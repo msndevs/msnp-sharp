@@ -105,7 +105,7 @@ namespace MSNPSharp
 
         #region Members
 
-        private Messenger _messenger = null;
+        private NSMessageHandler _nsMessageHandler = null;
         private SBMessageHandler _switchboard = null;
         private bool ended = false;
         private bool ending = false;
@@ -173,7 +173,7 @@ namespace MSNPSharp
         {
             if (_switchboard == null)
             {
-                _switchboard = new SBMessageHandler(Messenger.Nameserver);
+                _switchboard = new SBMessageHandler(_nsMessageHandler);
 
             }
 
@@ -305,7 +305,7 @@ namespace MSNPSharp
             {
                 foreach (Contact contact in Contacts)
                 {
-                    if (!contact.IsSibling(Messenger.ContactList.Owner))
+                    if (!contact.IsSibling(NSMessageHandler.ContactList.Owner))
                     {
                         return contact;
                     }
@@ -337,7 +337,7 @@ namespace MSNPSharp
 
                 foreach (Contact contact in Contacts)
                 {
-                    if (!contact.IsSibling(Messenger.Nameserver.ContactList.Owner))
+                    if (!contact.IsSibling(_nsMessageHandler.ContactList.Owner))
                     {
                         if (!contact.IsSibling(oldOwner))
                         {
@@ -376,8 +376,7 @@ namespace MSNPSharp
                 ending = false;
             }
 
-            _messenger.Conversations.Remove(this);
-
+            _nsMessageHandler.Conversations.Remove(this);
 
             ClearContacts();
 
@@ -394,7 +393,7 @@ namespace MSNPSharp
 
         protected virtual void OnP2PMessageReceived(object sender, P2PMessageEventArgs e)
         {
-            Messenger.Nameserver.P2PHandler.GetBridge(this);
+            NSMessageHandler.P2PHandler.GetBridge(this);
 
             if (P2PMessageReceived != null)
             {
@@ -493,7 +492,7 @@ namespace MSNPSharp
                 ex.Sender.Emoticons[ex.Emoticon.Sha] = ex.Emoticon;
 
                 // create a session and send the invitation
-                ObjectTransfer emoticonTransfer = _messenger.RequestMsnObject(ex.Sender, ex.Emoticon);
+                ObjectTransfer emoticonTransfer = _nsMessageHandler.P2PHandler.RequestMsnObject(ex.Sender, ex.Emoticon);
                 emoticonTransfer.TransferAborted += new EventHandler<ContactEventArgs>(transferSession_TransferAborted);
                 emoticonTransfer.TransferFinished += new EventHandler<EventArgs>(transferSession_TransferFinished);
 
@@ -560,9 +559,9 @@ namespace MSNPSharp
             if (!AddContact(e.Contact))
                 return;
 
-            if (!_messenger.Conversations.Contains(this))
+            if (!_nsMessageHandler.Conversations.Contains(this))
             {
-                _messenger.Conversations.Add(this);
+                _nsMessageHandler.Conversations.Add(this);
             }
 
             lock (_pendingInviteContacts)
@@ -570,7 +569,7 @@ namespace MSNPSharp
 
             conversationState = ConversationState.OneRemoteUserJoined;
 
-            if (!e.Contact.IsSibling(Messenger.ContactList.Owner))
+            if (!e.Contact.IsSibling(NSMessageHandler.ContactList.Owner))
             {
                 SetFirstJoinedContact(e.Contact);
             }
@@ -629,7 +628,7 @@ namespace MSNPSharp
 
             if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard)
             {
-                Messenger.Nameserver.RequestSwitchboard(_switchboard, this);
+                NSMessageHandler.RequestSwitchboard(_switchboard, this);
 
                 conversationState = ConversationState.SwitchboardRequestSent;
             }
@@ -877,17 +876,17 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Messenger that created the conversation
+        /// Name server that created the conversation
         /// </summary>
-        public Messenger Messenger
+        public NSMessageHandler NSMessageHandler
         {
             get
             {
-                return _messenger;
+                return _nsMessageHandler;
             }
             set
             {
-                _messenger = value;
+                _nsMessageHandler = value;
             }
         }
 
@@ -926,13 +925,13 @@ namespace MSNPSharp
         /// <summary>
         /// Constructor.
         /// </summary>
-        /// <param name="parent">The messenger object that requests the conversation.</param>
+        /// <param name="parent">The name server object that requests the conversation.</param>
         /// <param name="sbHandler">The switchboard to interface to.</param>		
-        internal Conversation(Messenger parent, SBMessageHandler sbHandler)
+        internal Conversation(NSMessageHandler parent, SBMessageHandler sbHandler)
         {
             _switchboard = sbHandler;
             _type = ConversationType.SwitchBoard;
-            _messenger = parent;
+            _nsMessageHandler = parent;
             IniCommonSettings();
             conversationState = ConversationState.SwitchboardRequestSent;
         }
@@ -941,9 +940,9 @@ namespace MSNPSharp
         /// Constructor.
         /// </summary>
         /// <param name="parent">The messenger object that requests the conversation.</param>
-        internal Conversation(Messenger parent)
+        internal Conversation(NSMessageHandler parent)
         {
-            _messenger = parent;
+            _nsMessageHandler = parent;
 
             _type = ConversationType.None;
             IniCommonSettings();
@@ -994,12 +993,12 @@ namespace MSNPSharp
                 }
             }
 
-            if (!Messenger.ContactList.HasContact(contactMail, type))
+            if (!NSMessageHandler.ContactList.HasContact(contactMail, type))
             {
                 throw new MSNPSharpException("Contact not on your contact list.");
             }
 
-            Contact contact = Messenger.ContactList.GetContact(contactMail, type);  //Only contacts on default addressbook can join conversations.
+            Contact contact = NSMessageHandler.ContactList.GetContact(contactMail, type);  //Only contacts on default addressbook can join conversations.
             if (contact.Status == PresenceStatus.Offline)
             {
                 throw new InvalidOperationException("Contact " + contactMail + " not online, please send offline message instead.");
@@ -1027,7 +1026,7 @@ namespace MSNPSharp
                         conversationState == ConversationState.ConversationEnded)
                     {
                         PendingContactEnqueue(contact);  //Enqueue the contact if user send message before it join.
-                        Messenger.Nameserver.RequestSwitchboard(_switchboard, this);
+                        NSMessageHandler.RequestSwitchboard(_switchboard, this);
 
                         conversationState = ConversationState.SwitchboardRequestSent;
                         return _switchboard;

@@ -182,14 +182,14 @@ namespace MSNPSharp.P2P
         {
             remotePacketNo = e.P2PMessage.Header.Identifier;
 
-            sbHandler.Messenger.Nameserver.P2PHandler.ProcessP2PMessage(this, Remote, Remote.SelectRandomEPID(), e.P2PMessage);
+            sbHandler.NSMessageHandler.P2PHandler.ProcessP2PMessage(this, Remote, Remote.SelectRandomEPID(), e.P2PMessage);
         }
 
         public override void Send(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage msg, AckHandler ackHandler)
         {
             if (sbHandler == null)
             {
-                sbHandler = session.NSMessageHandler.__internalMessenger.CreateConversation();
+                sbHandler = session.NSMessageHandler.CreateConversation();
 
                 AttachSBEvents();
 

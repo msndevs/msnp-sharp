@@ -107,33 +107,12 @@ namespace MSNPSharp
     /// </remarks>
     public class Messenger
     {
-        #region Events
-
-        /// <summary>
-        /// Occurs when a new conversation is created. Either by a local or remote invitation.
-        /// </summary>
-        /// <remarks>
-        /// You can check the initiator object in the event arguments to see which party initiated the
-        /// conversation. This event is called after the messenger server has created a switchboard handler,
-        /// so there is always a valid messageprocessor.
-        /// </remarks>
-        public event EventHandler<ConversationCreatedEventArgs> ConversationCreated;
-
-        protected virtual void OnConversationCreated(Conversation conversation, object initiator)
-        {
-            if (ConversationCreated != null)
-                ConversationCreated(this, new ConversationCreatedEventArgs(conversation, initiator));
-        }
-
-        #endregion
-
         #region Members
 
         private NSMessageProcessor nsMessageProcessor = null;
         private NSMessageHandler nsMessageHandler = null;
         private ConnectivitySettings connectivitySettings = null;
         private Credentials credentials = new Credentials(MsnProtocol.MSNP18);
-        private ArrayList conversations = ArrayList.Synchronized(new ArrayList());
         private MessageManager messageManager = null;
 
         #endregion
@@ -147,8 +126,8 @@ namespace MSNPSharp
         {
             connectivitySettings = new ConnectivitySettings();
             nsMessageProcessor = new NSMessageProcessor(connectivitySettings);
-            nsMessageHandler = new NSMessageHandler(this);
-            messageManager = new MessageManager(this);
+            nsMessageHandler = new NSMessageHandler();
+            messageManager = new MessageManager(nsMessageHandler);
 
             Nameserver.SBCreated += delegate(object sender, SBCreatedEventArgs ce)
             {
@@ -159,8 +138,8 @@ namespace MSNPSharp
                 }
 
                 // create a conversation object to handle with the switchboard
-                Conversation c = new Conversation(this, ce.Switchboard);
-                OnConversationCreated(c, ce.Initiator);
+                Conversation c = new Conversation(Nameserver, ce.Switchboard);
+                Nameserver.OnConversationCreated(c, ce.Initiator);
                 return;
             };
         }
@@ -356,13 +335,6 @@ namespace MSNPSharp
             }
         }
 
-        public ArrayList Conversations
-        {
-            get
-            {
-                return conversations;
-            }
-        }
 
         #endregion
 
@@ -420,32 +392,23 @@ namespace MSNPSharp
         /// Creates a conversation.
         /// </summary>
         /// <remarks>
-        /// This method will fire the <see cref="ConversationCreated"/> event. The initiator object of the created switchboard will be <b>this</b> messenger object.
+        /// This method will fire the <see cref="ConversationCreated"/> event. The initiator object of the
+        /// created switchboard will be <b>this</b> messenger object.
         /// </remarks>
         /// <returns></returns>
         public Conversation CreateConversation()
         {
-            Conversation conversation = new Conversation(this);
-            OnConversationCreated(conversation, this);
-            return conversation;
+            return Nameserver.CreateConversation();
         }
 
         public ObjectTransfer RequestMsnObject(Contact remoteContact, MSNObject msnObject)
         {
-            ObjectTransfer objectTransferApp = new ObjectTransfer(msnObject, remoteContact);
-
-            P2PHandler.AddTransfer(objectTransferApp);
-
-            return objectTransferApp;
+            return P2PHandler.RequestMsnObject(remoteContact, msnObject);
         }
 
         public FileTransfer SendFile(Contact remoteContact, string filename, FileStream fileStream)
         {
-            FileTransfer fileTransferApp = new FileTransfer(remoteContact, fileStream, Path.GetFileName(filename));
-
-            P2PHandler.AddTransfer(fileTransferApp);
-
-            return fileTransferApp;
+            return P2PHandler.SendFile(remoteContact, filename, fileStream);
         }
 
         #endregion

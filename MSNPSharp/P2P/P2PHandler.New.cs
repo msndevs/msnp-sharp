@@ -68,6 +68,24 @@ namespace MSNPSharp.P2P
             this.nsMessageHandler = nsHandler;
         }
 
+        public ObjectTransfer RequestMsnObject(Contact remoteContact, MSNObject msnObject)
+        {
+            ObjectTransfer objectTransferApp = new ObjectTransfer(msnObject, remoteContact);
+
+            AddTransfer(objectTransferApp);
+
+            return objectTransferApp;
+        }
+
+        public FileTransfer SendFile(Contact remoteContact, string filename, FileStream fileStream)
+        {
+            FileTransfer fileTransferApp = new FileTransfer(remoteContact, fileStream, Path.GetFileName(filename));
+
+            AddTransfer(fileTransferApp);
+
+            return fileTransferApp;
+        }
+
         public void RegisterAckHandler(P2PMessage msg, AckHandler handler)
         {
             if (msg.Version == P2PVersion.P2PV2)

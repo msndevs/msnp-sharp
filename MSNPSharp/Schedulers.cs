@@ -48,7 +48,7 @@ namespace MSNPSharp
     {
         IMessageProcessor messageProcessor = null;
         NetworkMessage message = null;
-        Guid messengerId = Guid.Empty;
+        Guid nameServerId = Guid.Empty;
         DateTime createTime = DateTime.MinValue;
 
         /// <summary>
@@ -56,7 +56,10 @@ namespace MSNPSharp
         /// </summary>
         public DateTime CreateTime
         {
-            get { return createTime; }
+            get
+            {
+                return createTime;
+            }
         }
 
         /// <summary>
@@ -64,7 +67,10 @@ namespace MSNPSharp
         /// </summary>
         public IMessageProcessor MessageProcessor
         {
-            get { return messageProcessor; }
+            get
+            {
+                return messageProcessor;
+            }
         }
 
         /// <summary>
@@ -72,15 +78,21 @@ namespace MSNPSharp
         /// </summary>
         public NetworkMessage Message
         {
-            get { return message; }
+            get
+            {
+                return message;
+            }
         }
 
         /// <summary>
-        /// The <see cref="Messenger"/> who schedule this message.
+        /// The <see cref="NSMessageHandler"/> who schedule this message.
         /// </summary>
-        public Guid MessengerId
+        public Guid NameServerId
         {
-            get { return messengerId; }
+            get
+            {
+                return nameServerId;
+            }
         }
 
         private SchedulerQueueObject()
@@ -91,7 +103,7 @@ namespace MSNPSharp
         {
             messageProcessor = processor;
             this.message = message;
-            messengerId = owner;
+            nameServerId = owner;
             createTime = DateTime.Now;
         }
     }
@@ -108,7 +120,7 @@ namespace MSNPSharp
         }
 
         void Enqueue(IMessageProcessor processor, NetworkMessage message, Guid ownerId);
-        Guid Register(Messenger messenger);
+        Guid Register(NSMessageHandler ns);
         bool UnRegister(Guid id);
     }
 
@@ -121,15 +133,15 @@ namespace MSNPSharp
         private int delayTime = 5000; //In ms.
         private Thread timerThread = null;
         protected Queue<SchedulerQueueObject> messageQueue = new Queue<SchedulerQueueObject>();
-        protected Dictionary<Guid, Messenger> messengerList = new Dictionary<Guid, Messenger>(0);
+        protected Dictionary<Guid, NSMessageHandler> nsList = new Dictionary<Guid, NSMessageHandler>(0);
 
         /// <summary>
         /// The sending interval for messages in message queue .
         /// </summary>
         public int DelayTime
         {
-            get 
-            { 
+            get
+            {
                 return delayTime;
             }
 
@@ -148,7 +160,7 @@ namespace MSNPSharp
 
             lock (syncObject)
             {
-                if (messengerList.ContainsKey(ownerId))
+                if (nsList.ContainsKey(ownerId))
                 {
                     messageQueue.Enqueue(new SchedulerQueueObject(processor, message, ownerId));
                 }
@@ -182,7 +194,8 @@ namespace MSNPSharp
                 while (messageQueue.Count > 0 && currentTime - messageQueue.Peek().CreateTime >= span)
                 {
                     SchedulerQueueObject item = messageQueue.Dequeue();
-                    if (messengerList.ContainsKey(item.MessengerId) && messengerList[item.MessengerId].Connected)
+                    if (nsList.ContainsKey(item.NameServerId) &&
+                        ((NSMessageProcessor)nsList[item.NameServerId].MessageProcessor).Connected)
                     {
                         try
                         {
@@ -219,7 +232,7 @@ namespace MSNPSharp
         {
             lock (syncObject)
             {
-                if (messengerList.ContainsKey(ownerId))
+                if (nsList.ContainsKey(ownerId))
                 {
                     if (timerThread.ThreadState == System.Threading.ThreadState.Unstarted ||
                         timerThread.ThreadState == System.Threading.ThreadState.Stopped)
@@ -238,28 +251,28 @@ namespace MSNPSharp
                     return;
                 }
             }
-            
+
         }
 
-        public virtual Guid Register(Messenger messenger)
+        public virtual Guid Register(NSMessageHandler ns)
         {
             lock (syncObject)
             {
-                foreach (Guid guid in messengerList.Keys)
+                foreach (Guid guid in nsList.Keys)
                 {
-                    if (object.ReferenceEquals(messenger, messengerList[guid]))
+                    if (object.ReferenceEquals(ns, nsList[guid]))
                     {
                         return guid;
                     }
                 }
 
                 Guid newId = Guid.NewGuid();
-                while (messengerList.ContainsKey(newId))
+                while (nsList.ContainsKey(newId))
                 {
                     newId = Guid.NewGuid();
                 }
 
-                messengerList[newId] = messenger;
+                nsList[newId] = ns;
                 return newId;
             }
         }
@@ -268,7 +281,7 @@ namespace MSNPSharp
         {
             lock (syncObject)
             {
-                return messengerList.Remove(id);
+                return nsList.Remove(id);
             }
         }
 
@@ -293,7 +306,7 @@ namespace MSNPSharp
 
                 while (messageQueue.Count > 0 && currentTime - messageQueue.Peek().CreateTime >= span)
                 {
-                    if (uniqueProcessors.ContainsKey(messageQueue.Peek().MessengerId))
+                    if (uniqueProcessors.ContainsKey(messageQueue.Peek().NameServerId))
                     {
                         break;
                     }
@@ -301,12 +314,13 @@ namespace MSNPSharp
                     {
 
                         SchedulerQueueObject item = messageQueue.Dequeue();
-                        if (messengerList.ContainsKey(item.MessengerId) && messengerList[item.MessengerId].Connected)
+                        if (nsList.ContainsKey(item.NameServerId) &&
+                            ((NSMessageProcessor)nsList[item.NameServerId].MessageProcessor).Connected)
                         {
                             try
                             {
                                 item.MessageProcessor.SendMessage(item.Message);
-                                uniqueProcessors.Add(item.MessengerId, item.MessageProcessor);
+                                uniqueProcessors.Add(item.NameServerId, item.MessageProcessor);
                             }
                             catch (Exception ex)
                             {
@@ -328,18 +342,18 @@ namespace MSNPSharp
 
         public static Scheduler SwitchBoardRequestScheduler
         {
-            get 
-            { 
-                return Schedulers.sbRequestScheduler; 
+            get
+            {
+                return Schedulers.sbRequestScheduler;
             }
         }
 
         public static Scheduler P2PInvitationScheduler
         {
-            get 
-            { 
-                return Schedulers.p2pInvitationScheduler; 
+            get
+            {
+                return Schedulers.p2pInvitationScheduler;
             }
         }
     }
-}
+};
