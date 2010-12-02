@@ -200,7 +200,7 @@ namespace MSNPSharp.Apps
                 SendMessage(rak, delegate(P2PMessage ack)
                 {
                     OnTransferFinished(EventArgs.Empty);
-                    P2PSession.Close();
+                    // Close after remote client sends BYE.
                 });
             }
             else
@@ -260,7 +260,9 @@ namespace MSNPSharp.Apps
 
                     objStream.Close();
                     OnTransferFinished(EventArgs.Empty);
-                    // P2PSession.Close();
+
+                    if (P2PSession != null)
+                        P2PSession.Close(); // Send first BYE
                 }
 
                 return true;
