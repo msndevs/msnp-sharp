@@ -323,16 +323,16 @@ namespace MSNPSharp.P2P
                 remoteContactEndPointID = slp.FromEndPoint;
             }
 
-            p2pBridge = bridge;
-            localBaseIdentifier = bridge.localPacketNo;
-            localIdentifier = localBaseIdentifier;
-            
-
             if (!uint.TryParse(slp.BodyValues["SessionID"].Value, out sessionId))
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
                     "Can't parse SessionID: " + SessionId, GetType().Name);
             }
+
+            p2pBridge = bridge;
+            localBaseIdentifier = bridge.localPacketNo;
+            localIdentifier = localBaseIdentifier;
+            status = P2PSessionStatus.WaitingForLocal;
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
               String.Format("{0} created (Initiated remotely)", SessionId), GetType().Name);
@@ -375,8 +375,6 @@ namespace MSNPSharp.P2P
 
             if (p2pApplication != null && p2pApplication.ValidateInvitation(invitation))
             {
-                status = P2PSessionStatus.WaitingForLocal;
-
                 if (p2pApplication.AutoAccept)
                 {
                     Accept(false);
@@ -391,8 +389,6 @@ namespace MSNPSharp.P2P
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
                     String.Format("{0} app DECLINES this invite:\r\n{1}", SessionId, slp), GetType().Name);
 
-                // OnError(EventArgs.Empty);
-
                 SLPStatusMessage slpMessage = new SLPStatusMessage(RemoteContactEPIDString, 500, "Internal Error");
                 slpMessage.Target = RemoteContactEPIDString;
                 slpMessage.Source = LocalContactEPIDString;
@@ -402,7 +398,6 @@ namespace MSNPSharp.P2P
                 slpMessage.BodyValues["SessionID"] = SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
                 P2PMessage p2pMessage = WrapSLPMessage(slpMessage);
-
                 Send(p2pMessage);
             }
         }
