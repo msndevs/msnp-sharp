@@ -62,10 +62,13 @@ namespace MSNPSharp.P2P
                 p2pBridge.ResumeSending(this);
         }
 
-        internal void SendDirectInvite()
+        internal static void SendDirectInvite(
+            NSMessageHandler nsMessageHandler,
+            P2PBridge p2pBridge,
+            P2PSession p2pSession)
         {
-            // Only send the direct invite if we're currently using an SBBridge
-            if (!(p2pBridge is SBBridge))
+            // Only send the direct invite if we're currently using an SBBridge or UUNBridge
+            if (!(p2pBridge is SBBridge) && !(p2pBridge is UUNBridge))
                 return;
 
             string connectionType = "Unknown-Connect";
@@ -77,7 +80,7 @@ namespace MSNPSharp.P2P
 
             if (localEndPoint == null || externalEndPoint == null)
             {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "LocalEndPoint or ExternalEndPoint are not set. Connection type will be set to unknown.", GetType().Name);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "LocalEndPoint or ExternalEndPoint are not set. Connection type will be set to unknown.");
             }
             else
             {
@@ -99,17 +102,17 @@ namespace MSNPSharp.P2P
                         connectionType = "Symmetric-NAT";
                 }
 
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Connection type set to " + connectionType + " for session " + sessionId, GetType().Name);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                    String.Format("Connection type set to {0} for session {1}", connectionType, p2pSession.SessionId.ToString()));
             }
 
             #endregion
 
             // Create the message
-            SLPRequestMessage slpMessage = new SLPRequestMessage(RemoteContactEPIDString, MSNSLPRequestMethod.INVITE);
-            slpMessage.Target = RemoteContactEPIDString;
-            slpMessage.Source = LocalContactEPIDString;
+            SLPRequestMessage slpMessage = new SLPRequestMessage(p2pSession.RemoteContactEPIDString, MSNSLPRequestMethod.INVITE);
+            slpMessage.Source = p2pSession.LocalContactEPIDString;
             slpMessage.CSeq = 0;
-            slpMessage.CallId = invitation.CallId;
+            slpMessage.CallId = p2pSession.Invitation.CallId;
             slpMessage.MaxForwards = 0;
             slpMessage.ContentType = "application/x-msnmsgr-transreqbody";
 
@@ -122,12 +125,27 @@ namespace MSNPSharp.P2P
             slpMessage.BodyValues["ICF"] = "false"; // Firewall enabled
             slpMessage.BodyValues["Nat-Trav-Msg-Type"] = "WLX-Nat-Trav-Msg-Direct-Connect-Req";
 
-            Send(WrapSLPMessage(slpMessage));
+            Contact remote = p2pSession.Remote;
+            P2PVersion ver = p2pSession.Version;
+            P2PMessage p2pMessage = new P2PMessage(ver);
+            p2pMessage.InnerMessage = slpMessage;
+
+            if (ver == P2PVersion.P2PV2)
+            {
+                p2pMessage.V2Header.TFCombination = TFCombination.First;
+            }
+            else if (ver == P2PVersion.P2PV1)
+            {
+                p2pMessage.V1Header.Flags = P2PFlag.MSNSLPInfo;
+            }
+
+            p2pBridge.Send(p2pSession, remote, p2pSession.RemoteContactEndPointID, p2pMessage, null);
+
             // Wait a bit, otherwise SLP message queued when called p2pBridge.StopSending(this);
             Thread.CurrentThread.Join(900);
 
             // Stop sending until we receive a response to the direct invite or the timeout expires
-            p2pBridge.StopSending(this);
+            p2pBridge.StopSending(p2pSession);
         }
 
         private static void ProcessDirectReqInvite(

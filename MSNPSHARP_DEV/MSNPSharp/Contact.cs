@@ -102,6 +102,7 @@ namespace MSNPSharp
 
         private NSMessageHandler nsMessageHandler = null;
         private P2PBridge directBridge = null;
+        private bool uunTried = false;
 
         #endregion
 
@@ -452,6 +453,18 @@ namespace MSNPSharp
                     directBridge.BridgeOpened += HandleDirectBridgeOpened;
                     directBridge.BridgeClosed += HandleDirectBridgeClosed;
                 }
+            }
+        }
+
+        public bool UUNTried
+        {
+            get
+            {
+                return uunTried;
+            }
+            protected internal set
+            {
+                uunTried = value;
             }
         }
 
