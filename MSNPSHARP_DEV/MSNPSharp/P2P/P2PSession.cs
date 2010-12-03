@@ -275,10 +275,11 @@ namespace MSNPSharp.P2P
             remoteContactEndPointID = app.Remote.SelectRandomEPID();
 
             nsMessageHandler = app.Local.NSMessageHandler;
-
             sessionId = (uint)random.Next(50000, int.MaxValue);
-            localBaseIdentifier = (uint)random.Next(50000, int.MaxValue);
-            localIdentifier = localBaseIdentifier;
+
+            // These 2 fields are set when Invite() called.
+            localBaseIdentifier = 0;
+            localIdentifier = 0;
 
             invitation = new SLPRequestMessage(RemoteContactEPIDString, MSNSLPRequestMethod.INVITE);
             invitation.Target = RemoteContactEPIDString;
@@ -418,6 +419,9 @@ namespace MSNPSharp.P2P
             }
             else
             {
+                MigrateToOptimalBridge();
+                localBaseIdentifier = p2pBridge.localPacketNo;
+                localIdentifier = localBaseIdentifier;
 
                 P2PMessage p2pMessage = WrapSLPMessage(invitation);
 
