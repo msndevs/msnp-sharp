@@ -57,13 +57,14 @@ namespace MSNPSharp.P2P
     /// </summary>
     public class P2PDirectProcessor : SocketMessageProcessor, IDisposable
     {
+        public event EventHandler<EventArgs> DirectNegotiationTimedOut;
         public event EventHandler<EventArgs> HandshakeCompleted;
         public event EventHandler<P2PMessageEventArgs> P2PMessageReceived;
 
         private P2PVersion version = P2PVersion.P2PV1;
         private Guid nonce = Guid.Empty;
         private bool needHash = false;
-        private Timer socketExpireTimer = new Timer(12000);
+        private Timer socketExpireTimer = new Timer(15000);
         private ProxySocket socketListener = null;
         private bool isListener = false;
         private Socket dcSocket = null;
@@ -169,6 +170,8 @@ namespace MSNPSharp.P2P
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
                 "I was waiting for " + (socketExpireTimer.Interval / 1000) + " seconds, but no one has connected!", GetType().Name);
+
+            OnDirectNegotiationTimedOut(EventArgs.Empty);
 
             Dispose();
         }
@@ -370,8 +373,6 @@ namespace MSNPSharp.P2P
                         P2PDCMessage dcMessage = new P2PDCMessage(version);
                         dcMessage.ParseBytes(data);
 
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, dcMessage.ToDebugString(), GetType().Name);
-
                         OnP2PMessageReceived(new P2PMessageEventArgs(dcMessage));
 
                         lock (MessageHandlers)
@@ -488,6 +489,12 @@ namespace MSNPSharp.P2P
                 SendSocketData(dcSocket, p2pMessage.GetBytes(), se);
             else
                 SendSocketData(p2pMessage.GetBytes(), se);
+        }
+
+        protected virtual void OnDirectNegotiationTimedOut(EventArgs e)
+        {
+            if (DirectNegotiationTimedOut != null)
+                DirectNegotiationTimedOut(this, e);
         }
 
         protected virtual void OnHandshakeCompleted(EventArgs e)

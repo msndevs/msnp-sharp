@@ -68,24 +68,35 @@ namespace MSNPSharp.P2P
             directConnection.P2PMessageReceived += new EventHandler<P2PMessageEventArgs>(directConnection_P2PMessageReceived);
             directConnection.SendCompleted += new EventHandler<MSNPSharp.Core.ObjectEventArgs>(directConnection_SendCompleted);
 
+            directConnection.DirectNegotiationTimedOut += new EventHandler<EventArgs>(directConnection_DirectNegotiationTimedOut);
             directConnection.ConnectionClosed += new EventHandler<EventArgs>(directConnection_ConnectionClosed);
             directConnection.ConnectingException += new EventHandler<ExceptionEventArgs>(directConnection_ConnectingException);
             directConnection.ConnectionException += new EventHandler<ExceptionEventArgs>(directConnection_ConnectionException);
         }
 
-        void directConnection_ConnectionException(object sender, ExceptionEventArgs e)
+        private void directConnection_HandshakeCompleted(object sender, EventArgs e)
+        {
+            OnBridgeOpened(e);
+        }
+
+        private void directConnection_DirectNegotiationTimedOut(object sender, EventArgs e)
+        {
+            OnBridgeClosed(EventArgs.Empty);
+        }
+
+        private void directConnection_ConnectionException(object sender, ExceptionEventArgs e)
         {
             OnBridgeClosed(EventArgs.Empty);
 
         }
 
-        void directConnection_ConnectingException(object sender, ExceptionEventArgs e)
+        private void directConnection_ConnectingException(object sender, ExceptionEventArgs e)
         {
             OnBridgeClosed(EventArgs.Empty);
 
         }
 
-        void directConnection_ConnectionClosed(object sender, EventArgs e)
+        private void directConnection_ConnectionClosed(object sender, EventArgs e)
         {
             OnBridgeClosed(EventArgs.Empty);
         }
@@ -98,11 +109,6 @@ namespace MSNPSharp.P2P
         public void Connect()
         {
             directConnection.Connect();
-        }
-
-        private void directConnection_HandshakeCompleted(object sender, EventArgs e)
-        {
-            OnBridgeOpened(e);
         }
 
         private void directConnection_P2PMessageReceived(object sender, P2PMessageEventArgs e)
