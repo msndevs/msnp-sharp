@@ -187,7 +187,7 @@ namespace MSNPSharp.Apps
                 }
                 else if (P2PVersion == P2PVersion.P2PV2)
                 {
-                    msg.V2Header.OperationCode |= (byte)OperationCode.RAK;
+                    msg.V2Header.OperationCode = (byte)OperationCode.RAK;
                     msg.V2Header.TFCombination = TFCombination.MsnObject | TFCombination.First;
                     msg.V2Header.PackageNumber = packNum;
                 }

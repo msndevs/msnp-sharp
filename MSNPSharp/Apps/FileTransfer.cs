@@ -285,7 +285,7 @@ namespace MSNPSharp.Apps
 
             if (Sending)
             {
-                P2PSession.SendDirectInvite();
+                P2PSession.SendDirectInvite(this.NSMessageHandler, P2PSession.Bridge, P2PSession);
 
                 _dataStream.Seek(0, SeekOrigin.Begin);
                 _sendingData = true;

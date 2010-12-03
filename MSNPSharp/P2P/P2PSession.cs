@@ -419,10 +419,19 @@ namespace MSNPSharp.P2P
             }
             else
             {
-                MigrateToOptimalBridge();
-                localBaseIdentifier = p2pBridge.localPacketNo;
-                localIdentifier = localBaseIdentifier;
+                if (NSMessageHandler.UUNBridge.SuitableFor(this) && Remote.UUNTried == false)
+                {
+                    Remote.UUNTried = true;
+                    P2PSession.SendDirectInvite(NSMessageHandler, NSMessageHandler.UUNBridge, this);
+                }
+                else
+                {
+                    MigrateToOptimalBridge();
+                    localBaseIdentifier = p2pBridge.localPacketNo;
+                    localIdentifier = localBaseIdentifier;
+                }
 
+                
                 P2PMessage p2pMessage = WrapSLPMessage(invitation);
 
                 if (version == P2PVersion.P2PV2)
@@ -445,7 +454,7 @@ namespace MSNPSharp.P2P
                         String.Format("{0} invitation sent with SYN+RAK op and received RemoteBaseIdentifier is: {1}", SessionId, remoteIdentifier), GetType().Name);
 
                     if (ack.Header.RequireAck)
-                    {                       
+                    {
                         Send(ack.CreateAcknowledgement());
 
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
@@ -478,7 +487,7 @@ namespace MSNPSharp.P2P
                 Send(WrapSLPMessage(slpMessage), delegate(P2PMessage ack)
                 {
                     if (sendDCInvite)
-                        SendDirectInvite();
+                        SendDirectInvite(nsMessageHandler, p2pBridge, this);
 
                     OnActive(EventArgs.Empty);
 
@@ -932,6 +941,9 @@ namespace MSNPSharp.P2P
                 p2pBridge.BridgeOpened += BridgeOpened;
                 p2pBridge.BridgeClosed += BridgeClosed;
                 p2pBridge.BridgeSent += BridgeSent;
+
+                localBaseIdentifier = p2pBridge.localPacketNo;
+                localIdentifier = localBaseIdentifier;
 
                 if ((timeoutTimer != null) && !(p2pBridge is SBBridge))
                     DirectNegotiationSuccessful();

@@ -281,14 +281,6 @@ namespace MSNPSharp.Apps
 
             p2pMessage.Header.SessionId = p2pSession.SessionId;
 
-            if (0 == p2pMessage.Header.Identifier)
-            {
-                if (p2pMessage.Version == P2PVersion.P2PV1)
-                    p2pMessage.Header.Identifier = p2pSession.NextLocalIdentifier(1);
-                else
-                    p2pMessage.Header.Identifier = p2pSession.NextLocalIdentifier((int)p2pMessage.Header.MessageSize);
-            }
-
             // If not an ack, set the footer (p2pv1 only)
             if (p2pMessage.Version == P2PVersion.P2PV1 && (p2pMessage.V1Header.Flags & P2PFlag.Acknowledgement) != P2PFlag.Acknowledgement)
                 p2pMessage.Footer = ApplicationId;

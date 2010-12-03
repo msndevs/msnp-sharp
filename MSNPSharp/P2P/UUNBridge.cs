@@ -59,12 +59,25 @@ namespace MSNPSharp.P2P
             }
         }
 
-        [Obsolete("This is not valid for UUNBridge", true)]
+        public override bool SuitableFor(P2PSession session)
+        {
+            if (session != null)
+            {
+                ClientCapacities caps = session.Remote.EndPointData[session.RemoteContactEndPointID].ClientCapacities;
+                return (ClientCapacities.SupportP2PUUNBootstrap == (caps & ClientCapacities.SupportP2PUUNBootstrap));
+            }
+            return false;
+
+            // Don't call base.SuitableFor(). Base call checks Remote and generates InvalidOperationException();
+            // See below. 
+        }
+
+        [Obsolete("This is not valid for UUNBridge. See SuitableFor() method.", true)]
         public override Contact Remote
         {
             get
             {
-                throw new InvalidOperationException("This is not valid for UUNBridge");
+                throw new InvalidOperationException("This is not valid for UUNBridge. See SuitableFor() method.");
             }
         }
 

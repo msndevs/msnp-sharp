@@ -2032,62 +2032,66 @@ namespace MSNPSharp
 
                                 sourceContact = ContactList.GetContact(sourceEmail, ClientType.PassportMember);
 
-                                if (slpMessage.ContentType == "application/x-msnmsgr-transreqbody")
+                                if (slpMessage.ContentType == "application/x-msnmsgr-transreqbody" ||
+                                    slpMessage.ContentType == "application/x-msnmsgr-transrespbody")
                                 {
                                     P2PSession.ProcessDirectInvite(slpMessage, this, null);
-
-                                    /*
-
-                                    SLPStatusMessage slpResponseMessage = new SLPStatusMessage(slpMessage.Source, 500, "Internal Error");
-                                    slpResponseMessage.Target = slpMessage.Target;
-                                    slpResponseMessage.Via = slpMessage.Via;
-                                    slpResponseMessage.CSeq = slpMessage.CSeq;
-                                    slpResponseMessage.CallId = slpMessage.CallId;
-                                    slpResponseMessage.MaxForwards = slpMessage.MaxForwards;
-                                    slpResponseMessage.ContentType = @"application/x-msnmsgr-transrespbody";
-
-                                    slpResponseMessage.BodyValues["Listening"] = "false";
-                                    slpResponseMessage.BodyValues["Conn-Type"] = "Firewall";
-                                    slpResponseMessage.BodyValues["TCP-Conn-Type"] = "Firewall";
-                                    slpResponseMessage.BodyValues["IPv6-global"] = string.Empty;
-                                    slpResponseMessage.BodyValues["UPnPNat"] = "false";
-                                    slpResponseMessage.BodyValues["Capabilities-Flags"] = "1";
-                                    slpResponseMessage.BodyValues["Nat-Trav-Msg-Type"] = "WLX-Nat-Trav-Msg-Direct-Connect-Resp";
-                                    slpResponseMessage.BodyValues["Bridge"] = "TCPv1";
-
-                                    if (slpMessage.BodyValues.ContainsKey("Hashed-Nonce"))
-                                    {
-                                        slpResponseMessage.BodyValues["Hashed-Nonce"] = slpMessage.BodyValues["Hashed-Nonce"].Value;
-                                    }
-                                    else
-                                    {
-                                        slpResponseMessage.BodyValues["Hashed-Nonce"] = Guid.Empty.ToString("B");
-                                    }
-
-                                    P2PMessage msg = new P2PMessage(ver);
-                                    msg.InnerMessage = slpResponseMessage;
-
-                                    uunBridge.Send(null, sourceContact, sourceGuid, msg, null);
-                                     * */
                                 }
-                                else if (slpMessage.ContentType == "application/x-msnmsgr-transrespbody")
+
+                                /*
+
+                                SLPStatusMessage slpResponseMessage = new SLPStatusMessage(slpMessage.Source, 500, "Internal Error");
+                                slpResponseMessage.Target = slpMessage.Target;
+                                slpResponseMessage.Via = slpMessage.Via;
+                                slpResponseMessage.CSeq = slpMessage.CSeq;
+                                slpResponseMessage.CallId = slpMessage.CallId;
+                                slpResponseMessage.MaxForwards = slpMessage.MaxForwards;
+                                slpResponseMessage.ContentType = @"application/x-msnmsgr-transrespbody";
+
+                                slpResponseMessage.BodyValues["Listening"] = "false";
+                                slpResponseMessage.BodyValues["Conn-Type"] = "Firewall";
+                                slpResponseMessage.BodyValues["TCP-Conn-Type"] = "Firewall";
+                                slpResponseMessage.BodyValues["IPv6-global"] = string.Empty;
+                                slpResponseMessage.BodyValues["UPnPNat"] = "false";
+                                slpResponseMessage.BodyValues["Capabilities-Flags"] = "1";
+                                slpResponseMessage.BodyValues["Nat-Trav-Msg-Type"] = "WLX-Nat-Trav-Msg-Direct-Connect-Resp";
+                                slpResponseMessage.BodyValues["Bridge"] = "TCPv1";
+
+                                if (slpMessage.BodyValues.ContainsKey("Hashed-Nonce"))
                                 {
-                                    SLPRequestMessage slpResponseMessage = new SLPRequestMessage(slpMessage.Source, MSNSLPRequestMethod.ACK);
-                                    slpResponseMessage.Source = slpMessage.Target;
-                                    slpResponseMessage.Via = slpMessage.Via;
-                                    slpResponseMessage.CSeq = 0;
-                                    slpResponseMessage.CallId = Guid.Empty;
-                                    slpResponseMessage.MaxForwards = 0;
-                                    slpResponseMessage.ContentType = @"application/x-msnmsgr-transdestaddrupdate";
-
-                                    slpResponseMessage.BodyValues["stroPdnAsrddAlanretnI4vPI"] = "0435:001.2.861.291";
-                                    slpResponseMessage.BodyValues["Nat-Trav-Msg-Type"] = "WLX-Nat-Trav-Msg-Updated-Connecting-Port";
-
-                                    P2PMessage msg = new P2PMessage(ver);
-                                    msg.InnerMessage = slpResponseMessage;
-
-                                    uunBridge.Send(null, sourceContact, sourceGuid, msg, null);
+                                    slpResponseMessage.BodyValues["Hashed-Nonce"] = slpMessage.BodyValues["Hashed-Nonce"].Value;
                                 }
+                                else
+                                {
+                                    slpResponseMessage.BodyValues["Hashed-Nonce"] = Guid.Empty.ToString("B");
+                                }
+
+                                P2PMessage msg = new P2PMessage(ver);
+                                msg.InnerMessage = slpResponseMessage;
+
+                                uunBridge.Send(null, sourceContact, sourceGuid, msg, null);
+                                     
+                            }
+                            else if (slpMessage.ContentType == "application/x-msnmsgr-transrespbody")
+                            {
+                                SLPRequestMessage slpResponseMessage = new SLPRequestMessage(slpMessage.Source, MSNSLPRequestMethod.ACK);
+                                slpResponseMessage.Source = slpMessage.Target;
+                                slpResponseMessage.Via = slpMessage.Via;
+                                slpResponseMessage.CSeq = 0;
+                                slpResponseMessage.CallId = Guid.Empty;
+                                slpResponseMessage.MaxForwards = 0;
+                                slpResponseMessage.ContentType = @"application/x-msnmsgr-transdestaddrupdate";
+
+                                slpResponseMessage.BodyValues["stroPdnAsrddAlanretnI4vPI"] = "0435:001.2.861.291";
+                                slpResponseMessage.BodyValues["Nat-Trav-Msg-Type"] = "WLX-Nat-Trav-Msg-Updated-Connecting-Port";
+
+                                P2PMessage msg = new P2PMessage(ver);
+                                msg.InnerMessage = slpResponseMessage;
+
+                                uunBridge.Send(null, sourceContact, sourceGuid, msg, null);
+                            }
+                                 * 
+                                 * */
                             }
                         }
                         break;
