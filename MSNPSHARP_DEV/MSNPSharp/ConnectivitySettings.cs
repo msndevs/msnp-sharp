@@ -326,6 +326,7 @@ namespace MSNPSharp
 
         private string host = "messenger.hotmail.com";
         private int port = 1863;
+        private IPEndPoint[] endPoints = new IPEndPoint[0];
         private string localHost = string.Empty;
         private int localPort = 0;
         private string proxyHost = string.Empty;
@@ -338,6 +339,21 @@ namespace MSNPSharp
         #endregion
 
         #region Public properties
+
+        /// <summary>
+        /// The remote IPs and ports to connect
+        /// </summary>
+        public IPEndPoint[] EndPoints
+        {
+            get
+            {
+                return endPoints;
+            }
+            set
+            {
+                endPoints = value;
+            }
+        }
 
         /// <summary>
         /// Hostname of the MSN server. Defaults is messenger.hotmail.com		

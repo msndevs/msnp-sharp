@@ -159,6 +159,37 @@ namespace Org.Mentalis.Network.ProxySocket {
 				return null;
 			}
 		}
+
+
+        public new IAsyncResult BeginConnect(IPAddress[] addresses, int port, AsyncCallback callback, object state)
+        {
+            if (addresses == null || addresses .Length == 0 || callback == null)
+                throw new ArgumentNullException();
+
+            if (this.ProtocolType != ProtocolType.Tcp || ProxyType == ProxyTypes.None || ProxyEndPoint == null)
+            {
+                ToThrow = null;
+                return base.BeginConnect(addresses, port, callback, state);
+            }
+            else
+            {
+                IPEndPoint remoteEP = new IPEndPoint(addresses[0], port);
+                CallBack = callback;
+                if (ProxyType == ProxyTypes.Socks4)
+                {
+                    AsyncResult = (new Socks4Handler(this, ProxyUser)).BeginNegotiate(remoteEP, new HandShakeComplete(this.OnHandShakeComplete), ProxyEndPoint);
+                    return AsyncResult;
+                }
+                else if (ProxyType == ProxyTypes.Socks5)
+                {
+                    AsyncResult = (new Socks5Handler(this, ProxyUser, ProxyPass)).BeginNegotiate(remoteEP, new HandShakeComplete(this.OnHandShakeComplete), ProxyEndPoint);
+                    return AsyncResult;
+                }
+                return null;
+            }
+        }
+
+
 		/// <summary>
 		/// Begins an asynchronous request for a connection to a network device.
 		/// </summary>

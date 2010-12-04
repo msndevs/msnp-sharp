@@ -117,6 +117,17 @@ namespace MSNPSharp.P2P
             }
         }
 
+        public override EndPoint RemoteEndPoint
+        {
+            get
+            {
+                if (dcSocket != null)
+                    return dcSocket.RemoteEndPoint;
+
+                return base.RemoteEndPoint;
+            }
+        }
+
         /// <summary>
         /// Constructor.
         /// </summary>

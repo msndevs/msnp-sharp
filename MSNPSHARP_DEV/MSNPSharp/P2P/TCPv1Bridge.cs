@@ -7,8 +7,28 @@ namespace MSNPSharp.P2P
 {
     using MSNPSharp.Core;
 
+    public class DestinationAddressUpdatedEventHandler : EventArgs
+    {
+        private IPEndPoint ipEndPoint;
+
+        public IPEndPoint IPEndPoint
+        {
+            get
+            {
+                return ipEndPoint;
+            }
+        }
+
+        public DestinationAddressUpdatedEventHandler(IPEndPoint ipep)
+        {
+            this.ipEndPoint = ipep;
+        }
+    }
+
     public class TCPv1Bridge : P2PBridge
     {
+        public event EventHandler<DestinationAddressUpdatedEventHandler> DestinationAddressUpdated;
+
         private NSMessageHandler nsMessageHandler = null;
         private P2PSession startupSession = null;
         private P2PDirectProcessor directConnection = null;
@@ -50,6 +70,28 @@ namespace MSNPSharp.P2P
             }
         }
 
+        public IPEndPoint RemoteEndPoint
+        {
+            get
+            {
+                if (directConnection != null)
+                    return directConnection.RemoteEndPoint as IPEndPoint;
+
+                return null;
+            }
+        }
+
+        public IPEndPoint LocalEndPoint
+        {
+            get
+            {
+                if (directConnection != null)
+                    return directConnection.LocalEndPoint as IPEndPoint;
+
+                return null;
+            }
+        }
+
         public TCPv1Bridge(
             ConnectivitySettings connectivitySettings,
             P2PVersion p2pVersion,
@@ -72,6 +114,23 @@ namespace MSNPSharp.P2P
             directConnection.ConnectionClosed += new EventHandler<EventArgs>(directConnection_ConnectionClosed);
             directConnection.ConnectingException += new EventHandler<ExceptionEventArgs>(directConnection_ConnectingException);
             directConnection.ConnectionException += new EventHandler<ExceptionEventArgs>(directConnection_ConnectionException);
+        }
+
+        protected internal virtual void OnDestinationAddressUpdated(DestinationAddressUpdatedEventHandler e)
+        {
+            if (directConnection != null && directConnection.RemoteEndPoint != null)
+            {
+                IPEndPoint ipep = (IPEndPoint)directConnection.RemoteEndPoint;
+
+                if (ipep.Address.Equals(e.IPEndPoint.Address) == false || ipep.Port != e.IPEndPoint.Port)
+                {
+                    directConnection.Disconnect();
+                    OnBridgeClosed(EventArgs.Empty);
+                }
+            }
+
+            if (DestinationAddressUpdated != null)
+                DestinationAddressUpdated(this, e);
         }
 
         private void directConnection_HandshakeCompleted(object sender, EventArgs e)

@@ -47,6 +47,8 @@ namespace MSNPSharp.P2P
                 ProcessDirectReqInvite(slp, nsMessageHandler, startupSession);
             else if (slp.ContentType == "application/x-msnmsgr-transrespbody")
                 ProcessDirectRespInvite(slp, nsMessageHandler, startupSession);
+            else if (slp.ContentType == "application/x-msnmsgr-transdestaddrupdate")
+                ProcessDirectAddrUpdate(slp, nsMessageHandler, startupSession);
         }
 
         private void DirectNegotiationSuccessful()
@@ -62,28 +64,20 @@ namespace MSNPSharp.P2P
                 p2pBridge.ResumeSending(this);
         }
 
-        internal static void SendDirectInvite(
-            NSMessageHandler nsMessageHandler,
-            P2PBridge p2pBridge,
-            P2PSession p2pSession)
+        private static string ConnectionType(NSMessageHandler nsMessageHandler, out int netId)
         {
-            // Only send the direct invite if we're currently using an SBBridge or UUNBridge
-            if (!(p2pBridge is SBBridge) && !(p2pBridge is UUNBridge))
-                return;
-
             string connectionType = "Unknown-Connect";
-            string netId = "2042264281"; // unknown variable
+            netId = 0;
             IPEndPoint localEndPoint = nsMessageHandler.LocalEndPoint;
             IPEndPoint externalEndPoint = nsMessageHandler.ExternalEndPoint;
 
-            #region Check and determine connectivity
-
             if (localEndPoint == null || externalEndPoint == null)
             {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "LocalEndPoint or ExternalEndPoint are not set. Connection type will be set to unknown.");
             }
             else
             {
+                netId = BitConverter.ToInt32(localEndPoint.Address.GetAddressBytes(), 0);
+
                 if (localEndPoint.Address.Equals(externalEndPoint.Address))
                 {
                     if (localEndPoint.Port == externalEndPoint.Port)
@@ -95,18 +89,31 @@ namespace MSNPSharp.P2P
                 {
                     if (localEndPoint.Port == externalEndPoint.Port)
                     {
-                        netId = "0";
+                        netId = 0;
                         connectionType = "IP-Restrict-NAT";
                     }
                     else
                         connectionType = "Symmetric-NAT";
                 }
-
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
-                    String.Format("Connection type set to {0} for session {1}", connectionType, p2pSession.SessionId.ToString()));
             }
 
-            #endregion
+            return connectionType;
+        }
+
+        internal static void SendDirectInvite(
+            NSMessageHandler nsMessageHandler,
+            P2PBridge p2pBridge,
+            P2PSession p2pSession)
+        {
+            // Only send the direct invite if we're currently using an SBBridge or UUNBridge
+            if (!(p2pBridge is SBBridge) && !(p2pBridge is UUNBridge))
+                return;
+
+            int netId;
+            string connectionType = ConnectionType(nsMessageHandler, out netId);
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                String.Format("Connection type set to {0} for session {1}", connectionType, p2pSession.SessionId.ToString()));
 
             // Create the message
             SLPRequestMessage slpMessage = new SLPRequestMessage(p2pSession.RemoteContactEPIDString, MSNSLPRequestMethod.INVITE);
@@ -118,7 +125,7 @@ namespace MSNPSharp.P2P
 
             slpMessage.BodyValues["Bridges"] = "TCPv1 SBBridge";
             slpMessage.BodyValues["Capabilities-Flags"] = "1";
-            slpMessage.BodyValues["NetID"] = netId;
+            slpMessage.BodyValues["NetID"] = netId.ToString(System.Globalization.CultureInfo.InvariantCulture);
             slpMessage.BodyValues["Conn-Type"] = connectionType;
             slpMessage.BodyValues["TCP-Conn-Type"] = connectionType;
             slpMessage.BodyValues["UPnPNat"] = "false"; // UPNP Enabled
@@ -210,7 +217,8 @@ namespace MSNPSharp.P2P
                     slpMessage.BodyValues["Nat-Trav-Msg-Type"] = "WLX-Nat-Trav-Msg-Direct-Connect-Resp";
                     slpMessage.BodyValues["UPnPNat"] = "false";
 
-                    slpMessage.BodyValues["NeedConnectingEndpointInfo"] = "false";
+                    slpMessage.BodyValues["NeedConnectingEndpointInfo"] = "true";
+
                     slpMessage.BodyValues["Conn-Type"] = "Direct-Connect";
                     slpMessage.BodyValues["TCP-Conn-Type"] = "Direct-Connect";
                     slpMessage.BodyValues[nonceFieldName] = nonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
@@ -280,9 +288,9 @@ namespace MSNPSharp.P2P
                     //properties.DCNonceType = dcNonceType;
                 }
 
-                IPEndPoint selectedPoint = SelectIPEndPoint(bodyValues, nsMessageHandler);
+                IPEndPoint[] selectedPoint = SelectIPEndPoint(bodyValues, nsMessageHandler);
 
-                if (selectedPoint != null)
+                if (selectedPoint != null && selectedPoint.Length > 0)
                 {
                     P2PVersion ver = (message.FromEndPoint != Guid.Empty && message.ToEndPoint != Guid.Empty)
                         ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
@@ -292,16 +300,58 @@ namespace MSNPSharp.P2P
 
                     // We must connect to the remote client
                     ConnectivitySettings settings = new ConnectivitySettings();
-                    settings.Host = selectedPoint.Address.ToString();
-                    settings.Port = selectedPoint.Port;
+                    settings.EndPoints = selectedPoint;
+                    remote.DirectBridge = CreateDirectConnection(remote, ver, settings, nonce, (dcNonceType == DCNonceType.Sha1), nsMessageHandler, startupSession);
 
-                    remote.DirectBridge = CreateDirectConnection(remote, ver, settings.Host, settings.Port, nonce, (dcNonceType == DCNonceType.Sha1), nsMessageHandler, startupSession);
+                    bool needConnectingEndpointInfo;
+                    if (bodyValues.ContainsKey("NeedConnectingEndpointInfo") &&
+                        bool.TryParse(bodyValues["NeedConnectingEndpointInfo"], out needConnectingEndpointInfo) &&
+                        needConnectingEndpointInfo == true)
+                    {
+                        IPEndPoint ipep = ((TCPv1Bridge)remote.DirectBridge).LocalEndPoint;
+
+                        string desc = "stroPdnAsrddAlanretnI4vPI";
+                        char[] rev = ipep.ToString().ToCharArray();
+                        Array.Reverse(rev);
+                        string ipandport = new string(rev);
+
+                        SLPRequestMessage slpResponseMessage = new SLPRequestMessage(message.Source, MSNSLPRequestMethod.ACK);
+                        slpResponseMessage.Source = message.Target;
+                        slpResponseMessage.Via = message.Via;
+                        slpResponseMessage.CSeq = 0;
+                        slpResponseMessage.CallId = Guid.Empty;
+                        slpResponseMessage.MaxForwards = 0;
+                        slpResponseMessage.ContentType = @"application/x-msnmsgr-transdestaddrupdate";
+
+                        slpResponseMessage.BodyValues[desc] = ipandport;
+                        slpResponseMessage.BodyValues["Nat-Trav-Msg-Type"] = "WLX-Nat-Trav-Msg-Updated-Connecting-Port";
+
+                        P2PMessage msg = new P2PMessage(ver);
+                        msg.InnerMessage = slpResponseMessage;
+
+                        nsMessageHandler.UUNBridge.Send(null, remote, remoteGuid, msg, null);
+                    }
+
                     return;
                 }
             }
 
             if (startupSession != null)
                 startupSession.DirectNegotiationFailed();
+        }
+
+        private static void ProcessDirectAddrUpdate(
+            SLPMessage message,
+            NSMessageHandler nsMessageHandler,
+            P2PSession startupSession)
+        {
+            Contact from = nsMessageHandler.ContactList.GetContact(message.FromEmailAccount, ClientType.PassportMember);
+            IPEndPoint[] ipEndPoint = SelectIPEndPoint(message.BodyValues, nsMessageHandler);
+
+            if (from.DirectBridge != null && ipEndPoint != null && ipEndPoint.Length > 0)
+            {
+                ((TCPv1Bridge)from.DirectBridge).OnDestinationAddressUpdated(new DestinationAddressUpdatedEventHandler(ipEndPoint[0]));
+            }
         }
 
         private static TCPv1Bridge ListenForDirectConnection(
@@ -332,11 +382,13 @@ namespace MSNPSharp.P2P
             return tcpBridge;
         }
 
-        private static TCPv1Bridge CreateDirectConnection(Contact remote, P2PVersion ver, string host, int port, Guid nonce, bool hashed, NSMessageHandler nsMessageHandler, P2PSession startupSession)
+        private static TCPv1Bridge CreateDirectConnection(Contact remote, P2PVersion ver, ConnectivitySettings cs, Guid nonce, bool hashed, NSMessageHandler nsMessageHandler, P2PSession startupSession)
         {
-            TCPv1Bridge tcpBridge = new TCPv1Bridge(new ConnectivitySettings(host, port), ver, nonce, hashed, startupSession, nsMessageHandler, remote);
+            IPEndPoint ipep = cs.EndPoints[0];
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Trying to setup direct connection with remote host " + host + ":" + port.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            TCPv1Bridge tcpBridge = new TCPv1Bridge(cs, ver, nonce, hashed, startupSession, nsMessageHandler, remote);
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Trying to setup direct connection with remote host " + ipep.Address + ":" + ipep.Port.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
             tcpBridge.Connect();
 
@@ -422,134 +474,216 @@ namespace MSNPSharp.P2P
             return 0;
         }
 
-        private static IPEndPoint SelectIPEndPoint(MimeDictionary bodyValues, NSMessageHandler nsMessageHandler)
+        private static IPEndPoint[] SelectIPEndPoint(MimeDictionary bodyValues, NSMessageHandler nsMessageHandler)
         {
-            List<IPAddress> ipAddrs = new List<IPAddress>();
-            string[] addrs = new string[0];
-            int port = 0;
+            List<IPEndPoint> externalPoints = new List<IPEndPoint>();
+            List<IPEndPoint> internalPoints = new List<IPEndPoint>();
+            bool nat = false;
 
-            if (bodyValues.ContainsKey("IPv4External-Addrs") || bodyValues.ContainsKey("srddA-lanretxE4vPI"))
+            #region External
+
+            if (bodyValues.ContainsKey("IPv4External-Addrs") || bodyValues.ContainsKey("srddA-lanretxE4vPI") ||
+                bodyValues.ContainsKey("IPv4ExternalAddrsAndPorts") || bodyValues.ContainsKey("stroPdnAsrddAlanretxE4vPI"))
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Using external IP addresses");
 
                 if (bodyValues.ContainsKey("IPv4External-Addrs"))
                 {
-                    addrs = bodyValues["IPv4External-Addrs"].Value.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                    port = int.Parse(bodyValues["IPv4External-Port"].ToString(), System.Globalization.CultureInfo.InvariantCulture);
+                    string[] addrs = bodyValues["IPv4External-Addrs"].Value.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    int port = int.Parse(bodyValues["IPv4External-Port"].ToString(), System.Globalization.CultureInfo.InvariantCulture);
+                    IPAddress ip;
+                    foreach (string addr in addrs)
+                    {
+                        if (IPAddress.TryParse(addr, out ip))
+                            externalPoints.Add(new IPEndPoint(ip, port));
+                    }
                 }
-                else
+                else if (bodyValues.ContainsKey("IPv4ExternalAddrsAndPorts"))
                 {
+                    string[] addrsAndPorts = bodyValues["IPv4ExternalAddrsAndPorts"].Value.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    IPAddress ip;
+                    foreach (string str in addrsAndPorts)
+                    {
+                        string[] addrAndPort = str.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (IPAddress.TryParse(addrAndPort[0], out ip))
+                            externalPoints.Add(new IPEndPoint(ip, int.Parse(addrAndPort[1])));
+                    }
+                }
+                else if (bodyValues.ContainsKey("srddA-lanretxE4vPI"))
+                {
+                    nat = true;
+
                     char[] revHost = bodyValues["srddA-lanretxE4vPI"].ToString().ToCharArray();
                     Array.Reverse(revHost);
-                    addrs = new string(revHost).Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    string[] addrs = new string(revHost).Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
                     char[] revPort = bodyValues["troP-lanretxE4vPI"].ToString().ToCharArray();
                     Array.Reverse(revPort);
-                    port = int.Parse(new string(revPort), System.Globalization.CultureInfo.InvariantCulture);
+                    int port = int.Parse(new string(revPort), System.Globalization.CultureInfo.InvariantCulture);
+
+                    IPAddress ip;
+                    foreach (string addr in addrs)
+                    {
+                        if (IPAddress.TryParse(addr, out ip))
+                            externalPoints.Add(new IPEndPoint(ip, port));
+                    }
+                }
+                else if (bodyValues.ContainsKey("stroPdnAsrddAlanretxE4vPI"))
+                {
+                    nat = true;
+
+                    char[] rev = bodyValues["stroPdnAsrddAlanretxE4vPI"].ToString().ToCharArray();
+                    Array.Reverse(rev);
+                    string[] addrsAndPorts = new string(rev).Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    IPAddress ip;
+                    foreach (string str in addrsAndPorts)
+                    {
+                        string[] addrAndPort = str.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+
+                        if (IPAddress.TryParse(addrAndPort[0], out ip))
+                            externalPoints.Add(new IPEndPoint(ip, int.Parse(addrAndPort[1])));
+                    }
                 }
 
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                       String.Format("{0} external IP addresses found, with port {1}", addrs.Length, port));
+                       String.Format("{0} external IP addresses found:", externalPoints.Count));
 
-                for (int i = 0; i < addrs.Length; i++)
+                foreach (IPEndPoint ipep in externalPoints)
                 {
-                    IPAddress ip;
-                    if (IPAddress.TryParse(addrs[i], out ip))
-                    {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "\t" + addrs[i]);
-
-                        ipAddrs.Add(ip);
-
-                        if (ip.Equals(nsMessageHandler.LocalEndPoint.Address))
-                        {
-                            // External IP matches our own, clearing external IPs
-                            //addrs = new string[0];
-                            //ipAddrs.Clear();
-                            break;
-                        }
-                    }
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "\t" + ipep.ToString());
                 }
             }
 
-            if ((ipAddrs.Count == 0) &&
-                (bodyValues.ContainsKey("IPv4Internal-Addrs") || bodyValues.ContainsKey("srddA-lanretnI4vPI")))
+            #endregion
+
+            #region Internal
+
+            if (bodyValues.ContainsKey("IPv4Internal-Addrs") || bodyValues.ContainsKey("srddA-lanretnI4vPI") ||
+                bodyValues.ContainsKey("IPv4InternalAddrsAndPorts") || bodyValues.ContainsKey("stroPdnAsrddAlanretnI4vPI"))
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Using internal IP addresses");
 
                 if (bodyValues.ContainsKey("IPv4Internal-Addrs"))
                 {
-                    addrs = bodyValues["IPv4Internal-Addrs"].Value.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                    port = int.Parse(bodyValues["IPv4Internal-Port"].ToString(), System.Globalization.CultureInfo.InvariantCulture);
+                    string[] addrs = bodyValues["IPv4Internal-Addrs"].Value.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    int port = int.Parse(bodyValues["IPv4Internal-Port"].ToString(), System.Globalization.CultureInfo.InvariantCulture);
+
+                    IPAddress ip;
+                    foreach (string addr in addrs)
+                    {
+                        if (IPAddress.TryParse(addr, out ip))
+                            internalPoints.Add(new IPEndPoint(ip, port));
+                    }
                 }
-                else
+                else if (bodyValues.ContainsKey("IPv4InternalAddrsAndPorts"))
                 {
+                    string[] addrsAndPorts = bodyValues["IPv4InternalAddrsAndPorts"].Value.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    IPAddress ip;
+                    foreach (string str in addrsAndPorts)
+                    {
+                        string[] addrAndPort = str.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (IPAddress.TryParse(addrAndPort[0], out ip))
+                            internalPoints.Add(new IPEndPoint(ip, int.Parse(addrAndPort[1])));
+                    }
+                }
+                else if (bodyValues.ContainsKey("srddA-lanretnI4vPI"))
+                {
+                    nat = true;
+
                     char[] revHost = bodyValues["srddA-lanretnI4vPI"].ToString().ToCharArray();
                     Array.Reverse(revHost);
-                    addrs = new string(revHost).Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    string[] addrs = new string(revHost).Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
                     char[] revPort = bodyValues["troP-lanretnI4vPI"].ToString().ToCharArray();
                     Array.Reverse(revPort);
-                    port = int.Parse(new string(revPort), System.Globalization.CultureInfo.InvariantCulture);
+                    int port = int.Parse(new string(revPort), System.Globalization.CultureInfo.InvariantCulture);
+
+                    IPAddress ip;
+                    foreach (string addr in addrs)
+                    {
+                        if (IPAddress.TryParse(addr, out ip))
+                            internalPoints.Add(new IPEndPoint(ip, port));
+                    }
                 }
-            }
-
-            if (addrs.Length == 0)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Unable to find any remote IP addresses");
-
-                // Failed
-                return null;
-            }
-
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                      String.Format("{0} internal IP addresses found, with port {1}",
-                      addrs.Length, port));
-
-            for (int i = 0; i < addrs.Length; i++)
-            {
-                IPAddress ip;
-                if (IPAddress.TryParse(addrs[i], out ip))
+                else if (bodyValues.ContainsKey("stroPdnAsrddAlanretnI4vPI"))
                 {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "\t" + addrs[i]);
+                    nat = true;
 
-                    ipAddrs.Add(ip);
+                    char[] rev = bodyValues["stroPdnAsrddAlanretnI4vPI"].ToString().ToCharArray();
+                    Array.Reverse(rev);
+                    string[] addrsAndPorts = new string(rev).Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    IPAddress ip;
+                    foreach (string str in addrsAndPorts)
+                    {
+                        string[] addrAndPort = str.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+
+                        if (IPAddress.TryParse(addrAndPort[0], out ip))
+                            internalPoints.Add(new IPEndPoint(ip, int.Parse(addrAndPort[1])));
+                    }
+                }
+
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                       String.Format("{0} internal IP addresses found:", internalPoints.Count));
+
+                foreach (IPEndPoint ipep in internalPoints)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "\t" + ipep.ToString());
                 }
             }
 
-            if (addrs.Length == 0)
+            #endregion
+
+            if (externalPoints.Count == 0 && internalPoints.Count == 0)
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Unable to find any remote IP addresses");
 
                 // Failed
                 return null;
             }
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Is NAT: " + nat);
+
+            List<IPEndPoint> ret = new List<IPEndPoint>();
 
             // Try to find the correct IP
-            IPAddress ipAddr = null;
             byte[] localBytes = nsMessageHandler.LocalEndPoint.Address.GetAddressBytes();
 
-            foreach (IPAddress ip in ipAddrs)
+            foreach (IPEndPoint ipep in internalPoints)
             {
-                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                if (ipep.Address.AddressFamily == AddressFamily.InterNetwork)
                 {
                     // This is an IPv4 address
                     // Check if the first 3 octets match our local IP address
                     // If so, make use of that address (it's on our LAN)
 
-                    byte[] bytes = ip.GetAddressBytes();
+                    byte[] bytes = ipep.Address.GetAddressBytes();
 
                     if ((bytes[0] == localBytes[0]) && (bytes[1] == localBytes[1]) && (bytes[2] == localBytes[2]))
                     {
-                        ipAddr = ip;
+                        ret.Add(ipep);
                         break;
                     }
                 }
             }
 
-            if (ipAddr == null)
-                ipAddr = ipAddrs[0];
+            if (ret.Count == 0)
+            {
+                foreach (IPEndPoint ipep in internalPoints)
+                {
+                    if (!ret.Contains(ipep))
+                        ret.Add(ipep);
+                }
+            }
 
-            return new IPEndPoint(ipAddr, port);
+            foreach (IPEndPoint ipep in externalPoints)
+            {
+                if (!ret.Contains(ipep))
+                    ret.Add(ipep);
+            }
+
+            return ret.ToArray();
         }
     }
 };
