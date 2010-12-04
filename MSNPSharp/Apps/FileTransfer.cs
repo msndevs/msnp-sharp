@@ -353,7 +353,8 @@ namespace MSNPSharp.Apps
                 P2PMessage rak = new P2PMessage(P2PVersion);
                 SendMessage(rak, delegate(P2PMessage ack)
                 {
-                    OnTransferFinished(EventArgs.Empty);
+                    Abort();
+                    OnTransferFinished(EventArgs.Empty);                    
                 });
             }
             else
