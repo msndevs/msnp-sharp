@@ -505,6 +505,14 @@ namespace MSNPSharp.Core
             }
         }
 
+        public virtual EndPoint RemoteEndPoint
+        {
+            get
+            {
+                return socket.RemoteEndPoint;
+            }
+        }
+
         protected List<IMessageHandler> MessageHandlers
         {
             get
@@ -562,7 +570,18 @@ namespace MSNPSharp.Core
 
                 IPAddress hostIP = null;
 
-                if (IPAddress.TryParse(ConnectivitySettings.Host, out hostIP))
+                if (ConnectivitySettings.EndPoints != null && ConnectivitySettings.EndPoints.Length > 0)
+                {
+                    int port = ConnectivitySettings.EndPoints[0].Port;
+                    IPAddress[] addresses = new IPAddress[ConnectivitySettings.EndPoints.Length];
+                    for (int i = 0; i < addresses.Length; i++)
+                    {
+                        addresses[i] = ConnectivitySettings.EndPoints[i].Address;
+                    }
+                    
+                    ((ProxySocket)socket).BeginConnect(addresses, port, new AsyncCallback(EndConnectCallback), socket);
+                }
+                else if (IPAddress.TryParse(ConnectivitySettings.Host, out hostIP))
                 {
                     // start connecting				
                     ((ProxySocket)socket).BeginConnect(new System.Net.IPEndPoint(IPAddress.Parse(ConnectivitySettings.Host), ConnectivitySettings.Port), new AsyncCallback(EndConnectCallback), socket);
