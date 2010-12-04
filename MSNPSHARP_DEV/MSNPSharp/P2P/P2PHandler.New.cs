@@ -151,6 +151,15 @@ namespace MSNPSharp.P2P
                     return;
             }
 
+            // CLOSED SESSION: Bridge sync
+            if (p2pMessage.Header.RequireAck)
+            {
+                P2PMessage ack = p2pMessage.CreateAcknowledgement();
+                ack.Header.Identifier = bridge.localPacketNo;
+                bridge.Send(null, source, sourceGuid, ack, null);
+                return;
+            }
+
             // UNHANDLED P2P MESSAGE
             Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
                 String.Format("*******Unhandled P2P message!*******\r\n{0}", p2pMessage.ToDebugString()), GetType().Name);
