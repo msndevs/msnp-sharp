@@ -392,7 +392,7 @@ namespace MSNPSharp
         /// Creates a conversation.
         /// </summary>
         /// <remarks>
-        /// This method will fire the <see cref="ConversationCreated"/> event. The initiator object of the
+        /// This method will fire the <see cref="NSMessageHandler.ConversationCreated"/> event. The initiator object of the
         /// created switchboard will be <b>this</b> messenger object.
         /// </remarks>
         /// <returns></returns>

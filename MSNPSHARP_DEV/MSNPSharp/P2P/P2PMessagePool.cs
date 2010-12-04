@@ -208,5 +208,14 @@ namespace MSNPSharp.P2P
 
             return true; // Invalid packet, don't kill me.
         }
+
+        public void Clear()
+        {
+            lock (incompletedP2PV1Messages)
+                incompletedP2PV1Messages.Clear();
+
+            lock (incompletedP2PV2Messages)
+                incompletedP2PV2Messages.Clear();
+        }
     }
 };

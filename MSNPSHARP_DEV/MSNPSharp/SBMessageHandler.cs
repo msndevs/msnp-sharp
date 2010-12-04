@@ -221,9 +221,6 @@ namespace MSNPSharp
             SetNewProcessor();
 
             ResigerHandlersToProcessor(MessageProcessor);
-            /*NEWP2P,TODO,XXX:
-            NSMessageHandler.P2PHandler.AddSwitchboardSession(this);
-             */
             NSMessageHandler.ContactOffline += new EventHandler<ContactEventArgs>(ContactOfflineHandler);
         }
 
@@ -414,23 +411,6 @@ namespace MSNPSharp
                 sessionHash = value;
             }
         }
-        /*NEWP2P,TODO,XXX:
-        /// <summary>
-        /// Implements the P2P framework. This object is automatically created when a succesfull connection was made to the switchboard.
-        /// </summary>
-        [Obsolete("Please use Messenger.P2PHandler.", true)]
-        public P2PHandler P2PHandler
-        {
-            get
-            {
-                throw new MSNPSharpException("Please use Messenger.P2PHandler.");
-            }
-            set
-            {
-                throw new MSNPSharpException("Please use Messenger.P2PHandler.");
-            }
-        }
-        */
         #endregion
 
         #region Invitation
@@ -890,9 +870,6 @@ namespace MSNPSharp
             if (processor != null)
             {
                 processor.RegisterHandler(this);
-                /*NEWP2P,TODO,XXX:
-                processor.RegisterHandler(NSMessageHandler.P2PHandler);
-                 */
             }
         }
 

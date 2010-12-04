@@ -455,9 +455,6 @@ namespace MSNPSharp
             if (SessionClosed != null)
                 SessionClosed(this, e);
 
-            /*NEWP2P,TODO,XXX:
-            Messenger.P2PHandler.RemoveSwitchboardSession(_switchboard);
-            */
             OnConversationEnded(this);
         }
 

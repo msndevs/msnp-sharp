@@ -758,7 +758,6 @@ namespace MSNPSharpClient
             else
                 displayUser.Image = Properties.Resources.YahooMessenger_logo.Clone() as Image;
 
-            //NEWP2P,TODO,XXX:
             ConversationID.RemoteOwner.DisplayImageChanged += new EventHandler<DisplayImageChangedEventArgs>(Contact_DisplayImageChanged);
             ConversationID.RemoteOwner.DisplayImageContextChanged += new EventHandler<DisplayImageChangedEventArgs>(Contact_DisplayImageConextChanged);
 
