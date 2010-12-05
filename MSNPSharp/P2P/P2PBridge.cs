@@ -79,6 +79,7 @@ namespace MSNPSharp.P2P
     public abstract class P2PBridge : IDisposable
     {
         public event EventHandler<EventArgs> BridgeOpened;
+        public event EventHandler<EventArgs> BridgeSynced;
         public event EventHandler<EventArgs> BridgeClosed;
         public event EventHandler<P2PMessageSessionEventArgs> BridgeSent;
 
@@ -86,6 +87,7 @@ namespace MSNPSharp.P2P
 
         protected internal uint localPacketNo = 0;
         protected internal uint remotePacketNo = 0;
+        protected internal uint syncIdentifier = 0;
 
         protected uint bridgeID = ++bridgeCount;
         protected int queueSize = 0;
@@ -106,6 +108,31 @@ namespace MSNPSharp.P2P
         public abstract Contact Remote
         {
             get;
+        }
+
+        public virtual bool Synced
+        {
+            get
+            {
+                return (0 != syncIdentifier);
+            }
+        }
+
+        protected internal virtual uint SyncId
+        {
+            get
+            {
+                return syncIdentifier;
+            }
+            set
+            {
+                syncIdentifier = value;
+
+                if (0 != value)
+                {
+                    OnBridgeSynced(EventArgs.Empty);
+                }
+            }
         }
 
         public virtual Dictionary<P2PSession, P2PSendQueue> SendQueues
@@ -333,6 +360,15 @@ namespace MSNPSharp.P2P
                 BridgeOpened(this, e);
 
             ProcessSendQueues();
+        }
+
+        protected internal virtual void OnBridgeSynced(EventArgs e)
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                String.Format("{0} synced, sync id: {1}", this.ToString(), this.syncIdentifier), GetType().Name);
+
+            if (BridgeSynced != null)
+                BridgeSynced(this, e);
         }
 
         protected virtual void OnBridgeClosed(EventArgs e)
