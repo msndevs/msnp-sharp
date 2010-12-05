@@ -204,8 +204,6 @@ namespace MSNPSharp.P2P
 
         private void directConnection_P2PMessageReceived(object sender, P2PMessageEventArgs e)
         {
-            remotePacketNo = e.P2PMessage.Header.Identifier;
-
             nsMessageHandler.P2PHandler.ProcessP2PMessage(this, Remote, Remote.SelectRandomEPID(), e.P2PMessage);
         }
 

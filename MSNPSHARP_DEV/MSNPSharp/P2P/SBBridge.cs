@@ -180,8 +180,6 @@ namespace MSNPSharp.P2P
 
         void sb_P2PMessageReceived(object sender, P2PMessageEventArgs e)
         {
-            remotePacketNo = e.P2PMessage.Header.Identifier;
-
             sbHandler.NSMessageHandler.P2PHandler.ProcessP2PMessage(this, Remote, Remote.SelectRandomEPID(), e.P2PMessage);
         }
 

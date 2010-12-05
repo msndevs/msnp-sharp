@@ -86,7 +86,6 @@ namespace MSNPSharp.P2P
         private static uint bridgeCount = 0;
 
         protected internal uint localPacketNo = 0;
-        protected internal uint remotePacketNo = 0;
         protected internal uint syncIdentifier = 0;
 
         protected uint bridgeID = ++bridgeCount;
@@ -147,7 +146,6 @@ namespace MSNPSharp.P2P
         {
             this.queueSize = queueSize;
             this.localPacketNo = (uint)new Random().Next(1000, int.MaxValue);
-            this.remotePacketNo = 0;
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                 String.Format("P2PBridge {0} created", this.ToString()), GetType().Name);
