@@ -322,7 +322,7 @@ namespace MSNPSharp.P2P
             nsMessageHandler = app.Local.NSMessageHandler;
             sessionId = (uint)random.Next(50000, int.MaxValue);
 
-            // These 2 fields are set when Invite() called.
+            // These 2 fields are set when optimal bridge found.
             localBaseIdentifier = 0;
             localIdentifier = 0;
 
@@ -402,6 +402,8 @@ namespace MSNPSharp.P2P
                         Send(msg.CreateAcknowledgement(),
                             delegate(P2PMessage sync)
                             {
+                                bridge.SyncId = sync.Header.AckIdentifier;
+
                                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
                                     String.Format("{0} SYNC completed:\r\n{1}", SessionId, sync), GetType().Name);
 
@@ -470,7 +472,8 @@ namespace MSNPSharp.P2P
                     UUNTried = true;
                     P2PSession.SendDirectInvite(NSMessageHandler, NSMessageHandler.UUNBridge, this);
                 }
-                else
+                
+                // Get id from bridge....
                 {
                     MigrateToOptimalBridge();
                     localBaseIdentifier = p2pBridge.localPacketNo;
@@ -482,11 +485,14 @@ namespace MSNPSharp.P2P
 
                 if (version == P2PVersion.P2PV2)
                 {
-                    p2pMessage.V2Header.OperationCode = (byte)(OperationCode.SYN | OperationCode.RAK);
-                    p2pMessage.V2Header.AppendPeerInfoTLV();
+                    if (p2pBridge.Synced == false)
+                    {
+                        p2pMessage.V2Header.OperationCode = (byte)(OperationCode.SYN | OperationCode.RAK);
+                        p2pMessage.V2Header.AppendPeerInfoTLV();
 
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
-                    String.Format("{0} invitation sending with SYN+RAK op...", SessionId), GetType().Name);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                        String.Format("{0} invitation sending with SYN+RAK op...", SessionId), GetType().Name);
+                    }
                 }
 
                 p2pMessage.InnerMessage = invitation;
@@ -502,6 +508,8 @@ namespace MSNPSharp.P2P
                     if (ack.Header.RequireAck)
                     {
                         Send(ack.CreateAcknowledgement());
+
+                        p2pBridge.SyncId = ack.Header.Identifier;
 
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
                            String.Format("{0} SYN ack sent", SessionId), GetType().Name);
