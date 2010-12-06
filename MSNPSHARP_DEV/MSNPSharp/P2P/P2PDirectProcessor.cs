@@ -127,14 +127,14 @@ namespace MSNPSharp.P2P
                 return base.RemoteEndPoint;
             }
         }
-
+        Guid reply = Guid.Empty;
         /// <summary>
         /// Constructor.
         /// </summary>
         public P2PDirectProcessor(
             ConnectivitySettings connectivitySettings,
             P2PVersion p2pVersion,
-            Guid authNonce, bool isNeedHash,
+            Guid reply, Guid authNonce, bool isNeedHash,
             P2PSession p2pMessageSession,
             NSMessageHandler nsMessageHandler)
             : base(connectivitySettings)
@@ -143,6 +143,7 @@ namespace MSNPSharp.P2P
 
             this.version = p2pVersion;
             this.nonce = authNonce;
+            this.reply = reply;
             this.needHash = isNeedHash;
             this.startupSession = p2pMessageSession;
             this.nsMessageHandler = nsMessageHandler;
@@ -281,7 +282,7 @@ namespace MSNPSharp.P2P
                 // Send NONCE
                 DCState = DirectConnectionState.Handshake;
                 P2PDCHandshakeMessage hm = new P2PDCHandshakeMessage(Version);
-                hm.Guid = Nonce;
+                hm.Guid = reply;
 
                 if (Version == P2PVersion.P2PV1)
                 {
@@ -425,6 +426,8 @@ namespace MSNPSharp.P2P
 
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                             "Nonce MATCH: " + match.Guid, GetType().Name);
+
+                        match.Guid = reply;
 
                         if (version == P2PVersion.P2PV1)
                         {

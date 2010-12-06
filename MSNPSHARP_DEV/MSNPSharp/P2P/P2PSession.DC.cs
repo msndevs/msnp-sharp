@@ -143,6 +143,9 @@ namespace MSNPSharp.P2P
 
             int netId;
             string connectionType = ConnectionType(nsMessageHandler, out netId);
+            Contact remote = p2pSession.Remote;
+            P2PVersion ver = p2pSession.Version;
+            P2PMessage p2pMessage = new P2PMessage(ver);
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
                 String.Format("Connection type set to {0} for session {1}", connectionType, p2pSession.SessionId.ToString()));
@@ -164,9 +167,10 @@ namespace MSNPSharp.P2P
             slpMessage.BodyValues["ICF"] = "false"; // Firewall enabled
             slpMessage.BodyValues["Nat-Trav-Msg-Type"] = "WLX-Nat-Trav-Msg-Direct-Connect-Req";
 
-            Contact remote = p2pSession.Remote;
-            P2PVersion ver = p2pSession.Version;
-            P2PMessage p2pMessage = new P2PMessage(ver);
+            // We support Hashed-Nonce ( 2 way handshake )
+            remote.GenerateNewDCKeys();
+            slpMessage.BodyValues["Hashed-Nonce"] = remote.dcLocalHashedNonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+
             p2pMessage.InnerMessage = slpMessage;
 
             if (ver == P2PVersion.P2PV2)
@@ -205,25 +209,33 @@ namespace MSNPSharp.P2P
                 slpMessage.ContentType = "application/x-msnmsgr-transrespbody";
                 slpMessage.BodyValues["Bridge"] = "TCPv1";
 
-                // Initial NonceType. Remote side prefers this. But I prefer Nonce :)
+                Guid remoteGuid = message.FromEndPoint;
+                Contact remote = nsMessageHandler.ContactList.GetContact(message.FromEmailAccount, ClientType.PassportMember);
+                
                 DCNonceType dcNonceType;
-                Guid nonce = ParseDCNonce(message.BodyValues, out dcNonceType);
+                Guid remoteNonce = ParseDCNonce(message.BodyValues, out dcNonceType);
+                if (remoteNonce == Guid.Empty) // Plain
+                    remoteNonce = remote.dcPlainKey;
 
-                if (dcNonceType == DCNonceType.None)
+                bool hashed = (dcNonceType == DCNonceType.Sha1);
+                string nonceFieldName = hashed ? "Hashed-Nonce" : "Nonce";
+                Guid myHashedNonce = hashed ? remote.dcLocalHashedNonce : remoteNonce;
+                Guid myPlainNonce = remote.dcPlainKey;
+                if (dcNonceType == DCNonceType.Sha1)
                 {
-                    nonce = Guid.NewGuid();
+                    // Remote contact supports Hashed-Nonce
+                    remote.dcType = dcNonceType;
+                    remote.dcRemoteHashedNonce = remoteNonce;
                 }
-
-                bool hashed = false;
-                string nonceFieldName = "Nonce";
+                else
+                {
+                    remote.dcType = DCNonceType.Plain;
+                    myPlainNonce = remote.dcPlainKey = remote.dcLocalHashedNonce = remote.dcRemoteHashedNonce = remoteNonce;
+                }
 
                 // Find host by name
                 IPAddress ipAddress = nsMessageHandler.LocalEndPoint.Address;
                 int port;
-
-
-                Contact remote = nsMessageHandler.ContactList.GetContact(message.FromEmailAccount, ClientType.PassportMember);
-                Guid remoteGuid = message.FromEndPoint;
 
                 P2PVersion ver = (message.FromEndPoint != Guid.Empty && message.ToEndPoint != Guid.Empty)
                     ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
@@ -237,9 +249,8 @@ namespace MSNPSharp.P2P
                 }
                 else
                 {
-
                     // Let's listen
-                    remote.DirectBridge = ListenForDirectConnection(remote, nsMessageHandler, ver, startupSession, ipAddress, port, nonce, hashed);
+                    remote.DirectBridge = ListenForDirectConnection(remote, nsMessageHandler, ver, startupSession, ipAddress, port, myPlainNonce, remoteNonce, hashed);
 
                     slpMessage.BodyValues["Listening"] = "true";
                     slpMessage.BodyValues["Capabilities-Flags"] = "1";
@@ -251,7 +262,7 @@ namespace MSNPSharp.P2P
 
                     slpMessage.BodyValues["Conn-Type"] = "Direct-Connect";
                     slpMessage.BodyValues["TCP-Conn-Type"] = "Direct-Connect";
-                    slpMessage.BodyValues[nonceFieldName] = nonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+                    slpMessage.BodyValues[nonceFieldName] = myHashedNonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
                     slpMessage.BodyValues["IPv4Internal-Addrs"] = ipAddress.ToString();
                     slpMessage.BodyValues["IPv4Internal-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
@@ -301,22 +312,13 @@ namespace MSNPSharp.P2P
                 bodyValues.ContainsKey("Listening") &&
                 bodyValues["Listening"].ToString().ToLowerInvariant().IndexOf("true") >= 0)
             {
+                Contact remote = nsMessageHandler.ContactList.GetContact(message.FromEmailAccount, ClientType.PassportMember);
+                Guid remoteGuid = message.FromEndPoint;
+
                 DCNonceType dcNonceType;
-                Guid nonce = ParseDCNonce(message.BodyValues, out dcNonceType);
-
-                if (dcNonceType == DCNonceType.Sha1)
-                {
-                    // Always needed
-                    //properties.RemoteNonce = nonce;
-                    //properties.DCNonceType = dcNonceType;
-                }
-
-                if (dcNonceType == DCNonceType.Plain)
-                {
-                    // Only needed for listening side
-                    //properties.Nonce = nonce;
-                    //properties.DCNonceType = dcNonceType;
-                }
+                Guid remoteNonce = ParseDCNonce(message.BodyValues, out dcNonceType);
+                bool hashed = (dcNonceType == DCNonceType.Sha1);
+                Guid replyGuid = hashed ? remote.dcPlainKey : remoteNonce;
 
                 IPEndPoint[] selectedPoint = SelectIPEndPoint(bodyValues, nsMessageHandler);
 
@@ -325,13 +327,10 @@ namespace MSNPSharp.P2P
                     P2PVersion ver = (message.FromEndPoint != Guid.Empty && message.ToEndPoint != Guid.Empty)
                         ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
 
-                    Contact remote = nsMessageHandler.ContactList.GetContact(message.FromEmailAccount, ClientType.PassportMember);
-                    Guid remoteGuid = message.FromEndPoint;
-
                     // We must connect to the remote client
                     ConnectivitySettings settings = new ConnectivitySettings();
                     settings.EndPoints = selectedPoint;
-                    remote.DirectBridge = CreateDirectConnection(remote, ver, settings, nonce, (dcNonceType == DCNonceType.Sha1), nsMessageHandler, startupSession);
+                    remote.DirectBridge = CreateDirectConnection(remote, ver, settings, replyGuid, remoteNonce, hashed, nsMessageHandler, startupSession);
 
                     bool needConnectingEndpointInfo;
                     if (bodyValues.ContainsKey("NeedConnectingEndpointInfo") &&
@@ -389,7 +388,7 @@ namespace MSNPSharp.P2P
             NSMessageHandler nsMessageHandler,
             P2PVersion ver,
             P2PSession startupSession,
-            IPAddress host, int port, Guid nonce, bool hashed)
+            IPAddress host, int port, Guid replyGuid, Guid remoteNonce, bool hashed)
         {
             ConnectivitySettings cs = new ConnectivitySettings();
             if (nsMessageHandler.ConnectivitySettings.LocalHost == string.Empty)
@@ -403,7 +402,7 @@ namespace MSNPSharp.P2P
                 cs.LocalPort = nsMessageHandler.ConnectivitySettings.LocalPort;
             }
 
-            TCPv1Bridge tcpBridge = new TCPv1Bridge(cs, ver, nonce, hashed, startupSession, nsMessageHandler, remote);
+            TCPv1Bridge tcpBridge = new TCPv1Bridge(cs, ver, replyGuid, remoteNonce, hashed, startupSession, nsMessageHandler, remote);
 
             tcpBridge.Listen(IPAddress.Parse(cs.LocalHost), cs.LocalPort);
 
@@ -412,11 +411,11 @@ namespace MSNPSharp.P2P
             return tcpBridge;
         }
 
-        private static TCPv1Bridge CreateDirectConnection(Contact remote, P2PVersion ver, ConnectivitySettings cs, Guid nonce, bool hashed, NSMessageHandler nsMessageHandler, P2PSession startupSession)
+        private static TCPv1Bridge CreateDirectConnection(Contact remote, P2PVersion ver, ConnectivitySettings cs, Guid replyGuid, Guid remoteNonce, bool hashed, NSMessageHandler nsMessageHandler, P2PSession startupSession)
         {
             IPEndPoint ipep = cs.EndPoints[0];
 
-            TCPv1Bridge tcpBridge = new TCPv1Bridge(cs, ver, nonce, hashed, startupSession, nsMessageHandler, remote);
+            TCPv1Bridge tcpBridge = new TCPv1Bridge(cs, ver, replyGuid, remoteNonce, hashed, startupSession, nsMessageHandler, remote);
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Trying to setup direct connection with remote host " + ipep.Address + ":" + ipep.Port.ToString(System.Globalization.CultureInfo.InvariantCulture));
 

@@ -124,10 +124,12 @@ namespace MSNPSharp.P2P
             }
         }
 
+        Guid reply = Guid.Empty;
+
         public TCPv1Bridge(
             ConnectivitySettings connectivitySettings,
             P2PVersion p2pVersion,
-            Guid authNonce, bool isNeedHash,
+            Guid replyNonce, Guid remoteNonce, bool isNeedHash,
             P2PSession p2pSession,
             NSMessageHandler ns,
             Contact remote)
@@ -136,8 +138,9 @@ namespace MSNPSharp.P2P
             this.startupSession = p2pSession;
             this.nsMessageHandler = ns;
             this.remote = remote;
+            this.reply = replyNonce;
 
-            directConnection = new P2PDirectProcessor(connectivitySettings, p2pVersion, authNonce, isNeedHash, p2pSession, nsMessageHandler);
+            directConnection = new P2PDirectProcessor(connectivitySettings, p2pVersion, replyNonce, remoteNonce, isNeedHash, p2pSession, nsMessageHandler);
             directConnection.HandshakeCompleted += new EventHandler<EventArgs>(directConnection_HandshakeCompleted);
             directConnection.P2PMessageReceived += new EventHandler<P2PMessageEventArgs>(directConnection_P2PMessageReceived);
             directConnection.SendCompleted += new EventHandler<MSNPSharp.Core.ObjectEventArgs>(directConnection_SendCompleted);
