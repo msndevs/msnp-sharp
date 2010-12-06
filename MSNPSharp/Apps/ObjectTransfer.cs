@@ -241,15 +241,21 @@ namespace MSNPSharp.Apps
             }
         }
 
-        public override bool ProcessData(P2PBridge bridge, byte[] data)
+        public override bool ProcessData(P2PBridge bridge, byte[] data, bool reset)
         {
-            if (data.Length == 4 && (BitUtility.ToInt32(data, 0, true) == 0))
+            if (sending)
             {
-                // Data prep
-                objStream.SetLength(0);
-                return true;
+                // We are sender but remote client want to kill me :)
+                return false;
             }
-            else
+
+            if (reset)
+            {
+                // Data prep or TFCombination.First
+                objStream.SetLength(0);
+            }
+
+            if (data.Length > 0)
             {
                 objStream.Write(data, 0, data.Length);
 
@@ -296,9 +302,8 @@ namespace MSNPSharp.Apps
                     if (P2PSession != null)
                         P2PSession.Close(); // Send first BYE
                 }
-
-                return true;
             }
+            return true;
         }
     }
 };
