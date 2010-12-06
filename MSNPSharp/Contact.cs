@@ -98,10 +98,34 @@ namespace MSNPSharp
         private Uri userTile = null;
         private string userTileLocation = string.Empty;
 
+        [NonSerialized]
         private object syncObject = new object();
 
+        #region DC setup (These are here, because p2p session may be null)
+
+        [NonSerialized]
         private NSMessageHandler nsMessageHandler = null;
+        [NonSerialized]
         private P2PBridge directBridge = null;
+        [NonSerialized]
+        internal DCNonceType dcType = DCNonceType.None;
+        [NonSerialized]
+        internal Guid dcPlainKey = Guid.Empty;
+        [NonSerialized]
+        internal Guid dcLocalHashedNonce = Guid.Empty;
+        [NonSerialized]
+        internal Guid dcRemoteHashedNonce  = Guid.Empty;
+
+        internal void GenerateNewDCKeys()
+        {
+            dcType = DCNonceType.Sha1;
+            dcPlainKey = Guid.NewGuid();
+            dcLocalHashedNonce = HashedNonceGenerator.HashNonce(dcPlainKey);
+            dcRemoteHashedNonce = Guid.Empty;
+        }
+
+        #endregion
+
 
         #endregion
 
@@ -123,6 +147,8 @@ namespace MSNPSharp
         {
             if (hasInitialized)
                 return;
+
+            GenerateNewDCKeys();
 
             NSMessageHandler = handler;
             addressBookId = abId;
