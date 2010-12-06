@@ -139,6 +139,10 @@ namespace MSNPSharp.P2P
             {
                 return localBaseIdentifier;
             }
+            set
+            {
+                localBaseIdentifier = value;
+            }
         }
 
         /// <summary>
@@ -393,24 +397,6 @@ namespace MSNPSharp.P2P
 
                 if (version == P2PVersion.P2PV2)
                     remoteIdentifier += msg.V2Header.MessageSize;
-
-                // Send local baseID
-                if (msg.Header.RequireAck)
-                {
-                    P2PMessage ack = msg.CreateAcknowledgement();
-                    if (ack.Header.RequireAck)
-                        Send(msg.CreateAcknowledgement(),
-                            delegate(P2PMessage sync)
-                            {
-                                bridge.SyncId = sync.Header.AckIdentifier;
-
-                                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
-                                    String.Format("{0} SYNC completed:\r\n{1}", SessionId, sync), GetType().Name);
-
-                            });
-                    else
-                        Send(msg.CreateAcknowledgement());
-                }
             }
 
             // Create application based on invitation
@@ -790,11 +776,6 @@ namespace MSNPSharp.P2P
                             slpMessage.BodyValues["SessionID"] = SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
                             Send(WrapSLPMessage(slpMessage));
-
-                            P2PMessage lastACK = new P2PMessage(p2pMessage.Version);
-                            lastACK.Header.AckIdentifier = remoteIdentifier;
-
-                            Send(lastACK);
                         }
 
                         OnClosed(new ContactEventArgs(Remote));
@@ -803,9 +784,6 @@ namespace MSNPSharp.P2P
                     }
                     else
                     {
-                        if (p2pMessage.Header.RequireAck)
-                            Send(p2pMessage.CreateAcknowledgement());
-
                         if (slpRequest.ContentType == "application/x-msnmsgr-transreqbody" ||
                             slpRequest.ContentType == "application/x-msnmsgr-transrespbody")
                         {
@@ -821,9 +799,6 @@ namespace MSNPSharp.P2P
                 else if (slp is SLPStatusMessage)
                 {
                     SLPStatusMessage slpStatus = slp as SLPStatusMessage;
-
-                    if (p2pMessage.Header.RequireAck)
-                        Send(p2pMessage.CreateAcknowledgement());
 
                     if (slpStatus.Code == 200) // OK
                     {
@@ -861,21 +836,12 @@ namespace MSNPSharp.P2P
 
             #endregion
 
-            // CONTROL RAK for APPLICATIONS (not SLP)
-            // Transfer finished or OperationCode.RAK
-            bool handled = false;
-            if (p2pMessage.Header.RequireAck)
-            {
-                handled = true;
-                Send(p2pMessage.CreateAcknowledgement());
-            }
-
             if (p2pApplication == null)
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
                       String.Format("P2PSession {0}: Received message for P2P app, but it's either been disposed or not created", sessionId), GetType().Name);
 
-                return handled;
+                return false;
             }
             else
             {
@@ -884,12 +850,10 @@ namespace MSNPSharp.P2P
                 {
                     byte[] appData = new byte[p2pMessage.InnerBody.Length];
                     Buffer.BlockCopy(p2pMessage.InnerBody, 0, appData, 0, appData.Length);
-                    handled = p2pApplication.ProcessData(bridge, appData);
+                    return p2pApplication.ProcessData(bridge, appData);
                 }
 
-                return handled;
-                // return p2pApplication.ProcessP2PMessage(bridge, p2pMessage);
-                // P2PDataMessage(offset, totalsize, chunksize, chunk);
+                return false;
             }
         }
 

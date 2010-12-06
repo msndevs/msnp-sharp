@@ -59,6 +59,25 @@ namespace MSNPSharp.P2P
             }
         }
 
+        public override bool Synced
+        {
+            get
+            {
+                return true;
+            }
+        }
+
+        protected internal override uint SyncId
+        {
+            get
+            {
+                return uint.MaxValue;
+            }
+            set
+            {
+            }
+        }
+
         public override bool SuitableFor(P2PSession session)
         {
             if (session != null)

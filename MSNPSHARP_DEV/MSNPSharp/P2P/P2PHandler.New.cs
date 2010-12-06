@@ -160,14 +160,23 @@ namespace MSNPSharp.P2P
             // HANDLE ACK: ACK/NAK to our RAK message
             if (p2pMessage.Header.IsAcknowledgement || p2pMessage.Header.IsNegativeAck)
             {
-                HandleAck(p2pMessage);
+                HandleACK(p2pMessage);
                 return;
             }
 
             // FIND SESSION: Search session by SessionId/ExpectedIdentifier
-            P2PSession session;
-            if (((session = FindSession(p2pMessage, slp)) != null) &&
-                session.ProcessP2PMessage(bridge, p2pMessage, slp))
+            P2PSession session = FindSession(p2pMessage, slp);
+
+            // HANDLE RAK:
+            // session == null: Bridge rak or syn
+            // session != null: Session rak
+            if (p2pMessage.Header.RequireAck)
+            {
+                HandleRAK(bridge, source, sourceGuid, session, p2pMessage);
+            }
+
+            // HANDLE SESSION
+            if (session != null && session.ProcessP2PMessage(bridge, p2pMessage, slp))
             {
                 return;
             }
@@ -177,15 +186,6 @@ namespace MSNPSharp.P2P
             {
                 if (ProcessSLPMessage(bridge, source, sourceGuid, p2pMessage, slp))
                     return;
-            }
-
-            // CLOSED SESSION: Bridge sync
-            if (p2pMessage.Header.RequireAck)
-            {
-                P2PMessage ack = p2pMessage.CreateAcknowledgement();
-                ack.Header.Identifier = bridge.localPacketNo;
-                bridge.Send(null, source, sourceGuid, ack, null);
-                return;
             }
 
             // UNHANDLED P2P MESSAGE
@@ -280,7 +280,7 @@ namespace MSNPSharp.P2P
 
         #region HandleAck
 
-        private void HandleAck(P2PMessage p2pMessage)
+        private void HandleACK(P2PMessage p2pMessage)
         {
             KeyValuePair<P2PMessage, AckHandler>? pair = null;
             uint ackNakId = 0;
@@ -336,6 +336,40 @@ namespace MSNPSharp.P2P
         }
 
         #endregion
+
+        #region HandleRAK
+
+        private void HandleRAK(P2PBridge bridge, Contact source, Guid sourceGuid, P2PSession session, P2PMessage msg)
+        {
+            P2PMessage ack = msg.CreateAcknowledgement();
+            ack.Header.Identifier = (session == null) ? bridge.localPacketNo : session.LocalIdentifier;
+
+            if (ack.Header.RequireAck)
+            {
+                // SYN
+                bridge.Send(session, source, sourceGuid, ack, delegate(P2PMessage sync)
+                {
+                    bridge.SyncId = sync.Header.AckIdentifier;
+
+                    if (session != null)
+                    {
+                        session.LocalIdentifier = bridge.SyncId;
+                        session.LocalBaseIdentifier = bridge.SyncId;
+                    }
+
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                        String.Format("SYNC completed for: {0}", bridge), GetType().Name);
+                });
+            }
+            else
+            {
+                // ACK
+                bridge.Send(session, source, sourceGuid, ack, null);
+            }
+        }
+
+        #endregion
+
 
         #region FindSession & P2PSessionClosed
 

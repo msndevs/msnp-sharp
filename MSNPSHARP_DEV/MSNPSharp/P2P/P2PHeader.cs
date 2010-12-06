@@ -683,7 +683,7 @@ namespace MSNPSharp.P2P
         public void AppendPeerInfoTLV()
         {
             OperationCode |= (byte)MSNPSharp.OperationCode.SYN;
-            HeaderTLVs.Add(0x01, CreatePeerInfoValue());
+            HeaderTLVs[0x1] = CreatePeerInfoValue();
         }
 
         public override P2PHeader CreateAck()
