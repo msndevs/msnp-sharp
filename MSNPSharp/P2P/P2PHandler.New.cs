@@ -166,12 +166,14 @@ namespace MSNPSharp.P2P
 
             // FIND SESSION: Search session by SessionId/ExpectedIdentifier
             P2PSession session = FindSession(p2pMessage, slp);
+            bool handled = false;
 
             // HANDLE RAK:
             // session == null: Bridge rak or syn
             // session != null: Session rak
             if (p2pMessage.Header.RequireAck)
             {
+                handled = true;
                 HandleRAK(bridge, source, sourceGuid, session, p2pMessage);
             }
 
@@ -188,9 +190,12 @@ namespace MSNPSharp.P2P
                     return;
             }
 
-            // UNHANDLED P2P MESSAGE
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                String.Format("*******Unhandled P2P message!*******\r\n{0}", p2pMessage.ToDebugString()), GetType().Name);
+            if (!handled)
+            {
+                // UNHANDLED P2P MESSAGE
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                    String.Format("*******Unhandled P2P message!*******\r\n{0}", p2pMessage.ToDebugString()), GetType().Name);
+            }
         }
 
         #endregion
