@@ -407,9 +407,21 @@ namespace MSNPSharp.Apps
         }
 
 
-        public override bool ProcessData(P2PBridge bridge, byte[] data)
+        public override bool ProcessData(P2PBridge bridge, byte[] data, bool reset)
         {
-            _dataStream.Write(data, 0, data.Length);
+            if (_sending)
+            {
+                // We are sender but remote client want to kill me :)
+                return false;
+            }
+
+            if (reset)
+            {
+                _dataStream.SetLength(0);
+            }
+
+            if (data.Length > 0)
+                _dataStream.Write(data, 0, data.Length);
 
             OnProgressed(EventArgs.Empty);
 

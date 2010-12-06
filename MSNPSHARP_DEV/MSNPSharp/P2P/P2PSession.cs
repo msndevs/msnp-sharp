@@ -848,9 +848,26 @@ namespace MSNPSharp.P2P
                 // Application data
                 if (p2pMessage.Header.MessageSize > 0 && p2pMessage.Header.SessionId > 0)
                 {
-                    byte[] appData = new byte[p2pMessage.InnerBody.Length];
-                    Buffer.BlockCopy(p2pMessage.InnerBody, 0, appData, 0, appData.Length);
-                    return p2pApplication.ProcessData(bridge, appData);
+                    bool reset = false;
+                    byte[] appData = new byte[0];
+
+                    if (p2pMessage.Header.MessageSize == 4 && BitUtility.ToInt32(p2pMessage.InnerBody, 0, true) == 0)
+                    {
+                        reset = true;
+                    }
+                    else
+                    {
+                        appData = new byte[p2pMessage.InnerBody.Length];
+                        Buffer.BlockCopy(p2pMessage.InnerBody, 0, appData, 0, appData.Length);
+                    }
+
+                    if (p2pMessage.Version == P2PVersion.P2PV2 &&
+                        (TFCombination.First == (p2pMessage.V2Header.TFCombination & TFCombination.First)))
+                    {
+                        reset = true;
+                    }
+
+                    return p2pApplication.ProcessData(bridge, appData, reset);
                 }
 
                 return false;
