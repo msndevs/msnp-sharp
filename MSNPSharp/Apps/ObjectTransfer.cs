@@ -194,7 +194,7 @@ namespace MSNPSharp.Apps
                 if (P2PVersion == P2PVersion.P2PV2)
                 {
                     p2pData.V2Header.TFCombination = TFCombination.First;
-                    p2pData.V2Header.PackageNumber = packNum;
+                    p2pData.V2Header.PackageNumber = 0;
                 }
 
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Data prep sent", GetType().Name);
