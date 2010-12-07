@@ -692,21 +692,16 @@ namespace MSNPSharp.P2P
             if ((OperationCode & (byte)MSNPSharp.OperationCode.RAK) > 0)
             {
                 ack.AckIdentifier = Identifier + MessageSize;
+                ack.OperationCode = (byte)MSNPSharp.OperationCode.None;
 
-                if (MessageSize == 0)
-                {
-                    //never ACK an ACK with RAK included to prevent storm 
-                    //                         ---  Scott Werndorfer
-                    ack.OperationCode |= (byte)MSNPSharp.OperationCode.None;
-                }
-                else
+                if (MessageSize > 0)
                 {
                     if (!IsAcknowledgement)
                     {
-                        ack.OperationCode |= (byte)MSNPSharp.OperationCode.RAK;
-
                         if ((OperationCode & (byte)MSNPSharp.OperationCode.SYN) != 0)
                         {
+                            ack.OperationCode |= (byte)MSNPSharp.OperationCode.RAK;
+
                             if (HeaderTLVs.ContainsKey(0x01))
                             {
                                 ack.HeaderTLVs.Add(0x01, HeaderTLVs[0x01]);  //If this is an ACK, we MUST copy the peer info TLV.
@@ -714,14 +709,7 @@ namespace MSNPSharp.P2P
                             }
                         }
                     }
-                    else
-                    {
-                        //never ACK an ACK with RAK included to prevent storm 
-                        //                         ---  Scott Werndorfer
-                        ack.OperationCode |= (byte)MSNPSharp.OperationCode.None;
-                    }
                 }
-                
             }
             else
             {
