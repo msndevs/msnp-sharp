@@ -131,6 +131,16 @@ namespace MSNPSharp.DataTransfer
             get;
         }
 
+        public abstract bool IsNegativeAck
+        {
+            get;
+        }
+
+        public abstract bool RequireAck
+        {
+            get;
+        }
+
         public abstract P2PHeader CreateAck();
         public abstract int ParseHeader(byte[] data);
         public abstract byte[] GetBytes();
@@ -309,7 +319,31 @@ namespace MSNPSharp.DataTransfer
         {
             get
             {
-                return (AckIdentifier != 0);
+                return (AckIdentifier != 0) &&
+                    ((Flags & P2PFlag.Acknowledgement) == P2PFlag.Acknowledgement);
+            }
+        }
+
+        public override bool IsNegativeAck
+        {
+            get
+            {
+                return (AckIdentifier != 0) &&
+                    ((Flags & P2PFlag.NegativeAck) == P2PFlag.NegativeAck);
+            }
+        }
+
+        public override bool RequireAck
+        {
+            get
+            {
+                if (IsAcknowledgement)
+                    return false;
+
+                if ((MessageSize + Offset) == TotalSize)
+                    return true;
+
+                return false;
             }
         }
 
@@ -543,9 +577,55 @@ namespace MSNPSharp.DataTransfer
             }
         }
 
+        private UInt32 nakIdentifier;
+        public virtual uint NakIdentifier
+        {
+            get
+            {
+                if (nakIdentifier == 0 && headerTLVs.ContainsKey(0x3))
+                {
+                    nakIdentifier = BitUtility.ToUInt32(headerTLVs[0x3], 0, false);
+                }
+                return nakIdentifier;
+            }
+            set
+            {
+                nakIdentifier = value;
+
+                if (value == 0)
+                {
+                    headerTLVs.Remove(0x3);
+                }
+                else
+                {
+                    headerTLVs[0x3] = BitUtility.GetBytes(value, false);
+                }
+            }
+        }
+
+
         public override bool IsAcknowledgement
         {
-            get { return headerTLVs.ContainsKey(0x2); }
+            get
+            {
+                return headerTLVs.ContainsKey(0x2);
+            }
+        }
+
+        public override bool IsNegativeAck
+        {
+            get
+            {
+                return headerTLVs.ContainsKey(0x3);
+            }
+        }
+
+        public override bool RequireAck
+        {
+            get
+            {
+                return ((OperationCode & (byte)MSNPSharp.OperationCode.RAK) > 0);
+            }
         }
 
         private TFCombination tfCombination;
@@ -603,7 +683,7 @@ namespace MSNPSharp.DataTransfer
         public void AppendPeerInfoTLV()
         {
             OperationCode |= (byte)MSNPSharp.OperationCode.SYN;
-            HeaderTLVs.Add(0x01, CreatePeerInfoValue());
+            HeaderTLVs[0x1] = CreatePeerInfoValue();
         }
 
         public override P2PHeader CreateAck()
@@ -612,21 +692,16 @@ namespace MSNPSharp.DataTransfer
             if ((OperationCode & (byte)MSNPSharp.OperationCode.RAK) > 0)
             {
                 ack.AckIdentifier = Identifier + MessageSize;
+                ack.OperationCode = (byte)MSNPSharp.OperationCode.None;
 
-                if (MessageSize == 0)
-                {
-                    //never ACK an ACK with RAK included to prevent storm 
-                    //                         ---  Scott Werndorfer
-                    ack.OperationCode |= (byte)MSNPSharp.OperationCode.None;
-                }
-                else
+                if (MessageSize > 0)
                 {
                     if (!IsAcknowledgement)
                     {
-                        ack.OperationCode |= (byte)MSNPSharp.OperationCode.RAK;
-
                         if ((OperationCode & (byte)MSNPSharp.OperationCode.SYN) != 0)
                         {
+                            ack.OperationCode |= (byte)MSNPSharp.OperationCode.RAK;
+
                             if (HeaderTLVs.ContainsKey(0x01))
                             {
                                 ack.HeaderTLVs.Add(0x01, HeaderTLVs[0x01]);  //If this is an ACK, we MUST copy the peer info TLV.
@@ -634,14 +709,7 @@ namespace MSNPSharp.DataTransfer
                             }
                         }
                     }
-                    else
-                    {
-                        //never ACK an ACK with RAK included to prevent storm 
-                        //                         ---  Scott Werndorfer
-                        ack.OperationCode |= (byte)MSNPSharp.OperationCode.None;
-                    }
                 }
-                
             }
             else
             {
@@ -730,13 +798,25 @@ namespace MSNPSharp.DataTransfer
             switch (T)
             {
                 case 1:
-                    // IP
+                    // PeerInfo
+                    if (L == 12)
+                    {
+                        return;
+                    }
                     return;
 
                 case 2:
                     if (L == 4)
                     {
                         AckIdentifier = BitUtility.ToUInt32(V, 0, false);
+                        return;
+                    }
+                    break;
+
+                case 3:
+                    if (L == 4)
+                    {
+                        NakIdentifier = BitUtility.ToUInt32(V, 0, false);
                         return;
                     }
                     break;
@@ -869,6 +949,7 @@ namespace MSNPSharp.DataTransfer
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "MessageSize         : {1:x} ({0})\r\n", MessageSize.ToString(System.Globalization.CultureInfo.InvariantCulture), MessageSize) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "Identifier          : {1:x} ({0})\r\n", Identifier.ToString(System.Globalization.CultureInfo.InvariantCulture), Identifier) +
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, "AckIdentifier       : {1:x} ({0})\r\n", AckIdentifier.ToString(System.Globalization.CultureInfo.InvariantCulture), AckIdentifier) +
+                String.Format(System.Globalization.CultureInfo.InvariantCulture, "NakIdentifier       : {1:x} ({0})\r\n", NakIdentifier.ToString(System.Globalization.CultureInfo.InvariantCulture), NakIdentifier) +
                 headerTLVBuilder.ToString() +
 
                 String.Format(System.Globalization.CultureInfo.InvariantCulture, " Data HeaderLength  : {1:x} ({0})\r\n", dataHeaderLen.ToString(System.Globalization.CultureInfo.InvariantCulture), dataHeaderLen) +
