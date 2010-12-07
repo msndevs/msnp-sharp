@@ -238,16 +238,19 @@ namespace MSNPSharp.P2P
         {
             foreach (KeyValuePair<P2PSession, P2PSendQueue> pair in sendQueues)
             {
-                while (Ready(pair.Key) && (pair.Value.Count > 0))
+                lock (pair.Key)
                 {
-                    P2PSendItem item = pair.Value.Dequeue();
+                    while (Ready(pair.Key) && (pair.Value.Count > 0))
+                    {
+                        P2PSendItem item = pair.Value.Dequeue();
 
-                    if (!sendingQueues.ContainsKey(pair.Key))
-                        sendingQueues.Add(pair.Key, new P2PSendList());
+                        if (!sendingQueues.ContainsKey(pair.Key))
+                            sendingQueues.Add(pair.Key, new P2PSendList());
 
-                    sendingQueues[pair.Key].Add(item);
+                        sendingQueues[pair.Key].Add(item);
 
-                    SendOnePacket(pair.Key, item.Remote, item.RemoteGuid, item.P2PMessage);
+                        SendOnePacket(pair.Key, item.Remote, item.RemoteGuid, item.P2PMessage);
+                    }
                 }
             }
 
