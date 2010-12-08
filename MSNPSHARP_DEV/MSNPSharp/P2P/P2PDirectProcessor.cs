@@ -170,10 +170,21 @@ namespace MSNPSharp.P2P
             isListener = true;
             socketListener = socket;
 
+            SetupTimer();
+            socket.BeginAccept(new AsyncCallback(EndAcceptCallback), socket);
+        }
+
+        public override void Connect()
+        {
+            SetupTimer();
+            base.Connect();
+        }
+
+        private void SetupTimer()
+        {
             socketExpireTimer.Elapsed += new ElapsedEventHandler(socketExpireTimer_Elapsed);
             socketExpireTimer.AutoReset = false;
-            socketExpireTimer.Enabled = true; // After accepted, DISABLE timer.
-            socket.BeginAccept(new AsyncCallback(EndAcceptCallback), socket);
+            socketExpireTimer.Enabled = true; // After handshake completed, DISABLE timer.
         }
 
         private void socketExpireTimer_Elapsed(object sender, ElapsedEventArgs e)
@@ -181,7 +192,7 @@ namespace MSNPSharp.P2P
             socketExpireTimer.Elapsed -= socketExpireTimer_Elapsed;
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                "I was waiting for " + (socketExpireTimer.Interval / 1000) + " seconds, but no one has connected!", GetType().Name);
+                "No handshake made in " + (socketExpireTimer.Interval / 1000) + " seconds, disposing...", GetType().Name);
 
             OnDirectNegotiationTimedOut(EventArgs.Empty);
 
@@ -215,10 +226,6 @@ namespace MSNPSharp.P2P
             try
             {
                 dcSocket = listenSocket.EndAccept(ar);
-
-                // Disable timer. Otherwise, data transfer will be broken after 12 secs.
-                // Huge datas can't transmit within 12 secs :) 
-                socketExpireTimer.Enabled = false;
 
                 DCState = DirectConnectionState.Foo;
 
@@ -513,6 +520,9 @@ namespace MSNPSharp.P2P
 
         protected virtual void OnHandshakeCompleted(EventArgs e)
         {
+            // Disable timer.
+            socketExpireTimer.Enabled = false;
+
             if (HandshakeCompleted != null)
                 HandshakeCompleted(this, e);
         }
