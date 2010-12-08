@@ -45,7 +45,7 @@ namespace MSNPSharpClient
 
             fileTransfer.TransferStarted += (TransferSession_TransferStarted);
             fileTransfer.Progressed += (TransferSession_TransferProgressed);
-            fileTransfer.TransferAborted += (TransferSession_TransferProgressed);
+            fileTransfer.TransferAborted += (TransferSession_TransferAborted);
             fileTransfer.TransferFinished += (TransferSession_TransferFinished);
 
             progressBar.Maximum = (int)fileTransfer.Context.FileSize;
@@ -174,7 +174,7 @@ namespace MSNPSharpClient
         {
             fileTransfer.TransferStarted -= (TransferSession_TransferStarted);
             fileTransfer.Progressed -= (TransferSession_TransferProgressed);
-            fileTransfer.TransferAborted -= (TransferSession_TransferProgressed);
+            fileTransfer.TransferAborted -= (TransferSession_TransferAborted);
             fileTransfer.TransferFinished -= (TransferSession_TransferFinished);
         }
 

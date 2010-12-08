@@ -39,11 +39,25 @@ namespace MSNPSharp
     using MSNPSharp.IO;
     using MSNPSharp.Core;
 
+    /// <summary>
+    /// Binding public ports to support direct connections
+    /// </summary>
     [Serializable]
     public enum PublicPortPriority
     {
+        /// <summary>
+        /// Don't bind public ports for direct connections.
+        /// </summary>
         None = 0,
+
+        /// <summary>
+        /// Bind public ports first for direct connections.
+        /// </summary>
         First = 1,
+
+        /// <summary>
+        /// Bind public ports last for direct connections when other port failed.
+        /// </summary>
         Last = 9
     }
 
@@ -71,8 +85,6 @@ namespace MSNPSharp
             8080 // webcache
         };
 
-
-
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -81,15 +93,15 @@ namespace MSNPSharp
             isMono = (null != Type.GetType("Mono.Runtime")); // http://www.mono-project.com/FAQ:_Technical
 
             TraceSwitch.Level = TraceLevel.Verbose;
-#if DEBUG
+
             serializationType = MclSerialization.Compression | MclSerialization.Cryptography;
-#else
-            serializationType = MclSerialization.Compression;
-#endif
+
             enableGzipCompressionForWebServices = (isMono == false);
         }
 
         private static PublicPortPriority publicPortPriority = PublicPortPriority.First;
+        private static bool disableP2PDirectConnections = false;
+
         private static string savepath = Path.GetFullPath(".");
         private static bool enableGzipCompressionForWebServices;
         private static MclSerialization serializationType;
@@ -98,6 +110,11 @@ namespace MSNPSharp
         private static bool noSave;
         private static bool isMono;
 
+        /// <summary>
+        /// Public port priority for direct connections. If the machine connecting internet is hosted
+        /// for servers (http, ftp, smtp, pop3 etc.) you should set this to
+        /// <see cref="MSNPSharp.PublicPortPriority.None"/>.
+        /// </summary>
         public static PublicPortPriority PublicPortPriority
         {
             get
@@ -107,6 +124,22 @@ namespace MSNPSharp
             set
             {
                 publicPortPriority = value;
+            }
+        }
+
+        /// <summary>
+        /// Disable P2P direct connections for transfers if direct connections fails or
+        /// the machine connecting internet is behind NAT. Slow switchboard connections are used.
+        /// </summary>
+        public static bool DisableP2PDirectConnections
+        {
+            get
+            {
+                return Settings.disableP2PDirectConnections;
+            }
+            set
+            {
+                Settings.disableP2PDirectConnections = value;
             }
         }
 
@@ -215,22 +248,6 @@ namespace MSNPSharp
             set
             {
                 enableGzipCompressionForWebServices = value;
-            }
-        }
-
-        /// <summary>
-        /// Don't use compression when saving addressbook files.
-        /// </summary>
-        [Obsolete("Please use SerializationType", false)]
-        public static bool NoCompress
-        {
-            get
-            {
-                return (serializationType == MclSerialization.None);
-            }
-            set
-            {
-                serializationType = value ? MclSerialization.None : MclSerialization.Compression;
             }
         }
     }

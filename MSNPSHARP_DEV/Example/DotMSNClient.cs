@@ -84,6 +84,10 @@ namespace MSNPSharpClient
             // If you want to use it in an environment that does not have write permission, set NoSave to true.
             //Settings.NoSave = true;
 
+            // Disable P2P direct connections for transfers if direct connections fails or
+            // the machine connecting internet is behind NAT.
+            //Settings.DisableP2PDirectConnections = true;
+
             // set the events that we will handle
             // remember that the nameserver is the server that sends contact lists, notifies you of contact status changes, etc.
             // a switchboard server handles the individual conversation sessions.

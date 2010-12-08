@@ -188,52 +188,54 @@ namespace MSNPSharp.Apps
                 ushort packNum = base.P2PSession.IncreaseDataPacketNumber();
 
                 // Data prep
-                P2PDataMessage p2pData = new P2PDataMessage(P2PVersion);
-                p2pData.WritePreparationBytes();
+                P2PDataMessage prepData = new P2PDataMessage(P2PVersion);
+                prepData.WritePreparationBytes();
 
                 if (P2PVersion == P2PVersion.P2PV2)
                 {
-                    p2pData.V2Header.TFCombination = TFCombination.First;
-                    p2pData.V2Header.PackageNumber = 0;
+                    prepData.V2Header.TFCombination = TFCombination.First;
                 }
 
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Data prep sent", GetType().Name);
-                SendMessage(p2pData);
-
-                // All chunks
-                byte[] allData = new byte[msnObject.Size];
-                lock (objStream)
-                {
-                    using (Stream s = objStream)
+                SendMessage(prepData,
+                    delegate
                     {
-                        s.Position = 0;
-                        s.Read(allData, 0, allData.Length);
-                    }
-                }
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, 
+                            "Data prep sent and ACK received. Sending whole data...", GetType().Name);
 
-                P2PDataMessage msg = new P2PDataMessage(P2PVersion);
-                if (P2PVersion == P2PVersion.P2PV1)
-                {
-                    msg.V1Header.Flags = P2PFlag.Data;
-                    msg.V1Header.AckSessionId = (uint)new Random().Next(50, int.MaxValue);
-                }
-                else if (P2PVersion == P2PVersion.P2PV2)
-                {
-                    msg.V2Header.OperationCode = (byte)OperationCode.RAK;
-                    msg.V2Header.TFCombination = TFCombination.MsnObject | TFCombination.First;
-                    msg.V2Header.PackageNumber = packNum;
-                }
+                        // All chunks
+                        byte[] allData = new byte[msnObject.Size];
+                        lock (objStream)
+                        {
+                            using (Stream s = objStream)
+                            {
+                                s.Position = 0;
+                                s.Read(allData, 0, allData.Length);
+                            }
+                        }
 
-                msg.InnerBody = allData;
-                SendMessage(msg);
+                        P2PDataMessage msg = new P2PDataMessage(P2PVersion);
+                        if (P2PVersion == P2PVersion.P2PV1)
+                        {
+                            msg.V1Header.Flags = P2PFlag.Data;
+                            msg.V1Header.AckSessionId = (uint)new Random().Next(50, int.MaxValue);
+                        }
+                        else if (P2PVersion == P2PVersion.P2PV2)
+                        {
+                            msg.V2Header.TFCombination = TFCombination.MsnObject | TFCombination.First;
+                            msg.V2Header.PackageNumber = packNum;
+                        }
 
-                // Register the ACKHandler
-                P2PMessage rak = new P2PMessage(P2PVersion);
-                SendMessage(rak, delegate(P2PMessage ack)
-                {
-                    OnTransferFinished(EventArgs.Empty);
-                    // Close after remote client sends BYE.
-                });
+                        msg.InnerBody = allData;
+                        SendMessage(msg);
+
+                        // Register the ACKHandler
+                        P2PMessage rak = new P2PMessage(P2PVersion);
+                        SendMessage(rak, delegate(P2PMessage ack)
+                        {
+                            OnTransferFinished(EventArgs.Empty);
+                            // Close after remote client sends BYE.
+                        });
+                    });
             }
             else
             {
