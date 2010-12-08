@@ -189,7 +189,8 @@ namespace MSNPSharp.P2P
                 p2pMessage.V1Header.Flags = P2PFlag.MSNSLPInfo;
             }
 
-            p2pBridge.Send(p2pSession, remote, p2pSession.RemoteContactEndPointID, p2pMessage, null);
+            p2pMessage.Header.Identifier = p2pBridge.localPacketNo;
+            p2pBridge.Send(null, remote, p2pSession.RemoteContactEndPointID, p2pMessage, null);
 
             // Wait a bit, otherwise SLP message queued when called p2pBridge.StopSending(this);
             Thread.CurrentThread.Join(900);
@@ -225,7 +226,7 @@ namespace MSNPSharp.P2P
 
                 Guid remoteGuid = message.FromEndPoint;
                 Contact remote = nsMessageHandler.ContactList.GetContact(message.FromEmailAccount, ClientType.PassportMember);
-                
+
                 DCNonceType dcNonceType;
                 Guid remoteNonce = ParseDCNonce(message.BodyValues, out dcNonceType);
                 if (remoteNonce == Guid.Empty) // Plain
@@ -302,7 +303,10 @@ namespace MSNPSharp.P2P
                 }
 
                 if (startupSession != null)
-                    startupSession.Send(p2pMessage);
+                {
+                    p2pMessage.Header.Identifier = startupSession.Bridge.localPacketNo;
+                    startupSession.Bridge.Send(null, startupSession.Remote, startupSession.RemoteContactEndPointID, p2pMessage, null);
+                }
                 else
                     nsMessageHandler.UUNBridge.Send(null, remote, remoteGuid, p2pMessage, null);
             }

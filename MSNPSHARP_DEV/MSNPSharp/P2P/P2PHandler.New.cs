@@ -138,7 +138,7 @@ namespace MSNPSharp.P2P
 
         public void ProcessP2PMessage(P2PBridge bridge, Contact source, Guid sourceGuid, P2PMessage p2pMessage)
         {
-            // SLP BUFFERING: Combine splitted SLP messages
+            // 1) SLP BUFFERING: Combine splitted SLP messages
             if (slpMessagePool.BufferMessage(ref p2pMessage))
             {
                 // * Buffering: Not completed yet, we must wait next packets -OR-
@@ -147,9 +147,18 @@ namespace MSNPSharp.P2P
             }
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                String.Format("Received MSG\r\n{0}", p2pMessage.ToDebugString()), GetType().Name);
+                String.Format("Received P2PMessage from {0}\r\n{1}", bridge.ToString(), p2pMessage.ToDebugString()), GetType().Name);
 
-            // CHECK SLP: Check destination, source, endpoints
+            bool handled = false;
+
+            // 2) HANDLE RAK: RAKs are session independent and mustn't be quoted on bridges.
+            if (p2pMessage.Header.RequireAck)
+            {
+                handled = true;
+                HandleRAK(bridge, source, sourceGuid, p2pMessage);
+            }
+
+            // 3) CHECK SLP: Check destination, source, endpoints
             SLPMessage slp = p2pMessage.IsSLPData ? p2pMessage.InnerMessage as SLPMessage : null;
             if (slp != null)
             {
@@ -157,33 +166,21 @@ namespace MSNPSharp.P2P
                     return;
             }
 
-            // HANDLE ACK: ACK/NAK to our RAK message
+            // 4) HANDLE ACK: ACK/NAK to our RAK message
             if (p2pMessage.Header.IsAcknowledgement || p2pMessage.Header.IsNegativeAck)
             {
                 HandleACK(p2pMessage);
                 return;
             }
 
-            // FIND SESSION: Search session by SessionId/ExpectedIdentifier
+            // 5) FIND SESSION: Search session by SessionId/ExpectedIdentifier
             P2PSession session = FindSession(p2pMessage, slp);
-            bool handled = false;
-
-            // HANDLE RAK:
-            // session == null: Bridge rak or syn
-            // session != null: Session rak
-            if (p2pMessage.Header.RequireAck)
-            {
-                handled = true;
-                HandleRAK(bridge, source, sourceGuid, session, p2pMessage);
-            }
-
-            // HANDLE SESSION
             if (session != null && session.ProcessP2PMessage(bridge, p2pMessage, slp))
             {
                 return;
             }
 
-            // FIRST SLP MESSAGE: Create applications/sessions based on invitation
+            // 6) FIRST SLP MESSAGE: Create applications/sessions based on invitation
             if (slp != null)
             {
                 if (ProcessSLPMessage(bridge, source, sourceGuid, p2pMessage, slp))
@@ -344,23 +341,17 @@ namespace MSNPSharp.P2P
 
         #region HandleRAK
 
-        private void HandleRAK(P2PBridge bridge, Contact source, Guid sourceGuid, P2PSession session, P2PMessage msg)
+        private void HandleRAK(P2PBridge bridge, Contact source, Guid sourceGuid, P2PMessage msg)
         {
             P2PMessage ack = msg.CreateAcknowledgement();
-            ack.Header.Identifier = (session == null) ? bridge.localPacketNo : session.LocalIdentifier;
+            ack.Header.Identifier = bridge.localPacketNo;
 
             if (ack.Header.RequireAck)
             {
                 // SYN
-                bridge.Send(session, source, sourceGuid, ack, delegate(P2PMessage sync)
+                bridge.Send(null, source, sourceGuid, ack, delegate(P2PMessage sync)
                 {
                     bridge.SyncId = sync.Header.AckIdentifier;
-
-                    if (session != null)
-                    {
-                        session.LocalIdentifier = bridge.SyncId;
-                        session.LocalBaseIdentifier = bridge.SyncId;
-                    }
 
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
                         String.Format("SYNC completed for: {0}", bridge), GetType().Name);
@@ -369,7 +360,7 @@ namespace MSNPSharp.P2P
             else
             {
                 // ACK
-                bridge.Send(session, source, sourceGuid, ack, null);
+                bridge.Send(null, source, sourceGuid, ack, null);
             }
         }
 
