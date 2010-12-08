@@ -137,6 +137,9 @@ namespace MSNPSharp.P2P
             P2PBridge p2pBridge,
             P2PSession p2pSession)
         {
+            if (Settings.DisableP2PDirectConnections)
+                return;
+
             // Only send the direct invite if we're currently using an SBBridge or UUNBridge
             if (!(p2pBridge is SBBridge) && !(p2pBridge is UUNBridge))
                 return;
@@ -240,8 +243,8 @@ namespace MSNPSharp.P2P
                 P2PVersion ver = (message.FromEndPoint != Guid.Empty && message.ToEndPoint != Guid.Empty)
                     ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
 
-
-                if (false == ipAddress.Equals(nsMessageHandler.ExternalEndPoint.Address) ||
+                if (Settings.DisableP2PDirectConnections ||
+                    false == ipAddress.Equals(nsMessageHandler.ExternalEndPoint.Address) ||
                     (0 == (port = GetNextDirectConnectionPort(ipAddress))))
                 {
                     slpMessage.BodyValues["Listening"] = "false";
