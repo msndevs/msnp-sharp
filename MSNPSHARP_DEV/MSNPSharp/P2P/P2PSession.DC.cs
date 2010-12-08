@@ -110,22 +110,29 @@ namespace MSNPSharp.P2P
             {
                 netId = BitConverter.ToInt32(localEndPoint.Address.GetAddressBytes(), 0);
 
-                if (localEndPoint.Address.Equals(externalEndPoint.Address))
+                if (Settings.DisableP2PDirectConnections)
                 {
-                    if (localEndPoint.Port == externalEndPoint.Port)
-                        connectionType = "Direct-Connect";
-                    else
-                        connectionType = "Port-Restrict-NAT";
+                    connectionType = "Firewall";
                 }
                 else
                 {
-                    if (localEndPoint.Port == externalEndPoint.Port)
+                    if (localEndPoint.Address.Equals(externalEndPoint.Address))
                     {
-                        netId = 0;
-                        connectionType = "IP-Restrict-NAT";
+                        if (localEndPoint.Port == externalEndPoint.Port)
+                            connectionType = "Direct-Connect";
+                        else
+                            connectionType = "Port-Restrict-NAT";
                     }
                     else
-                        connectionType = "Symmetric-NAT";
+                    {
+                        if (localEndPoint.Port == externalEndPoint.Port)
+                        {
+                            netId = 0;
+                            connectionType = "IP-Restrict-NAT";
+                        }
+                        else
+                            connectionType = "Symmetric-NAT";
+                    }
                 }
             }
 
@@ -137,10 +144,7 @@ namespace MSNPSharp.P2P
             P2PBridge p2pBridge,
             P2PSession p2pSession)
         {
-            if (Settings.DisableP2PDirectConnections)
-                return;
-
-            // Only send the direct invite if we're currently using an SBBridge or UUNBridge
+             // Only send the direct invite if we're currently using an SBBridge or UUNBridge
             if (!(p2pBridge is SBBridge) && !(p2pBridge is UUNBridge))
                 return;
 
@@ -167,7 +171,7 @@ namespace MSNPSharp.P2P
             slpMessage.BodyValues["Conn-Type"] = connectionType;
             slpMessage.BodyValues["TCP-Conn-Type"] = connectionType;
             slpMessage.BodyValues["UPnPNat"] = "false"; // UPNP Enabled
-            slpMessage.BodyValues["ICF"] = "false"; // Firewall enabled
+            slpMessage.BodyValues["ICF"] = (connectionType == "Firewall").ToString(); // Firewall enabled
             slpMessage.BodyValues["Nat-Trav-Msg-Type"] = "WLX-Nat-Trav-Msg-Direct-Connect-Req";
 
             // We support Hashed-Nonce ( 2 way handshake )
@@ -199,6 +203,13 @@ namespace MSNPSharp.P2P
             NSMessageHandler nsMessageHandler,
             P2PSession startupSession)
         {
+
+            if (startupSession != null && startupSession.Bridge != null &&
+                startupSession.Bridge is TCPv1Bridge)
+            {
+                return; // We are using a dc bridge already. Don't allow second one.
+            }
+
             if (message.BodyValues.ContainsKey("Bridges") &&
                 message.BodyValues["Bridges"].ToString().Contains("TCPv1"))
             {
