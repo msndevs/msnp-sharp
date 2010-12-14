@@ -129,6 +129,7 @@ namespace MSNPSharp.Apps
 
             if (msnObject.ObjectType == MSNObjectType.UserDisplay)
             {
+                msnObject = new DisplayImage();
                 applicationId = 12;
                 msnObject.SetContext(remote.UserTileLocation, false);
             }
