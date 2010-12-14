@@ -874,15 +874,53 @@ namespace MSNPSharp.P2P
         {
             ResetTimeoutTimer();
 
-            SetSequenceNumber(msg);
-
             if (p2pBridge == null)
                 MigrateToOptimalBridge();
 
-            p2pBridge.Send(this, Remote, RemoteContactEndPointID, msg, ackHandler);
+            P2PMessage[] msgs = SetSequenceNumberAndRegisterAck(msg, ackHandler);
+
+            foreach (P2PMessage m in msgs)
+                p2pBridge.Send(this, Remote, RemoteContactEndPointID, m, null);
         }
 
-        private void SetSequenceNumber(P2PMessage p2pMessage)
+        private P2PMessage[] SetSequenceNumberAndRegisterAck(P2PMessage p2pMessage, AckHandler ackHandler)
+        {
+            if (p2pMessage.Header.Identifier == 0)
+            {
+                if (p2pMessage.Version == P2PVersion.P2PV1)
+                {
+                    p2pMessage.Header.Identifier = ++localIdentifier;
+                }
+                else if (p2pMessage.Version == P2PVersion.P2PV2)
+                {
+                    p2pMessage.V2Header.Identifier = localIdentifier;
+                }
+            }
+
+            if (p2pMessage.Version == P2PVersion.P2PV1 && p2pMessage.V1Header.AckSessionId == 0)
+            {
+                p2pMessage.V1Header.AckSessionId = (uint)random.Next(50000, int.MaxValue);
+            }
+
+            P2PMessage[] msgs = p2pMessage.SplitMessage(p2pBridge.MaxDataSize);
+
+            if (p2pMessage.Version == P2PVersion.P2PV2)
+            {
+                // Correct local sequence no
+                P2PMessage lastMsg = msgs[msgs.Length - 1];
+                localIdentifier = lastMsg.V2Header.Identifier + lastMsg.V2Header.MessageSize;
+            }
+
+            if (ackHandler != null)
+            {
+                P2PMessage firstMessage = msgs[0];
+                nsMessageHandler.P2PHandler.RegisterAckHandler(firstMessage, ackHandler);
+            }
+
+            return msgs;
+        }
+
+        private void SetSequenceNumber2(P2PMessage p2pMessage)
         {
             // Check whether the sequence number is already set. This is important to check for acknowledge messages.
             if (p2pMessage.Header.Identifier == 0)

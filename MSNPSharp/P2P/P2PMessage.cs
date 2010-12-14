@@ -318,7 +318,8 @@ namespace MSNPSharp.P2P
                     chunkMessage.V1Header.MessageSize = messageSize;
                     chunkMessage.InnerBody = chunk;
 
-                    chunkMessage.V1Header.AckSessionId = (uint)rand.Next(50000, int.MaxValue);
+                    chunkMessage.V1Header.AckSessionId = V1Header.AckSessionId;
+
                     chunkMessage.Footer = Footer;
 
                     chunkMessage.PrepareMessage();
@@ -327,7 +328,6 @@ namespace MSNPSharp.P2P
                     offset += messageSize;
                 }
             }
-
 
 
             if (Version == P2PVersion.P2PV2)

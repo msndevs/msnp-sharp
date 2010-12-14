@@ -34,6 +34,7 @@ using System;
 using System.IO;
 using System.Text;
 using System.Drawing;
+using System.Threading;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Security.Cryptography;
@@ -196,46 +197,57 @@ namespace MSNPSharp.Apps
                     prepData.V2Header.TFCombination = TFCombination.First;
                 }
 
-                SendMessage(prepData,
-                    delegate
+                SendMessage(prepData);
+                Thread.CurrentThread.Join(900);
+
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                    "Data prep sent. Sending whole data...", GetType().Name);
+
+                // All chunks
+                byte[] allData = new byte[msnObject.Size];
+                lock (objStream)
+                {
+                    using (Stream s = objStream)
                     {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, 
-                            "Data prep sent and ACK received. Sending whole data...", GetType().Name);
+                        s.Position = 0;
+                        s.Read(allData, 0, allData.Length);
+                    }
+                }
 
-                        // All chunks
-                        byte[] allData = new byte[msnObject.Size];
-                        lock (objStream)
-                        {
-                            using (Stream s = objStream)
-                            {
-                                s.Position = 0;
-                                s.Read(allData, 0, allData.Length);
-                            }
-                        }
+                P2PDataMessage msg = new P2PDataMessage(P2PVersion);
+                if (P2PVersion == P2PVersion.P2PV1)
+                {
+                    msg.V1Header.Flags = P2PFlag.Data;
+                    msg.V1Header.AckSessionId = (uint)new Random().Next(50, int.MaxValue);
+                }
+                else if (P2PVersion == P2PVersion.P2PV2)
+                {
+                    msg.V2Header.TFCombination = TFCombination.MsnObject | TFCombination.First;
+                    msg.V2Header.PackageNumber = packNum;
+                }
 
-                        P2PDataMessage msg = new P2PDataMessage(P2PVersion);
-                        if (P2PVersion == P2PVersion.P2PV1)
-                        {
-                            msg.V1Header.Flags = P2PFlag.Data;
-                            msg.V1Header.AckSessionId = (uint)new Random().Next(50, int.MaxValue);
-                        }
-                        else if (P2PVersion == P2PVersion.P2PV2)
-                        {
-                            msg.V2Header.TFCombination = TFCombination.MsnObject | TFCombination.First;
-                            msg.V2Header.PackageNumber = packNum;
-                        }
+                msg.InnerBody = allData;
 
-                        msg.InnerBody = allData;
-                        SendMessage(msg);
-
-                        // Register the ACKHandler
-                        P2PMessage rak = new P2PMessage(P2PVersion);
-                        SendMessage(rak, delegate(P2PMessage ack)
-                        {
-                            OnTransferFinished(EventArgs.Empty);
-                            // Close after remote client sends BYE.
-                        });
+                if (P2PVersion == P2PVersion.P2PV1)
+                {
+                    SendMessage(msg, delegate(P2PMessage ack)
+                    {
+                        OnTransferFinished(EventArgs.Empty);
+                        // Close after remote client sends BYE.
                     });
+                }
+                else
+                {
+                    SendMessage(msg, null);
+
+                    // Register the ACKHandler
+                    P2PMessage rak = new P2PMessage(P2PVersion);
+                    SendMessage(rak, delegate(P2PMessage ack)
+                    {
+                        OnTransferFinished(EventArgs.Empty);
+                        // Close after remote client sends BYE.
+                    });
+                }
             }
             else
             {
