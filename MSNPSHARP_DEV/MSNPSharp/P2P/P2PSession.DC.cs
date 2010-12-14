@@ -144,7 +144,7 @@ namespace MSNPSharp.P2P
             P2PBridge p2pBridge,
             P2PSession p2pSession)
         {
-             // Only send the direct invite if we're currently using an SBBridge or UUNBridge
+            // Only send the direct invite if we're currently using an SBBridge or UUNBridge
             if (!(p2pBridge is SBBridge) && !(p2pBridge is UUNBridge))
                 return;
 
@@ -196,7 +196,8 @@ namespace MSNPSharp.P2P
             Thread.CurrentThread.Join(900);
 
             // Stop sending until we receive a response to the direct invite or the timeout expires
-            p2pBridge.StopSending(p2pSession);
+            if (!(p2pBridge is UUNBridge))
+                p2pBridge.StopSending(p2pSession);
         }
 
         private static void ProcessDirectReqInvite(
