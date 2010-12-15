@@ -41,19 +41,19 @@ namespace MSNPSharp.P2P
 
     public class DestinationAddressUpdatedEventHandler : EventArgs
     {
-        private IPEndPoint ipEndPoint;
+        private IPEndPoint[] ipEndPoints;
 
-        public IPEndPoint IPEndPoint
+        public IPEndPoint[] IPEndPoints
         {
             get
             {
-                return ipEndPoint;
+                return ipEndPoints;
             }
         }
 
-        public DestinationAddressUpdatedEventHandler(IPEndPoint ipep)
+        public DestinationAddressUpdatedEventHandler(IPEndPoint[] ipeps)
         {
-            this.ipEndPoint = ipep;
+            this.ipEndPoints = ipeps;
         }
     }
 
@@ -123,9 +123,6 @@ namespace MSNPSharp.P2P
                 return null;
             }
         }
-
-        Guid reply = Guid.Empty;
-
         public TCPv1Bridge(
             ConnectivitySettings connectivitySettings,
             P2PVersion p2pVersion,
@@ -138,7 +135,6 @@ namespace MSNPSharp.P2P
             this.startupSession = p2pSession;
             this.nsMessageHandler = ns;
             this.remote = remote;
-            this.reply = replyNonce;
 
             directConnection = new P2PDirectProcessor(connectivitySettings, p2pVersion, replyNonce, remoteNonce, isNeedHash, p2pSession, nsMessageHandler);
             directConnection.HandshakeCompleted += new EventHandler<EventArgs>(directConnection_HandshakeCompleted);
@@ -153,11 +149,21 @@ namespace MSNPSharp.P2P
 
         protected internal virtual void OnDestinationAddressUpdated(DestinationAddressUpdatedEventHandler e)
         {
-            if (directConnection != null && directConnection.RemoteEndPoint != null)
+            if (directConnection != null && directConnection.Connected && directConnection.RemoteEndPoint != null)
             {
-                IPEndPoint ipep = (IPEndPoint)directConnection.RemoteEndPoint;
+                IPEndPoint remoteIpep = (IPEndPoint)directConnection.RemoteEndPoint;
+                bool trustedPeer = false;
 
-                if (ipep.Address.Equals(e.IPEndPoint.Address) == false || ipep.Port != e.IPEndPoint.Port)
+                foreach (IPEndPoint ipep in e.IPEndPoints)
+                {
+                    if (ipep.Address.Equals(remoteIpep.Address) && ipep.Port == remoteIpep.Port)
+                    {
+                        trustedPeer = true;
+                        break;
+                    }
+                }
+
+                if (trustedPeer == false)
                 {
                     directConnection.Disconnect();
                     OnBridgeClosed(EventArgs.Empty);
@@ -181,13 +187,11 @@ namespace MSNPSharp.P2P
         private void directConnection_ConnectionException(object sender, ExceptionEventArgs e)
         {
             OnBridgeClosed(EventArgs.Empty);
-
         }
 
         private void directConnection_ConnectingException(object sender, ExceptionEventArgs e)
         {
             OnBridgeClosed(EventArgs.Empty);
-
         }
 
         private void directConnection_ConnectionClosed(object sender, EventArgs e)

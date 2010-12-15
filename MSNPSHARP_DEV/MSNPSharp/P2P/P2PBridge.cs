@@ -84,9 +84,8 @@ namespace MSNPSharp.P2P
         public event EventHandler<P2PMessageSessionEventArgs> BridgeSent;
 
         private static uint bridgeCount = 0;
-
-        protected internal uint localPacketNo = 0;
         protected internal uint syncIdentifier = 0;
+        protected internal uint localTrackerId = 0;
 
         protected uint bridgeID = ++bridgeCount;
         protected int queueSize = 0;
@@ -145,7 +144,7 @@ namespace MSNPSharp.P2P
         protected P2PBridge(int queueSize)
         {
             this.queueSize = queueSize;
-            this.localPacketNo = (uint)new Random().Next(1000, int.MaxValue);
+            this.localTrackerId = (uint)new Random().Next(5000, int.MaxValue);
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                 String.Format("P2PBridge {0} created", this.ToString()), GetType().Name);
@@ -184,14 +183,7 @@ namespace MSNPSharp.P2P
             if (remote == null)
                 throw new ArgumentNullException("remote");
 
-
-            P2PMessage[] msgs = msg.SplitMessage(MaxDataSize);
-
-            if (ackHandler != null)
-            {
-                P2PMessage firstMessage = msgs[0];
-                remote.NSMessageHandler.P2PHandler.RegisterAckHandler(firstMessage, ackHandler);
-            }
+            P2PMessage[] msgs = SetSequenceNumberAndRegisterAck(session, remote, msg, ackHandler);
 
             if (session == null)
             {
@@ -225,13 +217,49 @@ namespace MSNPSharp.P2P
             foreach (P2PMessage m in msgs)
                 sendQueues[session].Enqueue(remote, remoteGuid, m);
 
-            if (msg.Version == P2PVersion.P2PV2)
+            ProcessSendQueues();
+        }
+
+        private P2PMessage[] SetSequenceNumberAndRegisterAck(P2PSession session, Contact remote, P2PMessage p2pMessage, AckHandler ackHandler)
+        {
+            if (p2pMessage.Header.Identifier == 0)
             {
-                P2PMessage lastMsg = msgs[msgs.Length - 1];
-                session.LocalIdentifier = lastMsg.V2Header.Identifier + lastMsg.V2Header.MessageSize;
+                if (p2pMessage.Version == P2PVersion.P2PV1)
+                {
+                    p2pMessage.Header.Identifier = ++localTrackerId;
+                }
+                else if (p2pMessage.Version == P2PVersion.P2PV2)
+                {
+                    p2pMessage.V2Header.Identifier = localTrackerId;
+                }
             }
 
-            ProcessSendQueues();
+            if (p2pMessage.Version == P2PVersion.P2PV1 && p2pMessage.V1Header.AckSessionId == 0)
+            {
+                p2pMessage.V1Header.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
+            }
+
+            P2PMessage[] msgs = p2pMessage.SplitMessage(MaxDataSize);
+
+            if (p2pMessage.Version == P2PVersion.P2PV2)
+            {
+                // Correct local sequence no
+                P2PMessage lastMsg = msgs[msgs.Length - 1];
+                localTrackerId = lastMsg.V2Header.Identifier + lastMsg.V2Header.MessageSize;
+            }
+
+            if (ackHandler != null)
+            {
+                P2PMessage firstMessage = msgs[0];
+                remote.NSMessageHandler.P2PHandler.RegisterAckHandler(firstMessage, ackHandler);
+            }
+
+            if (session != null)
+            {
+                session.LocalIdentifier = localTrackerId;
+            }
+
+            return msgs;
         }
 
         protected virtual void ProcessSendQueues()
@@ -385,7 +413,7 @@ namespace MSNPSharp.P2P
         {
             if (e.P2PMessage.Header.Identifier != 0)
             {
-                this.localPacketNo = (e.P2PMessage.Version == P2PVersion.P2PV1)
+                this.localTrackerId = (e.P2PMessage.Version == P2PVersion.P2PV1)
                     ? e.P2PMessage.Header.Identifier + 1 : e.P2PMessage.Header.Identifier + e.P2PMessage.Header.MessageSize;
             }
 

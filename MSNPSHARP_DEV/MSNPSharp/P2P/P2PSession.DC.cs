@@ -51,6 +51,8 @@ namespace MSNPSharp.P2P
 
     partial class P2PSession
     {
+        private Timer directNegotiationTimer = null;
+
         public static Guid ParseDCNonce(MimeDictionary bodyValues, out DCNonceType dcNonceType)
         {
             dcNonceType = DCNonceType.None;
@@ -70,27 +72,51 @@ namespace MSNPSharp.P2P
             return nonce;
         }
 
-        internal static void ProcessDirectInvite(
-            SLPMessage slp,
-            NSMessageHandler nsMessageHandler,
-            P2PSession startupSession)
+        internal static void ProcessDirectInvite(SLPMessage slp, NSMessageHandler ns, P2PSession startupSession)
         {
-            if (slp.ContentType == "application/x-msnmsgr-transreqbody")
-                ProcessDirectReqInvite(slp, nsMessageHandler, startupSession);
-            else if (slp.ContentType == "application/x-msnmsgr-transrespbody")
-                ProcessDirectRespInvite(slp, nsMessageHandler, startupSession);
-            else if (slp.ContentType == "application/x-msnmsgr-transdestaddrupdate")
-                ProcessDirectAddrUpdate(slp, nsMessageHandler, startupSession);
+            switch (slp.ContentType)
+            {
+                case "application/x-msnmsgr-transreqbody":
+                    ProcessDCReqInvite(slp, ns, startupSession);
+                    break;
+
+                case "application/x-msnmsgr-transrespbody":
+                    ProcessDCRespInvite(slp, ns, startupSession);
+                    break;
+
+                case "application/x-msnmsgr-transdestaddrupdate":
+                    ProcessDirectAddrUpdate(slp, ns, startupSession);
+                    break;
+            }
         }
 
         private void DirectNegotiationSuccessful()
         {
+            if (directNegotiationTimer != null)
+            {
+                directNegotiationTimer.Dispose();
+                directNegotiationTimer = null;
+            }
+
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Direct connection negotiation was successful", GetType().Name);
+        }
+
+        private void DirectNegotiationTimedOut(object p2pSession)
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Direct connection negotiation timed out", GetType().Name);
+
+            DirectNegotiationFailed();
         }
 
         internal void DirectNegotiationFailed()
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Direct connection negotiation was unsuccessful", GetType().Name);
+
+            if (directNegotiationTimer != null)
+            {
+                directNegotiationTimer.Dispose();
+                directNegotiationTimer = null;
+            }
 
             if (p2pBridge != null)
                 p2pBridge.ResumeSending(this);
@@ -189,10 +215,10 @@ namespace MSNPSharp.P2P
                 p2pMessage.V1Header.Flags = P2PFlag.MSNSLPInfo;
             }
 
-            p2pMessage.Header.Identifier = p2pBridge.localPacketNo;
             p2pBridge.Send(null, remote, p2pSession.RemoteContactEndPointID, p2pMessage, null);
 
             // Wait a bit, otherwise SLP message queued when called p2pBridge.StopSending(this);
+            p2pSession.SetupDCTimer();
             Thread.CurrentThread.Join(900);
 
             // Stop sending until we receive a response to the direct invite or the timeout expires
@@ -200,12 +226,8 @@ namespace MSNPSharp.P2P
                 p2pBridge.StopSending(p2pSession);
         }
 
-        private static void ProcessDirectReqInvite(
-            SLPMessage message,
-            NSMessageHandler nsMessageHandler,
-            P2PSession startupSession)
+        private static void ProcessDCReqInvite(SLPMessage message, NSMessageHandler ns, P2PSession startupSession)
         {
-
             if (startupSession != null && startupSession.Bridge != null &&
                 startupSession.Bridge is TCPv1Bridge)
             {
@@ -226,7 +248,7 @@ namespace MSNPSharp.P2P
                 slpMessage.BodyValues["Bridge"] = "TCPv1";
 
                 Guid remoteGuid = message.FromEndPoint;
-                Contact remote = nsMessageHandler.ContactList.GetContact(message.FromEmailAccount, ClientType.PassportMember);
+                Contact remote = ns.ContactList.GetContact(message.FromEmailAccount, ClientType.PassportMember);
 
                 DCNonceType dcNonceType;
                 Guid remoteNonce = ParseDCNonce(message.BodyValues, out dcNonceType);
@@ -250,14 +272,14 @@ namespace MSNPSharp.P2P
                 }
 
                 // Find host by name
-                IPAddress ipAddress = nsMessageHandler.LocalEndPoint.Address;
+                IPAddress ipAddress = ns.LocalEndPoint.Address;
                 int port;
 
                 P2PVersion ver = (message.FromEndPoint != Guid.Empty && message.ToEndPoint != Guid.Empty)
                     ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
 
                 if (Settings.DisableP2PDirectConnections ||
-                    false == ipAddress.Equals(nsMessageHandler.ExternalEndPoint.Address) ||
+                    false == ipAddress.Equals(ns.ExternalEndPoint.Address) ||
                     (0 == (port = GetNextDirectConnectionPort(ipAddress))))
                 {
                     slpMessage.BodyValues["Listening"] = "false";
@@ -266,7 +288,7 @@ namespace MSNPSharp.P2P
                 else
                 {
                     // Let's listen
-                    remote.DirectBridge = ListenForDirectConnection(remote, nsMessageHandler, ver, startupSession, ipAddress, port, myPlainNonce, remoteNonce, hashed);
+                    remote.DirectBridge = ListenForDirectConnection(remote, ns, ver, startupSession, ipAddress, port, myPlainNonce, remoteNonce, hashed);
 
                     slpMessage.BodyValues["Listening"] = "true";
                     slpMessage.BodyValues["Capabilities-Flags"] = "1";
@@ -284,9 +306,9 @@ namespace MSNPSharp.P2P
 
                     // check if client is behind firewall (NAT-ted)
                     // if so, send the public ip also the client, so it can try to connect to that ip
-                    if (!nsMessageHandler.ExternalEndPoint.Address.Equals(nsMessageHandler.LocalEndPoint.Address))
+                    if (!ns.ExternalEndPoint.Address.Equals(ns.LocalEndPoint.Address))
                     {
-                        slpMessage.BodyValues["IPv4External-Addrs"] = nsMessageHandler.ExternalEndPoint.Address.ToString();
+                        slpMessage.BodyValues["IPv4External-Addrs"] = ns.ExternalEndPoint.Address.ToString();
                         slpMessage.BodyValues["IPv4External-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
                     }
                 }
@@ -305,11 +327,13 @@ namespace MSNPSharp.P2P
 
                 if (startupSession != null)
                 {
-                    p2pMessage.Header.Identifier = startupSession.Bridge.localPacketNo;
+                    startupSession.SetupDCTimer();
                     startupSession.Bridge.Send(null, startupSession.Remote, startupSession.RemoteContactEndPointID, p2pMessage, null);
                 }
                 else
-                    nsMessageHandler.UUNBridge.Send(null, remote, remoteGuid, p2pMessage, null);
+                {
+                    ns.UUNBridge.Send(null, remote, remoteGuid, p2pMessage, null);
+                }
             }
             else
             {
@@ -318,10 +342,12 @@ namespace MSNPSharp.P2P
             }
         }
 
-        private static void ProcessDirectRespInvite(
-            SLPMessage message,
-            NSMessageHandler nsMessageHandler,
-            P2PSession startupSession)
+        private void SetupDCTimer()
+        {
+            directNegotiationTimer = new Timer(new TimerCallback(DirectNegotiationTimedOut), this, 17000, 17000);
+        }
+
+        private static void ProcessDCRespInvite(SLPMessage message, NSMessageHandler ns, P2PSession startupSession)
         {
             MimeDictionary bodyValues = message.BodyValues;
 
@@ -331,7 +357,7 @@ namespace MSNPSharp.P2P
                 bodyValues.ContainsKey("Listening") &&
                 bodyValues["Listening"].ToString().ToLowerInvariant().IndexOf("true") >= 0)
             {
-                Contact remote = nsMessageHandler.ContactList.GetContact(message.FromEmailAccount, ClientType.PassportMember);
+                Contact remote = ns.ContactList.GetContact(message.FromEmailAccount, ClientType.PassportMember);
                 Guid remoteGuid = message.FromEndPoint;
 
                 DCNonceType dcNonceType;
@@ -339,7 +365,7 @@ namespace MSNPSharp.P2P
                 bool hashed = (dcNonceType == DCNonceType.Sha1);
                 Guid replyGuid = hashed ? remote.dcPlainKey : remoteNonce;
 
-                IPEndPoint[] selectedPoint = SelectIPEndPoint(bodyValues, nsMessageHandler);
+                IPEndPoint[] selectedPoint = SelectIPEndPoint(bodyValues, ns);
 
                 if (selectedPoint != null && selectedPoint.Length > 0)
                 {
@@ -349,7 +375,7 @@ namespace MSNPSharp.P2P
                     // We must connect to the remote client
                     ConnectivitySettings settings = new ConnectivitySettings();
                     settings.EndPoints = selectedPoint;
-                    remote.DirectBridge = CreateDirectConnection(remote, ver, settings, replyGuid, remoteNonce, hashed, nsMessageHandler, startupSession);
+                    remote.DirectBridge = CreateDirectConnection(remote, ver, settings, replyGuid, remoteNonce, hashed, ns, startupSession);
 
                     bool needConnectingEndpointInfo;
                     if (bodyValues.ContainsKey("NeedConnectingEndpointInfo") &&
@@ -377,7 +403,7 @@ namespace MSNPSharp.P2P
                         P2PMessage msg = new P2PMessage(ver);
                         msg.InnerMessage = slpResponseMessage;
 
-                        nsMessageHandler.UUNBridge.Send(null, remote, remoteGuid, msg, null);
+                        ns.UUNBridge.Send(null, remote, remoteGuid, msg, null);
                     }
 
                     return;
@@ -394,11 +420,11 @@ namespace MSNPSharp.P2P
             P2PSession startupSession)
         {
             Contact from = nsMessageHandler.ContactList.GetContact(message.FromEmailAccount, ClientType.PassportMember);
-            IPEndPoint[] ipEndPoint = SelectIPEndPoint(message.BodyValues, nsMessageHandler);
+            IPEndPoint[] ipEndPoints = SelectIPEndPoint(message.BodyValues, nsMessageHandler);
 
-            if (from.DirectBridge != null && ipEndPoint != null && ipEndPoint.Length > 0)
+            if (from.DirectBridge != null && ipEndPoints != null && ipEndPoints.Length > 0)
             {
-                ((TCPv1Bridge)from.DirectBridge).OnDestinationAddressUpdated(new DestinationAddressUpdatedEventHandler(ipEndPoint[0]));
+                ((TCPv1Bridge)from.DirectBridge).OnDestinationAddressUpdated(new DestinationAddressUpdatedEventHandler(ipEndPoints));
             }
         }
 
