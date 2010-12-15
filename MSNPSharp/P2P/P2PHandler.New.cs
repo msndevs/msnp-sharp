@@ -344,7 +344,7 @@ namespace MSNPSharp.P2P
         private void HandleRAK(P2PBridge bridge, Contact source, Guid sourceGuid, P2PMessage msg)
         {
             P2PMessage ack = msg.CreateAcknowledgement();
-            ack.Header.Identifier = bridge.localPacketNo;
+            ack.Header.Identifier = bridge.localTrackerId;
 
             if (ack.Header.RequireAck)
             {

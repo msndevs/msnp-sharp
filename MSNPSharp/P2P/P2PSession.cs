@@ -380,7 +380,7 @@ namespace MSNPSharp.P2P
             }
 
             p2pBridge = bridge;
-            localBaseIdentifier = bridge.localPacketNo;
+            localBaseIdentifier = bridge.localTrackerId;
             localIdentifier = localBaseIdentifier;
             status = P2PSessionStatus.WaitingForLocal;
 
@@ -462,7 +462,7 @@ namespace MSNPSharp.P2P
                 // Get id from bridge....
                 {
                     MigrateToOptimalBridge();
-                    localBaseIdentifier = p2pBridge.localPacketNo;
+                    localBaseIdentifier = p2pBridge.localTrackerId;
                     localIdentifier = localBaseIdentifier;
                 }
 
@@ -775,13 +775,10 @@ namespace MSNPSharp.P2P
                     else
                     {
                         if (slpRequest.ContentType == "application/x-msnmsgr-transreqbody" ||
-                            slpRequest.ContentType == "application/x-msnmsgr-transrespbody")
+                            slpRequest.ContentType == "application/x-msnmsgr-transrespbody" ||
+                            slpRequest.ContentType == "application/x-msnmsgr-transdestaddrupdate")
                         {
                             ProcessDirectInvite(slpRequest, nsMessageHandler, this); // Direct connection invite
-                            return true;
-                        }
-                        else if (slpRequest.Method == "ACK")
-                        {
                             return true;
                         }
                     }
@@ -877,70 +874,7 @@ namespace MSNPSharp.P2P
             if (p2pBridge == null)
                 MigrateToOptimalBridge();
 
-            P2PMessage[] msgs = SetSequenceNumberAndRegisterAck(msg, ackHandler);
-
-            foreach (P2PMessage m in msgs)
-                p2pBridge.Send(this, Remote, RemoteContactEndPointID, m, null);
-        }
-
-        private P2PMessage[] SetSequenceNumberAndRegisterAck(P2PMessage p2pMessage, AckHandler ackHandler)
-        {
-            if (p2pMessage.Header.Identifier == 0)
-            {
-                if (p2pMessage.Version == P2PVersion.P2PV1)
-                {
-                    p2pMessage.Header.Identifier = ++localIdentifier;
-                }
-                else if (p2pMessage.Version == P2PVersion.P2PV2)
-                {
-                    p2pMessage.V2Header.Identifier = localIdentifier;
-                }
-            }
-
-            if (p2pMessage.Version == P2PVersion.P2PV1 && p2pMessage.V1Header.AckSessionId == 0)
-            {
-                p2pMessage.V1Header.AckSessionId = (uint)random.Next(50000, int.MaxValue);
-            }
-
-            P2PMessage[] msgs = p2pMessage.SplitMessage(p2pBridge.MaxDataSize);
-
-            if (p2pMessage.Version == P2PVersion.P2PV2)
-            {
-                // Correct local sequence no
-                P2PMessage lastMsg = msgs[msgs.Length - 1];
-                localIdentifier = lastMsg.V2Header.Identifier + lastMsg.V2Header.MessageSize;
-            }
-
-            if (ackHandler != null)
-            {
-                P2PMessage firstMessage = msgs[0];
-                nsMessageHandler.P2PHandler.RegisterAckHandler(firstMessage, ackHandler);
-            }
-
-            return msgs;
-        }
-
-        private void SetSequenceNumber2(P2PMessage p2pMessage)
-        {
-            // Check whether the sequence number is already set. This is important to check for acknowledge messages.
-            if (p2pMessage.Header.Identifier == 0)
-            {
-                if (Version == P2PVersion.P2PV1)
-                {
-                    IncreaseLocalIdentifier();
-                    p2pMessage.Header.Identifier = LocalIdentifier;
-                }
-                else if (Version == P2PVersion.P2PV2)
-                {
-                    p2pMessage.V2Header.Identifier = LocalIdentifier;
-                    CorrectLocalIdentifier((int)p2pMessage.V2Header.MessageSize);
-                }
-            }
-
-            if (Version == P2PVersion.P2PV1 && p2pMessage.V1Header.AckSessionId == 0)
-            {
-                p2pMessage.V1Header.AckSessionId = (uint)random.Next(50000, int.MaxValue);
-            }
+            p2pBridge.Send(this, Remote, RemoteContactEndPointID, msg, ackHandler);
         }
 
         private P2PMessage WrapSLPMessage(SLPMessage slpMessage)
@@ -1007,14 +941,12 @@ namespace MSNPSharp.P2P
                 p2pBridge.BridgeClosed += BridgeClosed;
                 p2pBridge.BridgeSent += BridgeSent;
 
-                localBaseIdentifier = p2pBridge.localPacketNo;
+                localBaseIdentifier = p2pBridge.localTrackerId;
                 localIdentifier = localBaseIdentifier;
 
-                if ((timeoutTimer != null) && !(p2pBridge is SBBridge))
+                if ((directNegotiationTimer != null) && !(p2pBridge is SBBridge))
                     DirectNegotiationSuccessful();
             }
-            //else
-            //    UnmapDirectPort();
         }
 
         private void BridgeOpened(object sender, EventArgs args)
