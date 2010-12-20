@@ -138,7 +138,16 @@ namespace MSNPSharp.P2P
 
         public void ProcessP2PMessage(P2PBridge bridge, Contact source, Guid sourceGuid, P2PMessage p2pMessage)
         {
-            // 1) SLP BUFFERING: Combine splitted SLP messages
+            bool handled = false;
+
+            // 1) HANDLE RAK: RAKs are session independent and mustn't be quoted on bridges.
+            if (p2pMessage.Header.RequireAck)
+            {
+                handled = true;
+                HandleRAK(bridge, source, sourceGuid, p2pMessage);
+            }
+
+            // 2) SLP BUFFERING: Combine splitted SLP messages
             if (slpMessagePool.BufferMessage(ref p2pMessage))
             {
                 // * Buffering: Not completed yet, we must wait next packets -OR-
@@ -148,15 +157,6 @@ namespace MSNPSharp.P2P
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                 String.Format("Received P2PMessage from {0}\r\n{1}", bridge.ToString(), p2pMessage.ToDebugString()), GetType().Name);
-
-            bool handled = false;
-
-            // 2) HANDLE RAK: RAKs are session independent and mustn't be quoted on bridges.
-            if (p2pMessage.Header.RequireAck)
-            {
-                handled = true;
-                HandleRAK(bridge, source, sourceGuid, p2pMessage);
-            }
 
             // 3) CHECK SLP: Check destination, source, endpoints
             SLPMessage slp = p2pMessage.IsSLPData ? p2pMessage.InnerMessage as SLPMessage : null;

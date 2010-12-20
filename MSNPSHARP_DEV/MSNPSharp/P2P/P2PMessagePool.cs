@@ -121,12 +121,15 @@ namespace MSNPSharp.P2P
                                         incompletedP2PV2Messages.Remove(originalIdentifier);
                                     }
 
+                                    // Don't debug p2p inner packet (SLP) here.
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                                        " Buffering splitted SLP message! DataRemaining:" + totalMessage.V2Header.DataRemaining +
+                                        " NewIdentifier: " + newIdentifier);
+
                                     if (p2pMessage.V2Header.DataRemaining > 0)
                                     {
-                                        incompletedP2PV2Messages[newIdentifier] = totalMessage;
-
                                         // Don't debug p2p packet here. Because it hasn't completed yet and SLPMessage.Parse() fails...
-                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Buffering splitted messages and hasn't completed yet! DataRemaining:" + totalMessage.V2Header.DataRemaining);
+                                        incompletedP2PV2Messages[newIdentifier] = totalMessage;
                                         return true; // Buffering
                                     }
                                     else // Last part
