@@ -219,7 +219,16 @@ namespace MSNPSharp.P2P
             get
             {
                 if (base.InnerMessage == null && InnerBody != null && InnerBody.Length > 0)
-                    base.InnerMessage = SLPMessage.Parse(InnerBody);
+                {
+                    if (Version == P2PVersion.P2PV1 && V1Header.MessageSize == V1Header.TotalSize)
+                    {
+                        base.InnerMessage = SLPMessage.Parse(InnerBody);
+                    }
+                    else if (Version == P2PVersion.P2PV2 && V2Header.DataRemaining == 0 && V2Header.TFCombination == TFCombination.First)
+                    {
+                        base.InnerMessage = SLPMessage.Parse(InnerBody);
+                    }
+                }
 
                 return base.InnerMessage;
             }
