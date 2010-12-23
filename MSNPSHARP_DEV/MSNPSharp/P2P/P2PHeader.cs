@@ -338,7 +338,7 @@ namespace MSNPSharp.P2P
         {
             get
             {
-                if (IsAcknowledgement)
+                if (AckIdentifier != 0)
                     return false;
 
                 if ((MessageSize + Offset) == TotalSize)
