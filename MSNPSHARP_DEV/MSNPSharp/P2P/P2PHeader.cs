@@ -142,6 +142,7 @@ namespace MSNPSharp.P2P
         }
 
         public abstract P2PHeader CreateAck();
+        public abstract P2PHeader CreateNak();
         public abstract int ParseHeader(byte[] data);
         public abstract byte[] GetBytes();
 
@@ -359,6 +360,13 @@ namespace MSNPSharp.P2P
             ack.AckIdentifier = AckSessionId;
             ack.AckTotalSize = TotalSize;
             return ack;
+        }
+
+        public override P2PHeader CreateNak()
+        {
+            P2Pv1Header nak = (P2Pv1Header)CreateAck();
+            nak.Flags = P2PFlag.NegativeAck;
+            return nak;
         }
 
         public override int ParseHeader(byte[] data)
@@ -717,6 +725,16 @@ namespace MSNPSharp.P2P
             }
 
             return ack;
+        }
+
+
+        public override P2PHeader CreateNak()
+        {
+            P2Pv2Header nak = new P2Pv2Header();
+
+            nak.NakIdentifier = Identifier + MessageSize;
+
+            return nak;
         }
 
         /// <summary>
