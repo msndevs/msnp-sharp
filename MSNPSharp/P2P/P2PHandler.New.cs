@@ -138,14 +138,8 @@ namespace MSNPSharp.P2P
 
         public void ProcessP2PMessage(P2PBridge bridge, Contact source, Guid sourceGuid, P2PMessage p2pMessage)
         {
-            bool handled = false;
-
             // 1) HANDLE RAK: RAKs are session independent and mustn't be quoted on bridges.
-            if (p2pMessage.Header.RequireAck)
-            {
-                handled = true;
-                HandleRAK(bridge, source, sourceGuid, p2pMessage);
-            }
+            bool requireAck = HandleRAK(bridge, source, sourceGuid, p2pMessage);
 
             // 2) SLP BUFFERING: Combine splitted SLP messages
             if (slpMessagePool.BufferMessage(ref p2pMessage))
@@ -167,9 +161,8 @@ namespace MSNPSharp.P2P
             }
 
             // 4) HANDLE ACK: ACK/NAK to our RAK message
-            if (p2pMessage.Header.IsAcknowledgement || p2pMessage.Header.IsNegativeAck)
+            if (HandleACK(p2pMessage))
             {
-                HandleACK(p2pMessage);
                 return;
             }
 
@@ -187,7 +180,7 @@ namespace MSNPSharp.P2P
                     return;
             }
 
-            if (!handled)
+            if (!requireAck)
             {
                 // UNHANDLED P2P MESSAGE
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
@@ -282,86 +275,103 @@ namespace MSNPSharp.P2P
 
         #region HandleAck
 
-        private void HandleACK(P2PMessage p2pMessage)
+        private bool HandleACK(P2PMessage p2pMessage)
         {
-            KeyValuePair<P2PMessage, AckHandler>? pair = null;
-            uint ackNakId = 0;
+            bool isAckOrNak = false;
 
-            if (p2pMessage.Version == P2PVersion.P2PV1)
+            if (p2pMessage.Header.IsAcknowledgement || p2pMessage.Header.IsNegativeAck)
             {
-                lock (ackHandlersV1)
+                KeyValuePair<P2PMessage, AckHandler>? pair = null;
+                uint ackNakId = 0;
+                isAckOrNak = true;
+
+                if (p2pMessage.Version == P2PVersion.P2PV1)
                 {
-                    if (ackHandlersV1.ContainsKey(p2pMessage.Header.AckIdentifier))
+                    lock (ackHandlersV1)
                     {
-                        ackNakId = p2pMessage.Header.AckIdentifier;
-                        pair = ackHandlersV1[ackNakId];
-                        ackHandlersV1.Remove(ackNakId);
+                        if (ackHandlersV1.ContainsKey(p2pMessage.Header.AckIdentifier))
+                        {
+                            ackNakId = p2pMessage.Header.AckIdentifier;
+                            pair = ackHandlersV1[ackNakId];
+                            ackHandlersV1.Remove(ackNakId);
+                        }
                     }
                 }
-            }
-            else if (p2pMessage.Version == P2PVersion.P2PV2)
-            {
-                lock (ackHandlersV2)
+                else if (p2pMessage.Version == P2PVersion.P2PV2)
                 {
-                    if (ackHandlersV2.ContainsKey(p2pMessage.Header.AckIdentifier))
+                    lock (ackHandlersV2)
                     {
-                        ackNakId = p2pMessage.Header.AckIdentifier;
-                        pair = ackHandlersV2[ackNakId];
-                        ackHandlersV2.Remove(ackNakId);
-                    }
-                    else if (ackHandlersV2.ContainsKey(p2pMessage.V2Header.NakIdentifier))
-                    {
-                        ackNakId = p2pMessage.V2Header.NakIdentifier;
-                        pair = ackHandlersV2[ackNakId];
-                        ackHandlersV2.Remove(ackNakId);
+                        if (ackHandlersV2.ContainsKey(p2pMessage.Header.AckIdentifier))
+                        {
+                            ackNakId = p2pMessage.Header.AckIdentifier;
+                            pair = ackHandlersV2[ackNakId];
+                            ackHandlersV2.Remove(ackNakId);
+                        }
+                        else if (ackHandlersV2.ContainsKey(p2pMessage.V2Header.NakIdentifier))
+                        {
+                            ackNakId = p2pMessage.V2Header.NakIdentifier;
+                            pair = ackHandlersV2[ackNakId];
+                            ackHandlersV2.Remove(ackNakId);
+                        }
                     }
                 }
-            }
 
-            if (ackNakId == 0)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                    String.Format("!!!!!! No AckHandler registered for ack/nak {0}:\r\n{1}", p2pMessage.Header.AckIdentifier, p2pMessage.ToDebugString()), GetType().Name);
-            }
-            else
-            {
-                if (pair.HasValue && pair.Value.Value != null)
+                if (ackNakId == 0)
                 {
-                    pair.Value.Value(p2pMessage);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                        String.Format("!!!!!! No AckHandler registered for ack/nak {0}:\r\n{1}", p2pMessage.Header.AckIdentifier, p2pMessage.ToDebugString()), GetType().Name);
                 }
                 else
                 {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                        String.Format("!!!!!! No AckHandler pair for ack {0}\r\n{1}", ackNakId, p2pMessage.ToDebugString()), GetType().Name);
+                    if (pair.HasValue && pair.Value.Value != null)
+                    {
+                        pair.Value.Value(p2pMessage);
+                    }
+                    else
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                            String.Format("!!!!!! No AckHandler pair for ack {0}\r\n{1}", ackNakId, p2pMessage.ToDebugString()), GetType().Name);
+                    }
                 }
             }
+
+            return isAckOrNak;
         }
 
         #endregion
 
         #region HandleRAK
 
-        private void HandleRAK(P2PBridge bridge, Contact source, Guid sourceGuid, P2PMessage msg)
+        private bool HandleRAK(P2PBridge bridge, Contact source, Guid sourceGuid, P2PMessage msg)
         {
-            P2PMessage ack = msg.CreateAcknowledgement();
-            ack.Header.Identifier = bridge.localTrackerId;
+            bool requireAck = false;
 
-            if (ack.Header.RequireAck)
+            if (msg.Header.RequireAck)
             {
-                // SYN
-                bridge.Send(null, source, sourceGuid, ack, delegate(P2PMessage sync)
+                requireAck = true;
+
+                P2PMessage ack = msg.CreateAcknowledgement();
+                ack.Header.Identifier = bridge.localTrackerId;
+
+                if (ack.Header.RequireAck)
                 {
-                    bridge.SyncId = sync.Header.AckIdentifier;
+                    // SYN
+                    bridge.Send(null, source, sourceGuid, ack, delegate(P2PMessage sync)
+                    {
+                        bridge.SyncId = sync.Header.AckIdentifier;
 
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
-                        String.Format("SYNC completed for: {0}", bridge), GetType().Name);
-                });
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                            String.Format("SYNC completed for: {0}", bridge), GetType().Name);
+                    });
+                }
+                else
+                {
+                    // ACK
+                    bridge.Send(null, source, sourceGuid, ack, null);
+                }
             }
-            else
-            {
-                // ACK
-                bridge.Send(null, source, sourceGuid, ack, null);
-            }
+
+            return requireAck;
         }
 
         #endregion
