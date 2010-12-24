@@ -772,6 +772,21 @@ namespace MSNPSharp.P2P
 
                         return true;
                     }
+                    else if (slpRequest.ContentType == "application/x-msnmsgr-sessionreqbody" &&
+                        slpRequest.Method == "INVITE")
+                    {
+                        SLPStatusMessage slpMessage = new SLPStatusMessage(RemoteContactEPIDString, 500, "Internal Error");
+                        slpMessage.Target = RemoteContactEPIDString;
+                        slpMessage.Source = LocalContactEPIDString;
+                        slpMessage.Branch = invitation.Branch;
+                        slpMessage.CallId = invitation.CallId;
+                        slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
+                        slpMessage.BodyValues["SessionID"] = SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+                        P2PMessage errorMessage = WrapSLPMessage(slpMessage);
+                        bridge.Send(null, Remote, RemoteContactEndPointID, errorMessage, null);
+                        return true;
+                    }
                     else
                     {
                         if (slpRequest.ContentType == "application/x-msnmsgr-transreqbody" ||
