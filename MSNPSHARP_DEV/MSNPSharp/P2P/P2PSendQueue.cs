@@ -96,13 +96,21 @@ namespace MSNPSharp.P2P
         {
             lock (this)
             {
+                P2PSendItem? removeItem = null;
+
                 foreach (P2PSendItem item in this)
                 {
                     if (item.P2PMessage == msg)
                     {
-                        Remove(item);
-                        return;
+                        removeItem = item;
+                        break;
                     }
+                }
+
+                if (removeItem != null)
+                {
+                    Remove(removeItem.Value);
+                    return;
                 }
             }
 
