@@ -1477,6 +1477,15 @@ namespace MSNPSharp
                     //Get UserTileLocation
                     contact.UserTileLocation = GetUserTileLocationFromUBXXmlData(xmlDoc);
 
+                    // Get the scenes context
+                    string newSceneContext = GetSceneContextFromUBXXmlData(xmlDoc);
+
+                    if (contact.SceneContext != newSceneContext)
+                    {
+                        contact.SceneContext = newSceneContext;
+                        contact.FireSceneImageContextChangedEvent(newSceneContext);
+                    }
+
                     //Get endpoint data.
                     bool isPrivateEndPoint = (contact is Owner);
 
@@ -1604,6 +1613,17 @@ namespace MSNPSharp
             if (userTileLocationNode != null)
             {
                 return string.IsNullOrEmpty(userTileLocationNode.InnerXml) ? string.Empty : userTileLocationNode.InnerText;
+            }
+
+            return string.Empty;
+        }
+
+        private string GetSceneContextFromUBXXmlData(XmlDocument ubxData)
+        {
+            XmlNode sceneLocationNode = ubxData.SelectSingleNode(@"//Data/Scene");
+            if (sceneLocationNode != null)
+            {
+                return string.IsNullOrEmpty(sceneLocationNode.InnerXml) ? string.Empty : sceneLocationNode.InnerText;
             }
 
             return string.Empty;

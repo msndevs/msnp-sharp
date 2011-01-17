@@ -69,6 +69,10 @@ namespace MSNPSharp.Apps
                 {
                     msnObject.SetContext(Remote.UserTileLocation, false);
                 }
+                else if (msnObject.ObjectType == MSNObjectType.Scene)
+                {
+                    msnObject.SetContext(Remote.SceneContext, false);
+                }
 
                 return Convert.ToBase64String(Encoding.UTF8.GetBytes(msnObject.ContextPlain));
             }
@@ -106,6 +110,11 @@ namespace MSNPSharp.Apps
                 msnObject = NSMessageHandler.ContactList.Owner.DisplayImage;
                 objStream = NSMessageHandler.ContactList.Owner.DisplayImage.OpenStream();
             }
+            else if (msnObject.ObjectType == MSNObjectType.Scene)
+            {
+                msnObject = NSMessageHandler.ContactList.Owner.SceneImage;
+                objStream = NSMessageHandler.ContactList.Owner.SceneImage.OpenStream();
+            }
             else if (msnObject.ObjectType == MSNObjectType.Emoticon &&
                 Local.Emoticons.ContainsKey(msnObject.Sha))
             {
@@ -132,6 +141,12 @@ namespace MSNPSharp.Apps
                 msnObject = new DisplayImage();
                 applicationId = 12;
                 msnObject.SetContext(remote.UserTileLocation, false);
+            }
+            else if (msnObject.ObjectType == MSNObjectType.Scene)
+            {
+                msnObject = new SceneImage();
+                applicationId = 12;
+                msnObject.SetContext(remote.SceneContext, false);
             }
             else if (msnObject.ObjectType == MSNObjectType.Emoticon)
             {
@@ -166,6 +181,12 @@ namespace MSNPSharp.Apps
                 {
                     msnObject = Local.DisplayImage;
                     objStream = Local.DisplayImage.OpenStream();
+                    ret |= true;
+                }
+                else if (validObject.ObjectType == MSNObjectType.Scene)
+                {
+                    msnObject = Local.SceneImage;
+                    objStream = Local.SceneImage.OpenStream();
                     ret |= true;
                 }
                 else if (validObject.ObjectType == MSNObjectType.Emoticon &&
@@ -305,6 +326,13 @@ namespace MSNPSharp.Apps
                         Remote.SetDisplayImageAndFireDisplayImageChangedEvent(newDisplayImage);
 
                         msnObject = newDisplayImage;
+                    }
+                    else if (msnObject.ObjectType == MSNObjectType.Scene)
+                    {
+                        SceneImage newSceneImage = new SceneImage(Remote.Mail.ToLowerInvariant(), ms);
+                        Remote.SetSceneImageAndFireSceneImageChangedEvent(newSceneImage);
+
+                        msnObject = newSceneImage;
                     }
                     else if (msnObject.ObjectType == MSNObjectType.Emoticon)
                     {

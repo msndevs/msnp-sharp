@@ -788,6 +788,71 @@ namespace MSNPSharp
     }
 
     /// <summary>
+    /// Event argument used when a user's <see cref="SceneImage"/> property has been changed.
+    /// </summary>
+    public class SceneImageChangedEventArgs : EventArgs
+    {
+        private bool callFromContactManager = false;
+        private DisplayImageChangedType status = DisplayImageChangedType.None;
+        private SceneImage newSceneImage = null;
+
+        public SceneImage NewDisplayImage
+        {
+            get
+            {
+                return newSceneImage;
+            }
+        }
+
+        /// <summary>
+        ///  The reason that fires <see cref="Contact.SceneImageChanged"/> event.
+        /// </summary>
+        public DisplayImageChangedType Status
+        {
+            get
+            {
+                return status;
+            }
+        }
+
+        /// <summary>
+        /// Whether we need to do display image synchronize.
+        /// </summary>
+        internal bool CallFromContactManager
+        {
+            get
+            {
+                return callFromContactManager;
+            }
+        }
+
+        private SceneImageChangedEventArgs()
+        {
+        }
+
+        internal SceneImageChangedEventArgs(SceneImage sceneImage, DisplayImageChangedType type, bool needSync)
+        {
+            status = type;
+            callFromContactManager = needSync;
+            newSceneImage = sceneImage;
+        }
+
+        internal SceneImageChangedEventArgs(SceneImageChangedEventArgs arg, bool needSync)
+        {
+            status = arg.Status;
+            callFromContactManager = needSync;
+            newSceneImage = arg.NewDisplayImage;
+        }
+
+        public SceneImageChangedEventArgs(SceneImage sceneImage, DisplayImageChangedType type)
+        {
+            status = type;
+            callFromContactManager = false;
+            newSceneImage = sceneImage;
+        }
+    }
+
+    /// <summary>
     /// Use when receiving messages from IM network other than MSN.
     /// </summary>
     public class CrossNetworkMessageEventArgs : EventArgs
