@@ -110,7 +110,11 @@ namespace MSNPSharp
         /// <summary>
         /// Signature sound
         /// </summary>
-        SignatureSound = 14
+        SignatureSound = 14,
+        /// <summary>
+        /// Scene image
+        /// </summary>
+        Scene = 16
     }
 
     /// <summary>
@@ -408,6 +412,9 @@ namespace MSNPSharp
                                     break;
                                 case "8":
                                     type = MSNObjectType.Wink;
+                                    break;
+                                case "16":
+                                    type = MSNObjectType.Scene;
                                     break;
                             }
                             break;

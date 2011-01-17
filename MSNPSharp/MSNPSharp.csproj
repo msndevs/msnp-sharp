@@ -66,6 +66,7 @@
     <Compile Include="Credentials.cs" />
     <Compile Include="Core\MimeDictionary.cs" />
     <Compile Include="DisplayImage.cs" />
+    <Compile Include="SceneImage.cs"/>
     <Compile Include="Emoticon.cs" />
     <Compile Include="EmoticonMessage.cs" />
     <Compile Include="EndPointData.cs" />

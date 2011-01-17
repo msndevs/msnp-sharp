@@ -83,6 +83,7 @@ namespace MSNPSharp
         private MSNLists lists = MSNLists.None;
 
         private DisplayImage displayImage = null;
+        private SceneImage sceneImage = new SceneImage();
         private PersonalMessage personalMessage = null;
 
 
@@ -97,6 +98,7 @@ namespace MSNPSharp
         private List<ActivityDetailsType> activities = new List<ActivityDetailsType>(0);
         private Uri userTile = null;
         private string userTileLocation = string.Empty;
+        private string sceneContext = string.Empty;
 
         [NonSerialized]
         private object syncObject = new object();
@@ -184,6 +186,10 @@ namespace MSNPSharp
         /// </summary>
         public event EventHandler<DisplayImageChangedEventArgs> DisplayImageChanged;
 
+        /// <summary>
+        /// Fired after contact's scene has been changed.
+        /// </summary>
+        public event EventHandler<SceneImageChangedEventArgs> SceneImageChanged;
 
         public event EventHandler<EventArgs> DirectBridgeEstablished;
 
@@ -191,6 +197,12 @@ namespace MSNPSharp
         /// Fired after received contact's display image changed notification.
         /// </summary>
         public event EventHandler<DisplayImageChangedEventArgs> DisplayImageContextChanged;
+
+        /// <summary>
+        /// Fired after receiving notification that the contact's display image has changed.
+        /// </summary>
+        public event EventHandler<SceneImageChangedEventArgs> SceneImageContextChanged;
+
         public event EventHandler<ContactGroupEventArgs> ContactGroupAdded;
         public event EventHandler<ContactGroupEventArgs> ContactGroupRemoved;
         public event EventHandler<EventArgs> ContactBlocked;
@@ -263,6 +275,22 @@ namespace MSNPSharp
             internal set
             {
                 userTileLocation = MSNObject.GetDecodeString(value);
+            }
+        }
+
+        /// <summary>
+        /// The scenes context.
+        /// </summary>
+        public string SceneContext
+        {
+            get
+            {
+                return sceneContext;
+            }
+
+            internal set
+            {
+                sceneContext = MSNObject.GetDecodeString(value);
             }
         }
 
@@ -566,6 +594,23 @@ namespace MSNPSharp
                 {
                     displayImage = value;
                     SaveDisplayImage(displayImage);
+                }
+            }
+        }
+
+        public virtual SceneImage SceneImage
+        {
+            get
+            {
+                return sceneImage;
+            }
+
+            //Calling this will not fire SceneImageChanged event.
+            internal set
+            {
+                if (sceneImage != value)
+                {
+                    sceneImage = value;
                 }
             }
         }
@@ -1057,6 +1102,23 @@ namespace MSNPSharp
         }
 
         /// <summary>
+        /// This method will lead to fire <see cref="Contact.SceneImageContextChanged"/> event if the SceneImage.Sha has been changed.
+        /// </summary>
+        /// <param name="updatedImageContext"></param>
+        /// <returns>
+        /// false: No event was fired.<br/>
+        /// true: The <see cref="Contact.SceneImageContextChanged"/> was fired.
+        /// </returns>
+        internal bool FireSceneImageContextChangedEvent(string updatedImageContext)
+        {
+            if (SceneImage == updatedImageContext)
+                return false;
+
+            OnSceneImageContextChanged(new SceneImageChangedEventArgs(null, DisplayImageChangedType.UpdateTransmissionRequired));
+            return true;
+        }
+
+        /// <summary>
         /// This method will lead to fire <see cref="Contact.DisplayImageChanged"/> event if the DisplayImage.Image has been changed.
         /// </summary>
         /// <param name="image"></param>
@@ -1089,10 +1151,35 @@ namespace MSNPSharp
             return true;
         }
 
+        internal bool SetSceneImageAndFireSceneImageChangedEvent(SceneImage image)
+        {
+            if (image == null) return false;
+
+            SceneImageChangedEventArgs sceneImageChangedArg = null;
+            {
+                sceneImageChangedArg = new SceneImageChangedEventArgs(image, DisplayImageChangedType.TransmissionCompleted, false);
+            }
+
+            if (!object.ReferenceEquals(sceneImage, image))
+            {
+                sceneImage = image;
+            }
+
+            SaveOriginalSceneImageAndFireSceneImageChangedEvent(sceneImageChangedArg);
+
+            return true;
+        }
+
         internal void SaveOriginalDisplayImageAndFireDisplayImageChangedEvent(DisplayImageChangedEventArgs arg)
         {
             SaveDisplayImage(displayImage);
             OnDisplayImageChanged(arg);
+        }
+
+        internal void SaveOriginalSceneImageAndFireSceneImageChangedEvent(SceneImageChangedEventArgs arg)
+        {
+            //SaveDisplayImage(displayImage);
+            OnSceneImageChanged(arg);
         }
 
         internal void NotifyManager()
@@ -1160,11 +1247,27 @@ namespace MSNPSharp
             }
         }
 
+        protected virtual void OnSceneImageChanged(SceneImageChangedEventArgs arg)
+        {
+            if (SceneImageChanged != null)
+            {
+                SceneImageChanged(this, arg);
+            }
+        }
+
         protected virtual void OnDisplayImageContextChanged(DisplayImageChangedEventArgs arg)
         {
             if (DisplayImageContextChanged != null)
             {
                 DisplayImageContextChanged(this, arg);
+            }
+        }
+
+        protected virtual void OnSceneImageContextChanged(SceneImageChangedEventArgs arg)
+        {
+            if (SceneImageContextChanged != null)
+            {
+                SceneImageContextChanged(this, arg);
             }
         }
 
