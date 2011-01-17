@@ -56,10 +56,19 @@ using System.Drawing;
         private SerializableDictionary<string, uint> visitCount = new SerializableDictionary<string, uint>(MaxSlot);
         private SerializableDictionary<string, string> userImageRelationships = new SerializableDictionary<string, string>();
 
+        private SerializableDictionary<string, string> userSceneRelationships = new SerializableDictionary<string, string>();
+        private SerializableDictionary<string, byte[]> userSceneSlots = new SerializableDictionary<string, byte[]>(MaxSlot);
+
         public SerializableDictionary<string, string> UserImageRelationships
         {
             get { return userImageRelationships; }
             set { userImageRelationships = value; }
+        }
+
+        public SerializableDictionary<string, string> UserSceneRelationships
+        {
+            get { return userSceneRelationships; }
+            set { userSceneRelationships = value; }
         }
 
 
@@ -70,9 +79,18 @@ using System.Drawing;
         }
 
         /// <summary>
-        /// Data structure that store the user's display images.
+        /// Data structure that stores the user's display images.
         /// </summary>
         public SerializableDictionary<string, byte[]> UserTileSlots
+        {
+            get { return userTileSlots; }
+            set { userTileSlots = value; }
+        }
+
+        /// <summary>
+        /// Data structure that stores the user's scene images.
+        /// </summary>
+        public SerializableDictionary<string, byte[]> UserSceneSlots
         {
             get { return userTileSlots; }
             set { userTileSlots = value; }
@@ -137,10 +155,22 @@ using System.Drawing;
                 return UserImageRelationships.ContainsKey(siblingAccount.ToLowerInvariant());
         }
 
+        private bool HasSceneRelationship(string siblingAccount)
+        {
+            lock (UserSceneRelationships)
+                return UserSceneRelationships.ContainsKey(siblingAccount.ToLowerInvariant());
+        }
+
         private bool HasImage(string imageKey)
         {
             lock (UserTileSlots)
                 return UserTileSlots.ContainsKey(imageKey);
+        }
+
+        private bool HasScene(string imageKey)
+        {
+            lock (UserSceneSlots)
+                return UserSceneSlots.ContainsKey(imageKey);
         }
 
         private bool HasRelationshipAndImage(string siblingAccount, out string imageKey)
@@ -162,6 +192,25 @@ using System.Drawing;
             return true;
         }
 
+        private bool HasRelationshipAndScene(string siblingAccount, out string imageKey)
+        {
+            imageKey = string.Empty;
+            if (!HasSceneRelationship(siblingAccount))
+            {
+                return false;
+            }
+
+            string imgKey = string.Empty;
+            lock (UserSceneRelationships)
+                imgKey = UserSceneRelationships[siblingAccount.ToLowerInvariant()];
+
+            if (!HasScene(imgKey))
+                return false;
+
+            imageKey = imgKey;
+            return true;
+        }
+
         private void AddImage(string imageKey, byte[] data)
         {
             if (HasImage(imageKey))
@@ -171,10 +220,25 @@ using System.Drawing;
                 UserTileSlots[imageKey] = data;
         }
 
+        private void AddScene(string imageKey, byte[] data)
+        {
+            if (HasScene(imageKey))
+                return;
+
+            lock (UserSceneSlots)
+                UserSceneSlots[imageKey] = data;
+        }
+
         private void AddRelationship(string siblingAccount, string imageKey)
         {
             lock (UserImageRelationships)
                 UserImageRelationships[siblingAccount.ToLowerInvariant()] = imageKey;
+        }
+
+        private void AddSceneRelationship(string siblingAccount, string imageKey)
+        {
+            lock (UserSceneRelationships)
+                UserSceneRelationships[siblingAccount.ToLowerInvariant()] = imageKey;
         }
 
         private void AddImageAndRelationship(string siblingAccount, string imageKey, byte[] data)
@@ -326,6 +390,19 @@ using System.Drawing;
             return null;
         }
 
+        internal byte[] GetRawSceneDataBySiblingString(string siblingAccount, out string imageKey)
+        {
+            if (HasRelationshipAndScene(siblingAccount, out imageKey))
+            {
+                lock (UserSceneSlots)
+                {
+                    return UserSceneSlots[imageKey];
+                }
+            }
+
+            return null;
+        }
+
         internal bool SaveImageAndRelationship(string siblingAccount, string imageKey, byte[] userTile)
         {
 
@@ -350,6 +427,12 @@ using System.Drawing;
             }
 
             return true;
+        }
+
+        internal void SaveSceneAndRelationship(string siblingAccount, string imageKey, byte[] userTile)
+        {
+            AddScene(imageKey, userTile);
+            AddSceneRelationship(siblingAccount, imageKey);
         }
 
         #endregion

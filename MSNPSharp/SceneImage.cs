@@ -44,19 +44,19 @@ namespace MSNPSharp
     public class SceneImage : MSNObject
     {
         private Image image = null;
-        private bool isDefaultScene = false;
-        private Image defaultImage = Properties.Resources.WLXLarge_default;
-        private static string defaultLocation = "MSNPSharpDefault";
+        private bool isDefaultImage = false;
+        private Image defaultImage = Properties.Resources.default_scene;
+        private static string defaultLocation = "SceneDefault";
 
-        public bool IsDefaultScene
+        public bool IsDefaultImage
         {
             get
             {
-                return isDefaultScene;
+                return isDefaultImage;
             }
             protected internal set
             {
-                isDefaultScene = value;
+                isDefaultImage = value;
             }
         }
 
@@ -82,7 +82,7 @@ namespace MSNPSharp
                 DataStream = stream;
             }
 
-            isDefaultScene = isDefault;
+            isDefaultImage = isDefault;
             Creator = creator;
 
             RetrieveImage();
@@ -153,7 +153,7 @@ namespace MSNPSharp
         /// <returns></returns>
         internal byte[] GetRawData()
         {
-            if (IsDefaultScene)
+            if (isDefaultImage)
                 return null;
 
             if (DataStream == null)
@@ -174,7 +174,7 @@ namespace MSNPSharp
 
         protected override bool ContextEqual(string contextPlain)
         {
-            if (IsDefaultScene && string.IsNullOrEmpty(contextPlain))
+            if (isDefaultImage && string.IsNullOrEmpty(contextPlain))
                 return true;
 
             return base.ContextEqual(contextPlain);

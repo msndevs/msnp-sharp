@@ -83,7 +83,7 @@ namespace MSNPSharp
         private MSNLists lists = MSNLists.None;
 
         private DisplayImage displayImage = null;
-        private SceneImage sceneImage = new SceneImage();
+        private SceneImage sceneImage = null;
         private PersonalMessage personalMessage = null;
 
 
@@ -169,6 +169,7 @@ namespace MSNPSharp
             }
 
             displayImage = DisplayImage.CreateDefaultImage(Mail);
+            sceneImage = SceneImage.CreateDefaultImage(Mail);
 
             hasInitialized = true;
         }
@@ -199,7 +200,7 @@ namespace MSNPSharp
         public event EventHandler<DisplayImageChangedEventArgs> DisplayImageContextChanged;
 
         /// <summary>
-        /// Fired after receiving notification that the contact's display image has changed.
+        /// Fired after receiving notification that the contact's scene image has changed.
         /// </summary>
         public event EventHandler<SceneImageChangedEventArgs> SceneImageContextChanged;
 
@@ -582,7 +583,6 @@ namespace MSNPSharp
         {
             get
             {
-
                 LoadDisplayImageFromDeltas();
                 return displayImage;
             }
@@ -602,15 +602,15 @@ namespace MSNPSharp
         {
             get
             {
+                LoadSceneImageFromDeltas();
                 return sceneImage;
             }
-
-            //Calling this will not fire SceneImageChanged event.
             internal set
             {
                 if (sceneImage != value)
                 {
                     sceneImage = value;
+                    SaveSceneImage(sceneImage);
                 }
             }
         }
@@ -1114,7 +1114,8 @@ namespace MSNPSharp
             if (SceneImage == updatedImageContext)
                 return false;
 
-            OnSceneImageContextChanged(new SceneImageChangedEventArgs(null, DisplayImageChangedType.UpdateTransmissionRequired));
+            OnSceneImageContextChanged(new SceneImageChangedEventArgs(DisplayImageChangedType.UpdateTransmissionRequired, updatedImageContext == string.Empty));
+
             return true;
         }
 
@@ -1178,7 +1179,7 @@ namespace MSNPSharp
 
         internal void SaveOriginalSceneImageAndFireSceneImageChangedEvent(SceneImageChangedEventArgs arg)
         {
-            //SaveDisplayImage(displayImage);
+            SaveSceneImage(SceneImage);
             OnSceneImageChanged(arg);
         }
 
@@ -1290,6 +1291,25 @@ namespace MSNPSharp
             }
         }
 
+        protected virtual void LoadSceneImageFromDeltas()
+        {
+            if (NSMessageHandler.ContactService.Deltas == null)
+                return;
+
+            if (sceneImage != null && !sceneImage.IsDefaultImage) //Not default, no need to restore.
+                return;
+
+            string Sha = string.Empty;
+            byte[] rawImageData = NSMessageHandler.ContactService.Deltas.GetRawSceneDataBySiblingString(SiblingString, out Sha);
+            if (rawImageData != null)
+            {
+                sceneImage = new SceneImage(Mail, new MemoryStream(rawImageData));
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "User " + ToString() + "'s scene image restored.\r\n " +
+                    "Old SHA:     " + Sha + "\r\n " +
+                    "Current SHA: " + displayImage.Sha + "\r\n");
+            }
+        }
+
         protected virtual void SaveDisplayImage(DisplayImage dispImage)
         {
             if (NSMessageHandler.ContactService.Deltas == null || dispImage == null)
@@ -1302,6 +1322,18 @@ namespace MSNPSharp
             {
                 NSMessageHandler.ContactService.Deltas.Save(true);
             }
+        }
+
+        protected virtual void SaveSceneImage(SceneImage sceneImage)
+        {
+            if (NSMessageHandler.ContactService.Deltas == null || sceneImage == null)
+                return;
+
+            if (sceneImage.Image == null || string.IsNullOrEmpty(sceneImage.Sha))
+                return;
+
+            NSMessageHandler.ContactService.Deltas.SaveSceneAndRelationship(SiblingString, sceneImage.Sha, sceneImage.GetRawData());
+            NSMessageHandler.ContactService.Deltas.Save(true);
         }
 
         #endregion
