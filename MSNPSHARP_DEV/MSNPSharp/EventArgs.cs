@@ -793,10 +793,11 @@ namespace MSNPSharp
     public class SceneImageChangedEventArgs : EventArgs
     {
         private bool callFromContactManager = false;
+        private bool isDefault = false;
         private DisplayImageChangedType status = DisplayImageChangedType.None;
         private SceneImage newSceneImage = null;
 
-        public SceneImage NewDisplayImage
+        public SceneImage NewSceneImage
         {
             get
             {
@@ -816,7 +817,18 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Whether we need to do display image synchronize.
+        ///  If the user has chosen to set his scene image to default.
+        /// </summary>
+        public bool IsDefault
+        {
+            get
+            {
+                return isDefault;
+            }
+        }
+
+        /// <summary>
+        /// Whether we need to synchronize the scene image.
         /// </summary>
         internal bool CallFromContactManager
         {
@@ -837,18 +849,13 @@ namespace MSNPSharp
             newSceneImage = sceneImage;
         }
 
-        internal SceneImageChangedEventArgs(SceneImageChangedEventArgs arg, bool needSync)
-        {
-            status = arg.Status;
-            callFromContactManager = needSync;
-            newSceneImage = arg.NewDisplayImage;
-        }
-
-        public SceneImageChangedEventArgs(SceneImage sceneImage, DisplayImageChangedType type)
+        public SceneImageChangedEventArgs(DisplayImageChangedType type, bool isDefault)
         {
             status = type;
             callFromContactManager = false;
-            newSceneImage = sceneImage;
+            newSceneImage = null;
+
+            this.isDefault = isDefault;
         }
     }
 

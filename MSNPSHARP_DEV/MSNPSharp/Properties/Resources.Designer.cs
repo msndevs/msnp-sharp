@@ -69,6 +69,13 @@ namespace MSNPSharp.Properties {
             }
         }
         
+        internal static System.Drawing.Bitmap default_scene {
+            get {
+                object obj = ResourceManager.GetObject("default_scene", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
         /// <summary>
         ///   Looks up a localized string similar to 4.0.0.1824.
         /// </summary>

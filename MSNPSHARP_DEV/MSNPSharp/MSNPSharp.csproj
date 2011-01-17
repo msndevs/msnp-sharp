@@ -389,6 +389,7 @@
   <ItemGroup>
     <None Include="Resources\msnpsharp.snk" />
     <None Include="Resources\WLXLarge_default.gif" />
+    <None Include="Resources\default_scene.jpg" />
     <None Include="Web References\MSNWS.MSNABSharingService\ABAddResponseType.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
