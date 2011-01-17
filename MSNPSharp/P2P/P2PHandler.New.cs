@@ -520,7 +520,6 @@ namespace MSNPSharp.P2P
                 }
                 else
                 {
-                    bridge.Send(null, source, sourceGuid, msg.CreateAcknowledgement(), null);
                     SendSLPStatus(bridge, msg, source, sourceGuid, 404, "Not Found");
                 }
 

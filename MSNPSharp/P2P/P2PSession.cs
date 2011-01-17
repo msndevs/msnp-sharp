@@ -31,11 +31,11 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
+using System.Text;
 using System.Threading;
+using System.Diagnostics;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
-using System.Diagnostics;
 
 namespace MSNPSharp.P2P
 {
@@ -311,7 +311,8 @@ namespace MSNPSharp.P2P
         #region Constructors and Destructors
 
         /// <summary>
-        /// We are sender. (Initiated locally).
+        /// Creates a new session initiated locally and prepares the invitation message.
+        /// The next step must be Invite().
         /// </summary>
         public P2PSession(P2PApplication app)
         {
@@ -348,7 +349,9 @@ namespace MSNPSharp.P2P
         }
 
         /// <summary>
-        /// We are receiver. (Initiated remotely)
+        /// Creates a new session initiated remotely. If the application cannot be handled, decline message will be sent.
+        /// The application will handle all messages automatically and no user interaction is required if AutoAccept is true.
+        /// If AutoAccept is false, <see cref="P2PHandler.InvitationReceived"/> event will be fired.
         /// </summary>
         public P2PSession(SLPRequestMessage slp, P2PMessage msg, NSMessageHandler ns, P2PBridge bridge)
         {
@@ -420,19 +423,7 @@ namespace MSNPSharp.P2P
             }
             else
             {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
-                    String.Format("{0} app DECLINES this invite:\r\n{1}", SessionId, slp), GetType().Name);
-
-                SLPStatusMessage slpMessage = new SLPStatusMessage(RemoteContactEPIDString, 500, "Internal Error");
-                slpMessage.Target = RemoteContactEPIDString;
-                slpMessage.Source = LocalContactEPIDString;
-                slpMessage.Branch = invitation.Branch;
-                slpMessage.CallId = invitation.CallId;
-                slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
-                slpMessage.BodyValues["SessionID"] = SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
-
-                P2PMessage p2pMessage = WrapSLPMessage(slpMessage);
-                Send(p2pMessage);
+                Decline();
             }
         }
 
