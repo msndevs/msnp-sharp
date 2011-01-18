@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -44,6 +44,7 @@
   <ItemGroup>
     <Compile Include="Apps\FileTransfer.cs" />
     <Compile Include="Apps\ObjectTransfer.cs" />
+    <Compile Include="Apps\P2PActivity.cs" />
     <Compile Include="Apps\P2PApplication.cs" />
     <Compile Include="Circle.cs" />
     <Compile Include="CircleList.cs" />
@@ -66,7 +67,7 @@
     <Compile Include="Credentials.cs" />
     <Compile Include="Core\MimeDictionary.cs" />
     <Compile Include="DisplayImage.cs" />
-    <Compile Include="SceneImage.cs"/>
+    <Compile Include="SceneImage.cs" />
     <Compile Include="Emoticon.cs" />
     <Compile Include="EmoticonMessage.cs" />
     <Compile Include="EndPointData.cs" />

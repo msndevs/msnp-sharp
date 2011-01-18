@@ -1214,6 +1214,22 @@ namespace MSNPSharpClient
                 FileTransferForm ftf = new FileTransferForm(e.P2PSession);
                 ftf.Show(this);
             }
+            else if (e.P2PSession.Application is P2PActivity)
+            {
+                P2PActivity p2pActivity = e.P2PSession.Application as P2PActivity;
+
+                if (MessageBox.Show(
+                     e.P2PSession.Remote.Name +
+                    " wants to invite you to join an activity.\r\n\r\nActivity name: " +
+                    p2pActivity.ActivityName + "\r\nAppID: " + 
+                    p2pActivity.ApplicationId + "\r\nEufGuid: " +
+                    p2pActivity.ApplicationEufGuid,
+                    "Activity invitation",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    e.P2PSession.Accept(false);
+                }
+            }
             else if (e.P2PSession.Application is P2PApplication)
             {
                 if (MessageBox.Show(
