@@ -35,6 +35,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Diagnostics;
+using System.Globalization;
 using System.Collections.Generic;
 
 namespace MSNPSharp.P2P
@@ -193,7 +194,7 @@ namespace MSNPSharp.P2P
 
             slpMessage.BodyValues["Bridges"] = "TCPv1 SBBridge";
             slpMessage.BodyValues["Capabilities-Flags"] = "1";
-            slpMessage.BodyValues["NetID"] = netId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            slpMessage.BodyValues["NetID"] = netId.ToString(CultureInfo.InvariantCulture);
             slpMessage.BodyValues["Conn-Type"] = connectionType;
             slpMessage.BodyValues["TCP-Conn-Type"] = connectionType;
             slpMessage.BodyValues["UPnPNat"] = "false"; // UPNP Enabled
@@ -202,7 +203,7 @@ namespace MSNPSharp.P2P
 
             // We support Hashed-Nonce ( 2 way handshake )
             remote.GenerateNewDCKeys();
-            slpMessage.BodyValues["Hashed-Nonce"] = remote.dcLocalHashedNonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+            slpMessage.BodyValues["Hashed-Nonce"] = remote.dcLocalHashedNonce.ToString("B").ToUpper(CultureInfo.InvariantCulture);
 
             p2pMessage.InnerMessage = slpMessage;
 
@@ -283,7 +284,7 @@ namespace MSNPSharp.P2P
                     (0 == (port = GetNextDirectConnectionPort(ipAddress))))
                 {
                     slpMessage.BodyValues["Listening"] = "false";
-                    slpMessage.BodyValues[nonceFieldName] = Guid.Empty.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+                    slpMessage.BodyValues[nonceFieldName] = Guid.Empty.ToString("B").ToUpper(CultureInfo.InvariantCulture);
                 }
                 else
                 {
@@ -300,16 +301,16 @@ namespace MSNPSharp.P2P
 
                     slpMessage.BodyValues["Conn-Type"] = "Direct-Connect";
                     slpMessage.BodyValues["TCP-Conn-Type"] = "Direct-Connect";
-                    slpMessage.BodyValues[nonceFieldName] = myHashedNonce.ToString("B").ToUpper(System.Globalization.CultureInfo.InvariantCulture);
+                    slpMessage.BodyValues[nonceFieldName] = myHashedNonce.ToString("B").ToUpper(CultureInfo.InvariantCulture);
                     slpMessage.BodyValues["IPv4Internal-Addrs"] = ipAddress.ToString();
-                    slpMessage.BodyValues["IPv4Internal-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                    slpMessage.BodyValues["IPv4Internal-Port"] = port.ToString(CultureInfo.InvariantCulture);
 
                     // check if client is behind firewall (NAT-ted)
                     // if so, send the public ip also the client, so it can try to connect to that ip
                     if (!ns.ExternalEndPoint.Address.Equals(ns.LocalEndPoint.Address))
                     {
                         slpMessage.BodyValues["IPv4External-Addrs"] = ns.ExternalEndPoint.Address.ToString();
-                        slpMessage.BodyValues["IPv4External-Port"] = port.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                        slpMessage.BodyValues["IPv4External-Port"] = port.ToString(CultureInfo.InvariantCulture);
                     }
                 }
 
@@ -451,7 +452,7 @@ namespace MSNPSharp.P2P
 
             tcpBridge.Listen(IPAddress.Parse(cs.LocalHost), cs.LocalPort);
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Listening on " + cs.LocalHost + ":" + cs.LocalPort.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Listening on " + cs.LocalHost + ":" + cs.LocalPort.ToString(CultureInfo.InvariantCulture));
 
             return tcpBridge;
         }
@@ -462,7 +463,7 @@ namespace MSNPSharp.P2P
 
             TCPv1Bridge tcpBridge = new TCPv1Bridge(cs, ver, replyGuid, remoteNonce, hashed, startupSession, nsMessageHandler, remote);
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Trying to setup direct connection with remote host " + ipep.Address + ":" + ipep.Port.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Trying to setup direct connection with remote host " + ipep.Address + ":" + ipep.Port.ToString(CultureInfo.InvariantCulture));
 
             tcpBridge.Connect();
 
@@ -564,12 +565,18 @@ namespace MSNPSharp.P2P
                 if (bodyValues.ContainsKey("IPv4External-Addrs"))
                 {
                     string[] addrs = bodyValues["IPv4External-Addrs"].Value.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                    int port = int.Parse(bodyValues["IPv4External-Port"].ToString(), System.Globalization.CultureInfo.InvariantCulture);
-                    IPAddress ip;
-                    foreach (string addr in addrs)
+                    string[] ports = bodyValues["IPv4External-Port"].Value.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    if (addrs.Length == ports.Length)
                     {
-                        if (IPAddress.TryParse(addr, out ip))
-                            externalPoints.Add(new IPEndPoint(ip, port));
+                        IPAddress ip;
+                        int port;
+
+                        for (int i = 0; i < addrs.Length; i++)
+                        {
+                            if (IPAddress.TryParse(addrs[i], out ip) && int.TryParse(ports[i], NumberStyles.Integer, CultureInfo.InvariantCulture, out port))
+                                externalPoints.Add(new IPEndPoint(ip, port));
+                        }
                     }
                 }
                 else if (bodyValues.ContainsKey("IPv4ExternalAddrsAndPorts"))
@@ -593,13 +600,18 @@ namespace MSNPSharp.P2P
 
                     char[] revPort = bodyValues["troP-lanretxE4vPI"].ToString().ToCharArray();
                     Array.Reverse(revPort);
-                    int port = int.Parse(new string(revPort), System.Globalization.CultureInfo.InvariantCulture);
+                    string[] ports = new string(revPort).Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-                    IPAddress ip;
-                    foreach (string addr in addrs)
+                    if (addrs.Length == ports.Length)
                     {
-                        if (IPAddress.TryParse(addr, out ip))
-                            externalPoints.Add(new IPEndPoint(ip, port));
+                        IPAddress ip;
+                        int port;
+
+                        for (int i = 0; i < addrs.Length; i++)
+                        {
+                            if (IPAddress.TryParse(addrs[i], out ip) && int.TryParse(ports[i], NumberStyles.Integer, CultureInfo.InvariantCulture, out port))
+                                externalPoints.Add(new IPEndPoint(ip, port));
+                        }
                     }
                 }
                 else if (bodyValues.ContainsKey("stroPdnAsrddAlanretxE4vPI"))
@@ -641,13 +653,18 @@ namespace MSNPSharp.P2P
                 if (bodyValues.ContainsKey("IPv4Internal-Addrs"))
                 {
                     string[] addrs = bodyValues["IPv4Internal-Addrs"].Value.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                    int port = int.Parse(bodyValues["IPv4Internal-Port"].ToString(), System.Globalization.CultureInfo.InvariantCulture);
+                    string[] ports = bodyValues["IPv4Internal-Port"].Value.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-                    IPAddress ip;
-                    foreach (string addr in addrs)
+                    if (addrs.Length == ports.Length)
                     {
-                        if (IPAddress.TryParse(addr, out ip))
-                            internalPoints.Add(new IPEndPoint(ip, port));
+                        IPAddress ip;
+                        int port;
+
+                        for (int i = 0; i < addrs.Length; i++)
+                        {
+                            if (IPAddress.TryParse(addrs[i], out ip) && int.TryParse(ports[i], NumberStyles.Integer, CultureInfo.InvariantCulture, out port))
+                                internalPoints.Add(new IPEndPoint(ip, port));
+                        }
                     }
                 }
                 else if (bodyValues.ContainsKey("IPv4InternalAddrsAndPorts"))
@@ -671,13 +688,18 @@ namespace MSNPSharp.P2P
 
                     char[] revPort = bodyValues["troP-lanretnI4vPI"].ToString().ToCharArray();
                     Array.Reverse(revPort);
-                    int port = int.Parse(new string(revPort), System.Globalization.CultureInfo.InvariantCulture);
+                    string[] ports = new string(revPort).Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-                    IPAddress ip;
-                    foreach (string addr in addrs)
+                    if (addrs.Length == ports.Length)
                     {
-                        if (IPAddress.TryParse(addr, out ip))
-                            internalPoints.Add(new IPEndPoint(ip, port));
+                        IPAddress ip;
+                        int port;
+
+                        for (int i = 0; i < addrs.Length; i++)
+                        {
+                            if (IPAddress.TryParse(addrs[i], out ip) && int.TryParse(ports[i], NumberStyles.Integer, CultureInfo.InvariantCulture, out port))
+                                internalPoints.Add(new IPEndPoint(ip, port));
+                        }
                     }
                 }
                 else if (bodyValues.ContainsKey("stroPdnAsrddAlanretnI4vPI"))
