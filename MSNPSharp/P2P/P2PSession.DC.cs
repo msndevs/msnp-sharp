@@ -567,15 +567,22 @@ namespace MSNPSharp.P2P
                     string[] addrs = bodyValues["IPv4External-Addrs"].Value.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                     string[] ports = bodyValues["IPv4External-Port"].Value.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-                    if (addrs.Length == ports.Length)
+                    if (addrs.Length > 0 && ports.Length > 0)
                     {
                         IPAddress ip;
-                        int port;
+                        int port = 0;
+                        int.TryParse(ports[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out port);
 
                         for (int i = 0; i < addrs.Length; i++)
                         {
-                            if (IPAddress.TryParse(addrs[i], out ip) && int.TryParse(ports[i], NumberStyles.Integer, CultureInfo.InvariantCulture, out port))
-                                externalPoints.Add(new IPEndPoint(ip, port));
+                            if (IPAddress.TryParse(addrs[i], out ip))
+                            {
+                                if (i < ports.Length)
+                                    int.TryParse(ports[i], NumberStyles.Integer, CultureInfo.InvariantCulture, out port);
+
+                                if (port > 0)
+                                    externalPoints.Add(new IPEndPoint(ip, port));
+                            }
                         }
                     }
                 }
@@ -602,15 +609,22 @@ namespace MSNPSharp.P2P
                     Array.Reverse(revPort);
                     string[] ports = new string(revPort).Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-                    if (addrs.Length == ports.Length)
+                    if (addrs.Length > 0 && ports.Length > 0)
                     {
                         IPAddress ip;
-                        int port;
+                        int port = 0;
+                        int.TryParse(ports[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out port);
 
                         for (int i = 0; i < addrs.Length; i++)
                         {
-                            if (IPAddress.TryParse(addrs[i], out ip) && int.TryParse(ports[i], NumberStyles.Integer, CultureInfo.InvariantCulture, out port))
-                                externalPoints.Add(new IPEndPoint(ip, port));
+                            if (IPAddress.TryParse(addrs[i], out ip))
+                            {
+                                if (i < ports.Length)
+                                    int.TryParse(ports[i], NumberStyles.Integer, CultureInfo.InvariantCulture, out port);
+
+                                if (port > 0)
+                                    externalPoints.Add(new IPEndPoint(ip, port));
+                            }
                         }
                     }
                 }
@@ -655,15 +669,22 @@ namespace MSNPSharp.P2P
                     string[] addrs = bodyValues["IPv4Internal-Addrs"].Value.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                     string[] ports = bodyValues["IPv4Internal-Port"].Value.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-                    if (addrs.Length == ports.Length)
+                    if (addrs.Length > 0 && ports.Length > 0)
                     {
                         IPAddress ip;
-                        int port;
+                        int port = 0;
+                        int.TryParse(ports[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out port);
 
                         for (int i = 0; i < addrs.Length; i++)
                         {
-                            if (IPAddress.TryParse(addrs[i], out ip) && int.TryParse(ports[i], NumberStyles.Integer, CultureInfo.InvariantCulture, out port))
-                                internalPoints.Add(new IPEndPoint(ip, port));
+                            if (IPAddress.TryParse(addrs[i], out ip))
+                            {
+                                if (i < ports.Length)
+                                    int.TryParse(ports[i], NumberStyles.Integer, CultureInfo.InvariantCulture, out port);
+
+                                if (port > 0)
+                                    internalPoints.Add(new IPEndPoint(ip, port));
+                            }
                         }
                     }
                 }
@@ -690,15 +711,22 @@ namespace MSNPSharp.P2P
                     Array.Reverse(revPort);
                     string[] ports = new string(revPort).Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-                    if (addrs.Length == ports.Length)
+                    if (addrs.Length > 0 && ports.Length > 0)
                     {
                         IPAddress ip;
-                        int port;
+                        int port = 0;
+                        int.TryParse(ports[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out port);
 
                         for (int i = 0; i < addrs.Length; i++)
                         {
-                            if (IPAddress.TryParse(addrs[i], out ip) && int.TryParse(ports[i], NumberStyles.Integer, CultureInfo.InvariantCulture, out port))
-                                internalPoints.Add(new IPEndPoint(ip, port));
+                            if (IPAddress.TryParse(addrs[i], out ip))
+                            {
+                                if (i < ports.Length)
+                                    int.TryParse(ports[i], NumberStyles.Integer, CultureInfo.InvariantCulture, out port);
+
+                                if (port > 0)
+                                    internalPoints.Add(new IPEndPoint(ip, port));
+                            }
                         }
                     }
                 }
