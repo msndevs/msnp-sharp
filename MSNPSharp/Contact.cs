@@ -1085,102 +1085,86 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// This method will lead to fire <see cref="Contact.DisplayImageContextChanged"/> event if the DisplayImage.Sha has been changed.
+        /// This method will lead to fire <see cref="Contact.DisplayImageContextChanged"/> or <see cref="Contact.SceneImageContextChanged"/> event if the images SHA has been changed.
         /// </summary>
-        /// <param name="updatedImageContext"></param>
         /// <returns>
         /// false: No event was fired.<br/>
         /// true: The <see cref="Contact.DisplayImageContextChanged"/> was fired.
         /// </returns>
-        internal bool FireDisplayImageContextChangedEvent(string updatedImageContext)
+        internal bool FireImageContextChangedEvent(string updatedImageContext, MSNObjectType imgObject)
         {
-            if (DisplayImage == updatedImageContext)
+            if (imgObject == MSNObjectType.UserDisplay)
+            {
+                if (DisplayImage == updatedImageContext)
+                    return false;
+
+                OnDisplayImageContextChanged(new DisplayImageChangedEventArgs(null, DisplayImageChangedType.UpdateTransmissionRequired));
+            }
+            else if (imgObject == MSNObjectType.Scene)
+            {
+                if (SceneImage == updatedImageContext)
+                    return false;
+
+                OnSceneImageContextChanged(new SceneImageChangedEventArgs(DisplayImageChangedType.UpdateTransmissionRequired, updatedImageContext == string.Empty));
+            }
+            else
                 return false;
-
-            OnDisplayImageContextChanged(new DisplayImageChangedEventArgs(null, DisplayImageChangedType.UpdateTransmissionRequired));
-            return true;
-        }
-
-        /// <summary>
-        /// This method will lead to fire <see cref="Contact.SceneImageContextChanged"/> event if the SceneImage.Sha has been changed.
-        /// </summary>
-        /// <param name="updatedImageContext"></param>
-        /// <returns>
-        /// false: No event was fired.<br/>
-        /// true: The <see cref="Contact.SceneImageContextChanged"/> was fired.
-        /// </returns>
-        internal bool FireSceneImageContextChangedEvent(string updatedImageContext)
-        {
-            if (SceneImage == updatedImageContext)
-                return false;
-
-            OnSceneImageContextChanged(new SceneImageChangedEventArgs(DisplayImageChangedType.UpdateTransmissionRequired, updatedImageContext == string.Empty));
 
             return true;
         }
 
         /// <summary>
-        /// This method will lead to fire <see cref="Contact.DisplayImageChanged"/> event if the DisplayImage.Image has been changed.
+        /// This method will lead to fire <see cref="Contact.DisplayImageChanged"/> or <see cref="Contact.SceneImageChanged"/>  event if the image has been changed.
         /// </summary>
         /// <param name="image"></param>
         /// <returns>
         /// false: No event was fired.<br/>
         /// true: The <see cref="Contact.DisplayImageChanged"/> event was fired.
         /// </returns>
-        internal bool SetDisplayImageAndFireDisplayImageChangedEvent(DisplayImage image)
+        internal bool SetImageAndFireImageChangedEvent(MSNObject image)
         {
+            EventArgs eventTrigger = null;
+
             if (image == null) return false;
 
-
-            DisplayImageChangedEventArgs displayImageChangedArg = null;
-            //if ((displayImage != null && displayImage.Sha != image.Sha && displayImage.IsDefaultImage && image.Image != null) ||     //Transmission completed. default Image -> new Image
-            //    (displayImage != null && displayImage.Sha != image.Sha && !displayImage.IsDefaultImage && image.Image != null) ||     //Transmission completed. old Image -> new Image.
-            //    (displayImage != null && object.ReferenceEquals(displayImage, image) && displayImage.Image != null) ||              //Transmission completed. old Image -> updated old Image.
-            //    (displayImage == null))
+            if (image.ObjectType == MSNObjectType.UserDisplay)
             {
+                //if ((displayImage != null && displayImage.Sha != image.Sha && displayImage.IsDefaultImage && image.Image != null) ||     //Transmission completed. default Image -> new Image
+                //    (displayImage != null && displayImage.Sha != image.Sha && !displayImage.IsDefaultImage && image.Image != null) ||     //Transmission completed. old Image -> new Image.
+                //    (displayImage != null && object.ReferenceEquals(displayImage, image) && displayImage.Image != null) ||              //Transmission completed. old Image -> updated old Image.
+                //    (displayImage == null))
+                eventTrigger = new DisplayImageChangedEventArgs((DisplayImage)image, DisplayImageChangedType.TransmissionCompleted, false);
 
-                displayImageChangedArg = new DisplayImageChangedEventArgs(image, DisplayImageChangedType.TransmissionCompleted, false);
+                if (!object.ReferenceEquals(displayImage, (DisplayImage)image))
+                    displayImage = (DisplayImage)image;
             }
-
-            if (!object.ReferenceEquals(displayImage, image))
+            else if (image.ObjectType == MSNObjectType.Scene)
             {
-                displayImage = image;
-            }
+                eventTrigger = new SceneImageChangedEventArgs((SceneImage)image, DisplayImageChangedType.TransmissionCompleted, false);
 
-            SaveOriginalDisplayImageAndFireDisplayImageChangedEvent(displayImageChangedArg);
+                if (!object.ReferenceEquals(sceneImage, (SceneImage)image))
+                    sceneImage = (SceneImage)image;
+            }
+            else
+                return false;
+
+            SaveOriginalImageAndFireImageChangedEvent(eventTrigger);
 
             return true;
         }
 
-        internal bool SetSceneImageAndFireSceneImageChangedEvent(SceneImage image)
+        internal void SaveOriginalImageAndFireImageChangedEvent(EventArgs arg)
         {
-            if (image == null) return false;
-
-            SceneImageChangedEventArgs sceneImageChangedArg = null;
+            if (arg is DisplayImageChangedEventArgs)
             {
-                sceneImageChangedArg = new SceneImageChangedEventArgs(image, DisplayImageChangedType.TransmissionCompleted, false);
+                OnDisplayImageChanged((DisplayImageChangedEventArgs)arg);
+                SaveDisplayImage(displayImage);
             }
-
-            if (!object.ReferenceEquals(sceneImage, image))
+            else if (arg is SceneImageChangedEventArgs)
             {
-                sceneImage = image;
+                OnSceneImageChanged((SceneImageChangedEventArgs)arg);
+                SaveSceneImage(sceneImage);
             }
-
-            SaveOriginalSceneImageAndFireSceneImageChangedEvent(sceneImageChangedArg);
-
-            return true;
-        }
-
-        internal void SaveOriginalDisplayImageAndFireDisplayImageChangedEvent(DisplayImageChangedEventArgs arg)
-        {
-            SaveDisplayImage(displayImage);
-            OnDisplayImageChanged(arg);
-        }
-
-        internal void SaveOriginalSceneImageAndFireSceneImageChangedEvent(SceneImageChangedEventArgs arg)
-        {
-            SaveSceneImage(SceneImage);
-            OnSceneImageChanged(arg);
         }
 
         internal void NotifyManager()
