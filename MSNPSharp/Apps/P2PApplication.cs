@@ -449,7 +449,7 @@ namespace MSNPSharp.Apps
         {
             try
             {
-                int added = AddApplication(Assembly.GetExecutingAssembly());
+                int added = RegisterApplication(Assembly.GetExecutingAssembly());
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
                     String.Format("Registered {0} built-in p2p applications", added), "P2PApplication");
             }
@@ -460,28 +460,51 @@ namespace MSNPSharp.Apps
             }
         }
 
-        #region Add/Find Application
+        #region CreateInstance
 
-        public static int AddApplication(Assembly assembly)
+        public static P2PApplication CreateInstance(Guid eufGuid, uint appId, P2PSession withSession)
+        {
+            if (withSession != null && eufGuid != Guid.Empty && p2pAppCache.ContainsKey(eufGuid))
+            {
+                if (appId != 0)
+                {
+                    foreach (P2PApp app in p2pAppCache[eufGuid])
+                    {
+                        if (appId == app.AppId)
+                            return (P2PApplication)Activator.CreateInstance(app.AppType, withSession);
+                    }
+                }
+
+                return (P2PApplication)Activator.CreateInstance(p2pAppCache[eufGuid][0].AppType, withSession);
+            }
+
+            return null;
+        }
+
+        #endregion
+
+        #region RegisterApplication/UnregisterApplication
+
+        public static int RegisterApplication(Assembly assembly)
         {
             int count = 0;
 
             foreach (Type type in assembly.GetTypes())
             {
                 if (type.GetCustomAttributes(typeof(P2PApplicationAttribute), false).Length > 0)
-                    if (AddApplication(type))
+                    if (RegisterApplication(type))
                         count++;
             }
 
             return count;
         }
 
-        public static bool AddApplication(Type appType)
+        public static bool RegisterApplication(Type appType)
         {
-            return AddApplication(appType, false);
+            return RegisterApplication(appType, false);
         }
 
-        public static bool AddApplication(Type appType, bool overrideExisting)
+        public static bool RegisterApplication(Type appType, bool overrideExisting)
         {
             if (appType == null)
                 throw new ArgumentNullException("appType");
@@ -550,22 +573,63 @@ namespace MSNPSharp.Apps
             return added;
         }
 
-        internal static Type GetApplication(Guid eufGuid, uint appId)
+        public static int UnregisterApplication(Assembly assembly)
         {
-            if (eufGuid != Guid.Empty && p2pAppCache.ContainsKey(eufGuid))
-            {
-                if (appId != 0)
-                {
-                    foreach (P2PApp app in p2pAppCache[eufGuid])
-                        if (appId == app.AppId)
-                            return app.AppType;
-                }
+            int count = 0;
 
-                return p2pAppCache[eufGuid][0].AppType;
+            foreach (Type type in assembly.GetTypes())
+            {
+                if (type.GetCustomAttributes(typeof(P2PApplicationAttribute), false).Length > 0)
+                    if (UnregisterApplication(type))
+                        count++;
             }
 
-            return null;
+            return count;
         }
+
+        public static bool UnregisterApplication(Type appType)
+        {
+            bool unregistered = false;
+
+            if (appType == null)
+                throw new ArgumentNullException("appType");
+
+            if (!appType.IsSubclassOf(typeof(P2PApplication)))
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                    String.Format("Type {0} can't be unregistered! It must be derived from P2PApplication", appType.Name), "P2PApplication");
+
+                return false;
+            }
+
+            foreach (P2PApplicationAttribute att in appType.GetCustomAttributes(typeof(P2PApplicationAttribute), false))
+            {
+                lock (p2pAppCache)
+                {
+                    if (p2pAppCache.ContainsKey(att.EufGuid))
+                    {
+                        P2PApp app = new P2PApp(att.EufGuid, att.AppId, appType);
+
+                        if (p2pAppCache[att.EufGuid].Contains(app))
+                        {
+                            while (p2pAppCache[att.EufGuid].Remove(app))
+                            {
+                                unregistered = true;
+
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                                    String.Format("Application has unregistered! EufGuid: {0}, AppId: {1}, AppType: {2}", att.EufGuid, att.AppId, appType), "P2PApplication");
+                            }
+                        }
+                    }
+                }
+            }
+
+            return unregistered;
+        }
+
+        #endregion
+
+        #region FindApplicationId/FindApplicationEufGuid
 
         private static uint FindApplicationId(P2PApplication p2pApp)
         {

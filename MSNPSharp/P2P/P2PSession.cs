@@ -405,10 +405,7 @@ namespace MSNPSharp.P2P
             // Create application based on invitation
             uint appId = slp.BodyValues.ContainsKey("AppID") ? uint.Parse(slp.BodyValues["AppID"].Value) : 0;
             Guid eufGuid = slp.BodyValues.ContainsKey("EUF-GUID") ? new Guid(slp.BodyValues["EUF-GUID"].Value) : Guid.Empty;
-            Type appType = P2PApplication.GetApplication(eufGuid, appId);
-
-            if (appType != null)
-                p2pApplication = (P2PApplication)Activator.CreateInstance(appType, this);
+            p2pApplication = P2PApplication.CreateInstance(eufGuid, appId, this);
 
             if (p2pApplication != null && p2pApplication.ValidateInvitation(invitation))
             {
