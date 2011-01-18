@@ -282,7 +282,7 @@ namespace MSNPSharp
                         MSNObjectCatalog.GetInstance().Remove(base.DisplayImage);
                     }
 
-                    SetDisplayImageAndFireDisplayImageChangedEvent(value);
+                    SetImageAndFireImageChangedEvent(value);
                     value.Creator = Mail;
 
                     MSNObjectCatalog.GetInstance().Add(base.DisplayImage);
