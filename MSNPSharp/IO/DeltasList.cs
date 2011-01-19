@@ -353,10 +353,10 @@ namespace MSNPSharp.IO
 
         internal bool SaveImageAndRelationship(string siblingAccount, string imageKey, byte[] userTile, bool isDisplayImage)
         {
-            // Only display images will have visit counts
-            if (isDisplayImage)
+            lock (isDisplayImage ? UserTileSlots : UserSceneSlots)
             {
-                lock (isDisplayImage ? UserTileSlots : UserSceneSlots)
+                // Only display images will have visit counts, at the moment
+                if (isDisplayImage)
                 {
                     if (UserTileSlots.Count == MaxSlot)
                     {
@@ -372,10 +372,9 @@ namespace MSNPSharp.IO
                             return false;
                         }
                     }
-
-                    AddImageAndRelationship(siblingAccount, imageKey, userTile, isDisplayImage);
                 }
 
+                AddImageAndRelationship(siblingAccount, imageKey, userTile, isDisplayImage);
             }
 
             return true;
