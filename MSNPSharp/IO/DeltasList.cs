@@ -40,7 +40,7 @@ namespace MSNPSharp.IO
 {
     using MSNPSharp.MSNWS.MSNABSharingService;
     using MSNPSharp.Core;
-using System.Drawing;
+    using System.Drawing;
 
     /// <summary>
     /// Storage class for deltas request
@@ -149,102 +149,59 @@ using System.Drawing;
 
         #region Private methods
 
-        private bool HasRelationship(string siblingAccount)
+        private bool HasRelationship(string siblingAccount, SerializableDictionary<string, string> dictRelation)
         {
-            lock (UserImageRelationships)
-                return UserImageRelationships.ContainsKey(siblingAccount.ToLowerInvariant());
+            lock (dictRelation)
+                return dictRelation.ContainsKey(siblingAccount.ToLowerInvariant());
         }
 
-        private bool HasSceneRelationship(string siblingAccount)
+        private bool HasImage(string imageKey, SerializableDictionary<string, byte[]> dictImage)
         {
-            lock (UserSceneRelationships)
-                return UserSceneRelationships.ContainsKey(siblingAccount.ToLowerInvariant());
+            lock (dictImage)
+                return dictImage.ContainsKey(imageKey);
         }
 
-        private bool HasImage(string imageKey)
+        private bool HasRelationshipAndImage(string siblingAccount, out string imageKey, bool isDisplayImage)
         {
-            lock (UserTileSlots)
-                return UserTileSlots.ContainsKey(imageKey);
-        }
+            SerializableDictionary<string, byte[]> userImage = (isDisplayImage) ? UserTileSlots : UserSceneSlots;
+            SerializableDictionary<string, string> userRelation = (isDisplayImage) ? userImageRelationships : UserSceneRelationships;
 
-        private bool HasScene(string imageKey)
-        {
-            lock (UserSceneSlots)
-                return UserSceneSlots.ContainsKey(imageKey);
-        }
-
-        private bool HasRelationshipAndImage(string siblingAccount, out string imageKey)
-        {
             imageKey = string.Empty;
-            if (!HasRelationship(siblingAccount))
+            if (!HasRelationship(siblingAccount, userRelation))
             {
                 return false;
             }
 
             string imgKey = string.Empty;
-            lock (UserImageRelationships)
-                imgKey = UserImageRelationships[siblingAccount.ToLowerInvariant()];
+            lock (userRelation)
+                imgKey = userRelation[siblingAccount.ToLowerInvariant()];
 
-            if (!HasImage(imgKey))
+            if (!HasImage(imgKey, userImage))
                 return false;
 
             imageKey = imgKey;
             return true;
         }
 
-        private bool HasRelationshipAndScene(string siblingAccount, out string imageKey)
+        private void AddImage(string imageKey, byte[] data, SerializableDictionary<string, byte[]> dictImage)
         {
-            imageKey = string.Empty;
-            if (!HasSceneRelationship(siblingAccount))
-            {
-                return false;
-            }
-
-            string imgKey = string.Empty;
-            lock (UserSceneRelationships)
-                imgKey = UserSceneRelationships[siblingAccount.ToLowerInvariant()];
-
-            if (!HasScene(imgKey))
-                return false;
-
-            imageKey = imgKey;
-            return true;
-        }
-
-        private void AddImage(string imageKey, byte[] data)
-        {
-            if (HasImage(imageKey))
+            if (HasImage(imageKey, dictImage))
                 return;
 
-            lock (UserTileSlots)
-                UserTileSlots[imageKey] = data;
+            lock (dictImage)
+                dictImage[imageKey] = data;
         }
 
-        private void AddScene(string imageKey, byte[] data)
+        private void AddRelationship(string siblingAccount, string imageKey, SerializableDictionary<string, string> dictRelation)
         {
-            if (HasScene(imageKey))
-                return;
-
-            lock (UserSceneSlots)
-                UserSceneSlots[imageKey] = data;
+            lock (dictRelation)
+                dictRelation[siblingAccount.ToLowerInvariant()] = imageKey;
         }
 
-        private void AddRelationship(string siblingAccount, string imageKey)
+        private void AddImageAndRelationship(string siblingAccount, string imageKey, byte[] data, bool isDisplayImage)
         {
-            lock (UserImageRelationships)
-                UserImageRelationships[siblingAccount.ToLowerInvariant()] = imageKey;
-        }
-
-        private void AddSceneRelationship(string siblingAccount, string imageKey)
-        {
-            lock (UserSceneRelationships)
-                UserSceneRelationships[siblingAccount.ToLowerInvariant()] = imageKey;
-        }
-
-        private void AddImageAndRelationship(string siblingAccount, string imageKey, byte[] data)
-        {
-            AddImage(imageKey, data);
-            AddRelationship(siblingAccount, imageKey);
+            AddImage(imageKey, data, isDisplayImage ? UserTileSlots : UserSceneSlots);
+            AddRelationship(siblingAccount, imageKey, isDisplayImage ? UserImageRelationships : UserSceneRelationships);
         }
 
         private bool RemoveImage(string imageKey)
@@ -272,7 +229,7 @@ using System.Drawing;
 
         private bool RemoveRelationship(string siblingAccount)
         {
-            if (!HasRelationship(siblingAccount))
+            if (!HasRelationship(siblingAccount, UserImageRelationships))
                 return false;
 
             lock (UserImageRelationships)
@@ -374,65 +331,54 @@ using System.Drawing;
 
         #region Internal Methods
 
-        internal byte[] GetRawImageDataBySiblingString(string siblingAccount, out string imageKey)
+        internal byte[] GetRawImageDataBySiblingString(string siblingAccount, out string imageKey, bool isDisplayImage)
         {
             imageKey = string.Empty;
-            if (HasRelationshipAndImage(siblingAccount, out imageKey))
+            if (HasRelationshipAndImage(siblingAccount, out imageKey, isDisplayImage))
             {
-                lock (UserTileSlots)
+                lock (isDisplayImage ? UserTileSlots : UserSceneSlots)
                 {
-                    IncreaseVisitCount(imageKey);
-                    return UserTileSlots[imageKey];
-                }
-
-            }
-
-            return null;
-        }
-
-        internal byte[] GetRawSceneDataBySiblingString(string siblingAccount, out string imageKey)
-        {
-            if (HasRelationshipAndScene(siblingAccount, out imageKey))
-            {
-                lock (UserSceneSlots)
-                {
-                    return UserSceneSlots[imageKey];
-                }
-            }
-
-            return null;
-        }
-
-        internal bool SaveImageAndRelationship(string siblingAccount, string imageKey, byte[] userTile)
-        {
-
-            lock (UserTileSlots)
-            {
-                if (UserTileSlots.Count == MaxSlot)
-                {
-                    //The heaven is full.
-                    string deleteKey = string.Empty;
-                    if (GetLeastVisitImage(out deleteKey))
+                    if (isDisplayImage)
                     {
-                        RemoveImage(deleteKey);
+                        IncreaseVisitCount(imageKey);
+                        return UserTileSlots[imageKey];
                     }
                     else
+                        return UserSceneSlots[imageKey];
+                }
+            }
+
+            return null;
+        }
+
+        internal bool SaveImageAndRelationship(string siblingAccount, string imageKey, byte[] userTile, bool isDisplayImage)
+        {
+            // Only display images will have visit counts
+            if (isDisplayImage)
+            {
+                lock (isDisplayImage ? UserTileSlots : UserSceneSlots)
+                {
+                    if (UserTileSlots.Count == MaxSlot)
                     {
-                        //OMG no one want to give a place?
-                        return false;
+                        //The heaven is full.
+                        string deleteKey = string.Empty;
+                        if (GetLeastVisitImage(out deleteKey))
+                        {
+                            RemoveImage(deleteKey);
+                        }
+                        else
+                        {
+                            //OMG no one want to give a place?
+                            return false;
+                        }
                     }
+
+                    AddImageAndRelationship(siblingAccount, imageKey, userTile, isDisplayImage);
                 }
 
-                AddImageAndRelationship(siblingAccount, imageKey, userTile);
             }
 
             return true;
-        }
-
-        internal void SaveSceneAndRelationship(string siblingAccount, string imageKey, byte[] userTile)
-        {
-            AddScene(imageKey, userTile);
-            AddSceneRelationship(siblingAccount, imageKey);
         }
 
         #endregion

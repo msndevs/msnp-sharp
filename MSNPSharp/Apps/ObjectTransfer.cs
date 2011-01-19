@@ -323,14 +323,14 @@ namespace MSNPSharp.Apps
                     if (msnObject.ObjectType == MSNObjectType.UserDisplay)
                     {
                         DisplayImage newDisplayImage = new DisplayImage(Remote.Mail.ToLowerInvariant(), ms);
-                        Remote.SetImageAndFireImageChangedEvent(newDisplayImage);
+                        Remote.SetDisplayImageAndFireDisplayImageChangedEvent(newDisplayImage);
 
                         msnObject = newDisplayImage;
                     }
                     else if (msnObject.ObjectType == MSNObjectType.Scene)
                     {
                         SceneImage newSceneImage = new SceneImage(Remote.Mail.ToLowerInvariant(), ms);
-                        Remote.SetImageAndFireImageChangedEvent(newSceneImage);
+                        Remote.SetSceneImageAndFireSceneImageChangedEvent(newSceneImage);
 
                         msnObject = newSceneImage;
                     }
