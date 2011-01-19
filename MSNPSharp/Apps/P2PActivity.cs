@@ -184,7 +184,7 @@ namespace MSNPSharp.Apps
         public override bool ProcessData(P2PBridge bridge, byte[] data, bool reset)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                P2PMessage.DumpBytes(data), GetType().Name);
+                "DATA RECEIVED: " + P2PMessage.DumpBytes(data, 128, true), GetType().Name);
 
             return true;
         }
