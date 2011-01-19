@@ -116,7 +116,7 @@ namespace MSNPSharp
         [NonSerialized]
         internal Guid dcLocalHashedNonce = Guid.Empty;
         [NonSerialized]
-        internal Guid dcRemoteHashedNonce  = Guid.Empty;
+        internal Guid dcRemoteHashedNonce = Guid.Empty;
 
         internal void GenerateNewDCKeys()
         {
@@ -218,9 +218,9 @@ namespace MSNPSharp
 
         internal object SyncObject
         {
-            get 
-            { 
-                return syncObject; 
+            get
+            {
+                return syncObject;
             }
         }
 
@@ -573,9 +573,9 @@ namespace MSNPSharp
 
         public Dictionary<string, Contact> Siblings
         {
-            get 
-            { 
-                return siblings; 
+            get
+            {
+                return siblings;
             }
         }
 
@@ -583,7 +583,7 @@ namespace MSNPSharp
         {
             get
             {
-                LoadDisplayImageFromDeltas();
+                LoadImageFromDeltas(displayImage);
                 return displayImage;
             }
 
@@ -593,7 +593,7 @@ namespace MSNPSharp
                 if (displayImage != value)
                 {
                     displayImage = value;
-                    SaveDisplayImage(displayImage);
+                    SaveImage(displayImage);
                 }
             }
         }
@@ -602,7 +602,7 @@ namespace MSNPSharp
         {
             get
             {
-                LoadSceneImageFromDeltas();
+                LoadImageFromDeltas(sceneImage);
                 return sceneImage;
             }
             internal set
@@ -610,7 +610,7 @@ namespace MSNPSharp
                 if (sceneImage != value)
                 {
                     sceneImage = value;
-                    SaveSceneImage(sceneImage);
+                    SaveImage(sceneImage);
                 }
             }
         }
@@ -784,14 +784,14 @@ namespace MSNPSharp
         internal int ADLCount
         {
             get { return adlCount; }
-            set 
+            set
             {
                 if (value < 0)
                 {
                     value = 0;
                 }
 
-                adlCount = value; 
+                adlCount = value;
             }
         }
 
@@ -809,14 +809,14 @@ namespace MSNPSharp
         /// </summary>
         public CirclePersonalMembershipRole CircleRole
         {
-            get 
-            { 
-                return circleRole; 
+            get
+            {
+                return circleRole;
             }
 
-            internal set 
-            { 
-                circleRole = value; 
+            internal set
+            {
+                circleRole = value;
             }
         }
 
@@ -1028,7 +1028,7 @@ namespace MSNPSharp
             }
         }
 
-        
+
 
         internal void SetHasSpace(bool hasSpaceValue)
         {
@@ -1067,7 +1067,7 @@ namespace MSNPSharp
 
                 lock (syncObject)
                 {
-                    
+
                     status = newStatus;
                 }
 
@@ -1085,86 +1085,102 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// This method will lead to fire <see cref="Contact.DisplayImageContextChanged"/> or <see cref="Contact.SceneImageContextChanged"/> event if the images SHA has been changed.
+        /// This method will lead to fire <see cref="Contact.DisplayImageContextChanged"/> event if the DisplayImage.Sha has been changed.
         /// </summary>
+        /// <param name="updatedImageContext"></param>
         /// <returns>
         /// false: No event was fired.<br/>
         /// true: The <see cref="Contact.DisplayImageContextChanged"/> was fired.
         /// </returns>
-        internal bool FireImageContextChangedEvent(string updatedImageContext, MSNObjectType imgObject)
+        internal bool FireDisplayImageContextChangedEvent(string updatedImageContext)
         {
-            if (imgObject == MSNObjectType.UserDisplay)
-            {
-                if (DisplayImage == updatedImageContext)
-                    return false;
-
-                OnDisplayImageContextChanged(new DisplayImageChangedEventArgs(null, DisplayImageChangedType.UpdateTransmissionRequired));
-            }
-            else if (imgObject == MSNObjectType.Scene)
-            {
-                if (SceneImage == updatedImageContext)
-                    return false;
-
-                OnSceneImageContextChanged(new SceneImageChangedEventArgs(DisplayImageChangedType.UpdateTransmissionRequired, updatedImageContext == string.Empty));
-            }
-            else
+            if (DisplayImage == updatedImageContext)
                 return false;
+
+            OnDisplayImageContextChanged(new DisplayImageChangedEventArgs(null, DisplayImageChangedType.UpdateTransmissionRequired));
+            return true;
+        }
+
+        /// <summary>
+        /// This method will lead to fire <see cref="Contact.SceneImageContextChanged"/> event if the SceneImage.Sha has been changed.
+        /// </summary>
+        /// <param name="updatedImageContext"></param>
+        /// <returns>
+        /// false: No event was fired.<br/>
+        /// true: The <see cref="Contact.SceneImageContextChanged"/> was fired.
+        /// </returns>
+        internal bool FireSceneImageContextChangedEvent(string updatedImageContext)
+        {
+            if (SceneImage == updatedImageContext)
+                return false;
+
+            OnSceneImageContextChanged(new SceneImageChangedEventArgs(DisplayImageChangedType.UpdateTransmissionRequired, updatedImageContext == string.Empty));
 
             return true;
         }
 
         /// <summary>
-        /// This method will lead to fire <see cref="Contact.DisplayImageChanged"/> or <see cref="Contact.SceneImageChanged"/>  event if the image has been changed.
+        /// This method will lead to fire <see cref="Contact.DisplayImageChanged"/> event if the DisplayImage.Image has been changed.
         /// </summary>
         /// <param name="image"></param>
         /// <returns>
         /// false: No event was fired.<br/>
         /// true: The <see cref="Contact.DisplayImageChanged"/> event was fired.
         /// </returns>
-        internal bool SetImageAndFireImageChangedEvent(MSNObject image)
+        internal bool SetDisplayImageAndFireDisplayImageChangedEvent(DisplayImage image)
         {
-            EventArgs eventTrigger = null;
-
             if (image == null) return false;
 
-            if (image.ObjectType == MSNObjectType.UserDisplay)
+
+            DisplayImageChangedEventArgs displayImageChangedArg = null;
+            //if ((displayImage != null && displayImage.Sha != image.Sha && displayImage.IsDefaultImage && image.Image != null) ||     //Transmission completed. default Image -> new Image
+            //    (displayImage != null && displayImage.Sha != image.Sha && !displayImage.IsDefaultImage && image.Image != null) ||     //Transmission completed. old Image -> new Image.
+            //    (displayImage != null && object.ReferenceEquals(displayImage, image) && displayImage.Image != null) ||              //Transmission completed. old Image -> updated old Image.
+            //    (displayImage == null))
             {
-                //if ((displayImage != null && displayImage.Sha != image.Sha && displayImage.IsDefaultImage && image.Image != null) ||     //Transmission completed. default Image -> new Image
-                //    (displayImage != null && displayImage.Sha != image.Sha && !displayImage.IsDefaultImage && image.Image != null) ||     //Transmission completed. old Image -> new Image.
-                //    (displayImage != null && object.ReferenceEquals(displayImage, image) && displayImage.Image != null) ||              //Transmission completed. old Image -> updated old Image.
-                //    (displayImage == null))
-                eventTrigger = new DisplayImageChangedEventArgs((DisplayImage)image, DisplayImageChangedType.TransmissionCompleted, false);
 
-                if (!object.ReferenceEquals(displayImage, (DisplayImage)image))
-                    displayImage = (DisplayImage)image;
+                displayImageChangedArg = new DisplayImageChangedEventArgs(image, DisplayImageChangedType.TransmissionCompleted, false);
             }
-            else if (image.ObjectType == MSNObjectType.Scene)
+
+            if (!object.ReferenceEquals(displayImage, image))
             {
-                eventTrigger = new SceneImageChangedEventArgs((SceneImage)image, DisplayImageChangedType.TransmissionCompleted, false);
-
-                if (!object.ReferenceEquals(sceneImage, (SceneImage)image))
-                    sceneImage = (SceneImage)image;
+                displayImage = image;
             }
-            else
-                return false;
 
-            SaveOriginalImageAndFireImageChangedEvent(eventTrigger);
+            SaveOriginalDisplayImageAndFireDisplayImageChangedEvent(displayImageChangedArg);
 
             return true;
         }
 
-        internal void SaveOriginalImageAndFireImageChangedEvent(EventArgs arg)
+        internal bool SetSceneImageAndFireSceneImageChangedEvent(SceneImage image)
         {
-            if (arg is DisplayImageChangedEventArgs)
+            if (image == null) return false;
+
+            SceneImageChangedEventArgs sceneImageChangedArg = null;
             {
-                OnDisplayImageChanged((DisplayImageChangedEventArgs)arg);
-                SaveDisplayImage(displayImage);
+                sceneImageChangedArg = new SceneImageChangedEventArgs(image, DisplayImageChangedType.TransmissionCompleted, false);
             }
-            else if (arg is SceneImageChangedEventArgs)
+
+            if (!object.ReferenceEquals(sceneImage, image))
             {
-                OnSceneImageChanged((SceneImageChangedEventArgs)arg);
-                SaveSceneImage(sceneImage);
+                sceneImage = image;
             }
+
+            SaveOriginalSceneImageAndFireSceneImageChangedEvent(sceneImageChangedArg);
+
+            return true;
+        }
+
+        internal void SaveOriginalDisplayImageAndFireDisplayImageChangedEvent(DisplayImageChangedEventArgs arg)
+        {
+            SaveImage(displayImage);
+            OnDisplayImageChanged(arg);
+        }
+
+        internal void SaveOriginalSceneImageAndFireSceneImageChangedEvent(SceneImageChangedEventArgs arg)
+        {
+            SaveImage(SceneImage);
+            OnSceneImageChanged(arg);
         }
 
         internal void NotifyManager()
@@ -1256,7 +1272,7 @@ namespace MSNPSharp
             }
         }
 
-        protected virtual void LoadDisplayImageFromDeltas()
+        protected virtual void LoadImageFromDeltas(DisplayImage image)
         {
             if (NSMessageHandler.ContactService.Deltas == null)
                 return;
@@ -1265,36 +1281,38 @@ namespace MSNPSharp
                 return;
 
             string Sha = string.Empty;
-            byte[] rawImageData = NSMessageHandler.ContactService.Deltas.GetRawImageDataBySiblingString(SiblingString, out Sha);
+            byte[] rawImageData = NSMessageHandler.ContactService.Deltas.GetRawImageDataBySiblingString(SiblingString, out Sha, true);
             if (rawImageData != null)
             {
                 displayImage = new DisplayImage(Mail, new MemoryStream(rawImageData));
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "User " + ToString() + "'s displayimage restored.\r\n " +
+
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "User " + ToString() + "'s displayimage" + "restored.\r\n " +
                     "Old SHA:     " + Sha + "\r\n " +
                     "Current SHA: " + displayImage.Sha + "\r\n");
             }
         }
 
-        protected virtual void LoadSceneImageFromDeltas()
+        protected virtual void LoadImageFromDeltas(SceneImage image)
         {
             if (NSMessageHandler.ContactService.Deltas == null)
                 return;
 
-            if (sceneImage != null && !sceneImage.IsDefaultImage) //Not default, no need to restore.
+            if (displayImage != null && !sceneImage.IsDefaultImage) //Not default, no need to restore.
                 return;
 
             string Sha = string.Empty;
-            byte[] rawImageData = NSMessageHandler.ContactService.Deltas.GetRawSceneDataBySiblingString(SiblingString, out Sha);
+            byte[] rawImageData = NSMessageHandler.ContactService.Deltas.GetRawImageDataBySiblingString(SiblingString, out Sha, false);
             if (rawImageData != null)
             {
                 sceneImage = new SceneImage(Mail, new MemoryStream(rawImageData));
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "User " + ToString() + "'s scene image restored.\r\n " +
+
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "User " + ToString() + "'s scene image" + "restored.\r\n " +
                     "Old SHA:     " + Sha + "\r\n " +
                     "Current SHA: " + displayImage.Sha + "\r\n");
             }
         }
 
-        protected virtual void SaveDisplayImage(DisplayImage dispImage)
+        protected virtual void SaveImage(DisplayImage dispImage)
         {
             if (NSMessageHandler.ContactService.Deltas == null || dispImage == null)
                 return;
@@ -1302,13 +1320,13 @@ namespace MSNPSharp
             if (dispImage.Image == null || string.IsNullOrEmpty(dispImage.Sha))
                 return;
 
-            if (NSMessageHandler.ContactService.Deltas.SaveImageAndRelationship(SiblingString, dispImage.Sha, dispImage.GetRawData()))
+            if (NSMessageHandler.ContactService.Deltas.SaveImageAndRelationship(SiblingString, dispImage.Sha, dispImage.GetRawData(), true))
             {
                 NSMessageHandler.ContactService.Deltas.Save(true);
             }
         }
 
-        protected virtual void SaveSceneImage(SceneImage sceneImage)
+        protected virtual void SaveImage(SceneImage sceneImage)
         {
             if (NSMessageHandler.ContactService.Deltas == null || sceneImage == null)
                 return;
@@ -1316,8 +1334,10 @@ namespace MSNPSharp
             if (sceneImage.Image == null || string.IsNullOrEmpty(sceneImage.Sha))
                 return;
 
-            NSMessageHandler.ContactService.Deltas.SaveSceneAndRelationship(SiblingString, sceneImage.Sha, sceneImage.GetRawData());
-            NSMessageHandler.ContactService.Deltas.Save(true);
+            if (NSMessageHandler.ContactService.Deltas.SaveImageAndRelationship(SiblingString, sceneImage.Sha, sceneImage.GetRawData(), false))
+            {
+                NSMessageHandler.ContactService.Deltas.Save(true);
+            }
         }
 
         #endregion
@@ -1395,14 +1415,14 @@ namespace MSNPSharp
         internal void AddToList(MSNLists list)
         {
             if ((lists & list) == MSNLists.None)
-            { 
+            {
                 lists |= list;
 
                 if ((list & MSNLists.BlockedList) == MSNLists.BlockedList)
                 {
                     OnContactBlocked();
                 }
-                
+
                 NotifyManager();
             }
 
@@ -1446,7 +1466,7 @@ namespace MSNPSharp
                 {
                     OnContactUnBlocked();
                 }
-                
+
                 NotifyManager();
             }
 

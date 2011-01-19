@@ -1483,7 +1483,7 @@ namespace MSNPSharp
                     if (contact.SceneContext != newSceneContext)
                     {
                         contact.SceneContext = newSceneContext;
-                        contact.FireImageContextChangedEvent(newSceneContext, MSNObjectType.Scene);
+                        contact.FireSceneImageContextChangedEvent(newSceneContext);
                     }
 
                     //Get endpoint data.
@@ -1742,7 +1742,7 @@ namespace MSNPSharp
                         if (contact.DisplayImage != newDisplayImageContext)
                         {
                             contact.UserTileLocation = newDisplayImageContext;
-                            contact.FireImageContextChangedEvent(newDisplayImageContext, MSNObjectType.UserDisplay);
+                            contact.FireDisplayImageContextChangedEvent(newDisplayImageContext);
                         }
                     }
 
@@ -1813,7 +1813,7 @@ namespace MSNPSharp
                         if (contact.DisplayImage != newDisplayImageContext)
                         {
                             contact.UserTileLocation = newDisplayImageContext;
-                            contact.FireImageContextChangedEvent(newDisplayImageContext, MSNObjectType.UserDisplay);
+                            contact.FireDisplayImageContextChangedEvent(newDisplayImageContext);
                         }
                     }
 
