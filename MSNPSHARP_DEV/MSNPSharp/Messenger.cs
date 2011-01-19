@@ -99,11 +99,10 @@ namespace MSNPSharp
     /// Provides an easy interface for the client programmer.
     /// </summary>
     /// <remarks>
-    /// Messenger is an important class for the client programmer. It provides an
-    /// easy interface to communicate with the network. Messenger is a facade which hides all
-    /// lower abstractions like message processors, protocol handlers, etc.
-    /// Messenger passes through events from underlying objects. This way the client programmer
-    /// can connect eventhandlers just once.
+    /// Messenger is an important class for the client programmer. It provides an easy interface to
+    /// communicate with the network. Messenger is a facade which hides all lower abstractions like message
+    /// processors, protocol handlers, etc. Messenger passes through events from underlying objects. This way
+    /// the client programmer can connect eventhandlers just once.
     /// </remarks>
     public class Messenger
     {
@@ -149,7 +148,7 @@ namespace MSNPSharp
         #region Properties
 
         /// <summary>
-        /// Provide a simple way to send and receive messages.
+        /// The message manager providing a simple way to send and receive messages.
         /// </summary>
         public MessageManager MessageManager
         {
@@ -325,7 +324,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// The handler that handles all incoming P2P framework messages.
+        /// The handler that manages all incoming/outgoing P2P framework messages.
         /// </summary>
         public P2PHandler P2PHandler
         {
@@ -341,7 +340,7 @@ namespace MSNPSharp
         #region Methods
 
         /// <summary>
-        /// Connect to the messenger network.
+        /// Connects to the messenger network.
         /// </summary>
         public virtual void Connect()
         {
@@ -373,7 +372,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Disconnect from the messenger network.
+        /// Disconnects from the messenger network.
         /// </summary>
         public virtual void Disconnect()
         {
@@ -389,26 +388,51 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Creates a conversation.
+        /// Creates a conversation and fires the <see cref="NSMessageHandler.ConversationCreated"/> event.
         /// </summary>
-        /// <remarks>
-        /// This method will fire the <see cref="NSMessageHandler.ConversationCreated"/> event. The initiator object of the
-        /// created switchboard will be <b>this</b> messenger object.
-        /// </remarks>
-        /// <returns></returns>
         public Conversation CreateConversation()
         {
             return Nameserver.CreateConversation();
         }
 
+        /// <summary>
+        /// Requests <paramref name="msnObject"/> from <paramref name="remoteContact"/>.
+        /// </summary>
+        /// <param name="remoteContact"></param>
+        /// <param name="msnObject"></param>
+        /// <returns></returns>
         public ObjectTransfer RequestMsnObject(Contact remoteContact, MSNObject msnObject)
         {
             return P2PHandler.RequestMsnObject(remoteContact, msnObject);
         }
 
+        /// <summary>
+        /// Sends a file to the <paramref name="remoteContact"/>.
+        /// </summary>
+        /// <param name="remoteContact">Remote contact to be sent a file</param>
+        /// <param name="filename">File name</param>
+        /// <param name="fileStream">File stream</param>
+        /// <returns></returns>
         public FileTransfer SendFile(Contact remoteContact, string filename, FileStream fileStream)
         {
             return P2PHandler.SendFile(remoteContact, filename, fileStream);
+        }
+
+        /// <summary>
+        /// Starts a new activity with <paramref name="remoteContact"/>.
+        /// </summary>
+        /// <param name="remoteContact"></param>
+        /// <param name="activityID">Activity ID</param>
+        /// <param name="activityName">Activity name</param>
+        /// <param name="activityData">Activity data</param>
+        /// <returns></returns>
+        public P2PActivity StartActivity(Contact remoteContact, uint activityID, string activityName, string activityData)
+        {
+            P2PActivity p2pActivity = new P2PActivity(remoteContact, activityID, activityName, activityData);
+
+            P2PHandler.AddTransfer(p2pActivity);
+
+            return p2pActivity;
         }
 
         #endregion

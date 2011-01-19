@@ -1094,19 +1094,8 @@ namespace MSNPSharpClient
                 cbMessageFontSize.Text = cbMessageFontSize.Tag.ToString();
             }
         }
-        /*NEWP2P,TODO,XXX:
-        private void MSNSLPHandler_TransferSessionClosed(object sender, P2PTransferSessionEventArgs e)
-        {
-            if (!richTextHistory.InvokeRequired)
-            {
-                DisplaySystemMessage("Activity session closed.");
-            }
-            else
-            {
-                richTextHistory.Invoke(new EventHandler<P2PTransferSessionEventArgs>(MSNSLPHandler_TransferSessionClosed), new object[] { sender,e });
-            }
-        }
-        */
+
+
 
         public class ActivityInfo
         {
@@ -1128,14 +1117,22 @@ namespace MSNPSharpClient
         {
             ActivityInfo ai = ((ToolStripItem)sender).Tag as ActivityInfo;
 
-            P2PActivity p2pActivity = new P2PActivity(
-                ConversationID.RemoteOwner,
-                ai.AppID,
-                ai.ActivityName,
-                ai.ActivityData);
+            P2PActivity p2pActivity =
+                _messenger.StartActivity(ConversationID.RemoteOwner, ai.AppID, ai.ActivityName, ai.ActivityData);
 
-            _messenger.P2PHandler.AddTransfer(p2pActivity);            
+            p2pActivity.P2PSession.Closed += new EventHandler<ContactEventArgs>(p2pActivity_Closed);
+        }
 
+        private void p2pActivity_Closed(object sender, ContactEventArgs e)
+        {
+            if (!richTextHistory.InvokeRequired)
+            {
+                DisplaySystemMessage("Activity session closed by " + e.Contact.Mail);
+            }
+            else
+            {
+                richTextHistory.Invoke(new EventHandler<ContactEventArgs>(p2pActivity_Closed), new object[] { sender, e });
+            }
         }
 
     }
