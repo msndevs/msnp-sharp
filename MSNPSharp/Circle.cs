@@ -43,7 +43,7 @@ namespace MSNPSharp
     /// <summary>
     /// The <see cref="Contact"/> who send a join contact invitation.
     /// </summary>
-    [Serializable()]
+    [Serializable]
     public class CircleInviter : Contact
     {
         private string message = string.Empty;
