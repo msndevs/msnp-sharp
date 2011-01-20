@@ -760,9 +760,17 @@ namespace MSNPSharpClient
             List<ActivityInfo> activities = new List<ActivityInfo>();
             ActivityInfo ai = new ActivityInfo();
             ai.AppID = 7;
-            ai.ActivityName = "Music Mix";
+            ai.ActivityName = "Test Activity";
             ai.ActivityData = @"http://code.google.com/p/msnp-sharp/";
             activities.Add(ai);
+
+            ai = new ActivityInfo();
+            ai.AppID = 10551613;
+            ai.ActivityName = "Tic Tac Toe";
+            ai.ActivityData = @"http://code.google.com/p/msnp-sharp/";
+            activities.Add(ai);
+
+            
 
             ai = new ActivityInfo();
             ai.AppID = 10551728;

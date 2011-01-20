@@ -851,13 +851,20 @@ namespace MSNPSharp.IO
                                     {
                                         contact.AddToList(msnlist);
                                         contact.Lists ^= Contact.GetConflictLists(contact.Lists, msnlist);
-                                        // Don't fire ReverseAdded(contact.Pending) here... It fires 2 times:
-                                        // The first is OnConnect after abSynchronized
-                                        // The second is here, not anymore here :)
-                                        // The correct place is in OnADLReceived.
-
-                                        // Send a list add event
                                         NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, msnlist));
+
+                                        // Added by other place, this place hasn't synchronized this contact yet.
+                                        if (contact.OnForwardList && contact.OnPendingList)
+                                        {
+                                            contact.OnPendingList = false;
+                                        }
+                                        // At this phase, we requested all memberships including pending.
+                                        else if (contact.OnPendingList ||
+                                            (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList))
+                                        {
+                                            NSMessageHandler.ContactService.OnReverseAdded(new ContactEventArgs(contact));
+                                            
+                                        }
                                     }
                                 }
 
