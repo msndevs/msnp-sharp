@@ -2291,7 +2291,7 @@ namespace MSNPSharp.IO
             string lowerId = abId.ToLowerInvariant();
             ReturnState returnValue = ReturnState.ProcessNextContact;
             ContactList contactList = null;
-            bool isDefaultAddressBook = (lowerId == WebServiceConstants.MessengerIndividualAddressBookId);
+            bool isDefaultAddressBook = (lowerId == null || lowerId == WebServiceConstants.MessengerIndividualAddressBookId);
 
             if (cinfo.emails != null && account == null && cinfo != null)
             {
@@ -2438,7 +2438,7 @@ namespace MSNPSharp.IO
                         needsDelete |= true;
                     }
 
-                    if (needsDelete)
+                    if (needsDelete && contact.Lists == MSNLists.None)
                     {
                         contactList.Remove(account, type);
                     }
