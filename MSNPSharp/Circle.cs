@@ -34,11 +34,12 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Diagnostics;
-using MSNPSharp.Core;
 using MSNPSharp.MSNWS.MSNABSharingService;
 
 namespace MSNPSharp
 {
+    using MSNPSharp.Core;
+
     /// <summary>
     /// The <see cref="Contact"/> who send a join contact invitation.
     /// </summary>
