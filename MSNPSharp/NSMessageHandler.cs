@@ -2803,10 +2803,16 @@ namespace MSNPSharp
                 NetworkMessage networkMessage = message as NetworkMessage;
                 if (networkMessage.InnerBody != null) //Payload ADL command
                 {
+                    #region NORMAL USER 
                     if (AutoSynchronize)
                     {
                         ContactService.msRequest(
                             PartnerScenario.MessengerPendingList,
+                            null /******************************************
+                                  * 
+                                  * ALL CHANGES WILL BE MADE BY msRequest()
+                                  * 
+                                  ******************************************
                             delegate
                             {
                                 XmlDocument xmlDoc = new XmlDocument();
@@ -2848,8 +2854,11 @@ namespace MSNPSharp
                                     } while (contactNode.NextSibling != null);
                                 }
 
-                            });
+                            }*****/
+                                   );
                     }
+                    #endregion
+                    #region BOT MODE
                     else
                     {
                         XmlDocument xmlDoc = new XmlDocument();
@@ -2887,6 +2896,7 @@ namespace MSNPSharp
                             } while (contactNode.NextSibling != null);
                         }
                     }
+                    #endregion
                 }
             }
         }
