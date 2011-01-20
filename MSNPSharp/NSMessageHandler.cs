@@ -2768,6 +2768,16 @@ namespace MSNPSharp
                                                 ContactService.OnReverseAdded(new ContactEventArgs(contact));
                                             }
                                         }
+                                        else
+                                        {
+                                            if (list == MSNLists.ReverseList)
+                                            {
+                                                Contact contact = ContactList.GetContact(account, displayName, type);
+                                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "ADL received, ReverseAdded event fired. Contact is in list: " + contact.Lists.ToString());
+                                                contact.Lists |= MSNLists.ReverseList;
+                                                ContactService.OnReverseAdded(new ContactEventArgs(contact));
+                                            }
+                                        }
 
                                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, account + ":" + type + " was added to your " + list.ToString(), GetType().Name);
 
