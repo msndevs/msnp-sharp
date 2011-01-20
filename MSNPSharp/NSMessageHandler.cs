@@ -2772,10 +2772,8 @@ namespace MSNPSharp
                                         {
                                             if (list == MSNLists.ReverseList)
                                             {
-                                                Contact contact = ContactList.GetContact(account, displayName, type);
-                                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "ADL received, ReverseAdded event fired. Contact is in list: " + contact.Lists.ToString());
-                                                contact.Lists |= MSNLists.ReverseList;
-                                                ContactService.OnReverseAdded(new ContactEventArgs(contact));
+                                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                                                    "ADL received, ReverseAdded will fire shortly. Please WAIT addressbook change event...", GetType().Name);
                                             }
                                         }
 
@@ -2813,7 +2811,7 @@ namespace MSNPSharp
                                 if (list == MSNLists.ReverseList)
                                 {
                                     Contact contact = ContactList.GetContact(account, displayName, type);
-                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "ADL received, ReverseAdded event fired. Contact is in list: " + contact.Lists.ToString());
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "[BOTMODE] ADL received, ReverseAdded event fired. Contact is in list: " + contact.Lists.ToString());
                                     contact.Lists |= MSNLists.ReverseList;
                                     ContactService.OnReverseAdded(new ContactEventArgs(contact));
                                 }
