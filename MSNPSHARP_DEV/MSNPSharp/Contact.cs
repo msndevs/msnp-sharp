@@ -1097,6 +1097,21 @@ namespace MSNPSharp
             if (DisplayImage == updatedImageContext)
                 return false;
 
+            // If Delta already has image, just call DisplayImageChanged instead
+            if (NSMessageHandler.ContactService.Deltas.HasImage(SiblingString, GetSHA(updatedImageContext), true))
+            {
+                string Sha = string.Empty;
+                byte[] rawImageData = NSMessageHandler.ContactService.Deltas.GetRawImageDataBySiblingString(SiblingString, out Sha, true);
+
+                if (rawImageData != null)
+                    displayImage = new DisplayImage(Mail, new MemoryStream(rawImageData));
+
+                NSMessageHandler.ContactService.Deltas.Save(true);
+                OnDisplayImageChanged(new DisplayImageChangedEventArgs(displayImage, DisplayImageChangedType.TransmissionCompleted, false));
+
+                return true;
+            }
+
             OnDisplayImageContextChanged(new DisplayImageChangedEventArgs(null, DisplayImageChangedType.UpdateTransmissionRequired));
             return true;
         }
@@ -1114,8 +1129,22 @@ namespace MSNPSharp
             if (SceneImage == updatedImageContext)
                 return false;
 
-            OnSceneImageContextChanged(new SceneImageChangedEventArgs(DisplayImageChangedType.UpdateTransmissionRequired, updatedImageContext == string.Empty));
+            // If Delta already has image, just call SceneImageChanged instead
+            if (NSMessageHandler.ContactService.Deltas.HasImage(SiblingString, GetSHA(updatedImageContext), false))
+            {
+                string Sha = string.Empty;
+                byte[] rawImageData = NSMessageHandler.ContactService.Deltas.GetRawImageDataBySiblingString(SiblingString, out Sha, false);
 
+                if (rawImageData != null)
+                    sceneImage = new SceneImage(Mail, new MemoryStream(rawImageData));
+
+                NSMessageHandler.ContactService.Deltas.Save(true);
+                OnSceneImageChanged(new SceneImageChangedEventArgs(sceneImage, DisplayImageChangedType.TransmissionCompleted, false));
+
+                return true;
+            }
+
+            OnSceneImageContextChanged(new SceneImageChangedEventArgs(DisplayImageChangedType.UpdateTransmissionRequired, updatedImageContext == string.Empty));
             return true;
         }
 
@@ -1181,6 +1210,14 @@ namespace MSNPSharp
         {
             SaveImage(SceneImage);
             OnSceneImageChanged(arg);
+        }
+
+        internal string GetSHA(string imageContext)
+        {
+            string decodeContext = MSNObject.GetDecodeString(imageContext);
+            int indexSHA = decodeContext.IndexOf("SHA1D=\"", 0) + 7;
+
+            return decodeContext.Substring(indexSHA, decodeContext.IndexOf("\"", indexSHA) - indexSHA);
         }
 
         internal void NotifyManager()

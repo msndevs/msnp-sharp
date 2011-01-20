@@ -331,6 +331,20 @@ namespace MSNPSharp.IO
 
         #region Internal Methods
 
+        internal bool HasImage(string siblingAccount, string imageKey, bool isDisplayImage)
+        {
+            if (imageKey != null)
+            {
+                if (HasImage(imageKey, isDisplayImage ? UserTileSlots : userSceneSlots))
+                {
+                    AddRelationship(siblingAccount, imageKey, isDisplayImage ? UserImageRelationships : UserSceneRelationships);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         internal byte[] GetRawImageDataBySiblingString(string siblingAccount, out string imageKey, bool isDisplayImage)
         {
             imageKey = string.Empty;
