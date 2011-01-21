@@ -1486,6 +1486,14 @@ namespace MSNPSharp
                         contact.FireSceneImageContextChangedEvent(newSceneContext);
                     }
 
+                    // Get the color scheme
+                    System.Drawing.Color color = GetColorSchemeFromUBXXmlData(xmlDoc);
+                    if (contact.ColorScheme != color)
+                    {
+                        contact.ColorScheme = color;
+                        contact.OnColorSchemeChanged();
+                    }
+
                     //Get endpoint data.
                     bool isPrivateEndPoint = (contact is Owner);
 
@@ -1627,6 +1635,31 @@ namespace MSNPSharp
             }
 
             return string.Empty;
+        }
+
+        private System.Drawing.Color GetColorSchemeFromUBXXmlData(XmlDocument ubxData)
+        {
+            XmlNode colorSchemeNode = ubxData.SelectSingleNode(@"//Data/ColorScheme");
+            if (colorSchemeNode != null)
+            {
+                if (string.IsNullOrEmpty(colorSchemeNode.InnerXml))
+                {
+                    return System.Drawing.Color.Empty;
+                }
+
+                int color;
+                if (int.TryParse(colorSchemeNode.InnerXml, out color))
+                {
+                    int red = color & 0xFF;
+                    int green = ((color & 0xFF00) >> 8) & 0xFF;
+                    int blue = ((color & 0xFF0000) >> 16) & 0xFF;
+                    color = (255 << 24) | (red << 16) | (green << 8) | blue;
+
+                    return System.Drawing.Color.FromArgb(color);
+                }
+            }
+
+            return System.Drawing.Color.Empty;
         }
 
         private List<EndPointData> GetEndPointDataFromUBXXmlData(string endpointAccount, XmlDocument ubxData, bool isPrivateEndPoint)
