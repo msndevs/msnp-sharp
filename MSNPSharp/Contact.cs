@@ -85,7 +85,7 @@ namespace MSNPSharp
         private DisplayImage displayImage = null;
         private SceneImage sceneImage = null;
         private PersonalMessage personalMessage = null;
-
+        private Color colorScheme = Color.Empty;
 
         private Dictionary<string, Emoticon> emoticons = new Dictionary<string, Emoticon>(0);
         private Dictionary<string, Contact> siblings = new Dictionary<string, Contact>(0);
@@ -203,6 +203,11 @@ namespace MSNPSharp
         /// Fired after receiving notification that the contact's scene image has changed.
         /// </summary>
         public event EventHandler<SceneImageChangedEventArgs> SceneImageContextChanged;
+
+        /// <summary>
+        /// Fired after receiving notification that the contact's color scheme has changed.
+        /// </summary>
+        public event EventHandler<EventArgs> ColorSchemeChanged;
 
         public event EventHandler<ContactGroupEventArgs> ContactGroupAdded;
         public event EventHandler<ContactGroupEventArgs> ContactGroupRemoved;
@@ -611,6 +616,21 @@ namespace MSNPSharp
                 {
                     sceneImage = value;
                     SaveImage(sceneImage);
+                }
+            }
+        }
+
+        public virtual Color ColorScheme
+        {
+            get
+            {
+                return colorScheme;
+            }
+            internal set
+            {
+                if (colorScheme != value)
+                {
+                    colorScheme = value;
                 }
             }
         }
@@ -1306,6 +1326,14 @@ namespace MSNPSharp
             if (SceneImageContextChanged != null)
             {
                 SceneImageContextChanged(this, arg);
+            }
+        }
+
+        internal virtual void OnColorSchemeChanged()
+        {
+            if (ColorSchemeChanged != null)
+            {
+                ColorSchemeChanged(this, EventArgs.Empty);
             }
         }
 
