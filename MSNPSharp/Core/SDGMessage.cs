@@ -68,13 +68,13 @@ namespace MSNPSharp.Core
             }
         }
 
-        public SDGMessage(string to, string from, long streamNo, long segmentNo)
+        public SDGMessage(string to, string from)
         {
             To = to;
             From = from;
 
-            Stream = streamNo;
-            Segment = segmentNo;
+            Stream = 0;
+            Segment = 0;
 
             messagingHeaders["MIME-Version"] = "1.0";
             messagingHeaders["Content-Length"] = "0";
@@ -210,25 +210,18 @@ namespace MSNPSharp.Core
                     sb.AppendLine(key + ": " + messagingHeaders[key].ToString());
                 }
             }
+            
+            sb.AppendLine();
 
             byte[] ret;
 
             if (InnerBody.Length > 0)
-            {
-                sb.AppendLine();
-
-                byte[] head = Encoding.UTF8.GetBytes(sb.ToString());
-                byte[] headAndInnerBody = AppendArray(head, InnerBody);
-                byte[] startLine = Encoding.ASCII.GetBytes(String.Format("SDG 0 {0}\r\n", headAndInnerBody.Length));
-
-                ret = AppendArray(startLine, headAndInnerBody);
+            {               
+                ret = AppendArray(Encoding.UTF8.GetBytes(sb.ToString()), InnerBody);
             }
             else
             {
-                byte[] head = Encoding.UTF8.GetBytes(sb.ToString());
-                byte[] startLine = Encoding.ASCII.GetBytes(String.Format("SDG 0 {0}\r\n", head.Length));
-
-                ret = AppendArray(startLine, head);
+                ret = Encoding.UTF8.GetBytes(sb.ToString());
             }
 
             return ret;

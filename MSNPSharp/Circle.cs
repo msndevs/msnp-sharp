@@ -156,26 +156,17 @@ namespace MSNPSharp
                 throw new InvalidOperationException("Cannot send a message when you are in 'Hidden' status.");
         }
 
-        private string ConstructSDGScheme()
+        private SDGMessage InitSDGMessage()
         {
-            string from = ((int)NSMessageHandler.ContactList.Owner.ClientType).ToString() + ":" +
-                NSMessageHandler.ContactList.Owner.Mail +
-                ";epid=" + NSMessageHandler.ContactList.Owner.MachineGuid.ToString("B").ToLowerInvariant();
+            string to = ((int)ClientType).ToString() + ":" + Mail;
+            string from = ((int)NSMessageHandler.ContactList.Owner.ClientType).ToString() + ":" + NSMessageHandler.ContactList.Owner.Mail;
 
+            SDGMessage sdgMessage = new SDGMessage(to, from);
+            sdgMessage.RoutingHeaders["To"]["path"] = "IM";
+            sdgMessage.RoutingHeaders["From"]["epid"] = NSMessageHandler.ContactList.Owner.MachineGuid.ToString("B").ToLowerInvariant();
+            sdgMessage.Stream = IncreaseSegmentCounter();
 
-            string to = ((int)ClientType).ToString() + ":" + Mail + ";path=IM";
-
-            string routingInfo = CircleString.RoutingScheme.Replace(CircleString.ToReplacementTag, to);
-            routingInfo = routingInfo.Replace(CircleString.FromReplacementTag, from);
-
-            string reliabilityInfo = CircleString.ReliabilityScheme.Replace(CircleString.StreamReplacementTag, "0");
-            reliabilityInfo = reliabilityInfo.Replace(CircleString.SegmentReplacementTag, IncreaseSegmentCounter().ToString());
-
-            string putCommandString = CircleString.CircleMessageScheme;
-            putCommandString = putCommandString.Replace(CircleString.RoutingSchemeReplacementTag, routingInfo);
-            putCommandString = putCommandString.Replace(CircleString.ReliabilitySchemeReplacementTag, reliabilityInfo);
-
-            return putCommandString;
+            return sdgMessage;
         }
 
         /// <summary>
@@ -186,11 +177,13 @@ namespace MSNPSharp
         public void SendNudge()
         {
             CheckValidation();
-            string scheme = ConstructSDGScheme();
 
-            scheme = scheme.Replace(CircleString.MessageSchemeReplacementTag, CircleString.NudgeMessageScheme);
-
-            NSPayLoadMessage nspayload = new NSPayLoadMessage("SDG", scheme);
+            SDGMessage sdg = InitSDGMessage();
+            sdg.ContentTransferEncoding = "7bit";
+            sdg.MessagingHeaders["Message-Type"] = "Nudge";
+            sdg.InnerBody = Encoding.ASCII.GetBytes("ID: 1\r\n\r\n");
+            
+            NSPayLoadMessage nspayload = new NSPayLoadMessage("SDG", sdg.ToString());
             NSMessageHandler.MessageProcessor.SendMessage(nspayload);
         }
 
@@ -203,20 +196,18 @@ namespace MSNPSharp
         public void SendMessage(TextMessage textMessage)
         {
             CheckValidation();
-
-            string scheme = ConstructSDGScheme();
-
             textMessage.PrepareMessage();
 
-            string content = MimeHeaderStrings.X_MMS_IM_Format + ": " + textMessage.GetStyleString() + "\r\n\r\n" + textMessage.Text;
-            string textMessageScheme = CircleString.TextMessageScheme.Replace(CircleString.TextMessageContentReplacementTag, content);
-            textMessageScheme = textMessageScheme.Replace(CircleString.ContentLengthReplacementTag, textMessage.Text.Length.ToString());
+            SDGMessage sdg = InitSDGMessage();
+            sdg.ContentTransferEncoding = "7bit";
+            sdg.MessagingHeaders["Message-Type"] = "Text";
+            sdg.MessagingHeaders["Content-Type"] = "Text/plain";
+            sdg.MessagingHeaders[MimeHeaderStrings.X_MMS_IM_Format] = textMessage.GetStyleString();
 
-            scheme = scheme.Replace(CircleString.MessageSchemeReplacementTag, textMessageScheme);
+            sdg.InnerBody = Encoding.UTF8.GetBytes(textMessage.Text);
 
-            NSPayLoadMessage nspayload = new NSPayLoadMessage("SDG", scheme);
+            NSPayLoadMessage nspayload = new NSPayLoadMessage("SDG", sdg.ToString());
             NSMessageHandler.MessageProcessor.SendMessage(nspayload);
-
         }
 
         /// <summary>
@@ -227,12 +218,15 @@ namespace MSNPSharp
         public void SendTypingMessage()
         {
             CheckValidation();
-            string scheme = ConstructSDGScheme();
+            SDGMessage sdg = InitSDGMessage();
+            sdg.ContentTransferEncoding = "7bit";
+            sdg.MessagingHeaders["Content-Type"] = "text/x-msmsgscontrol";
+            sdg.MessagingHeaders["Message-Type"] = "Control";
+            sdg.MessagingHeaders["Message-Subtype"] = "Typing";
+            sdg.MessagingHeaders["TypingUser"] = NSMessageHandler.ContactList.Owner.Mail;
+            sdg.InnerBody = Encoding.ASCII.GetBytes("\r\n");
 
-            string typingScheme = CircleString.TypingMessageScheme.Replace(CircleString.OwnerReplacementTag, NSMessageHandler.ContactList.Owner.Mail);
-            scheme = scheme.Replace(CircleString.MessageSchemeReplacementTag, typingScheme);
-
-            NSPayLoadMessage nspayload = new NSPayLoadMessage("SDG", scheme);
+            NSPayLoadMessage nspayload = new NSPayLoadMessage("SDG", sdg.ToString());
             NSMessageHandler.MessageProcessor.SendMessage(nspayload);
         }
 

@@ -135,8 +135,8 @@ namespace MSNPSharpClient
             messenger.Nameserver.LeftCircleConversation += new EventHandler<CircleMemberEventArgs>(Nameserver_CircleMemberLeftConversation);
             messenger.Nameserver.JoinedCircleConversation += new EventHandler<CircleMemberEventArgs>(Nameserver_CircleMemberJoinedConversation);
             messenger.Nameserver.CircleTextMessageReceived += new EventHandler<CircleTextMessageEventArgs>(Nameserver_CircleTextMessageReceived);
-            messenger.Nameserver.CircleNudgeReceived += new EventHandler<CircleMemberEventArgs>(Nameserver_CircleNudgeReceived); 
-
+            messenger.Nameserver.CircleNudgeReceived += new EventHandler<CircleMemberEventArgs>(Nameserver_CircleNudgeReceived);
+            messenger.Nameserver.CircleTypingMessageReceived += new EventHandler<CircleMemberEventArgs>(Nameserver_CircleTypingMessageReceived);
             #endregion
 
 
@@ -275,7 +275,7 @@ namespace MSNPSharpClient
         void Nameserver_CircleNudgeReceived(object sender, CircleMemberEventArgs e)
         {
             Trace.WriteLine("Circle " + e.Circle.ToString() + ": Member: " + e.Member.ToString() + " send you a nudge.");
-            AutoGroupMessageReply(e.Circle);
+            e.Circle.SendNudge();
         }
 
         private void AutoGroupMessageReply(Circle circle)
@@ -288,6 +288,11 @@ namespace MSNPSharpClient
         {
             Trace.WriteLine("Circle " + e.Sender.ToString() + ": Member: " + e.TriggerMember.ToString() + " send you a message :" + e.Message.ToString());
             AutoGroupMessageReply(e.Sender);
+        }
+
+        void Nameserver_CircleTypingMessageReceived(object sender, CircleMemberEventArgs e)
+        {
+            e.Circle.SendTypingMessage();
         }
 
         void Nameserver_CircleMemberJoinedConversation(object sender, CircleMemberEventArgs e)
