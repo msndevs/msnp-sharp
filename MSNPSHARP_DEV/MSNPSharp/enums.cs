@@ -1059,32 +1059,6 @@ namespace MSNPSharp
                                                      "\r\n" +
                                                      "{xml}";
 
-        public const string TypingMessageScheme = "Messaging: 1.0\r\n" +
-                                                    "Content-Length: 2\r\n" +
-                                                    "Content-Type: text/x-msmsgscontrol\r\n" +
-                                                    "Content-Transfer-Encoding: 7bit\r\n" +
-                                                    "Message-Type: Control\r\n" +
-                                                    "Message-Subtype: Typing\r\n" +
-                                                    "MIME-Version: 1.0\r\n" +
-                                                    "TypingUser: {ownermail}\r\n" +
-                                                    "\r\n\r\n";
-
-        public const string TextMessageScheme = "Messaging: 1.0\r\n" +
-                                                    "Content-Length: {length}\r\n" +
-                                                    "Content-Type: Text/plain; charset=UTF-8\r\n" +
-                                                    "Content-Transfer-Encoding: 7bit\r\n" +
-                                                    "Message-Type: Text\r\n" +
-                                                    "MIME-Version: 1.0\r\n" +
-                                                    "{text message}";
-
-        public const string NudgeMessageScheme = "Messaging: 1.0\r\n" +
-                                                    "Content-Length: 9\r\n" +
-                                                    "Content-Type: Text/plain; charset=UTF-8\r\n" +
-                                                    "Content-Transfer-Encoding: 7bit\r\n" +
-                                                    "Message-Type: Nudge\r\n" +
-                                                    "MIME-Version: 1.0\r\n" +
-                                                    "\r\nID: 1\r\n\r\n";
-
         public const string PUTPayloadXMLScheme = "<circle><roster><id>IM</id><user><id>1:{ownermail}</id></user></roster></circle>";
 
         public const string ToReplacementTag = "{to}";
