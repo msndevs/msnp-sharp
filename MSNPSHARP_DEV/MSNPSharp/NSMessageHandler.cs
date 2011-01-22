@@ -3258,96 +3258,91 @@ namespace MSNPSharp
             ***/
 
             NetworkMessage networkMessage = message as NetworkMessage;
-            if (networkMessage.InnerBody != null)
+            if (networkMessage.InnerBody != null && networkMessage.InnerBody.Length > 0)
             {
-                string payloadString = Encoding.UTF8.GetString(networkMessage.InnerBody);
-                int lastLineBreak = payloadString.LastIndexOf("\r\n");
-                if (lastLineBreak != -1)
+                SDGMessage sdgMessage = new SDGMessage(networkMessage.InnerBody);
+
+                string[] typeMail = sdgMessage.RoutingHeaders[MimeHeaderStrings.To].Value.Split(':');
+                if (typeMail.Length == 0)
                 {
-                    string contentString = payloadString.Substring(lastLineBreak + 2);
-                    string mimeString = payloadString.Substring(0, lastLineBreak).Replace("\r\n\r\n", "\r\n");
-                    byte[] mimeBytes = Encoding.UTF8.GetBytes(mimeString);
-                    MimeDictionary mimeDic = new MimeDictionary(mimeBytes);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnSDGReceived] Error: Cannot find circle type in id: " + sdgMessage.To);
+                    return;
+                }
 
-                    string[] typeMail = mimeDic[MimeHeaderStrings.To].Value.Split(':');
-                    if (typeMail.Length == 0)
+                string[] guidDomain = typeMail[1].Split('@');
+                if (guidDomain.Length == 0)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnSDGReceived] Error: Cannot find circle guid and host domain in id: " + typeMail[1]);
+                    return;
+                }
+
+                Circle circle = CircleList[typeMail[1]];
+                if (circle == null)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnSDGReceived] Error: Cannot find circle " + typeMail[1] + " in your circle list.");
+                    return;
+                }
+
+                // 1:username@hotmail.com;via=9:guid@live.com
+                string fullAccount = sdgMessage.RoutingHeaders[MimeHeaderStrings.From].Value + ";via=" + sdgMessage.RoutingHeaders[MimeHeaderStrings.To].Value;
+                fullAccount = fullAccount.ToLowerInvariant();
+
+                Contact member = circle.GetMember(fullAccount, AccountParseOption.ParseAsFullCircleAccount);
+
+                if (member == null)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnSDGReceived] Error: Cannot find circle type in id: " + sdgMessage.To);
+                    return;
+                }
+
+                CircleMemberEventArgs arg = new CircleMemberEventArgs(circle, member);
+
+                if (sdgMessage.MessagingHeaders.ContainsKey(MimeHeaderStrings.Content_Type) &&
+                    sdgMessage.MessagingHeaders.ContainsKey(MimeHeaderStrings.Message_Subtype))
+                {
+                    if (sdgMessage.MessagingHeaders[MimeHeaderStrings.Content_Type].ToString().ToLowerInvariant() == "text/x-msmsgscontrol" &&
+                        sdgMessage.MessagingHeaders[MimeHeaderStrings.Message_Subtype].ToString().ToLowerInvariant() == "typing")
                     {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnSDGReceived] Error: Cannot find circle type in id: " + mimeDic[MimeHeaderStrings.To].Value);
-                        return;
+                        //Typing
+                        OnCircleTypingMessageReceived(arg);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                            "Circle: " + circle.ToString() + "\r\nMember: " + member.ToString() + "\r\nIs typing....");
                     }
+                }
 
-                    string[] guidDomain = typeMail[1].Split('@');
-                    if (guidDomain.Length == 0)
+                if (sdgMessage.MessagingHeaders.ContainsKey(MimeHeaderStrings.Content_Type) &&
+                    sdgMessage.MessagingHeaders.ContainsKey(MimeHeaderStrings.Message_Type))
+                {
+                    if (sdgMessage.MessagingHeaders[MimeHeaderStrings.Content_Type].ToString().ToLowerInvariant().IndexOf("text/plain;") > -1 &&
+                        sdgMessage.MessagingHeaders[MimeHeaderStrings.Message_Type].ToString().ToLowerInvariant() == "text")
                     {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnSDGReceived] Error: Cannot find circle guid and host domain in id: " + typeMail[1]);
-                        return;
-                    }
-
-                    Circle circle = CircleList[typeMail[1]];
-                    if (circle == null)
-                    {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnSDGReceived] Error: Cannot find circle " + typeMail[1] + " in your circle list.");
-                        return;
-                    }
-
-                    // 1:username@hotmail.com;via=9:guid@live.com
-                    string fullAccount = mimeDic[MimeHeaderStrings.From].Value + ";via=" + mimeDic[MimeHeaderStrings.To].Value;
-                    fullAccount = fullAccount.ToLowerInvariant();
-
-                    Contact member = circle.GetMember(fullAccount, AccountParseOption.ParseAsFullCircleAccount);
-
-                    if (member == null)
-                    {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnSDGReceived] Error: Cannot find circle type in id: " + mimeDic[MimeHeaderStrings.To].Value);
-                        return;
-                    }
-
-                    CircleMemberEventArgs arg = new CircleMemberEventArgs(circle, member);
-
-                    if (mimeDic.ContainsKey(MimeHeaderStrings.Content_Type) && mimeDic.ContainsKey(MimeHeaderStrings.Message_Subtype))
-                    {
-                        if (mimeDic[MimeHeaderStrings.Content_Type].ToString().ToLowerInvariant() == "text/x-msmsgscontrol" &&
-                            mimeDic[MimeHeaderStrings.Message_Subtype].ToString().ToLowerInvariant() == "typing")
+                        //Text message.
+                        TextMessage txtMessage = new TextMessage(Encoding.UTF8.GetString(sdgMessage.InnerBody));
+                        StrDictionary strDic = new StrDictionary();
+                        foreach (string key in sdgMessage.MessagingHeaders.Keys)
                         {
-                            //Typing
-                            OnCircleTypingMessageReceived(arg);
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                                "Circle: " + circle.ToString() + "\r\nMember: " + member.ToString() + "\r\nIs typing....");
-                        }
-                    }
-
-                    if (mimeDic.ContainsKey(MimeHeaderStrings.Content_Type) && mimeDic.ContainsKey(MimeHeaderStrings.Message_Type))
-                    {
-                        if (mimeDic[MimeHeaderStrings.Content_Type].ToString().ToLowerInvariant().IndexOf("text/plain;") > -1 &&
-                            mimeDic[MimeHeaderStrings.Message_Type].ToString().ToLowerInvariant() == "text")
-                        {
-                            //Text message.
-                            TextMessage txtMessage = new TextMessage(contentString);
-                            StrDictionary strDic = new StrDictionary();
-                            foreach (string key in mimeDic.Keys)
-                            {
-                                strDic.Add(key, mimeDic[key].ToString());
-                            }
-
-                            txtMessage.ParseHeader(strDic);
-                            CircleTextMessageEventArgs textMessageArg = new CircleTextMessageEventArgs(txtMessage, circle, member);
-                            OnCircleTextMessageReceived(textMessageArg);
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                                "Circle: " + circle.ToString() + "\r\nMember: " + member.ToString() + "\r\nSend you a text message:\r\n" + txtMessage.ToDebugString());
-
+                            strDic.Add(key, sdgMessage.MessagingHeaders[key].ToString());
                         }
 
-                        if (mimeDic[MimeHeaderStrings.Content_Type].ToString().ToLowerInvariant().IndexOf("text/plain;") > -1 &&
-                            mimeDic[MimeHeaderStrings.Message_Type].ToString().ToLowerInvariant() == "nudge")
-                        {
-                            //Nudge
-                            OnCircleNudgeReceived(arg);
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                                "Circle: " + circle.ToString() + "\r\nMember: " + member.ToString() + "\r\nSend you a nudge.");
-                        }
+                        txtMessage.ParseHeader(strDic);
+                        CircleTextMessageEventArgs textMessageArg = new CircleTextMessageEventArgs(txtMessage, circle, member);
+                        OnCircleTextMessageReceived(textMessageArg);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                            "Circle: " + circle.ToString() + "\r\nMember: " + member.ToString() + "\r\nSend you a text message:\r\n" + txtMessage.ToDebugString());
+
+                    }
+
+                    if (sdgMessage.MessagingHeaders[MimeHeaderStrings.Content_Type].ToString().ToLowerInvariant().IndexOf("text/plain;") > -1 &&
+                        sdgMessage.MessagingHeaders[MimeHeaderStrings.Message_Type].ToString().ToLowerInvariant() == "nudge")
+                    {
+                        //Nudge
+                        OnCircleNudgeReceived(arg);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                            "Circle: " + circle.ToString() + "\r\nMember: " + member.ToString() + "\r\nSend you a nudge.");
                     }
                 }
             }
+
         }
 
         protected virtual void OnCircleTypingMessageReceived(CircleMemberEventArgs e)
