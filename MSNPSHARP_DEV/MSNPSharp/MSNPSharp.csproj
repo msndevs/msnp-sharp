@@ -61,9 +61,9 @@
     <Compile Include="ConversationID.cs" />
     <Compile Include="Core\BitUtility.cs" />
     <Compile Include="Core\Converter.cs" />
+    <Compile Include="Core\MultiMimeMessage.cs" />
     <Compile Include="Core\NSPayLoadMessage.cs" />
     <Compile Include="Core\PersistentStream.cs" />
-    <Compile Include="Core\SDGMessage.cs" />
     <Compile Include="Core\TextPayloadMessage.cs" />
     <Compile Include="Credentials.cs" />
     <Compile Include="Core\MimeDictionary.cs" />

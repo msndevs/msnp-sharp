@@ -38,11 +38,15 @@ using System.Globalization;
 
 namespace MSNPSharp.Core
 {
-    public class SDGMessage : NetworkMessage
+    /// <summary>
+    /// MultiMime message for SDG/NFY/PUT/DEL commands.
+    /// </summary>
+    public class MultiMimeMessage : NetworkMessage
     {
         private MimeDictionary routingHeaders = new MimeDictionary();
         private MimeDictionary reliabilityHeaders = new MimeDictionary();
-        private MimeDictionary messagingHeaders = new MimeDictionary();
+        private MimeDictionary contentHeaders = new MimeDictionary();
+        private string contentKey = "Messaging";
 
         public MimeDictionary RoutingHeaders
         {
@@ -60,15 +64,27 @@ namespace MSNPSharp.Core
             }
         }
 
-        public MimeDictionary MessagingHeaders
+        public MimeDictionary ContentHeaders
         {
             get
             {
-                return messagingHeaders;
+                return contentHeaders;
             }
         }
 
-        public SDGMessage(string to, string from)
+        public string ContentKey
+        {
+            get
+            {
+                return contentKey;
+            }
+            set
+            {
+                contentKey = value;
+            }
+        }
+
+        public MultiMimeMessage(string to, string from)
         {
             To = to;
             From = from;
@@ -76,18 +92,16 @@ namespace MSNPSharp.Core
             Stream = 0;
             Segment = 0;
 
-            messagingHeaders["MIME-Version"] = "1.0";
-            messagingHeaders["Content-Length"] = "0";
-            messagingHeaders["Content-Type"] = "text/plain";
-            messagingHeaders["Content-Type"]["charset"] = "UTF-8";
+            contentHeaders["Content-Length"] = "0";
+            contentHeaders["Content-Type"] = "Text/plain; charset=UTF-8";
         }
 
-        public SDGMessage(byte[] data)
+        public MultiMimeMessage(byte[] data)
         {
             ParseBytes(data);
         }
 
-        public string To
+        public MimeValue To
         {
             get
             {
@@ -99,7 +113,7 @@ namespace MSNPSharp.Core
             }
         }
 
-        public string From
+        public MimeValue From
         {
             get
             {
@@ -137,49 +151,24 @@ namespace MSNPSharp.Core
         }
 
 
-        public string ContentType
+        public MimeValue ContentType
         {
             get
             {
-                return messagingHeaders["Content-Type"];
+                return contentHeaders["Content-Type"];
             }
             set
             {
-                messagingHeaders["Content-Type"] = value;
+                contentHeaders["Content-Type"] = value;
             }
         }
-
-        public string ContentTransferEncoding
-        {
-            get
-            {
-                return messagingHeaders["Content-Transfer-Encoding"];
-            }
-            set
-            {
-                messagingHeaders["Content-Transfer-Encoding"] = value;
-            }
-        }
-
-        public string MessageType
-        {
-            get
-            {
-                return messagingHeaders["Message-Type"];
-            }
-            set
-            {
-                messagingHeaders["Message-Type"] = value;
-            }
-        }
-
 
         public override byte[] GetBytes()
         {
             if (InnerBody == null)
                 InnerBody = new byte[0];
 
-            messagingHeaders["Content-Length"] = InnerBody.Length.ToString();
+            contentHeaders["Content-Length"] = InnerBody.Length.ToString();
 
             StringBuilder sb = new StringBuilder(128);
             sb.AppendLine("Routing: 1.0");
@@ -202,29 +191,21 @@ namespace MSNPSharp.Core
             }
             sb.AppendLine();
 
-            sb.AppendLine("Messaging: 1.0");
-            foreach (string key in messagingHeaders.Keys)
+            sb.AppendLine(ContentKey + ": 1.0");
+            foreach (string key in contentHeaders.Keys)
             {
-                if (key != "Messaging")
+                if (key != ContentKey)
                 {
-                    sb.AppendLine(key + ": " + messagingHeaders[key].ToString());
+                    sb.AppendLine(key + ": " + contentHeaders[key].ToString());
                 }
             }
-            
+
             sb.AppendLine();
 
-            byte[] ret;
-
-            if (InnerBody.Length > 0)
-            {               
-                ret = AppendArray(Encoding.UTF8.GetBytes(sb.ToString()), InnerBody);
-            }
-            else
-            {
-                ret = Encoding.UTF8.GetBytes(sb.ToString());
-            }
-
-            return ret;
+            return (InnerBody.Length > 0) ?
+                AppendArray(Encoding.UTF8.GetBytes(sb.ToString()), InnerBody)
+                :
+                Encoding.UTF8.GetBytes(sb.ToString());
         }
 
         public override void ParseBytes(byte[] data)
@@ -239,16 +220,18 @@ namespace MSNPSharp.Core
 
             byte[] messagingData = new byte[data.Length - routerHeaderEnd - reliabilityHeaderEnd];
             Array.Copy(reliabilityData, reliabilityHeaderEnd, messagingData, 0, messagingData.Length);
-            messagingHeaders.Clear();
-            int messagingHeaderEnd = messagingHeaders.Parse(messagingData);
+            contentHeaders.Clear();
+            int messagingHeaderEnd = contentHeaders.Parse(messagingData);
+            contentKey = contentHeaders.ContainsKey("Publication") ? "Publication" : "Messaging";
 
             int bodyLen = data.Length - routerHeaderEnd - reliabilityHeaderEnd - messagingHeaderEnd;
-            int contentLen;
+            int contentLen = bodyLen;
 
-            if (bodyLen > 0 &&
-                messagingHeaders.ContainsKey("Content-Length") &&
-                int.TryParse(messagingHeaders["Content-Length"], out contentLen) && contentLen > 0 &&
-                contentLen <= bodyLen /*don't allow buffer overflow*/)
+            if ((bodyLen > 0)
+                ||
+                (contentHeaders.ContainsKey("Content-Length") &&
+                 int.TryParse(contentHeaders["Content-Length"], out contentLen) && contentLen > 0 &&
+                 contentLen <= bodyLen /*don't allow buffer overflow*/))
             {
                 InnerBody = new byte[contentLen];
                 Array.Copy(messagingData, messagingHeaderEnd, InnerBody, 0, InnerBody.Length);
@@ -259,7 +242,6 @@ namespace MSNPSharp.Core
             }
 
         }
-
 
         public override string ToString()
         {

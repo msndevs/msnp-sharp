@@ -1024,26 +1024,19 @@ namespace MSNPSharp
         internal void JoinCircleConversation(Guid circleId, string hostDomain)
         {
             //Send PUT
-            string from = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Mail + ";epid=" + ContactList.Owner.MachineGuid.ToString("B").ToLowerInvariant();
             string to = ((int)ClientType.CircleMember).ToString() + ":" + circleId.ToString().ToLowerInvariant() + "@" + hostDomain;
+            string from = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Mail;
+            MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
+            mmMessage.RoutingHeaders["From"]["epid"] = ContactList.Owner.MachineGuid.ToString("B").ToLowerInvariant();
 
-            string routingInfo = CircleString.RoutingScheme.Replace(CircleString.ToReplacementTag, to);
-            routingInfo = routingInfo.Replace(CircleString.FromReplacementTag, from);
+            mmMessage.ContentKey = "Publication";
+            mmMessage.ContentHeaders["Uri"] = "/circle";
+            mmMessage.ContentHeaders["Content-Type"] = "application/circles+xml";
 
-            string reliabilityInfo = CircleString.ReliabilityScheme.Replace(CircleString.StreamReplacementTag, "0");
-            reliabilityInfo = reliabilityInfo.Replace(CircleString.SegmentReplacementTag, "0");
+            string putPayloadXML = "<circle><roster><id>IM</id><user><id>1:" + ContactList.Owner.Mail + "</id></user></roster></circle>";
+            mmMessage.InnerBody = System.Text.Encoding.ASCII.GetBytes(putPayloadXML);
 
-            string messageInfo = CircleString.PUTCircleReplyMessageScheme;
-            string replyXML = CircleString.PUTPayloadXMLScheme.Replace(CircleString.OwnerReplacementTag, ContactList.Owner.Mail);
-            messageInfo = messageInfo.Replace(CircleString.ContentLengthReplacementTag, replyXML.Length.ToString());
-            messageInfo = messageInfo.Replace(CircleString.XMLReplacementTag, replyXML);
-
-            string putCommandString = CircleString.CircleMessageScheme;
-            putCommandString = putCommandString.Replace(CircleString.RoutingSchemeReplacementTag, routingInfo);
-            putCommandString = putCommandString.Replace(CircleString.ReliabilitySchemeReplacementTag, reliabilityInfo);
-            putCommandString = putCommandString.Replace(CircleString.MessageSchemeReplacementTag, messageInfo);
-
-            NSPayLoadMessage nsMessage = new NSPayLoadMessage("PUT", putCommandString);
+            NSPayLoadMessage nsMessage = new NSPayLoadMessage("PUT", mmMessage.ToString());
             MessageProcessor.SendMessage(nsMessage);
         }
 
@@ -2836,7 +2829,7 @@ namespace MSNPSharp
                 NetworkMessage networkMessage = message as NetworkMessage;
                 if (networkMessage.InnerBody != null) //Payload ADL command
                 {
-                    #region NORMAL USER 
+                    #region NORMAL USER
                     if (AutoSynchronize)
                     {
                         ContactService.msRequest(
@@ -3078,26 +3071,18 @@ namespace MSNPSharp
             if (message.CommandValues[0].ToString() == "PUT")
             {
                 NetworkMessage networkMessage = message as NetworkMessage;
-                if (networkMessage.InnerBody == null)
+                if (networkMessage.InnerBody == null || networkMessage.InnerBody.Length == 0)
                     return;
 
-                string nfyTextString = Encoding.UTF8.GetString(networkMessage.InnerBody);
-                int lastLineBreak = nfyTextString.LastIndexOf("\r\n");
-                if (lastLineBreak == -1)
+                MultiMimeMessage mmm = new MultiMimeMessage(networkMessage.InnerBody);
+
+                if (!(mmm.ContentHeaders.ContainsKey(MimeHeaderStrings.Content_Type) && mmm.ContentHeaders.ContainsKey(MimeHeaderStrings.NotifType)))
                     return;
 
-                string xmlString = nfyTextString.Substring(lastLineBreak + 2);
-                string mimeString = nfyTextString.Substring(0, lastLineBreak).Replace("\r\n\r\n", "\r\n");
-                byte[] mimeBytes = Encoding.UTF8.GetBytes(mimeString);
-                MimeDictionary mimeDic = new MimeDictionary(mimeBytes);
-
-                if (!(mimeDic.ContainsKey(MimeHeaderStrings.Content_Type) && mimeDic.ContainsKey(MimeHeaderStrings.NotifType)))
+                if (mmm.ContentHeaders[MimeHeaderStrings.Content_Type].Value != "application/circles+xml")
                     return;
 
-                if (mimeDic[MimeHeaderStrings.Content_Type].Value != "application/circles+xml")
-                    return;
-
-                string[] typeMail = mimeDic[MimeHeaderStrings.From].ToString().Split(':');
+                string[] typeMail = mmm.From.ToString().Split(':');
 
                 if (typeMail.Length == 0)
                     return;
@@ -3111,17 +3096,17 @@ namespace MSNPSharp
                 if (circle == null)
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                                "[OnNFYReceived] Cannot complete the operation since circle not found: " + mimeDic[MimeHeaderStrings.From].ToString());
+                                "[OnNFYReceived] Cannot complete the operation since circle not found: " + mmm.From.ToString());
                     return;
                 }
 
-                if (xmlString == string.Empty)
+                if (mmm.InnerBody == null || mmm.InnerBody.Length == 0)
                     return;  //No xml content.
 
                 XmlDocument xmlDoc = new XmlDocument();
-                xmlDoc.LoadXml(xmlString);
+                xmlDoc.LoadXml(Encoding.UTF8.GetString(mmm.InnerBody));
 
-                if (mimeDic[MimeHeaderStrings.NotifType].Value == "Full")
+                if (mmm.ContentHeaders[MimeHeaderStrings.NotifType].Value == "Full")
                 {
                     //This is an initial NFY
                 }
@@ -3142,7 +3127,7 @@ namespace MSNPSharp
                         continue;
 
                     ClientType memberType = (ClientType)int.Parse(node.InnerText.Split(':')[0]);
-                    string id = node.InnerText + ";via=" + mimeDic[MimeHeaderStrings.From].ToString();
+                    string id = node.InnerText + ";via=" + mmm.From.ToString();
 
                     if (circle.HasMember(id, AccountParseOption.ParseAsFullCircleAccount))
                     {
@@ -3159,19 +3144,15 @@ namespace MSNPSharp
             if (message.CommandValues[0].ToString() == "DEL")
             {
                 NetworkMessage networkMessage = message as NetworkMessage;
-                if (networkMessage.InnerBody == null)
-                {
+                if (networkMessage.InnerBody == null || networkMessage.InnerBody.Length == 0)
                     return;
-                }
 
-                string mimeString = Encoding.UTF8.GetString(networkMessage.InnerBody);
-                mimeString = mimeString.Replace("\r\n\r\n", "\r\n");
-                byte[] mimeBytes = Encoding.UTF8.GetBytes(mimeString);
-                MimeDictionary mimeDic = new MimeDictionary(mimeBytes);
+                MultiMimeMessage mmm = new MultiMimeMessage(networkMessage.InnerBody);
 
-                if (!mimeDic.ContainsKey(MimeHeaderStrings.Uri))
+                if (!mmm.ContentHeaders.ContainsKey(MimeHeaderStrings.Uri))
                     return;
-                string xpathUri = mimeDic[MimeHeaderStrings.Uri].ToString();
+
+                string xpathUri = mmm.ContentHeaders[MimeHeaderStrings.Uri].ToString();
                 if (xpathUri.IndexOf("/circle/roster(IM)/user") == -1)
                     return;
 
@@ -3179,10 +3160,10 @@ namespace MSNPSharp
                 typeAccount = typeAccount.Substring(typeAccount.IndexOf("(") + 1);
                 typeAccount = typeAccount.Substring(0, typeAccount.IndexOf(")"));
 
-                if (!mimeDic.ContainsKey(MimeHeaderStrings.From))
+                if (!mmm.RoutingHeaders.ContainsKey(MimeHeaderStrings.From))
                     return;
 
-                string circleID = mimeDic[MimeHeaderStrings.From].ToString();
+                string circleID = mmm.From.ToString();
                 string[] typeCircleID = circleID.Split(':');
                 if (typeCircleID.Length < 2)
                     return;
@@ -3198,9 +3179,6 @@ namespace MSNPSharp
 
                 Contact member = circle.GetMember(fullAccount, AccountParseOption.ParseAsFullCircleAccount);
                 OnLeftCircleConversation(new CircleMemberEventArgs(circle, member));
-
-
-
             }
 
             #endregion
@@ -3216,56 +3194,15 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnSDGReceived(NSMessage message)
         {
-            /*** typing message ***
-            SDG 0 421
-            Routing: 1.0
-            To: 9:00000000-0000-0000-0009-cdc0351b0c6d@live.com;path=IM
-            From: 1:updatedynamicitem@hotmail.com;epid={7a29dadd-503d-4c5c-8e6b-a599c15de981}
-
-            Reliability: 1.0
-            Stream: 0
-            Segment: 1
-
-            Messaging: 1.0
-            Content-Length: 2
-            Content-Type: text/x-msmsgscontrol
-            Content-Transfer-Encoding: 7bit
-            Message-Type: Control
-            Message-Subtype: Typing
-            MIME-Version: 1.0
-            TypingUser: updatedynamicitem@hotmail.com
-            ***/
-
-            /*** group text messaging ***
-            SDG 0 410
-            Routing: 1.0
-            To: 9:00000000-0000-0000-0009-cdc0351b0c6d@live.com;path=IM
-            From: 1:updatedynamicitem@hotmail.com;epid={7a29dadd-503d-4c5c-8e6b-a599c15de981}
-
-            Reliability: 1.0
-            Stream: 0
-            Segment: 2
-
-            Messaging: 1.0
-            Content-Length: 2
-            Content-Type: Text/plain; charset=UTF-8
-            Content-Transfer-Encoding: 7bit
-            Message-Type: Text
-            MIME-Version: 1.0
-            X-MMS-IM-Format: FN=Segoe%20UI; EF=; CO=0; CS=1; PF=0
-
-            hi
-            ***/
-
             NetworkMessage networkMessage = message as NetworkMessage;
             if (networkMessage.InnerBody != null && networkMessage.InnerBody.Length > 0)
             {
-                SDGMessage sdgMessage = new SDGMessage(networkMessage.InnerBody);
+                MultiMimeMessage mmMessage = new MultiMimeMessage(networkMessage.InnerBody);
 
-                string[] typeMail = sdgMessage.RoutingHeaders[MimeHeaderStrings.To].Value.Split(':');
+                string[] typeMail = mmMessage.RoutingHeaders[MimeHeaderStrings.To].Value.Split(':');
                 if (typeMail.Length == 0)
                 {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnSDGReceived] Error: Cannot find circle type in id: " + sdgMessage.To);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnSDGReceived] Error: Cannot find circle type in id: " + mmMessage.To);
                     return;
                 }
 
@@ -3284,24 +3221,24 @@ namespace MSNPSharp
                 }
 
                 // 1:username@hotmail.com;via=9:guid@live.com
-                string fullAccount = sdgMessage.RoutingHeaders[MimeHeaderStrings.From].Value + ";via=" + sdgMessage.RoutingHeaders[MimeHeaderStrings.To].Value;
+                string fullAccount = mmMessage.RoutingHeaders[MimeHeaderStrings.From].Value + ";via=" + mmMessage.RoutingHeaders[MimeHeaderStrings.To].Value;
                 fullAccount = fullAccount.ToLowerInvariant();
 
                 Contact member = circle.GetMember(fullAccount, AccountParseOption.ParseAsFullCircleAccount);
 
                 if (member == null)
                 {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnSDGReceived] Error: Cannot find circle type in id: " + sdgMessage.To);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnSDGReceived] Error: Cannot find circle type in id: " + mmMessage.To);
                     return;
                 }
 
                 CircleMemberEventArgs arg = new CircleMemberEventArgs(circle, member);
 
-                if (sdgMessage.MessagingHeaders.ContainsKey(MimeHeaderStrings.Content_Type) &&
-                    sdgMessage.MessagingHeaders.ContainsKey(MimeHeaderStrings.Message_Subtype))
+                if (mmMessage.ContentHeaders.ContainsKey(MimeHeaderStrings.Content_Type) &&
+                    mmMessage.ContentHeaders.ContainsKey(MimeHeaderStrings.Message_Subtype))
                 {
-                    if (sdgMessage.MessagingHeaders[MimeHeaderStrings.Content_Type].ToString().ToLowerInvariant() == "text/x-msmsgscontrol" &&
-                        sdgMessage.MessagingHeaders[MimeHeaderStrings.Message_Subtype].ToString().ToLowerInvariant() == "typing")
+                    if (mmMessage.ContentHeaders[MimeHeaderStrings.Content_Type].ToString().ToLowerInvariant() == "text/x-msmsgscontrol" &&
+                        mmMessage.ContentHeaders[MimeHeaderStrings.Message_Subtype].ToString().ToLowerInvariant() == "typing")
                     {
                         //Typing
                         OnCircleTypingMessageReceived(arg);
@@ -3310,18 +3247,18 @@ namespace MSNPSharp
                     }
                 }
 
-                if (sdgMessage.MessagingHeaders.ContainsKey(MimeHeaderStrings.Content_Type) &&
-                    sdgMessage.MessagingHeaders.ContainsKey(MimeHeaderStrings.Message_Type))
+                if (mmMessage.ContentHeaders.ContainsKey(MimeHeaderStrings.Content_Type) &&
+                    mmMessage.ContentHeaders.ContainsKey(MimeHeaderStrings.Message_Type))
                 {
-                    if (sdgMessage.MessagingHeaders[MimeHeaderStrings.Content_Type].ToString().ToLowerInvariant().IndexOf("text/plain;") > -1 &&
-                        sdgMessage.MessagingHeaders[MimeHeaderStrings.Message_Type].ToString().ToLowerInvariant() == "text")
+                    if (mmMessage.ContentHeaders[MimeHeaderStrings.Content_Type].ToString().ToLowerInvariant().IndexOf("text/plain;") > -1 &&
+                        mmMessage.ContentHeaders[MimeHeaderStrings.Message_Type].ToString().ToLowerInvariant() == "text")
                     {
                         //Text message.
-                        TextMessage txtMessage = new TextMessage(Encoding.UTF8.GetString(sdgMessage.InnerBody));
+                        TextMessage txtMessage = new TextMessage(Encoding.UTF8.GetString(mmMessage.InnerBody));
                         StrDictionary strDic = new StrDictionary();
-                        foreach (string key in sdgMessage.MessagingHeaders.Keys)
+                        foreach (string key in mmMessage.ContentHeaders.Keys)
                         {
-                            strDic.Add(key, sdgMessage.MessagingHeaders[key].ToString());
+                            strDic.Add(key, mmMessage.ContentHeaders[key].ToString());
                         }
 
                         txtMessage.ParseHeader(strDic);
@@ -3332,8 +3269,8 @@ namespace MSNPSharp
 
                     }
 
-                    if (sdgMessage.MessagingHeaders[MimeHeaderStrings.Content_Type].ToString().ToLowerInvariant().IndexOf("text/plain;") > -1 &&
-                        sdgMessage.MessagingHeaders[MimeHeaderStrings.Message_Type].ToString().ToLowerInvariant() == "nudge")
+                    if (mmMessage.ContentHeaders[MimeHeaderStrings.Content_Type].ToString().ToLowerInvariant().IndexOf("text/plain;") > -1 &&
+                        mmMessage.ContentHeaders[MimeHeaderStrings.Message_Type].ToString().ToLowerInvariant() == "nudge")
                     {
                         //Nudge
                         OnCircleNudgeReceived(arg);
@@ -3342,7 +3279,6 @@ namespace MSNPSharp
                     }
                 }
             }
-
         }
 
         protected virtual void OnCircleTypingMessageReceived(CircleMemberEventArgs e)
@@ -3739,6 +3675,9 @@ namespace MSNPSharp
                 case "UBX":
                     OnUBXReceived(nsMessage);
                     break;
+                case "SDG":
+                    OnSDGReceived(nsMessage);
+                    break;
 
                 // Other CMDs
                 case "ADG":
@@ -3815,9 +3754,6 @@ namespace MSNPSharp
                     break;
                 case "PUT":
                     OnPUTReceived(nsMessage);
-                    break;
-                case "SDG":
-                    OnSDGReceived(nsMessage);
                     break;
                 default:
                     isUnknownMessage = true;

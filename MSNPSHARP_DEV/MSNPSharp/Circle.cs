@@ -156,17 +156,17 @@ namespace MSNPSharp
                 throw new InvalidOperationException("Cannot send a message when you are in 'Hidden' status.");
         }
 
-        private SDGMessage InitSDGMessage()
+        private MultiMimeMessage InitMultiMimeMessage()
         {
             string to = ((int)ClientType).ToString() + ":" + Mail;
             string from = ((int)NSMessageHandler.ContactList.Owner.ClientType).ToString() + ":" + NSMessageHandler.ContactList.Owner.Mail;
 
-            SDGMessage sdgMessage = new SDGMessage(to, from);
-            sdgMessage.RoutingHeaders["To"]["path"] = "IM";
-            sdgMessage.RoutingHeaders["From"]["epid"] = NSMessageHandler.ContactList.Owner.MachineGuid.ToString("B").ToLowerInvariant();
-            sdgMessage.Stream = IncreaseSegmentCounter();
+            MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
+            mmMessage.RoutingHeaders["To"]["path"] = "IM";
+            mmMessage.RoutingHeaders["From"]["epid"] = NSMessageHandler.ContactList.Owner.MachineGuid.ToString("B").ToLowerInvariant();
+            mmMessage.Segment = IncreaseSegmentCounter();
 
-            return sdgMessage;
+            return mmMessage;
         }
 
         /// <summary>
@@ -178,12 +178,13 @@ namespace MSNPSharp
         {
             CheckValidation();
 
-            SDGMessage sdg = InitSDGMessage();
-            sdg.ContentTransferEncoding = "7bit";
-            sdg.MessagingHeaders["Message-Type"] = "Nudge";
-            sdg.InnerBody = Encoding.ASCII.GetBytes("ID: 1\r\n\r\n");
+            MultiMimeMessage mmm = InitMultiMimeMessage();
+            mmm.ContentHeaders["MIME-Version"] = "1.0";
+            mmm.ContentHeaders["Content-Transfer-Encoding"] = "7bit";
+            mmm.ContentHeaders["Message-Type"] = "Nudge";
+            mmm.InnerBody = Encoding.ASCII.GetBytes("ID: 1\r\n\r\n");
             
-            NSPayLoadMessage nspayload = new NSPayLoadMessage("SDG", sdg.ToString());
+            NSPayLoadMessage nspayload = new NSPayLoadMessage("SDG", mmm.ToString());
             NSMessageHandler.MessageProcessor.SendMessage(nspayload);
         }
 
@@ -198,15 +199,16 @@ namespace MSNPSharp
             CheckValidation();
             textMessage.PrepareMessage();
 
-            SDGMessage sdg = InitSDGMessage();
-            sdg.ContentTransferEncoding = "7bit";
-            sdg.MessagingHeaders["Message-Type"] = "Text";
-            sdg.MessagingHeaders["Content-Type"] = "Text/plain";
-            sdg.MessagingHeaders[MimeHeaderStrings.X_MMS_IM_Format] = textMessage.GetStyleString();
+            MultiMimeMessage mmm = InitMultiMimeMessage();
+            mmm.ContentHeaders["MIME-Version"] = "1.0";
+            mmm.ContentHeaders["Content-Transfer-Encoding"] = "7bit";
+            mmm.ContentHeaders["Message-Type"] = "Text";
+            mmm.ContentHeaders["Content-Type"] = "Text/plain";
+            mmm.ContentHeaders[MimeHeaderStrings.X_MMS_IM_Format] = textMessage.GetStyleString();
 
-            sdg.InnerBody = Encoding.UTF8.GetBytes(textMessage.Text);
+            mmm.InnerBody = Encoding.UTF8.GetBytes(textMessage.Text);
 
-            NSPayLoadMessage nspayload = new NSPayLoadMessage("SDG", sdg.ToString());
+            NSPayLoadMessage nspayload = new NSPayLoadMessage("SDG", mmm.ToString());
             NSMessageHandler.MessageProcessor.SendMessage(nspayload);
         }
 
@@ -218,15 +220,18 @@ namespace MSNPSharp
         public void SendTypingMessage()
         {
             CheckValidation();
-            SDGMessage sdg = InitSDGMessage();
-            sdg.ContentTransferEncoding = "7bit";
-            sdg.MessagingHeaders["Content-Type"] = "text/x-msmsgscontrol";
-            sdg.MessagingHeaders["Message-Type"] = "Control";
-            sdg.MessagingHeaders["Message-Subtype"] = "Typing";
-            sdg.MessagingHeaders["TypingUser"] = NSMessageHandler.ContactList.Owner.Mail;
-            sdg.InnerBody = Encoding.ASCII.GetBytes("\r\n");
 
-            NSPayLoadMessage nspayload = new NSPayLoadMessage("SDG", sdg.ToString());
+            MultiMimeMessage mmm = InitMultiMimeMessage();
+            mmm.ContentHeaders["MIME-Version"] = "1.0";
+            mmm.ContentHeaders["Content-Transfer-Encoding"] = "7bit";
+            mmm.ContentHeaders["Content-Type"] = "text/x-msmsgscontrol";
+            mmm.ContentHeaders["Message-Type"] = "Control";
+            mmm.ContentHeaders["Message-Subtype"] = "Typing";
+            mmm.ContentHeaders["TypingUser"] = NSMessageHandler.ContactList.Owner.Mail;
+
+            mmm.InnerBody = Encoding.ASCII.GetBytes("\r\n");
+
+            NSPayLoadMessage nspayload = new NSPayLoadMessage("SDG", mmm.ToString());
             NSMessageHandler.MessageProcessor.SendMessage(nspayload);
         }
 
