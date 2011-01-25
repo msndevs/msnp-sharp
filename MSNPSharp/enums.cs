@@ -1036,44 +1036,6 @@ namespace MSNPSharp
     public static class CircleString
     {
         /// <summary>
-        /// The basic pattern of messages send and receive by circles.
-        /// </summary>
-        public const string CircleMessageScheme = "{routing scheme}" +
-            "\r\n" +
-            "{reliability scheme}" +
-            "\r\n" +
-            "{message scheme}";
-
-        public const string RoutingScheme = "Routing: 1.0\r\n" +
-                                                "To: {to}\r\n" +
-                                                "From: {from}\r\n";
-
-        public const string ReliabilityScheme = "Reliability: 1.0\r\n" +
-                                                "Stream: {stream}\r\n" +
-                                                "Segment: {segment}\r\n";
-
-        public const string PUTCircleReplyMessageScheme = "Publication: 1.0\r\n" +
-                                                     "Uri: /circle\r\n" +
-                                                     "Content-Type: application/circles+xml\r\n" +
-                                                     "Content-Length: {length}\r\n" +
-                                                     "\r\n" +
-                                                     "{xml}";
-
-        public const string PUTPayloadXMLScheme = "<circle><roster><id>IM</id><user><id>1:{ownermail}</id></user></roster></circle>";
-
-        public const string ToReplacementTag = "{to}";
-        public const string FromReplacementTag = "{from}";
-        public const string XMLReplacementTag = "{xml}";
-        public const string ContentLengthReplacementTag = "{length}";
-        public const string OwnerReplacementTag = "{ownermail}";
-        public const string StreamReplacementTag = "{stream}";
-        public const string SegmentReplacementTag = "{segment}";
-        public const string RoutingSchemeReplacementTag = "{routing scheme}";
-        public const string ReliabilitySchemeReplacementTag = "{reliability scheme}";
-        public const string MessageSchemeReplacementTag = "{message scheme}";
-        public const string TextMessageContentReplacementTag = "{text message}";
-
-        /// <summary>
         /// The default windows live circle host domain: live.com.
         /// </summary>
         public const string DefaultHostDomain = "live.com";
