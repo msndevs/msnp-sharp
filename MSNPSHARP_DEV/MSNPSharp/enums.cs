@@ -279,7 +279,7 @@ namespace MSNPSharp
     public enum ClientCapacities : long
     {
         None = 0x00,
-        IsMobile = 0x01,
+        OnlineViaMobile = 0x01,
         MsnExplorer8User = 0x02,
         CanViewInkGIF = 0x04,
         CanViewInkISF = 0x08,
@@ -370,11 +370,13 @@ namespace MSNPSharp
     public enum ClientCapacitiesEx : long
     {
         None = 0x00,
+        IsSmsOnly = 0x01,
+        SupportsVoiceOverMsnp = 0x02,
+        SupportsUucpSipStack = 0x04,
         RTCVideoEnabled = 0x10,
-        /// <summary>
-        /// The client can handle new stack of MSNP2P.
-        /// </summary>
         CanP2PV2 = 0x20,
+        IsAuthenticatedWebIMUser = 0x40,
+
         CanP2PV1 = 0x400,   //I guess.
         UNKnownEx1000 = 0x1000,
         CanHandleMSNCExMask = 0x20000
