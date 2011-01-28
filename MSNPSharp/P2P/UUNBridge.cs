@@ -82,8 +82,8 @@ namespace MSNPSharp.P2P
         {
             if (session != null)
             {
-                ClientCapacities caps = session.Remote.EndPointData[session.RemoteContactEndPointID].ClientCapacities;
-                return (ClientCapacities.SupportP2PUUNBootstrap == (caps & ClientCapacities.SupportP2PUUNBootstrap));
+                ClientCapabilities caps = session.Remote.EndPointData[session.RemoteContactEndPointID].ClientCapabilities;
+                return (ClientCapabilities.SupportsDirectBootstrapping == (caps & ClientCapabilities.SupportsDirectBootstrapping));
             }
             return false;
 

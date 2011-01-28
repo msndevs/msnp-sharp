@@ -276,110 +276,114 @@ namespace MSNPSharp
     /// The functions a (remote) client supports.
     /// </summary>
     [Flags]
-    public enum ClientCapacities : long
+    public enum ClientCapabilities : long
     {
         None = 0x00,
         OnlineViaMobile = 0x01,
-        MsnExplorer8User = 0x02,
-        CanViewInkGIF = 0x04,
-        CanViewInkISF = 0x08,
-        CanVideoConference = 0x10,
-        CanMultiPacketMSG = 0x20,
-        IsMobileEnabled = 0x40,
-        IsDirectDeviceEnabled = 0x80,
-        IsMobileMessagingDisabled = 0x100,
-        IsWebClient = 0x200,
-        IsMobileDevice = 0x400,
-        IsTGWClient = 0x800,
-        HasMSNSpaces = 0x1000,
-        UsingXPMediaCenter = 0x2000,
-        /// <summary>
-        /// Activity support.
-        /// </summary>
-        CanDirectIM = 0x4000,
-        CanReceiveWinks = 0x8000,
-        CanMSNSearch = 0x10000,
+        OnlineViaTexas = 0x02,
+        SupportsGifInk = 0x04,
+        SupportsIsfInk = 0x08,
+        WebCamDetected = 0x10,
+        SupportsChunking = 0x20,
+        MobileEnabled = 0x40,
+        WebWatchEnabled = 0x80,
+        SupportsActivities = 0x100,
+        OnlineViaWebIM = 0x200,
+        MobileDevice = 0x400,
+        OnlineViaFederatedInterface = 0x800,
+        HasSpace = 0x1000,
+        IsMceUser = 0x2000,
+        SupportsDirectIM = 0x4000,
+        SupportsWinks = 0x8000,
+        SupportsSharedSearch = 0x10000,
         IsBot = 0x20000,
-        CanReceiveVoiceClips = 0x40000,
-        CanSecureChannel = 0x80000,
-        CanSIP = 0x100000,
-        CanTunneledSip = 0x200000,
-        CanShareFolders = 0x400000,
-        PageModeMessaging = 0x800000,
+        SupportsVoiceIM = 0x40000,
+        SupportsSChannel = 0x80000,
+        SupportsSipInvite = 0x100000,
+        SupportsMultipartyMedia = 0x200000,
+        SupportsSDrive = 0x400000,
+        SupportsPageModeMessaging = 0x800000,
         HasOneCare = 0x1000000,
-        SupportP2PTURN = 0x2000000,
-        SupportP2PUUNBootstrap = 0x4000000,
-        IsUsingAlias = 0x8000000,
+        SupportsTurn = 0x2000000,
+        SupportsDirectBootstrapping = 0x4000000,
+        UsingAlias = 0x8000000,
 
         /// <summary>
-        /// MSN 6.0
+        /// MSNC1
         /// </summary>
-        CanHandleMSNC1 = 0x10000000,
+        AppVersion60 = 0x10000000,
         /// <summary>
-        /// MSN 6.1
+        /// MSNC2
         /// </summary>
-        CanHandleMSNC2 = 0x20000000,
+        AppVersion61 = 0x20000000,
         /// <summary>
-        /// MSN 6.2
+        /// MSNC3
         /// </summary>
-        CanHandleMSNC3 = 0x30000000,
+        AppVersion62 = 0x30000000,
         /// <summary>
-        /// MSN 7.0
+        /// MSNC4
         /// </summary>
-        CanHandleMSNC4 = 0x40000000,
+        AppVersion70 = 0x40000000,
         /// <summary>
-        /// MSN 7.5
+        /// MSNC5
         /// </summary>
-        CanHandleMSNC5 = 0x50000000,
+        AppVersion75 = 0x50000000,
         /// <summary>
-        /// MSN 8.0
+        /// MSNC6
         /// </summary>
-        CanHandleMSNC6 = 0x60000000,
+        AppVersion80 = 0x60000000,
         /// <summary>
-        /// MSN 8.1
+        ///MSNC7
         /// </summary>
-        CanHandleMSNC7 = 0x70000000,
+        AppVersion81 = 0x70000000,
         /// <summary>
-        /// MSN 8.5 (MSNP15)
+        /// MSNC8 (MSNP15)
         /// </summary>
-        CanHandleMSNC8 = 0x80000000,
+        AppVersion85 = 0x80000000,
         /// <summary>
-        /// MSN 9.0 (MSNP16)
+        /// MSNC9 (MSNP16)
         /// </summary>
-        CanHandleMSNC9 = 0x90000000,
+        AppVersion90 = 0x90000000,
         /// <summary>
-        /// MSN 14.0 - Wave 3 (MSNP18)
+        /// MSNC10 - MSN 14.0, Wave 3 (MSNP18)
         /// </summary>
-        CanHandleMSNC10 = 0xA0000000,
+        AppVersion2009 = 0xA0000000,
         /// <summary>
-        /// MSN 15.0 - Wave 4 (MSNP21)
+        /// MSNC11 - MSN 15.0, Wave 4 (MSNP21)
         /// </summary>
-        CanHandleMSNC11 = 0xB0000000,
+        AppVersion2011 = 0xB0000000,
 
-        CanHandleMSNC12 = 0xC0000000,
-        CanHandleMSNC13 = 0xD0000000,
-        CanHandleMSNC14 = 0xE0000000,
+        AppVersion____ = 0xC0000000,
+        AppVersion2___ = 0xD0000000,
+        AppVersion20__ = 0xE0000000,
 
         /// <summary>
         /// Mask for MSNC
         /// </summary>
-        CanHandleMSNCMask = 0xF0000000
+        AppVersionMask = 0xF0000000
     }
 
     [Flags]
-    public enum ClientCapacitiesEx : long
+    public enum ClientCapabilitiesEx : long
     {
         None = 0x00,
         IsSmsOnly = 0x01,
         SupportsVoiceOverMsnp = 0x02,
         SupportsUucpSipStack = 0x04,
+        SupportsApplicationMessages = 0x08,
         RTCVideoEnabled = 0x10,
-        CanP2PV2 = 0x20,
+        SupportsPeerToPeerV2 = 0x20,
         IsAuthenticatedWebIMUser = 0x40,
-
-        CanP2PV1 = 0x400,   //I guess.
-        UNKnownEx1000 = 0x1000,
-        CanHandleMSNCExMask = 0x20000
+        UNKNOWN_0x80 = 0x80,
+        SupportsOfflineIM = 0x100,
+        UNKNOWN_0x200 = 0x200,
+        SupportsNudges = 0x400,   // (((:)))
+        UNKNOWN_0x1000 = 0x1000,
+        SupportsPeerToPeerMixerRelay = 0x8000,
+        SupportsPeerToPeerEnveloping = 0x80000,
+        YahooIMDisabled = 0x400000,
+        SupportsMultipartyConversations = 0x80000000,
+        AppVersionMask = 0xF0000000
     }
 
     /// <summary>
@@ -1406,8 +1410,8 @@ namespace MSNPSharp
         None,
         Name,
         ClientCapacityString,
-        ClientCapacities,
-        ClientCapacitiesEx,
+        ClientCapabilities,
+        ClientCapabilitiesEx,
         Status
     }
 
@@ -1613,7 +1617,7 @@ namespace MSNPSharp
         public const ushort PeerInfoReservedField = 0;
 
         /// <summary>
-        /// The value of capacities field of Peer info TLV.
+        /// The value of capabilities field of Peer info TLV.
         /// </summary>
         public const uint Capabilities = 271;
     }
