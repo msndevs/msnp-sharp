@@ -1858,7 +1858,7 @@ namespace MSNPSharp.IO
             if (inverseList == null)
                 return false;
 
-            if (sortedCIDList.Count != inverseList.Length)
+            if (sortedCIDList.Count > inverseList.Length)
                 return false;
 
             lock (WLConnections)
@@ -1875,8 +1875,15 @@ namespace MSNPSharp.IO
                 }
             }
 
-            return true;
+            if (inverseList.Length > sortedCIDList.Count)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                    (inverseList.Length - sortedCIDList.Count).ToString() +
+                    " contacts don't have hidden representatives", GetType().Name);
 
+            }
+
+            return true;
         }
 
         private bool SaveAddressBookContactPage(string abId, ContactType[] contacts)
