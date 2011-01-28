@@ -56,8 +56,8 @@ namespace MSNPSharp
     {
         public static readonly Guid MachineGuid = Guid.NewGuid();
 
-        private const ClientCapacities DefaultClientCapacities = ClientCapacities.CanMultiPacketMSG | ClientCapacities.CanReceiveWinks | ClientCapacities.SupportP2PUUNBootstrap | ClientCapacities.CanHandleMSNC10;
-        private const ClientCapacitiesEx DefaultClientCapacitiesEx = ClientCapacitiesEx.CanP2PV2 | ClientCapacitiesEx.RTCVideoEnabled;
+        private const ClientCapabilities DefaultClientCapabilities = ClientCapabilities.SupportsChunking | ClientCapabilities.SupportsWinks | ClientCapabilities.SupportsDirectBootstrapping | ClientCapabilities.AppVersion2009;
+        private const ClientCapabilitiesEx DefaultClientCapabilitiesEx = ClientCapabilitiesEx.SupportsPeerToPeerV2 | ClientCapabilitiesEx.RTCVideoEnabled;
 
 
         #region Members
@@ -861,7 +861,7 @@ namespace MSNPSharp
                 throw new MSNPSharpException("Not a valid owner");
 
             string xmlstr = "<EndpointData><Capabilities>" +
-                ((long)ContactList.Owner.LocalEndPointClientCapacities).ToString() + ":" + ((long)ContactList.Owner.LocalEndPointClientCapacitiesEx).ToString()
+                ((long)ContactList.Owner.LocalEndPointClientCapabilities).ToString() + ":" + ((long)ContactList.Owner.LocalEndPointClientCapabilitiesEx).ToString()
             + "</Capabilities></EndpointData>";
 
             MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", xmlstr));
@@ -923,19 +923,19 @@ namespace MSNPSharp
             {
                 string capacities = String.Empty;
 
-                if (ContactList.Owner.LocalEndPointClientCapacities == ClientCapacities.None)
+                if (ContactList.Owner.LocalEndPointClientCapabilities == ClientCapabilities.None)
                 {
                     isSetDefault = true;
 
                     //don't set the same status or it will result in disconnection
-                    ContactList.Owner.LocalEndPointClientCapacities = DefaultClientCapacities;
+                    ContactList.Owner.LocalEndPointClientCapabilities = DefaultClientCapabilities;
 
                     if (BotMode)
                     {
-                        ContactList.Owner.LocalEndPointClientCapacities |= ClientCapacities.IsBot;
+                        ContactList.Owner.LocalEndPointClientCapabilities |= ClientCapabilities.IsBot;
                     }
 
-                    ContactList.Owner.LocalEndPointClientCapacitiesEx = DefaultClientCapacitiesEx;
+                    ContactList.Owner.LocalEndPointClientCapabilitiesEx = DefaultClientCapabilitiesEx;
 
                     SetEndPointCapabilities();
                     SetPresenceStatusUUX(status);
@@ -952,8 +952,8 @@ namespace MSNPSharp
                     SetScreenName(ContactList.Owner.Name);
                 }
 
-                ClientCapacitiesEx capsext = ContactList.Owner.LocalEndPointClientCapacitiesEx;
-                capacities = ((long)ContactList.Owner.LocalEndPointClientCapacities).ToString() + ":" + ((long)capsext).ToString();
+                ClientCapabilitiesEx capsext = ContactList.Owner.LocalEndPointClientCapabilitiesEx;
+                capacities = ((long)ContactList.Owner.LocalEndPointClientCapabilities).ToString() + ":" + ((long)capsext).ToString();
 
                 if (!isSetDefault)
                 {
@@ -993,8 +993,8 @@ namespace MSNPSharp
             if (ContactList.Owner.DisplayImage != null)
                 context = ContactList.Owner.DisplayImage.Context;
 
-            ClientCapacitiesEx capsext = ContactList.Owner.LocalEndPointClientCapacitiesEx;
-            string capacities = ((long)ContactList.Owner.LocalEndPointClientCapacities).ToString() + ":" + ((long)capsext).ToString();
+            ClientCapabilitiesEx capsext = ContactList.Owner.LocalEndPointClientCapabilitiesEx;
+            string capacities = ((long)ContactList.Owner.LocalEndPointClientCapabilities).ToString() + ":" + ((long)capsext).ToString();
 
             MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(ContactList.Owner.Status), capacities, context }));
         }
@@ -1666,23 +1666,23 @@ namespace MSNPSharp
                 {
                     Guid epId = new Guid(epNode.Attributes["id"].Value);
                     string capsString = (epNode["Capabilities"] == null) ? "0:0" : epNode["Capabilities"].InnerText;
-                    ClientCapacities clientCaps = ClientCapacities.None;
-                    ClientCapacitiesEx clientCapsEx = ClientCapacitiesEx.None;
+                    ClientCapabilities clientCaps = ClientCapabilities.None;
+                    ClientCapabilitiesEx clientCapsEx = ClientCapabilitiesEx.None;
 
                     string[] capsGroup = capsString.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
                     if (capsGroup.Length > 0)
                     {
-                        clientCaps = (ClientCapacities)uint.Parse(capsGroup[0]);
+                        clientCaps = (ClientCapabilities)uint.Parse(capsGroup[0]);
                     }
 
                     if (capsGroup.Length > 1)
                     {
-                        clientCapsEx = (ClientCapacitiesEx)uint.Parse(capsGroup[1]);
+                        clientCapsEx = (ClientCapabilitiesEx)uint.Parse(capsGroup[1]);
                     }
 
                     EndPointData epData = (isPrivateEndPoint ? new PrivateEndPointData(endpointAccount, epId) : new EndPointData(endpointAccount, epId));
-                    epData.ClientCapacities = clientCaps;
-                    epData.ClientCapacitiesEx = clientCapsEx;
+                    epData.ClientCapabilities = clientCaps;
+                    epData.ClientCapabilitiesEx = clientCapsEx;
                     endPoints.Add(epData);
                 }
             }
@@ -1695,9 +1695,9 @@ namespace MSNPSharp
         /// </summary>
         /// <remarks>
         /// Indicates that a contact on the forward list went online.
-        /// <code>NLN [status] [clienttype:account] [name] [clientcapacities:48] [displayimage] (MSNP18)</code>
-        /// <code>NLN [status] [account] [clienttype] [name] [clientcapacities:0] [displayimage] (MSNP16)</code>
-        /// <code>NLN [status] [account] [clienttype] [name] [clientcapacities] [displayimage] (MSNP15)</code>
+        /// <code>NLN [status] [clienttype:account] [name] [ClientCapabilities:48] [displayimage] (MSNP18)</code>
+        /// <code>NLN [status] [account] [clienttype] [name] [ClientCapabilities:0] [displayimage] (MSNP16)</code>
+        /// <code>NLN [status] [account] [clienttype] [name] [ClientCapabilities] [displayimage] (MSNP15)</code>
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnNLNReceived(NSMessage message)
@@ -1709,8 +1709,8 @@ namespace MSNPSharp
             string fullaccount = message.CommandValues[1].ToString(); // 1:username@hotmail.com;via=9:guid@live.com
             Contact contact = null;
             Circle circle = null;
-            ClientCapacities newcaps = ClientCapacities.None;
-            ClientCapacitiesEx newcapsex = ClientCapacitiesEx.None;
+            ClientCapabilities newcaps = ClientCapabilities.None;
+            ClientCapabilitiesEx newcapsex = ClientCapabilitiesEx.None;
 
             string newName = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
             string newDisplayImageContext = message.CommandValues.Count >= 5 ? message.CommandValues[4].ToString() : String.Empty;
@@ -1719,12 +1719,12 @@ namespace MSNPSharp
             {
                 if (message.CommandValues[3].ToString().Contains(":"))
                 {
-                    newcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[3].ToString().Split(':')[0]);
-                    newcapsex = (ClientCapacitiesEx)Convert.ToInt64(message.CommandValues[3].ToString().Split(':')[1]);
+                    newcaps = (ClientCapabilities)Convert.ToInt64(message.CommandValues[3].ToString().Split(':')[0]);
+                    newcapsex = (ClientCapabilitiesEx)Convert.ToInt64(message.CommandValues[3].ToString().Split(':')[1]);
                 }
                 else
                 {
-                    newcaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[3].ToString());
+                    newcaps = (ClientCapabilities)Convert.ToInt64(message.CommandValues[3].ToString());
                 }
 
             }
@@ -1760,8 +1760,8 @@ namespace MSNPSharp
                     contact = circle.ContactList.GetContact(account, type);
 
                     contact.SetName(MSNHttpUtility.NSDecode(message.CommandValues[2].ToString()));
-                    contact.EndPointData[Guid.Empty].ClientCapacities = newcaps;
-                    contact.EndPointData[Guid.Empty].ClientCapacitiesEx = newcapsex;
+                    contact.EndPointData[Guid.Empty].ClientCapabilities = newcaps;
+                    contact.EndPointData[Guid.Empty].ClientCapabilitiesEx = newcapsex;
 
                     if (contact != ContactList.Owner && newDisplayImageContext.Length > 10)
                     {
@@ -1831,8 +1831,8 @@ namespace MSNPSharp
                     }
 
                     contact.SetName(MSNHttpUtility.NSDecode(newName));
-                    contact.EndPointData[Guid.Empty].ClientCapacities = newcaps;
-                    contact.EndPointData[Guid.Empty].ClientCapacitiesEx = newcapsex;
+                    contact.EndPointData[Guid.Empty].ClientCapabilities = newcaps;
+                    contact.EndPointData[Guid.Empty].ClientCapabilitiesEx = newcapsex;
 
                     if (contact != ContactList.Owner && newDisplayImageContext.Length > 10)
                     {
@@ -1879,19 +1879,19 @@ namespace MSNPSharp
             string fullaccount = message.CommandValues[0].ToString(); // 1:username@hotmail.com;via=9:guid@live.com
             Contact contact = null;
             Circle circle = null;
-            ClientCapacities newCaps = ClientCapacities.None;
-            ClientCapacitiesEx newCapsEx = ClientCapacitiesEx.None;
+            ClientCapabilities newCaps = ClientCapabilities.None;
+            ClientCapabilitiesEx newCapsEx = ClientCapabilitiesEx.None;
 
             if (message.CommandValues.Count >= 2)
             {
                 if (message.CommandValues[1].ToString().Contains(":"))
                 {
-                    newCaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[1].ToString().Split(':')[0]);
-                    newCapsEx = (ClientCapacitiesEx)Convert.ToInt64(message.CommandValues[1].ToString().Split(':')[1]);
+                    newCaps = (ClientCapabilities)Convert.ToInt64(message.CommandValues[1].ToString().Split(':')[0]);
+                    newCapsEx = (ClientCapabilitiesEx)Convert.ToInt64(message.CommandValues[1].ToString().Split(':')[1]);
                 }
                 else
                 {
-                    newCaps = (ClientCapacities)Convert.ToInt64(message.CommandValues[1].ToString());
+                    newCaps = (ClientCapabilities)Convert.ToInt64(message.CommandValues[1].ToString());
                 }
             }
 
@@ -1975,8 +1975,8 @@ namespace MSNPSharp
                     {
                         contact.EndPointData.Clear();
                         contact.EndPointData[Guid.Empty] = new EndPointData(contact.Mail.ToLowerInvariant(), Guid.Empty);
-                        contact.EndPointData[Guid.Empty].ClientCapacities = newCaps;
-                        contact.EndPointData[Guid.Empty].ClientCapacitiesEx = newCapsEx;
+                        contact.EndPointData[Guid.Empty].ClientCapabilities = newCaps;
+                        contact.EndPointData[Guid.Empty].ClientCapabilitiesEx = newCapsEx;
                     }
 
                     if (contact != ContactList.Owner && message.CommandValues.Count >= 3 && type == ClientType.EmailMember)
@@ -3534,7 +3534,7 @@ namespace MSNPSharp
 
             // 3. isSignedIn must be here... 
             // a) ContactService.Clear() merges and saves addressbook if isSignedIn=true.
-            // b) Owner.ClientCapacities = ClientCapacities.None doesn't send CHG command if isSignedIn=false.
+            // b) Owner.ClientCapabilities = ClientCapabilities.None doesn't send CHG command if isSignedIn=false.
             isSignedIn = false;
             externalEndPoint = null;
             Interlocked.Exchange(ref canSendPing, 1);

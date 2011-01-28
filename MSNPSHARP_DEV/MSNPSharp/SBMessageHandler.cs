@@ -971,7 +971,7 @@ namespace MSNPSharp
                         return rosterName[lowerKey];
                     }
 
-                case RosterProperties.ClientCapacities:
+                case RosterProperties.ClientCapabilities:
                     lock (rosterCapacities)
                     {
                         if (!rosterCapacities.ContainsKey(lowerKey))
@@ -982,13 +982,13 @@ namespace MSNPSharp
                         if (value.Contains(":"))
                         {
                             int.TryParse(value.Split(':')[0], out cap);
-                            return (ClientCapacities)cap;
+                            return (ClientCapabilities)cap;
                         }
 
-                        return ClientCapacities.None;
+                        return ClientCapabilities.None;
                     }
 
-                case RosterProperties.ClientCapacitiesEx:
+                case RosterProperties.ClientCapabilitiesEx:
                     lock (rosterCapacities)
                     {
                         if (!rosterCapacities.ContainsKey(lowerKey))
@@ -999,10 +999,10 @@ namespace MSNPSharp
                         if (value.Contains(":"))
                         {
                             int.TryParse(value.Split(':')[1], out cap);
-                            return (ClientCapacitiesEx)cap;
+                            return (ClientCapabilitiesEx)cap;
                         }
 
-                        return ClientCapacitiesEx.None;
+                        return ClientCapabilitiesEx.None;
                     }
                 case RosterProperties.ClientCapacityString:
                     lock (rosterCapacities)
@@ -1627,21 +1627,21 @@ namespace MSNPSharp
                 if (!contact.EndPointData.ContainsKey(endpointGuid))
                 {
                     EndPointData epData = new EndPointData(contact.Mail, endpointGuid);
-                    epData.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps.Split(':')[0]);
-                    epData.ClientCapacitiesEx = (ClientCapacitiesEx)Convert.ToInt64(caps.Split(':')[1]);
+                    epData.ClientCapabilities = (ClientCapabilities)Convert.ToInt64(caps.Split(':')[0]);
+                    epData.ClientCapabilitiesEx = (ClientCapabilitiesEx)Convert.ToInt64(caps.Split(':')[1]);
                     contact.EndPointData[endpointGuid] = epData;
                     dump = true;
                 }
 
                 if (supportMPOP)
                 {
-                    contact.EndPointData[endpointGuid].ClientCapacities = (ClientCapacities)Convert.ToInt64(caps.Split(':')[0]);
-                    contact.EndPointData[endpointGuid].ClientCapacitiesEx = (ClientCapacitiesEx)Convert.ToInt64(caps.Split(':')[1]);
+                    contact.EndPointData[endpointGuid].ClientCapabilities = (ClientCapabilities)Convert.ToInt64(caps.Split(':')[0]);
+                    contact.EndPointData[endpointGuid].ClientCapabilitiesEx = (ClientCapabilitiesEx)Convert.ToInt64(caps.Split(':')[1]);
                 }
                 else
                 {
-                    contact.EndPointData[Guid.Empty].ClientCapacities = (ClientCapacities)Convert.ToInt64(caps.Split(':')[0]);
-                    contact.EndPointData[Guid.Empty].ClientCapacitiesEx = (ClientCapacitiesEx)Convert.ToInt64(caps.Split(':')[1]);
+                    contact.EndPointData[Guid.Empty].ClientCapabilities = (ClientCapabilities)Convert.ToInt64(caps.Split(':')[0]);
+                    contact.EndPointData[Guid.Empty].ClientCapabilitiesEx = (ClientCapabilitiesEx)Convert.ToInt64(caps.Split(':')[1]);
                 }
             }
             else
@@ -1649,18 +1649,18 @@ namespace MSNPSharp
                 if (!contact.EndPointData.ContainsKey(endpointGuid))
                 {
                     EndPointData epData = new EndPointData(contact.Mail, endpointGuid);
-                    epData.ClientCapacities = (ClientCapacities)Convert.ToInt64(caps);
+                    epData.ClientCapabilities = (ClientCapabilities)Convert.ToInt64(caps);
                     contact.EndPointData[endpointGuid] = epData;
                     dump = true;
                 }
 
                 if (supportMPOP)
                 {
-                    contact.EndPointData[endpointGuid].ClientCapacities = (ClientCapacities)Convert.ToInt64(caps);
+                    contact.EndPointData[endpointGuid].ClientCapabilities = (ClientCapabilities)Convert.ToInt64(caps);
                 }
                 else
                 {
-                    contact.EndPointData[Guid.Empty].ClientCapacities = (ClientCapacities)Convert.ToInt64(caps);
+                    contact.EndPointData[Guid.Empty].ClientCapabilities = (ClientCapabilities)Convert.ToInt64(caps);
                 }
             }
 

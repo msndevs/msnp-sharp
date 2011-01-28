@@ -58,38 +58,38 @@ namespace MSNPSharp
             }
         }
 
-        private ClientCapacities clientCapacities = ClientCapacities.None;
+        private ClientCapabilities clientCapabilities = ClientCapabilities.None;
 
         /// <summary>
         /// The capacities of the client at this enpoint.
         /// </summary>
-        public ClientCapacities ClientCapacities
+        public ClientCapabilities ClientCapabilities
         {
             get
             {
-                return clientCapacities;
+                return clientCapabilities;
             }
 
             internal set
             {
-                clientCapacities = value;
+                clientCapabilities = value;
             }
         }
 
-        private ClientCapacitiesEx clientCapacitiesEx = ClientCapacitiesEx.None;
+        private ClientCapabilitiesEx clientCapabilitiesEx = ClientCapabilitiesEx.None;
 
         /// <summary>
-        /// The new capacities of the client at this enpoint.
+        /// The new capabilities of the client at this enpoint.
         /// </summary>
-        public ClientCapacitiesEx ClientCapacitiesEx
+        public ClientCapabilitiesEx ClientCapabilitiesEx
         {
             get
             {
-                return clientCapacitiesEx;
+                return clientCapabilitiesEx;
             }
             internal set
             {
-                clientCapacitiesEx = value;
+                clientCapabilitiesEx = value;
             }
         }
 
@@ -162,7 +162,7 @@ namespace MSNPSharp
 
         public override string ToString()
         {
-            return Account + ";" + Id.ToString("B") + " " + ClientCapacities + ":" + ClientCapacitiesEx;
+            return Account + ";" + Id.ToString("B") + " " + ClientCapabilities + ":" + ClientCapabilitiesEx;
         }
     }
 
