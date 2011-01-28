@@ -209,6 +209,7 @@ namespace MSNPSharp.Core
                             case "UUN": // UUN Unified User Notification
                             case "ADL": // ADL Add List command
                             case "RML": // RML Remove List command
+                            case "FSL": // FSL
                             case "203": // 203
                             case "204": // 204 Invalid contact network in ADL/RML
                             case "205": // 205
