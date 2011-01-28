@@ -360,7 +360,9 @@ namespace MSNPSharp
         /// <summary>
         /// Mask for MSNC
         /// </summary>
-        AppVersionMask = 0xF0000000
+        AppVersionMask = 0xF0000000,
+
+        Default = SupportsChunking | SupportsWinks | SupportsSipInvite | SupportsDirectBootstrapping | AppVersion2009
     }
 
     [Flags]
@@ -383,7 +385,9 @@ namespace MSNPSharp
         SupportsPeerToPeerEnveloping = 0x80000,
         YahooIMDisabled = 0x400000,
         SupportsMultipartyConversations = 0x80000000,
-        AppVersionMask = 0xF0000000
+        AppVersionMask = 0xF0000000,
+
+        Default = SupportsPeerToPeerV2 | RTCVideoEnabled | SupportsOfflineIM | SupportsNudges
     }
 
     /// <summary>

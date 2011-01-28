@@ -56,10 +56,6 @@ namespace MSNPSharp
     {
         public static readonly Guid MachineGuid = Guid.NewGuid();
 
-        private const ClientCapabilities DefaultClientCapabilities = ClientCapabilities.SupportsChunking | ClientCapabilities.SupportsWinks | ClientCapabilities.SupportsDirectBootstrapping | ClientCapabilities.AppVersion2009;
-        private const ClientCapabilitiesEx DefaultClientCapabilitiesEx = ClientCapabilitiesEx.SupportsPeerToPeerV2 | ClientCapabilitiesEx.RTCVideoEnabled;
-
-
         #region Members
 
         private Credentials credentials = new Credentials(MsnProtocol.MSNP18);
@@ -928,14 +924,14 @@ namespace MSNPSharp
                     isSetDefault = true;
 
                     //don't set the same status or it will result in disconnection
-                    ContactList.Owner.LocalEndPointClientCapabilities = DefaultClientCapabilities;
+                    ContactList.Owner.LocalEndPointClientCapabilities = ClientCapabilities.Default;
 
                     if (BotMode)
                     {
                         ContactList.Owner.LocalEndPointClientCapabilities |= ClientCapabilities.IsBot;
                     }
 
-                    ContactList.Owner.LocalEndPointClientCapabilitiesEx = DefaultClientCapabilitiesEx;
+                    ContactList.Owner.LocalEndPointClientCapabilitiesEx = ClientCapabilitiesEx.Default;
 
                     SetEndPointCapabilities();
                     SetPresenceStatusUUX(status);
