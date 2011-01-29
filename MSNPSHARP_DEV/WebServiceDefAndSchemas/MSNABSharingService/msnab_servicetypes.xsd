@@ -135,6 +135,33 @@
 			</xsd:sequence>
 		</xsd:complexType>
 	</xsd:element>
+	<xsd:complexType name="ABFindByContactsRequestType">
+		<xsd:sequence>
+			<xsd:element name="abId" type="xsd:string"/>
+			<xsd:element name="abView" type="xsd:string"/>
+			<xsd:element name="contactIds">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="guid" type="xsd:string" maxOccurs="unbounded"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="ABFindByContactsResponseType">
+		<xsd:sequence>
+			<xsd:element name="contacts">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="Contact" type="msnab:ContactType" maxOccurs="unbounded"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="ab" type="msnab:abType"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:element name="ABFindByContactsResponse" type="msnab:ABFindByContactsResponseType"/>
+	<xsd:element name="ABFindByContacts" type="msnab:ABFindByContactsRequestType"/>
 	<xsd:element name="ABContactAdd" type="msnab:ABContactAddRequestType"/>
 	<xsd:complexType name="ABContactAddRequestType">
 		<xsd:sequence>
