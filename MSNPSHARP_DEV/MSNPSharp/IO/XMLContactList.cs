@@ -87,11 +87,11 @@ namespace MSNPSharp.IO
                     {
                         long cid = 0;
                         string account = null;
-                        ClientType type = ClientType.None;
+                        IMAddressInfoType type = IMAddressInfoType.None;
 
                         if (bm is PassportMember)
                         {
-                            type = ClientType.PassportMember;
+                            type = IMAddressInfoType.WindowsLive;
                             PassportMember pm = (PassportMember)bm;
                             if (!pm.IsPassportNameHidden)
                             {
@@ -101,16 +101,16 @@ namespace MSNPSharp.IO
                         }
                         else if (bm is EmailMember)
                         {
-                            type = ClientType.EmailMember;
+                            type = IMAddressInfoType.Yahoo;
                             account = ((EmailMember)bm).Email;
                         }
                         else if (bm is PhoneMember)
                         {
-                            type = ClientType.PhoneMember;
+                            type = IMAddressInfoType.Telephone;
                             account = ((PhoneMember)bm).PhoneNumber;
                         }
 
-                        if (account != null && type != ClientType.None)
+                        if (account != null && type != IMAddressInfoType.None)
                         {
                             string displayname = bm.DisplayName == null ? account : bm.DisplayName;
                             Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
@@ -248,7 +248,7 @@ namespace MSNPSharp.IO
         /// <param name="member"></param>
         /// <param name="scene"></param>
         /// <remarks>Since AllowList and BlockList are mutally exclusive, adding a member to AllowList will lead to the remove of BlockList, revese is as the same.</remarks>
-        internal void AddMemberhip(string servicetype, string account, ClientType type, string memberrole, BaseMember member, Scenario scene)
+        internal void AddMemberhip(string servicetype, string account, IMAddressInfoType type, string memberrole, BaseMember member, Scenario scene)
         {
             lock(SyncObject)
             {
@@ -279,7 +279,7 @@ namespace MSNPSharp.IO
             }
         }
 
-        internal void RemoveMemberhip(string servicetype, string account, ClientType type, string memberrole, Scenario scene)
+        internal void RemoveMemberhip(string servicetype, string account, IMAddressInfoType type, string memberrole, Scenario scene)
         {
             lock(SyncObject)
             {
@@ -478,7 +478,7 @@ namespace MSNPSharp.IO
             }
         }
 
-        private bool HasMemberhip(string servicetype, string account, ClientType type, string memberrole)
+        private bool HasMemberhip(string servicetype, string account, IMAddressInfoType type, string memberrole)
         {
             SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
             return (ms != null) && ms.ContainsKey(memberrole) && ms[memberrole].ContainsKey(Contact.MakeHash(account, type, WebServiceConstants.MessengerIndividualAddressBookId));
@@ -492,7 +492,7 @@ namespace MSNPSharp.IO
         /// <param name="type"></param>
         /// <param name="memberrole"></param>
         /// <returns>If the member not exist, return null.</returns>
-        public BaseMember SelectBaseMember(string servicetype, string account, ClientType type, string memberrole)
+        public BaseMember SelectBaseMember(string servicetype, string account, IMAddressInfoType type, string memberrole)
         {
             string hash = Contact.MakeHash(account, type, WebServiceConstants.MessengerIndividualAddressBookId);
             SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
@@ -753,11 +753,11 @@ namespace MSNPSharp.IO
                     {
                         long cid = 0;
                         string account = null;
-                        ClientType type = ClientType.None;
+                        IMAddressInfoType type = IMAddressInfoType.None;
 
                         if (bm is PassportMember)
                         {
-                            type = ClientType.PassportMember;
+                            type = IMAddressInfoType.WindowsLive;
                             PassportMember pm = bm as PassportMember;
                             if (!pm.IsPassportNameHidden)
                             {
@@ -767,17 +767,17 @@ namespace MSNPSharp.IO
                         }
                         else if (bm is EmailMember)
                         {
-                            type = ClientType.EmailMember;
+                            type = IMAddressInfoType.Yahoo;
                             account = ((EmailMember)bm).Email;
                         }
                         else if (bm is PhoneMember)
                         {
-                            type = ClientType.PhoneMember;
+                            type = IMAddressInfoType.Telephone;
                             account = ((PhoneMember)bm).PhoneNumber;
                         }
                         else if (bm is CircleMember)
                         {
-                            type = ClientType.CircleMember;
+                            type = IMAddressInfoType.Circle;
                             account = ((CircleMember)bm).CircleId;
                             if (!circlesMembership.ContainsKey(memberrole))
                             {
@@ -787,7 +787,7 @@ namespace MSNPSharp.IO
                             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, messengerService.Info.Handle.Type + " Membership " + bm.GetType().ToString() + ": " + memberrole + ":" + account);
                         }
 
-                        if (account != null && type != ClientType.None)
+                        if (account != null && type != IMAddressInfoType.None)
                         {
                             account = account.ToLowerInvariant();
                             RoleLists msnlist = NSMessageHandler.ContactService.GetMSNList(memberrole);
@@ -796,7 +796,7 @@ namespace MSNPSharp.IO
                             {
                                 #region Members deleted in other clients.
 
-                                if (type != ClientType.CircleMember)
+                                if (type != IMAddressInfoType.Circle)
                                 {
                                     if (HasMemberhip(messengerServiceClone.ServiceType, account, type, memberrole) &&
                                         WebServiceDateTimeConverter.ConvertToDateTime(MembershipList[messengerServiceClone.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type, WebServiceConstants.MessengerIndividualAddressBookId)].LastChanged)
@@ -832,7 +832,7 @@ namespace MSNPSharp.IO
                             {
                                 #region Newly added memberships.
 
-                                if (type != ClientType.CircleMember)
+                                if (type != IMAddressInfoType.Circle)
                                 {
 
                                     if (false == MembershipList[messengerServiceClone.ServiceType].Memberships.ContainsKey(memberrole) ||
@@ -890,12 +890,12 @@ namespace MSNPSharp.IO
                     foreach (BaseMember bm in members)
                     {
                         string account = null;
-                        ClientType type = ClientType.None;
+                        IMAddressInfoType type = IMAddressInfoType.None;
 
                         switch (bm.Type)
                         {
                             case MembershipType.Passport:
-                                type = ClientType.PassportMember;
+                                type = IMAddressInfoType.WindowsLive;
                                 PassportMember pm = bm as PassportMember;
                                 if (!pm.IsPassportNameHidden)
                                 {
@@ -904,12 +904,12 @@ namespace MSNPSharp.IO
                                 break;
 
                             case MembershipType.Email:
-                                type = ClientType.EmailMember;
+                                type = IMAddressInfoType.Yahoo;
                                 account = ((EmailMember)bm).Email;
                                 break;
 
                             case MembershipType.Phone:
-                                type = ClientType.PhoneMember;
+                                type = IMAddressInfoType.Telephone;
                                 account = ((PhoneMember)bm).PhoneNumber;
                                 break;
 
@@ -925,7 +925,7 @@ namespace MSNPSharp.IO
                                 break;
 
                             case MembershipType.Circle:
-                                type = ClientType.CircleMember;
+                                type = IMAddressInfoType.Circle;
                                 account = ((CircleMember)bm).CircleId;
                                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, service.Info.Handle.Type + " Membership " + bm.GetType().ToString() + ": " + memberrole + ":" + account);
                                 break;
@@ -1552,9 +1552,9 @@ namespace MSNPSharp.IO
                     continue;
 
                 if (!oldContactInverseList.ContainsKey(contactType.contactInfo.CID) &&
-                    circle.ContactList.HasContact(contactType.contactInfo.passportName, ClientType.PassportMember))
+                    circle.ContactList.HasContact(contactType.contactInfo.passportName, IMAddressInfoType.WindowsLive))
                 {
-                    circle.NSMessageHandler.ContactService.OnCircleMemberJoined(new CircleMemberEventArgs(circle, circle.ContactList[contactType.contactInfo.passportName, ClientType.PassportMember]));
+                    circle.NSMessageHandler.ContactService.OnCircleMemberJoined(new CircleMemberEventArgs(circle, circle.ContactList[contactType.contactInfo.passportName, IMAddressInfoType.WindowsLive]));
                 }
             }
 
@@ -2289,7 +2289,7 @@ namespace MSNPSharp.IO
             }
 
             contactInfoType cinfo = contactType.contactInfo;
-            ClientType type = ClientType.PassportMember;
+            IMAddressInfoType type = IMAddressInfoType.WindowsLive;
             string account = cinfo.passportName;
             string displayName = cinfo.displayName;
             string nickName = GetContactNickName(contactType);
@@ -2306,7 +2306,7 @@ namespace MSNPSharp.IO
                 {
                     if (cet.isMessengerEnabled)
                     {
-                        type = (ClientType)Enum.Parse(typeof(ClientType), cet.Capability);
+                        type = (IMAddressInfoType)Enum.Parse(typeof(IMAddressInfoType), cet.Capability);
                         account = cet.email;
                         isMessengeruser |= cet.isMessengerEnabled;
                         displayName = account;
@@ -2321,7 +2321,7 @@ namespace MSNPSharp.IO
                 {
                     if (cpt.isMessengerEnabled)
                     {
-                        type = ClientType.PhoneMember;
+                        type = IMAddressInfoType.Telephone;
                         account = cpt.number;
                         isMessengeruser |= cpt.isMessengerEnabled;
                         displayName = account;

@@ -506,7 +506,7 @@ namespace MSNPSharp
         private void SendOIMMessage(string account, string msg, OIMUserState userstate)
         {
             Contact contact = NSMessageHandler.ContactList[account]; // Only PassportMembers can receive oims.
-            if (NSMessageHandler.MSNTicket != MSNTicket.Empty && contact != null && contact.ClientType == ClientType.PassportMember && contact.OnAllowedList)
+            if (NSMessageHandler.MSNTicket != MSNTicket.Empty && contact != null && contact.ClientType == IMAddressInfoType.WindowsLive && contact.OnAllowedList)
             {
                 StringBuilder messageTemplate = new StringBuilder(
                     "MIME-Version: 1.0\r\n"

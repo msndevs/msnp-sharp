@@ -74,12 +74,12 @@ namespace MSNPSharp.Utilities
             }
         }
 
-        public ClientType NetworkType
+        public IMAddressInfoType NetworkType
         {
             get
             {
                 if (!remoteOwner.IsMessengerUser)
-                    return ClientType.None;
+                    return IMAddressInfoType.None;
 
                 return remoteOwner.ClientType;
             }

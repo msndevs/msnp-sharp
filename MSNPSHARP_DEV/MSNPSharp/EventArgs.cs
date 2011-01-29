@@ -928,10 +928,10 @@ namespace MSNPSharp
                 {
                     switch (From.ClientType)
                     {
-                        case ClientType.EmailMember:
+                        case IMAddressInfoType.Yahoo:
                             return NetworkType.Yahoo;
 
-                        case ClientType.PhoneMember:
+                        case IMAddressInfoType.Telephone:
                             return NetworkType.Mobile;
 
                         default:

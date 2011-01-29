@@ -1473,7 +1473,7 @@ namespace MSNPSharpClient
             bool activate = false;
             ConversationForm activeForm = null;
 
-            if (contact.ClientType != ClientType.EmailMember)
+            if (contact.ClientType != IMAddressInfoType.Yahoo)
             {
                 foreach (ConversationForm conv in ConversationForms)
                 {
@@ -1516,7 +1516,7 @@ namespace MSNPSharpClient
             Contact selectedContact = (Contact)treeViewFavoriteList.SelectedNode.Tag;
             this.propertyGrid.SelectedObject = selectedContact;
 
-            if (selectedContact.MobileAccess || selectedContact.ClientType == ClientType.PhoneMember)
+            if (selectedContact.MobileAccess || selectedContact.ClientType == IMAddressInfoType.Telephone)
             {
                 messenger.Nameserver.SendMobileMessage(selectedContact, "MSNP mobile message");
             }
@@ -1811,7 +1811,7 @@ namespace MSNPSharpClient
                     newnode.NodeFont = contact.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
                     newnode.Tag = contact;
 
-                    if (contact.MobileAccess || contact.ClientType == ClientType.PhoneMember)
+                    if (contact.MobileAccess || contact.ClientType == IMAddressInfoType.Telephone)
                     {
                         TreeNode newnode2 = mobileNode.Nodes.Add(contact.Hash, text);
                         newnode2.ImageIndex = newnode2.SelectedImageIndex = ImageIndexes.GetStatusIndex(contact.Status);
@@ -1867,7 +1867,7 @@ namespace MSNPSharpClient
                 contactNode.NodeFont = contactToUpdate.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
                 contactNode.Tag = contactToUpdate;
 
-                if (contactToUpdate.MobileAccess || contactToUpdate.ClientType == ClientType.PhoneMember)
+                if (contactToUpdate.MobileAccess || contactToUpdate.ClientType == IMAddressInfoType.Telephone)
                 {
                     TreeNode newnode2 = mobileNode.Nodes.ContainsKey(contactToUpdate.Hash) ?
                         mobileNode.Nodes[contactToUpdate.Hash] : mobileNode.Nodes.Add(contactToUpdate.Hash, text);
@@ -2153,9 +2153,9 @@ namespace MSNPSharpClient
         void circle_ContactUnBlocked(object sender, EventArgs e)
         {
             //This demo shows you how to invite a contact to your circle.
-            if (messenger.ContactList.HasContact("freezingsoft@hotmail.com", ClientType.PassportMember))
+            if (messenger.ContactList.HasContact("freezingsoft@hotmail.com", IMAddressInfoType.WindowsLive))
             {
-                messenger.ContactService.InviteCircleMember(sender as Circle, messenger.ContactList["freezingsoft@hotmail.com", ClientType.PassportMember], "hello");
+                messenger.ContactService.InviteCircleMember(sender as Circle, messenger.ContactList["freezingsoft@hotmail.com", IMAddressInfoType.WindowsLive], "hello");
                 messenger.ContactService.InviteCircleMemberCompleted += new EventHandler<CircleMemberEventArgs>(ContactService_CircleMemberInvited);
             }
         }

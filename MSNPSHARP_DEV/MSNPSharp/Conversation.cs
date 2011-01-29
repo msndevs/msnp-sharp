@@ -952,25 +952,25 @@ namespace MSNPSharp
         /// <param name="type">Contact type</param>
         /// <exception cref="InvalidOperationException">Operating on an ended conversation.</exception>
         /// <exception cref="NotSupportedException">Inviting mutiple YIM users into a YIM conversation, invite YIM users to a switchboard conversation, or passport members are invited into YIM conversation.</exception>
-        public SBMessageHandler Invite(string contactMail, ClientType type)
+        public SBMessageHandler Invite(string contactMail, IMAddressInfoType type)
         {
             if ((_type & ConversationType.YIM) == ConversationType.YIM &&
-                type != ClientType.EmailMember)
+                type != IMAddressInfoType.Yahoo)
             {
                 throw new NotSupportedException("Only Yahoo messenger users can be invited in a YIM conversation.");
             }
 
 
             if ((_type & ConversationType.YIM) == ConversationType.YIM &&
-                type == ClientType.EmailMember)
+                type == IMAddressInfoType.Yahoo)
             {
                 if (_contacts.Count > 1)
                     throw new NotSupportedException("Mutiple user not supported in YIM conversation.");
             }
 
             if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard &&
-                (type != ClientType.PassportMember &&
-                type != ClientType.LCS))
+                (type != IMAddressInfoType.WindowsLive &&
+                type != IMAddressInfoType.OfficeCommunicator))
             {
                 throw new NotSupportedException("Only Passport members can be invited in a switchboard conversation.");
             }
@@ -979,12 +979,12 @@ namespace MSNPSharp
             {
                 switch (type)
                 {
-                    case ClientType.EmailMember:
+                    case IMAddressInfoType.Yahoo:
                         _type = ConversationType.YIM;
                         break;
 
-                    case ClientType.LCS:
-                    case ClientType.PassportMember:
+                    case IMAddressInfoType.OfficeCommunicator:
+                    case IMAddressInfoType.WindowsLive:
                         _type = ConversationType.SwitchBoard;
                         break;
                 }

@@ -51,7 +51,7 @@ namespace MSNPSharpClient
                     XmlNodeList contacts = doc.GetElementsByTagName("contact");
                     foreach (XmlNode contactNode in contacts)
                     {
-                        if (ClientType.PassportMember == (ClientType)Convert.ToInt32(contactNode.Attributes["type"].Value))
+                        if (IMAddressInfoType.WindowsLive == (IMAddressInfoType)Convert.ToInt32(contactNode.Attributes["type"].Value))
                         {
                             Contacts.Add(contactNode.InnerText.ToLower(System.Globalization.CultureInfo.InvariantCulture));
                         }

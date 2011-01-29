@@ -43,7 +43,7 @@ namespace MSNPSharp
     [Serializable()]
     public class ContactList : Dictionary<int, Contact>
     {
-        private static ClientType[] clientTypes = (ClientType[])Enum.GetValues(typeof(ClientType));
+        private static IMAddressInfoType[] addressTypes = (IMAddressInfoType[])Enum.GetValues(typeof(IMAddressInfoType));
 
         [NonSerialized]
         private NSMessageHandler nsMessageHandler;
@@ -263,26 +263,15 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="account"></param>
         /// <returns>
-        /// If the contact does not exist, return null.
-        /// If the specified account has multi-clienttype, the contact with type
-        /// <see cref="ClientType.PassportMember"/> will be returned first.
-        /// If there's no PassportMember with the specified account, the contact with type 
-        /// <see cref="ClientType.EmailMember"/> will be returned. Then the next is <see cref="ClientType.PhoneMember"/>
-        /// ,<see cref="ClientType.LCS"/> and so on...
+        /// If the contact does not exist, returns null.
         /// </returns>
         public Contact GetContact(string account)
         {
-            if (HasContact(account, ClientType.PassportMember))
-                return GetContact(account, ClientType.PassportMember);
-
-            if (HasContact(account, ClientType.EmailMember))
-                return GetContact(account, ClientType.EmailMember);
-
-            if (HasContact(account, ClientType.PhoneMember))
-                return GetContact(account, ClientType.PhoneMember);
-
-            if (HasContact(account, ClientType.LCS))
-                return GetContact(account, ClientType.LCS);
+            foreach (IMAddressInfoType addressType in addressTypes)
+            {
+                if (HasContact(account, addressType))
+                    return GetContact(account, addressType);
+            }
 
             return null;
         }
@@ -295,12 +284,7 @@ namespace MSNPSharp
         /// <param name="account"></param>
         /// <param name="name"></param>
         /// <returns>
-        /// If the contact does not exist, return null.
-        /// If the specified account has multi-clienttype, the contact with type
-        /// <see cref="ClientType.PassportMember"/> will be returned first.
-        /// If there's no PassportMember with the specified account, the contact with type 
-        /// <see cref="ClientType.EmailMember"/> will be returned.Then the next is <see cref="ClientType.PhoneMember"/>
-        /// ,<see cref="ClientType.LCS"/> and so on...
+        /// If the contact does not exist, returns null.
         /// </returns>
         internal Contact GetContact(string account, string name)
         {
@@ -323,7 +307,7 @@ namespace MSNPSharp
         /// A <see cref="Contact"/> object.
         /// If the contact does not exist, create it.
         /// </returns>
-        internal Contact GetContact(string account, string name, ClientType type)
+        internal Contact GetContact(string account, string name, IMAddressInfoType type)
         {
             Contact contact = GetContact(account, type);
 
@@ -342,7 +326,7 @@ namespace MSNPSharp
         /// A <see cref="Contact"/> object.
         /// If the contact does not exist, create it.
         /// </returns>
-        internal Contact GetContact(string account, ClientType type)
+        internal Contact GetContact(string account, IMAddressInfoType type)
         {
             int hash = Contact.MakeHash(account, type, AddressBookId.ToString("D")).GetHashCode();
             if (ContainsKey(hash))
@@ -402,7 +386,7 @@ namespace MSNPSharp
             }
         }
 
-        public Contact this[string account, ClientType type]
+        public Contact this[string account, IMAddressInfoType type]
         {
             get
             {
@@ -421,7 +405,7 @@ namespace MSNPSharp
         /// <returns></returns>
         public bool HasContact(string account)
         {
-            foreach (ClientType ct in clientTypes)
+            foreach (IMAddressInfoType ct in addressTypes)
             {
                 if (HasContact(account, ct))
                     return true;
@@ -435,7 +419,7 @@ namespace MSNPSharp
         /// <param name="account"></param>
         /// <param name="type"></param>
         /// <returns></returns>
-        public bool HasContact(string account, ClientType type)
+        public bool HasContact(string account, IMAddressInfoType type)
         {
             return ContainsKey(Contact.MakeHash(account, type, AddressBookId.ToString("D")).GetHashCode());
         }
@@ -466,7 +450,7 @@ namespace MSNPSharp
         /// <param name="account"></param>
         internal void Remove(string account)
         {
-            foreach (ClientType ct in clientTypes)
+            foreach (IMAddressInfoType ct in addressTypes)
             {
                 if (HasContact(account, ct))
                     Remove(account, ct);
@@ -478,7 +462,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="account"></param>
         /// <param name="type"></param>
-        internal void Remove(string account, ClientType type)
+        internal void Remove(string account, IMAddressInfoType type)
         {
             lock (SyncRoot)
             {
@@ -513,7 +497,7 @@ namespace MSNPSharp
         public bool HasMultiType(string account)
         {
             int typecount = 0;
-            foreach (ClientType ct in clientTypes)
+            foreach (IMAddressInfoType ct in addressTypes)
             {
                 if (HasContact(account, ct) && ++typecount > 1)
                     return true;

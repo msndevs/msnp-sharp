@@ -947,15 +947,15 @@ namespace MSNPSharp
                 String domain;
                 string[] arr = contact_hash.Split(new string[] { ":", ";via=" }, StringSplitOptions.RemoveEmptyEntries);
                 RoleLists sendlist = contacts[contact_hash];
-                String type = ClientType.EmailMember.ToString();
+                String type = IMAddressInfoType.Yahoo.ToString();
 
                 if (arr.Length > 0)
                     type = arr[0];
 
-                ClientType clitype = (ClientType)Enum.Parse(typeof(ClientType), type);
+                IMAddressInfoType clitype = (IMAddressInfoType)Enum.Parse(typeof(IMAddressInfoType), type);
                 type = ((int)clitype).ToString();
 
-                if (clitype == ClientType.PhoneMember)
+                if (clitype == IMAddressInfoType.Telephone)
                 {
                     domain = String.Empty;
                     name = "tel:" + arr[1];
@@ -974,7 +974,7 @@ namespace MSNPSharp
                         currentDomain = domain;
                         domaincontactcount = 0;
 
-                        if (clitype == ClientType.PhoneMember)
+                        if (clitype == IMAddressInfoType.Telephone)
                         {
                             domtelElement = xmlDoc.CreateElement("t");
                         }
@@ -989,7 +989,7 @@ namespace MSNPSharp
                     XmlElement contactElement = xmlDoc.CreateElement("c");
                     contactElement.SetAttribute("n", name);
                     contactElement.SetAttribute("l", ((int)sendlist).ToString());
-                    if (clitype != ClientType.PhoneMember)
+                    if (clitype != IMAddressInfoType.Telephone)
                     {
                         contactElement.SetAttribute("t", type);
                     }
@@ -1050,10 +1050,10 @@ namespace MSNPSharp
 
         #region Add Contact
 
-        private void AddNonPendingContact(string account, ClientType ct, string invitation, string otheremail)
+        private void AddNonPendingContact(string account, IMAddressInfoType ct, string invitation, string otheremail)
         {
             // Query other networks and add as new contact if available
-            if (account.Contains("@") && ct == ClientType.PassportMember)
+            if (account.Contains("@") && ct == IMAddressInfoType.WindowsLive)
             {
                 string federatedQuery = "<ml><d n=\"{d}\"><c n=\"{n}\" /></d></ml>";
                 federatedQuery = federatedQuery.Replace("{d}", account.Split('@')[1]);
@@ -1081,7 +1081,7 @@ namespace MSNPSharp
                     if (!contact.OnBlockedList)
                     {
                         // Add to AL
-                        if (ct == ClientType.PassportMember)
+                        if (ct == IMAddressInfoType.WindowsLive)
                         {
                             // without membership, contact service adds this contact to AL automatically.
                             Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(2);
@@ -1133,7 +1133,7 @@ namespace MSNPSharp
                             if (!contact.OnBlockedList)
                             {
                                 // AL: Extra work for EmailMember: Add allow membership
-                                if (ClientType.EmailMember == contact.ClientType)
+                                if (IMAddressInfoType.Yahoo == contact.ClientType)
                                 {
                                     contact.OnAllowedList = true;
                                 }
@@ -1155,7 +1155,7 @@ namespace MSNPSharp
            );
         }
 
-        private void AddNewOrPendingContact(string account, bool pending, string invitation, ClientType network, string otheremail, ABContactAddCompletedEventHandler onSuccess)
+        private void AddNewOrPendingContact(string account, bool pending, string invitation, IMAddressInfoType network, string otheremail, ABContactAddCompletedEventHandler onSuccess)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
@@ -1188,7 +1188,7 @@ namespace MSNPSharp
 
                 switch (network)
                 {
-                    case ClientType.PassportMember:
+                    case IMAddressInfoType.WindowsLive:
                         request.contacts[0].contactInfo.contactType = MessengerContactType.Regular; // MUST BE "Regular". See r746
                         request.contacts[0].contactInfo.passportName = account;
                         request.contacts[0].contactInfo.isMessengerUser = true;
@@ -1205,7 +1205,7 @@ namespace MSNPSharp
                         request.options.EnableAllowListManagement = true; //contact service adds this contact to AL automatically if not blocked. 
                         break;
 
-                    case ClientType.EmailMember:
+                    case IMAddressInfoType.Yahoo:
 
                         List<contactEmailType> emails = new List<contactEmailType>();
 
@@ -1230,7 +1230,7 @@ namespace MSNPSharp
                         request.contacts[0].contactInfo.emails = emails.ToArray();
                         break;
 
-                    case ClientType.PhoneMember:
+                    case IMAddressInfoType.Telephone:
                         request.contacts[0].contactInfo.phones = new contactPhoneType[] { new contactPhoneType() };
                         request.contacts[0].contactInfo.phones[0].contactPhoneType1 = ContactPhoneTypeType.ContactPhoneMobile;
                         request.contacts[0].contactInfo.phones[0].number = account;
@@ -1271,15 +1271,15 @@ namespace MSNPSharp
                 {
                     account = "+" + account.Substring(2);
                 }
-                AddNewContact(account, ClientType.PhoneMember, invitation, String.Empty);
+                AddNewContact(account, IMAddressInfoType.Telephone, invitation, String.Empty);
             }
             else
             {
-                AddNewContact(account, ClientType.PassportMember, invitation, String.Empty);
+                AddNewContact(account, IMAddressInfoType.WindowsLive, invitation, String.Empty);
             }
         }
 
-        internal void AddNewContact(string account, ClientType network, string invitation, string otheremail)
+        internal void AddNewContact(string account, IMAddressInfoType network, string invitation, string otheremail)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
@@ -1455,7 +1455,7 @@ namespace MSNPSharp
             // ClientType changes
             switch (contact.ClientType)
             {
-                case ClientType.PassportMember:
+                case IMAddressInfoType.WindowsLive:
                     {
                         // IsMessengerUser
                         if (abContactType.contactInfo.isMessengerUser != contact.IsMessengerUser)
@@ -1477,7 +1477,7 @@ namespace MSNPSharp
                     }
                     break;
 
-                case ClientType.EmailMember:
+                case IMAddressInfoType.Yahoo:
                     {
                         if (abContactType.contactInfo.emails != null)
                         {
@@ -1497,7 +1497,7 @@ namespace MSNPSharp
                     }
                     break;
 
-                case ClientType.PhoneMember:
+                case IMAddressInfoType.Telephone:
                     {
                         if (abContactType.contactInfo.phones != null)
                         {
@@ -1977,7 +1977,7 @@ namespace MSNPSharp
             memberShip.MemberRole = GetMemberRole(list);
             BaseMember member = new BaseMember();
 
-            if (contact.ClientType == ClientType.PassportMember)
+            if (contact.ClientType == IMAddressInfoType.WindowsLive)
             {
                 member = new PassportMember();
                 PassportMember passportMember = member as PassportMember;
@@ -1985,7 +1985,7 @@ namespace MSNPSharp
                 passportMember.State = MemberState.Accepted;
                 passportMember.Type = MembershipType.Passport;
             }
-            else if (contact.ClientType == ClientType.EmailMember)
+            else if (contact.ClientType == IMAddressInfoType.Yahoo)
             {
                 member = new EmailMember();
                 EmailMember emailMember = member as EmailMember;
@@ -1996,7 +1996,7 @@ namespace MSNPSharp
                 emailMember.Annotations[0].Name = AnnotationNames.MSN_IM_BuddyType;
                 emailMember.Annotations[0].Value = "32:";
             }
-            else if (contact.ClientType == ClientType.PhoneMember)
+            else if (contact.ClientType == IMAddressInfoType.Telephone)
             {
                 member = new PhoneMember();
                 PhoneMember phoneMember = member as PhoneMember;
@@ -2134,7 +2134,7 @@ namespace MSNPSharp
 
             switch (contact.ClientType)
             {
-                case ClientType.PassportMember:
+                case IMAddressInfoType.WindowsLive:
 
                     deleteMember = new PassportMember();
                     deleteMember.Type = (baseMember == null) ? MembershipType.Passport : baseMember.Type;
@@ -2145,7 +2145,7 @@ namespace MSNPSharp
                     }
                     break;
 
-                case ClientType.EmailMember:
+                case IMAddressInfoType.Yahoo:
 
                     deleteMember = new EmailMember();
                     deleteMember.Type = (baseMember == null) ? MembershipType.Email : baseMember.Type;
@@ -2156,7 +2156,7 @@ namespace MSNPSharp
                     }
                     break;
 
-                case ClientType.PhoneMember:
+                case IMAddressInfoType.Telephone:
 
                     deleteMember = new PhoneMember();
                     deleteMember.Type = (baseMember == null) ? MembershipType.Phone : baseMember.Type;
