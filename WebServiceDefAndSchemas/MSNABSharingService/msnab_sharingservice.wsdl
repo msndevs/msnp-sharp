@@ -147,6 +147,12 @@
 	<message name="AddDynamicItemResponseMessage">
 		<part name="AddDynamicItemResponse" element="msnab:AddDynamicItemResponse"/>
 	</message>
+	<message name="ABFindByContactsMessage">
+		<part name="ABFindByContacts" element="msnab:ABFindByContacts"/>
+	</message>
+	<message name="ABFindByContactsResponseMessage">
+		<part name="ABFindByContactsResponse" element="msnab:ABFindByContactsResponse"/>
+	</message>
 	<portType name="SharingServicePortType">
 		<operation name="FindMembership">
 			<input message="msnab:FindMembershipMessage"/>
@@ -232,6 +238,10 @@
 		<operation name="AddDynamicItem">
 			<input message="msnab:AddDynamicItemMessage"/>
 			<output message="msnab:AddDynamicItemResponseMessage"/>
+		</operation>
+		<operation name="ABFindByContacts">
+			<input message="msnab:ABFindByContactsMessage"/>
+			<output message="msnab:ABFindByContactsResponseMessage"/>
 		</operation>
 	</portType>
 	<portType name="WhatsUpServicePortType">
@@ -494,6 +504,18 @@
 				<soap:header message="msnab:ServiceHeader" part="ServiceHeader" use="literal"/>
 			</output>
 		</operation>
+		<operation name="ABFindByContacts">
+			<soap:operation soapAction="http://www.msn.com/webservices/AddressBook/ABFindByContacts"/>
+			<input>
+				<soap:body use="literal"/>
+				<soap:header message="msnab:ABHeader" part="ApplicationHeader" use="literal"/>
+				<soap:header message="msnab:ABHeader" part="AuthHeader" use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+				<soap:header message="msnab:ServiceHeader" part="ServiceHeader" use="literal"/>
+			</output>
+		</operation>
 	</binding>
 	<binding name="WhatsUpServiceBinding" type="msnab:WhatsUpServicePortType">
 		<soap:binding transport="http://schemas.xmlsoap.org/soap/http"/>
@@ -571,6 +593,9 @@
 			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
 		</port>
 		<port name="AddDynamicItemPort" binding="msnab:ABServiceBinding">
+			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
+		</port>
+		<port name="ABFindByContactsPort" binding="msnab:ABServiceBinding">
 			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
 		</port>
 	</service>
