@@ -369,12 +369,12 @@ namespace MSNPSharp
     {
         /// <summary>
         /// </summary>
-        private MSNLists affectedList = MSNLists.None;
+        private RoleLists affectedList = RoleLists.None;
 
         /// <summary>
         /// The list which was send by the server
         /// </summary>
-        public MSNLists AffectedList
+        public RoleLists AffectedList
         {
             get
             {
@@ -390,7 +390,7 @@ namespace MSNPSharp
         /// Constructory.
         /// </summary>
         /// <param name="affectedList"></param>
-        public ListReceivedEventArgs(MSNLists affectedList)
+        public ListReceivedEventArgs(RoleLists affectedList)
         {
             AffectedList = affectedList;
         }
@@ -478,12 +478,12 @@ namespace MSNPSharp
     {
         /// <summary>
         /// </summary>
-        private MSNLists affectedList = MSNLists.None;
+        private RoleLists affectedList = RoleLists.None;
 
         /// <summary>
         /// The list which mutated.
         /// </summary>
-        public MSNLists AffectedList
+        public RoleLists AffectedList
         {
             get
             {
@@ -500,7 +500,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="contact"></param>
         /// <param name="affectedList"></param>
-        public ListMutateEventArgs(Contact contact, MSNLists affectedList)
+        public ListMutateEventArgs(Contact contact, RoleLists affectedList)
             : base(contact)
         {
             AffectedList = affectedList;

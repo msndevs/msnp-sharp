@@ -80,7 +80,7 @@ namespace MSNPSharp
         private CirclePersonalMembershipRole circleRole = CirclePersonalMembershipRole.None;
 
         private List<ContactGroup> contactGroups = new List<ContactGroup>(0);
-        private MSNLists lists = MSNLists.None;
+        private RoleLists lists = RoleLists.None;
 
         private DisplayImage displayImage = null;
         private SceneImage sceneImage = null;
@@ -848,7 +848,7 @@ namespace MSNPSharp
         {
             get
             {
-                return ((lists & MSNLists.ForwardList) == MSNLists.ForwardList);
+                return ((lists & RoleLists.Forward) == RoleLists.Forward);
             }
             set
             {
@@ -856,11 +856,11 @@ namespace MSNPSharp
                 {
                     if (value)
                     {
-                        NSMessageHandler.ContactService.AddContactToList(this, MSNLists.ForwardList, null);
+                        NSMessageHandler.ContactService.AddContactToList(this, RoleLists.Forward, null);
                     }
                     else
                     {
-                        NSMessageHandler.ContactService.RemoveContactFromList(this, MSNLists.ForwardList, null);
+                        NSMessageHandler.ContactService.RemoveContactFromList(this, RoleLists.Forward, null);
                     }
                 }
             }
@@ -899,7 +899,7 @@ namespace MSNPSharp
         {
             get
             {
-                return ((lists & MSNLists.AllowedList) == MSNLists.AllowedList);
+                return ((lists & RoleLists.Allow) == RoleLists.Allow);
             }
             set
             {
@@ -911,7 +911,7 @@ namespace MSNPSharp
                     }
                     else if (!OnReverseList)
                     {
-                        NSMessageHandler.ContactService.RemoveContactFromList(this, MSNLists.AllowedList, null);
+                        NSMessageHandler.ContactService.RemoveContactFromList(this, RoleLists.Allow, null);
                     }
                 }
             }
@@ -926,7 +926,7 @@ namespace MSNPSharp
         {
             get
             {
-                return ((lists & MSNLists.BlockedList) == MSNLists.BlockedList);
+                return ((lists & RoleLists.Block) == RoleLists.Block);
             }
             set
             {
@@ -938,7 +938,7 @@ namespace MSNPSharp
                     }
                     else if (!OnReverseList)
                     {
-                        NSMessageHandler.ContactService.RemoveContactFromList(this, MSNLists.BlockedList, null);
+                        NSMessageHandler.ContactService.RemoveContactFromList(this, RoleLists.Block, null);
                     }
                 }
             }
@@ -951,7 +951,7 @@ namespace MSNPSharp
         {
             get
             {
-                return ((lists & MSNLists.ReverseList) == MSNLists.ReverseList);
+                return ((lists & RoleLists.Reverse) == RoleLists.Reverse);
             }
         }
 
@@ -962,13 +962,13 @@ namespace MSNPSharp
         {
             get
             {
-                return ((lists & MSNLists.PendingList) == MSNLists.PendingList);
+                return ((lists & RoleLists.Pending) == RoleLists.Pending);
             }
             set
             {
                 if (value != OnPendingList && value == false)
                 {
-                    NSMessageHandler.ContactService.RemoveContactFromList(this, MSNLists.PendingList, null);
+                    NSMessageHandler.ContactService.RemoveContactFromList(this, RoleLists.Pending, null);
                 }
             }
         }
@@ -976,7 +976,7 @@ namespace MSNPSharp
         /// <summary>
         /// The msn lists this contact has.
         /// </summary>
-        public MSNLists Lists
+        public RoleLists Lists
         {
             get
             {
@@ -1010,7 +1010,7 @@ namespace MSNPSharp
             NotifyManager();
         }
 
-        internal void SetList(MSNLists msnLists)
+        internal void SetList(RoleLists msnLists)
         {
             lists = msnLists;
             NotifyManager();
@@ -1477,13 +1477,13 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="list"></param>
         /// <remarks>Since AllowList and BlockList are mutally exclusive, adding a member to AllowList will lead to the remove of BlockList, revese is as the same.</remarks>
-        internal void AddToList(MSNLists list)
+        internal void AddToList(RoleLists list)
         {
-            if ((lists & list) == MSNLists.None)
+            if ((lists & list) == RoleLists.None)
             {
                 lists |= list;
 
-                if ((list & MSNLists.BlockedList) == MSNLists.BlockedList)
+                if ((list & RoleLists.Block) == RoleLists.Block)
                 {
                     OnContactBlocked();
                 }
@@ -1513,9 +1513,9 @@ namespace MSNPSharp
             }
         }
 
-        internal void RemoveFromList(MSNLists list)
+        internal void RemoveFromList(RoleLists list)
         {
-            if ((lists & list) != MSNLists.None)
+            if ((lists & list) != RoleLists.None)
             {
                 lists ^= list;
 
@@ -1527,7 +1527,7 @@ namespace MSNPSharp
                     contactGroups.Clear();
                 }
 
-                if ((list & MSNLists.BlockedList) == MSNLists.BlockedList)
+                if ((list & RoleLists.Block) == RoleLists.Block)
                 {
                     OnContactUnBlocked();
                 }
@@ -1549,18 +1549,18 @@ namespace MSNPSharp
             }
         }
 
-        internal static MSNLists GetConflictLists(MSNLists currentLists, MSNLists newLists)
+        internal static RoleLists GetConflictLists(RoleLists currentLists, RoleLists newLists)
         {
-            MSNLists conflictLists = MSNLists.None;
+            RoleLists conflictLists = RoleLists.None;
 
-            if ((currentLists & MSNLists.AllowedList) != MSNLists.None && (newLists & MSNLists.BlockedList) != MSNLists.None)
+            if ((currentLists & RoleLists.Allow) != RoleLists.None && (newLists & RoleLists.Block) != RoleLists.None)
             {
-                conflictLists |= MSNLists.AllowedList;
+                conflictLists |= RoleLists.Allow;
             }
 
-            if ((currentLists & MSNLists.BlockedList) != MSNLists.None && (newLists & MSNLists.AllowedList) != MSNLists.None)
+            if ((currentLists & RoleLists.Block) != RoleLists.None && (newLists & RoleLists.Allow) != RoleLists.None)
             {
-                conflictLists |= MSNLists.BlockedList;
+                conflictLists |= RoleLists.Block;
             }
 
             return conflictLists;
@@ -1587,7 +1587,7 @@ namespace MSNPSharp
             return type.ToString() + ":" + account.ToLowerInvariant() + ";via=" + abId.ToLowerInvariant();
         }
 
-        internal bool HasLists(MSNLists msnlists)
+        internal bool HasLists(RoleLists msnlists)
         {
             return ((lists & msnlists) == msnlists);
         }

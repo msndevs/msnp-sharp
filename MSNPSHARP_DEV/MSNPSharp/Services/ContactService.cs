@@ -503,14 +503,14 @@ namespace MSNPSharp
                 return;
 
             int firstADLKey = 0;
-            Dictionary<string, MSNLists> hashlist = new Dictionary<string, MSNLists>();
+            Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>();
 
             #region Process Contacts
 
             if ((scene & Scenario.SendInitialContactsADL) != Scenario.None)
             {
                 // Combine initial ADL for Contacts
-                hashlist = new Dictionary<string, MSNLists>(NSMessageHandler.ContactList.Count);
+                hashlist = new Dictionary<string, RoleLists>(NSMessageHandler.ContactList.Count);
                 lock (NSMessageHandler.ContactList.SyncRoot)
                 {
                     foreach (Contact contact in NSMessageHandler.ContactList.All)
@@ -521,15 +521,15 @@ namespace MSNPSharp
                         contact.ADLCount--;
 
                         string ch = contact.Hash;
-                        MSNLists l = MSNLists.None;
+                        RoleLists l = RoleLists.None;
                         if (contact.IsMessengerUser)
-                            l |= MSNLists.ForwardList;
+                            l |= RoleLists.Forward;
                         if (contact.OnAllowedList)
-                            l |= MSNLists.AllowedList;
+                            l |= RoleLists.Allow;
                         else if (contact.OnBlockedList)
-                            l |= MSNLists.BlockedList;
+                            l |= RoleLists.Block;
 
-                        if (l != MSNLists.None && !hashlist.ContainsKey(ch))
+                        if (l != RoleLists.None && !hashlist.ContainsKey(ch))
                             hashlist.Add(ch, l);
                     }
                 }
@@ -567,7 +567,7 @@ namespace MSNPSharp
                     // Combine initial ADL for Circles
                     if (NSMessageHandler.CircleList.Count > 0)
                     {
-                        hashlist = new Dictionary<string, MSNLists>(NSMessageHandler.CircleList.Count);
+                        hashlist = new Dictionary<string, RoleLists>(NSMessageHandler.CircleList.Count);
                         lock (NSMessageHandler.CircleList.SyncRoot)
                         {
                             foreach (Circle circle in NSMessageHandler.CircleList)
@@ -577,7 +577,7 @@ namespace MSNPSharp
     
                                 circle.ADLCount--;
                                 string ch = circle.Hash;
-                                MSNLists l = circle.Lists;
+                                RoleLists l = circle.Lists;
                                 hashlist.Add(ch, l);
                             }
                         }
@@ -919,7 +919,7 @@ namespace MSNPSharp
             }
         }
 
-        public static string[] ConstructLists(Dictionary<string, MSNLists> contacts, bool initial)
+        public static string[] ConstructLists(Dictionary<string, RoleLists> contacts, bool initial)
         {
 
             List<string> mls = new List<string>();
@@ -946,7 +946,7 @@ namespace MSNPSharp
                 String name;
                 String domain;
                 string[] arr = contact_hash.Split(new string[] { ":", ";via=" }, StringSplitOptions.RemoveEmptyEntries);
-                MSNLists sendlist = contacts[contact_hash];
+                RoleLists sendlist = contacts[contact_hash];
                 String type = ClientType.EmailMember.ToString();
 
                 if (arr.Length > 0)
@@ -967,7 +967,7 @@ namespace MSNPSharp
                     name = usernameanddomain[0];
                 }
 
-                if (sendlist != MSNLists.None)
+                if (sendlist != RoleLists.None)
                 {
                     if (currentDomain != domain)
                     {
@@ -1084,11 +1084,11 @@ namespace MSNPSharp
                         if (ct == ClientType.PassportMember)
                         {
                             // without membership, contact service adds this contact to AL automatically.
-                            Dictionary<string, MSNLists> hashlist = new Dictionary<string, MSNLists>(2);
-                            hashlist.Add(contact.Hash, MSNLists.AllowedList);
+                            Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(2);
+                            hashlist.Add(contact.Hash, RoleLists.Allow);
                             string payload = ConstructLists(hashlist, false)[0];
                             NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
-                            contact.AddToList(MSNLists.AllowedList);
+                            contact.AddToList(RoleLists.Allow);
                         }
                         else
                         {
@@ -1109,7 +1109,7 @@ namespace MSNPSharp
         private void AddPendingContact(Contact contact)
         {
             // Delete PL with "ContactMsgrAPI"
-            RemoveContactFromList(contact, MSNLists.PendingList, null);
+            RemoveContactFromList(contact, RoleLists.Pending, null);
 
             // ADD contact to AB with "ContactMsgrAPI"
             AddNewOrPendingContact(
@@ -1127,7 +1127,7 @@ namespace MSNPSharp
 
                     // Add RL membership with "ContactMsgrAPI"
                     AddContactToList(contact,
-                        MSNLists.ReverseList,
+                        RoleLists.Reverse,
                         delegate
                         {
                             if (!contact.OnBlockedList)
@@ -1140,11 +1140,11 @@ namespace MSNPSharp
                                 else
                                 {
                                     // without membership, contact service adds this contact to AL automatically.
-                                    Dictionary<string, MSNLists> hashlist = new Dictionary<string, MSNLists>(2);
-                                    hashlist.Add(contact.Hash, MSNLists.AllowedList);
+                                    Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(2);
+                                    hashlist.Add(contact.Hash, RoleLists.Allow);
                                     string payload = ConstructLists(hashlist, false)[0];
                                     NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
-                                    contact.AddToList(MSNLists.AllowedList);
+                                    contact.AddToList(RoleLists.Allow);
                                 }
                             }
 
@@ -1931,20 +1931,20 @@ namespace MSNPSharp
         /// <param name="contact">The affected contact</param>
         /// <param name="list">The list to place the contact in</param>
         /// <param name="onSuccess"></param>
-        internal void AddContactToList(Contact contact, MSNLists list, EventHandler onSuccess)
+        internal void AddContactToList(Contact contact, RoleLists list, EventHandler onSuccess)
         {
-            if (list == MSNLists.PendingList) //this causes disconnect 
+            if (list == RoleLists.Pending) //this causes disconnect 
                 return;
 
             // check whether the update is necessary
             if (contact.HasLists(list))
                 return;
 
-            Dictionary<string, MSNLists> hashlist = new Dictionary<string, MSNLists>(2);
+            Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(2);
             hashlist.Add(contact.Hash, list);
             string payload = ConstructLists(hashlist, false)[0];
 
-            if (list == MSNLists.ForwardList)
+            if (list == RoleLists.Forward)
             {
                 NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
                 contact.AddToList(list);
@@ -1963,7 +1963,7 @@ namespace MSNPSharp
                 return;
             }
 
-            MsnServiceState AddMemberObject = new MsnServiceState((list == MSNLists.ReverseList) ? PartnerScenario.ContactMsgrAPI : PartnerScenario.BlockUnblock, "AddMember", true);
+            MsnServiceState AddMemberObject = new MsnServiceState((list == RoleLists.Reverse) ? PartnerScenario.ContactMsgrAPI : PartnerScenario.BlockUnblock, "AddMember", true);
             SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, AddMemberObject);
 
             AddMemberRequestType addMemberRequest = new AddMemberRequestType();
@@ -2026,7 +2026,7 @@ namespace MSNPSharp
                     AddressBook.AddMemberhip(ServiceFilterType.Messenger, contact.Mail, contact.ClientType, GetMemberRole(list), member, Scenario.ContactServeAPI);
                     NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, list));
 
-                    if ((list & MSNLists.AllowedList) == MSNLists.AllowedList || (list & MSNLists.BlockedList) == MSNLists.BlockedList)
+                    if ((list & RoleLists.Allow) == RoleLists.Allow || (list & RoleLists.Block) == RoleLists.Block)
                     {
                         NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
                     }
@@ -2053,20 +2053,20 @@ namespace MSNPSharp
         /// <param name="contact">The affected contact</param>
         /// <param name="list">The list to remove the contact from</param>
         /// <param name="onSuccess"></param>
-        internal void RemoveContactFromList(Contact contact, MSNLists list, EventHandler onSuccess)
+        internal void RemoveContactFromList(Contact contact, RoleLists list, EventHandler onSuccess)
         {
-            if (list == MSNLists.ReverseList) //this causes disconnect
+            if (list == RoleLists.Reverse) //this causes disconnect
                 return;
 
             // check whether the update is necessary
             if (!contact.HasLists(list))
                 return;
 
-            Dictionary<string, MSNLists> hashlist = new Dictionary<string, MSNLists>(2);
+            Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(2);
             hashlist.Add(contact.Hash, list);
             string payload = ConstructLists(hashlist, false)[0];
 
-            if (list == MSNLists.ForwardList)
+            if (list == RoleLists.Forward)
             {
                 NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML", payload));
                 contact.RemoveFromList(list);
@@ -2084,7 +2084,7 @@ namespace MSNPSharp
                 return;
             }
 
-            MsnServiceState DeleteMemberObject = new MsnServiceState((list == MSNLists.PendingList) ? PartnerScenario.ContactMsgrAPI : PartnerScenario.BlockUnblock, "DeleteMember", true);
+            MsnServiceState DeleteMemberObject = new MsnServiceState((list == RoleLists.Pending) ? PartnerScenario.ContactMsgrAPI : PartnerScenario.BlockUnblock, "DeleteMember", true);
             SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, DeleteMemberObject);
             sharingService.DeleteMemberCompleted += delegate(object service, DeleteMemberCompletedEventArgs e)
             {
@@ -2104,7 +2104,7 @@ namespace MSNPSharp
                     AddressBook.RemoveMemberhip(ServiceFilterType.Messenger, contact.Mail, contact.ClientType, GetMemberRole(list), Scenario.ContactServeAPI);
                     NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, list));
 
-                    if ((list & MSNLists.AllowedList) == MSNLists.AllowedList || (list & MSNLists.BlockedList) == MSNLists.BlockedList)
+                    if ((list & RoleLists.Allow) == RoleLists.Allow || (list & RoleLists.Block) == RoleLists.Block)
                     {
                         NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML", payload));
                     }
@@ -2191,17 +2191,17 @@ namespace MSNPSharp
             {
                 RemoveContactFromList(
                     contact,
-                    MSNLists.AllowedList,
+                    RoleLists.Allow,
                     delegate
                     {
                         if (!contact.OnBlockedList)
-                            AddContactToList(contact, MSNLists.BlockedList, null);
+                            AddContactToList(contact, RoleLists.Block, null);
                     }
                 );
             }
             else if (!contact.OnBlockedList)
             {
-                AddContactToList(contact, MSNLists.BlockedList, null);
+                AddContactToList(contact, RoleLists.Block, null);
             }
         }
 
@@ -2216,17 +2216,17 @@ namespace MSNPSharp
             {
                 RemoveContactFromList(
                     contact,
-                    MSNLists.BlockedList,
+                    RoleLists.Block,
                     delegate
                     {
                         if (!contact.OnAllowedList)
-                            AddContactToList(contact, MSNLists.AllowedList, null);
+                            AddContactToList(contact, RoleLists.Allow, null);
                     }
                 );
             }
             else if (!contact.OnAllowedList)
             {
-                AddContactToList(contact, MSNLists.AllowedList, null);
+                AddContactToList(contact, RoleLists.Allow, null);
             }
         }
 
@@ -2348,8 +2348,8 @@ namespace MSNPSharp
 
                     NSMessageHandler.SendBlockCircleNSCommands(circle.AddressBookId, circle.HostDomain);
 
-                    circle.RemoveFromList(MSNLists.AllowedList);
-                    circle.AddToList(MSNLists.BlockedList);
+                    circle.RemoveFromList(RoleLists.Allow);
+                    circle.AddToList(RoleLists.Block);
                     circle.SetStatus(PresenceStatus.Offline);
 
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "AddMember completed: " + circle.ToString(), GetType().Name);
@@ -2391,8 +2391,8 @@ namespace MSNPSharp
                     }
 
                     NSMessageHandler.SendUnBlockCircleNSCommands(circle.AddressBookId, circle.HostDomain);
-                    circle.RemoveFromList(MSNLists.BlockedList);
-                    circle.AddToList(MSNLists.AllowedList);
+                    circle.RemoveFromList(RoleLists.Block);
+                    circle.AddToList(RoleLists.Allow);
 
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "DeleteMember completed: " + circle.ToString(), GetType().Name);
                 }
@@ -2814,37 +2814,37 @@ namespace MSNPSharp
 
         #endregion
 
-        public string GetMemberRole(MSNLists list)
+        public string GetMemberRole(RoleLists list)
         {
             switch (list)
             {
-                case MSNLists.AllowedList:
+                case RoleLists.Allow:
                     return MemberRole.Allow;
 
-                case MSNLists.BlockedList:
+                case RoleLists.Block:
                     return MemberRole.Block;
 
-                case MSNLists.PendingList:
+                case RoleLists.Pending:
                     return MemberRole.Pending;
 
-                case MSNLists.ReverseList:
+                case RoleLists.Reverse:
                     return MemberRole.Reverse;
             }
             return MemberRole.ProfilePersonalContact;
         }
 
-        public MSNLists GetMSNList(string memberRole)
+        public RoleLists GetMSNList(string memberRole)
         {
             switch (memberRole)
             {
                 case MemberRole.Allow:
-                    return MSNLists.AllowedList;
+                    return RoleLists.Allow;
                 case MemberRole.Block:
-                    return MSNLists.BlockedList;
+                    return RoleLists.Block;
                 case MemberRole.Reverse:
-                    return MSNLists.ReverseList;
+                    return RoleLists.Reverse;
                 case MemberRole.Pending:
-                    return MSNLists.PendingList;
+                    return RoleLists.Pending;
             }
             throw new MSNPSharpException("Unknown MemberRole type");
         }

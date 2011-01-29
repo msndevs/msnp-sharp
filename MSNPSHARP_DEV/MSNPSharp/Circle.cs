@@ -468,7 +468,7 @@ namespace MSNPSharp
         protected virtual void Initialize()
         {
             ContactType = MessengerContactType.Circle;
-            Lists = MSNLists.AllowedList | MSNLists.ForwardList;
+            Lists = RoleLists.Allow | RoleLists.Forward;
         }
 
         #endregion

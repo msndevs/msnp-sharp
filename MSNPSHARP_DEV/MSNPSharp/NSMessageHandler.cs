@@ -1002,14 +1002,14 @@ namespace MSNPSharp
 
         internal void SendBlockCircleNSCommands(Guid circleId, string hostDomain)
         {
-            SendCircleNotifyRML(circleId, hostDomain, MSNLists.AllowedList, true);
-            SendCircleNotifyADL(circleId, hostDomain, MSNLists.BlockedList, true);
+            SendCircleNotifyRML(circleId, hostDomain, RoleLists.Allow, true);
+            SendCircleNotifyADL(circleId, hostDomain, RoleLists.Block, true);
         }
 
         internal void SendUnBlockCircleNSCommands(Guid circleId, string hostDomain)
         {
-            SendCircleNotifyRML(circleId, hostDomain, MSNLists.BlockedList, true);
-            SendCircleNotifyADL(circleId, hostDomain, MSNLists.AllowedList, true);
+            SendCircleNotifyRML(circleId, hostDomain, RoleLists.Block, true);
+            SendCircleNotifyADL(circleId, hostDomain, RoleLists.Allow, true);
         }
 
         /// <summary>
@@ -1036,7 +1036,7 @@ namespace MSNPSharp
             MessageProcessor.SendMessage(nsMessage);
         }
 
-        internal int SendCircleNotifyADL(Guid circleId, string hostDomain, MSNLists lists, bool blockUnBlock)
+        internal int SendCircleNotifyADL(Guid circleId, string hostDomain, RoleLists lists, bool blockUnBlock)
         {
             string payload = "<ml" + (blockUnBlock == true ? "" : " l=\"1\"") + "><d n=\""
             + hostDomain + "\"><c n=\"" + circleId.ToString("D") + "\" l=\"" +
@@ -1048,7 +1048,7 @@ namespace MSNPSharp
             return nsMessage.TransactionID;
         }
 
-        internal int SendCircleNotifyRML(Guid circleId, string hostDomain, MSNLists lists, bool blockUnBlock)
+        internal int SendCircleNotifyRML(Guid circleId, string hostDomain, RoleLists lists, bool blockUnBlock)
         {
             string payload = "<ml" + (blockUnBlock == true ? "" : " l=\"1\"") + "><d n=\""
             + hostDomain + "\"><c n=\"" + circleId.ToString("D") + "\" l=\"" +
@@ -2269,7 +2269,7 @@ namespace MSNPSharp
             }
 
             Contact callingContact = ContactList.GetContact(account, ClientType.PassportMember);
-            if (callingContact.Lists == MSNLists.None)
+            if (callingContact.Lists == RoleLists.None)
             {
                 anonymous = true;
             }
@@ -2790,20 +2790,20 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        protected virtual MSNLists GetMSNList(string name)
+        protected virtual RoleLists GetMSNList(string name)
         {
             switch (name)
             {
                 case "AL":
-                    return MSNLists.AllowedList;
+                    return RoleLists.Allow;
                 case "FL":
-                    return MSNLists.ForwardList;
+                    return RoleLists.Forward;
                 case "BL":
-                    return MSNLists.BlockedList;
+                    return RoleLists.Block;
                 case "RL":
-                    return MSNLists.ReverseList;
+                    return RoleLists.Reverse;
                 case "PL":
-                    return MSNLists.PendingList;
+                    return RoleLists.Pending;
             }
             throw new MSNPSharpException("Unknown MSNList type");
         }
@@ -2895,7 +2895,7 @@ namespace MSNPSharp
                             {
                                 string account = contactNode.Attributes["n"].Value + "@" + domain;
                                 ClientType type = (ClientType)int.Parse(contactNode.Attributes["t"].Value);
-                                MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
+                                RoleLists list = (RoleLists)int.Parse(contactNode.Attributes["l"].Value);
                                 string displayName = account;
                                 try
                                 {
@@ -2905,11 +2905,11 @@ namespace MSNPSharp
                                 {
                                 }
 
-                                if (list == MSNLists.ReverseList)
+                                if (list == RoleLists.Reverse)
                                 {
                                     Contact contact = ContactList.GetContact(account, displayName, type);
                                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "ADL received, ReverseAdded event fired. Contact is in list: " + contact.Lists.ToString());
-                                    contact.Lists |= MSNLists.ReverseList;
+                                    contact.Lists |= RoleLists.Reverse;
                                     ContactService.OnReverseAdded(new ContactEventArgs(contact));
                                 }
 
@@ -2953,7 +2953,7 @@ namespace MSNPSharp
                         {
                             string account = contactNode.Attributes["n"].Value + "@" + domain;
                             ClientType type = (ClientType)int.Parse(contactNode.Attributes["t"].Value);
-                            MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
+                            RoleLists list = (RoleLists)int.Parse(contactNode.Attributes["l"].Value);
                             account = account.ToLower(CultureInfo.InvariantCulture);
 
                             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, account + " has removed you from his/her " + list.ToString(), GetType().Name);
