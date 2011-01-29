@@ -371,6 +371,7 @@
       <xsd:element name="abView" type="xsd:string" />
       <xsd:element name="extendedContent" type="xsd:string" />
       <xsd:element minOccurs="0" name="abHandle" type="msnab:abHandleType" />
+      <xsd:element minOccurs="0" name="pageContext" type="msnab:pageContextType" />
     </xsd:sequence>
   </xsd:complexType>
   <xsd:complexType name="ABFindContactsPagedResultType">
