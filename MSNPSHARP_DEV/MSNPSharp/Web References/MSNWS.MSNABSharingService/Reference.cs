@@ -4157,10 +4157,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string passportNameField;
         
-        private bool isPassportNameHiddenField;
-        
-        private bool isPassportNameHiddenFieldSpecified;
-        
         private string displayNameField;
         
         private long puidField;
@@ -4174,10 +4170,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         private object brandIdListField;
         
         private string commentField;
-        
-        private bool isNotMobileVisibleField;
-        
-        private bool isNotMobileVisibleFieldSpecified;
         
         private bool isMobileIMEnabledField;
         
@@ -4225,6 +4217,10 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string timeZoneField;
         
+        private int trustLevelField;
+        
+        private bool trustLevelFieldSpecified;
+        
         private NetworkInfoType[] networkInfoListField;
         
         private string publicDisplayNameField;
@@ -4233,15 +4229,27 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool isAutoUpdateDisabledFieldSpecified;
         
+        private bool isHiddenField;
+        
+        private bool isHiddenFieldSpecified;
+        
+        private bool isPassportNameHiddenField;
+        
+        private bool isPassportNameHiddenFieldSpecified;
+        
+        private bool isNotMobileVisibleField;
+        
+        private bool isNotMobileVisibleFieldSpecified;
+        
+        private bool isShellContactField;
+        
+        private bool isShellContactFieldSpecified;
+        
         private MessengerMemberInfo messengerMemberInfoField;
         
         private object propertiesChangedField;
         
         private string clientErrorDataField;
-        
-        private bool isHiddenField;
-        
-        private bool isHiddenFieldSpecified;
         
         /// <remarks/>
         [System.Xml.Serialization.XmlArrayItemAttribute("ContactEmail", IsNullable=false)]
@@ -4401,27 +4409,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public bool IsPassportNameHidden {
-            get {
-                return this.isPassportNameHiddenField;
-            }
-            set {
-                this.isPassportNameHiddenField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool IsPassportNameHiddenSpecified {
-            get {
-                return this.isPassportNameHiddenFieldSpecified;
-            }
-            set {
-                this.isPassportNameHiddenFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
         public string displayName {
             get {
                 return this.displayNameField;
@@ -4490,27 +4477,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.commentField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public bool IsNotMobileVisible {
-            get {
-                return this.isNotMobileVisibleField;
-            }
-            set {
-                this.isNotMobileVisibleField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool IsNotMobileVisibleSpecified {
-            get {
-                return this.isNotMobileVisibleFieldSpecified;
-            }
-            set {
-                this.isNotMobileVisibleFieldSpecified = value;
             }
         }
         
@@ -4754,6 +4720,27 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
+        public int TrustLevel {
+            get {
+                return this.trustLevelField;
+            }
+            set {
+                this.trustLevelField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool TrustLevelSpecified {
+            get {
+                return this.trustLevelFieldSpecified;
+            }
+            set {
+                this.trustLevelFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
         [System.Xml.Serialization.XmlArrayItemAttribute("NetworkInfo", IsNullable=false)]
         public NetworkInfoType[] NetworkInfoList {
             get {
@@ -4796,6 +4783,90 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
+        public bool IsHidden {
+            get {
+                return this.isHiddenField;
+            }
+            set {
+                this.isHiddenField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool IsHiddenSpecified {
+            get {
+                return this.isHiddenFieldSpecified;
+            }
+            set {
+                this.isHiddenFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool IsPassportNameHidden {
+            get {
+                return this.isPassportNameHiddenField;
+            }
+            set {
+                this.isPassportNameHiddenField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool IsPassportNameHiddenSpecified {
+            get {
+                return this.isPassportNameHiddenFieldSpecified;
+            }
+            set {
+                this.isPassportNameHiddenFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool IsNotMobileVisible {
+            get {
+                return this.isNotMobileVisibleField;
+            }
+            set {
+                this.isNotMobileVisibleField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool IsNotMobileVisibleSpecified {
+            get {
+                return this.isNotMobileVisibleFieldSpecified;
+            }
+            set {
+                this.isNotMobileVisibleFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool IsShellContact {
+            get {
+                return this.isShellContactField;
+            }
+            set {
+                this.isShellContactField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool IsShellContactSpecified {
+            get {
+                return this.isShellContactFieldSpecified;
+            }
+            set {
+                this.isShellContactFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
         public MessengerMemberInfo MessengerMemberInfo {
             get {
                 return this.messengerMemberInfoField;
@@ -4822,27 +4893,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.clientErrorDataField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public bool IsHidden {
-            get {
-                return this.isHiddenField;
-            }
-            set {
-                this.isHiddenField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool IsHiddenSpecified {
-            get {
-                return this.isHiddenFieldSpecified;
-            }
-            set {
-                this.isHiddenFieldSpecified = value;
             }
         }
     }
@@ -6371,6 +6421,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private abHandleType abHandleField;
         
+        private pageContextType pageContextField;
+        
         /// <remarks/>
         public filterOptionsType filterOptions {
             get {
@@ -6408,6 +6460,16 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.abHandleField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public pageContextType pageContext {
+            get {
+                return this.pageContextField;
+            }
+            set {
+                this.pageContextField = value;
             }
         }
     }
@@ -6467,6 +6529,10 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool includeHiddenContactsField;
         
+        private bool includeShellContactsField;
+        
+        private bool includeShellContactsFieldSpecified;
+        
         /// <remarks/>
         public bool IncludeHiddenContacts {
             get {
@@ -6474,6 +6540,60 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.includeHiddenContactsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool IncludeShellContacts {
+            get {
+                return this.includeShellContactsField;
+            }
+            set {
+                this.includeShellContactsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool IncludeShellContactsSpecified {
+            get {
+                return this.includeShellContactsFieldSpecified;
+            }
+            set {
+                this.includeShellContactsFieldSpecified = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class pageContextType {
+        
+        private int pageSizeField;
+        
+        private string directionField;
+        
+        /// <remarks/>
+        public int PageSize {
+            get {
+                return this.pageSizeField;
+            }
+            set {
+                this.pageSizeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Direction {
+            get {
+                return this.directionField;
+            }
+            set {
+                this.directionField = value;
             }
         }
     }
