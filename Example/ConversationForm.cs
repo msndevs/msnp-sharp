@@ -512,7 +512,7 @@ namespace MSNPSharpClient
             activeconversationID = convId;
             firstInvitedContact = contact;
 
-            isYIM = (ConversationID.NetworkType == ClientType.EmailMember);
+            isYIM = (ConversationID.NetworkType == IMAddressInfoType.Yahoo);
 
             if (isYIM)
             {
@@ -730,7 +730,7 @@ namespace MSNPSharpClient
         private void ConversationForm_Load(object sender, EventArgs e)
         {
             Text = "Conversation with " + ConversationID.RemoteOwner.Mail + " - MSNPSharp";
-            Icon = (Icon)((ConversationID.RemoteOwner.ClientType == ClientType.PassportMember) ? Properties.Resources.msn_ico : Properties.Resources.yahoo_ico);
+            Icon = (Icon)((ConversationID.RemoteOwner.ClientType == IMAddressInfoType.WindowsLive) ? Properties.Resources.msn_ico : Properties.Resources.yahoo_ico);
             displayOwner.Image = _messenger.ContactList.Owner.DisplayImage.Image;
 
             lock (richTextHistory.Emotions)
@@ -828,7 +828,7 @@ namespace MSNPSharpClient
 
         private void RequestDisplayImage(Contact remoteContact, DisplayImage updateImage)
         {
-            if (remoteContact.ClientType == ClientType.PassportMember &&
+            if (remoteContact.ClientType == IMAddressInfoType.WindowsLive &&
                 updateImage != remoteContact.UserTileLocation)
             {
                 if (updateImage == null)
@@ -931,7 +931,7 @@ namespace MSNPSharpClient
             onlineUsersDropDown.Items.Clear();
             foreach (Contact c in _messenger.ContactList.Forward)
             {
-                if (c.Online && c.ClientType == ClientType.PassportMember)
+                if (c.Online && c.ClientType == IMAddressInfoType.WindowsLive)
                 {
                     onlineUsersDropDown.Items.Add(c.Mail, null, onlineUsersDropDown_Click).ToolTipText = c.Mail;
                 }
@@ -944,7 +944,7 @@ namespace MSNPSharpClient
         private void onlineUsersDropDown_Click(object sender, EventArgs args)
         {
             ToolStripItem item = (ToolStripItem)sender;
-            if (_messenger.ContactList.HasContact(item.ToolTipText, ClientType.PassportMember))
+            if (_messenger.ContactList.HasContact(item.ToolTipText, IMAddressInfoType.WindowsLive))
             {
                 activeconversationID = _messenger.MessageManager.InviteContactToConversation(activeconversationID, _messenger.ContactList.GetContact(item.ToolTipText));
             }

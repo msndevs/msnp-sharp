@@ -57,14 +57,14 @@ namespace MSNPSharp
 
 
         internal CircleInviter(ContactType inviter, string inviterMessage)
-            :base(WebServiceConstants.MessengerIndividualAddressBookId, inviter.contactInfo.passportName, ClientType.PassportMember, inviter.contactInfo.CID, null)
+            :base(WebServiceConstants.MessengerIndividualAddressBookId, inviter.contactInfo.passportName, IMAddressInfoType.WindowsLive, inviter.contactInfo.CID, null)
         {
             if (inviterMessage != null)
                 message = inviterMessage;
         }
 
         internal CircleInviter(string inviterEmail, string inviterName, string inviterMessage)
-            : base(WebServiceConstants.MessengerIndividualAddressBookId, inviterEmail, ClientType.PassportMember, 0, null)
+            : base(WebServiceConstants.MessengerIndividualAddressBookId, inviterEmail, IMAddressInfoType.WindowsLive, 0, null)
         {
             if (inviterMessage != null)
                 message = inviterMessage;
@@ -121,7 +121,7 @@ namespace MSNPSharp
         /// <param name="circleInfo"></param>
         /// <param name="handler"></param>
         public Circle(ContactType me, ContactType hidden, CircleInverseInfoType circleInfo, NSMessageHandler handler)
-            : base(circleInfo.Content.Handle.Id.ToLowerInvariant(), circleInfo.Content.Handle.Id.ToLowerInvariant() + "@" + circleInfo.Content.Info.HostedDomain.ToLowerInvariant(), ClientType.CircleMember, me.contactInfo.CID, handler)
+            : base(circleInfo.Content.Handle.Id.ToLowerInvariant(), circleInfo.Content.Handle.Id.ToLowerInvariant() + "@" + circleInfo.Content.Info.HostedDomain.ToLowerInvariant(), IMAddressInfoType.Circle, me.contactInfo.CID, handler)
         {
             hostDomain = circleInfo.Content.Info.HostedDomain.ToLowerInvariant();
             hiddenRepresentative = hidden;
@@ -258,7 +258,7 @@ namespace MSNPSharp
                             string[] typeAccount = lowerAccount.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
                             if (typeAccount.Length >= 2)
                             {
-                                ClientType type = (ClientType)(int.Parse(typeAccount[0]));
+                                IMAddressInfoType type = (IMAddressInfoType)(int.Parse(typeAccount[0]));
                                 string mail = typeAccount[1];
                                 if (HasMember(mail, type))
                                 {
@@ -288,7 +288,7 @@ namespace MSNPSharp
                             if (abid != AddressBookId || idDomain[1].ToLowerInvariant() != HostDomain)  //Is it the correct circle selected?
                                 return null;
 
-                            ClientType type = (ClientType)(int.Parse(typeAccount[0]));
+                            IMAddressInfoType type = (IMAddressInfoType)(int.Parse(typeAccount[0]));
                             string mail = typeAccount[1];
                             if (HasMember(mail, type))
                             {
@@ -327,7 +327,7 @@ namespace MSNPSharp
                             string[] typeAccount = lowerAccount.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
                             if (typeAccount.Length >= 2)
                             {
-                                ClientType type = (ClientType)(int.Parse(typeAccount[0]));
+                                IMAddressInfoType type = (IMAddressInfoType)(int.Parse(typeAccount[0]));
                                 string mail = typeAccount[1];
                                 if (HasMember(mail, type))
                                 {
@@ -358,7 +358,7 @@ namespace MSNPSharp
                             if (abid != AddressBookId || idDomain[1].ToLowerInvariant() != HostDomain)  //Is it the correct circle selected?
                                 return false;
 
-                            ClientType type = (ClientType)(int.Parse(typeAccount[0]));
+                            IMAddressInfoType type = (IMAddressInfoType)(int.Parse(typeAccount[0]));
                             string mail = typeAccount[1];
                             if (HasMember(mail, type))
                             {
@@ -399,7 +399,7 @@ namespace MSNPSharp
                             string[] typeAccount = lowerAccount.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
                             if (typeAccount.Length >= 2)
                             {
-                                ClientType type = (ClientType)(int.Parse(typeAccount[0]));
+                                IMAddressInfoType type = (IMAddressInfoType)(int.Parse(typeAccount[0]));
                                 string mail = typeAccount[1];
                                 return HasMember(mail, type);
                             }
@@ -423,7 +423,7 @@ namespace MSNPSharp
                             if (abid != AddressBookId || idDomain[1].ToLowerInvariant() != HostDomain)  //Is it the correct circle selected?
                                 return false;
 
-                            ClientType type = (ClientType)(int.Parse(typeAccount[0]));
+                            IMAddressInfoType type = (IMAddressInfoType)(int.Parse(typeAccount[0]));
                             string mail = typeAccount[1];
                             return HasMember(mail, type);
                         }
@@ -440,7 +440,7 @@ namespace MSNPSharp
         }
 
 
-        internal bool HasMember(string account, ClientType type)
+        internal bool HasMember(string account, IMAddressInfoType type)
         {
             lock (ContactList)
                 return ContactList.HasContact(account, type);

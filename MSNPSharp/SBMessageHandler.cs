@@ -1175,9 +1175,9 @@ namespace MSNPSharp
             }
 
             Contact contact = (message.CommandValues.Count >= 2) ?
-                NSMessageHandler.ContactList.GetContact(account, (ClientType)Enum.Parse(typeof(ClientType), message.CommandValues[1].ToString()))
+                NSMessageHandler.ContactList.GetContact(account, (IMAddressInfoType)Enum.Parse(typeof(IMAddressInfoType), message.CommandValues[1].ToString()))
                 :
-                NSMessageHandler.ContactList.GetContact(account, ClientType.PassportMember);
+                NSMessageHandler.ContactList.GetContact(account, IMAddressInfoType.WindowsLive);
 
             OnContactLeft(contact, endPointId); // notify the client programmer
 
@@ -1261,7 +1261,7 @@ namespace MSNPSharp
                 return;
 
             // Get the contact.
-            Contact contact = NSMessageHandler.ContactList.GetContact(account, ClientType.PassportMember);
+            Contact contact = NSMessageHandler.ContactList.GetContact(account, IMAddressInfoType.WindowsLive);
 
             // Not in contact list (anonymous). Update it's name and caps.
             if (contact.Lists == RoleLists.None && NSMessageHandler.BotMode)
@@ -1339,7 +1339,7 @@ namespace MSNPSharp
             if (NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant() != account)
             {
                 // Get the contact.
-                Contact contact = NSMessageHandler.ContactList.GetContact(account, ClientType.PassportMember);
+                Contact contact = NSMessageHandler.ContactList.GetContact(account, IMAddressInfoType.WindowsLive);
 
                 // Not in contact list (anonymous). Update it's name and caps.
                 if (contact.Lists == RoleLists.None && NSMessageHandler.BotMode)
@@ -1423,7 +1423,7 @@ namespace MSNPSharp
         {
             // the MSG command is the most versatile one. These are all the messages
             // between clients. Like normal messages, file transfer invitations, P2P messages, etc.
-            Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[0].ToString(), ClientType.PassportMember);
+            Contact contact = NSMessageHandler.ContactList.GetContact(message.CommandValues[0].ToString(), IMAddressInfoType.WindowsLive);
 
             // update the name to make sure we have it up-to-date
             //contact.SetName(message.CommandValues[1].ToString());
@@ -1510,7 +1510,7 @@ namespace MSNPSharp
                 {
                     case "text/x-msmsgscontrol":
                         // make sure we don't parse the rest of the message in the next loop											
-                        OnUserTyping(NSMessageHandler.ContactList.GetContact(sbMSGMessage.MimeHeader["TypingUser"], ClientType.PassportMember));
+                        OnUserTyping(NSMessageHandler.ContactList.GetContact(sbMSGMessage.MimeHeader["TypingUser"], IMAddressInfoType.WindowsLive));
                         break;
 
                     case "text/x-mms-emoticon":

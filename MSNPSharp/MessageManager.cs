@@ -366,12 +366,12 @@ namespace MSNPSharp.Utilities
                 throw new MSNPSharpException("This is not a MSN contact.");
             }
 
-            if (messengerContact.ClientType == ClientType.EmailMember && (messageObject is EmoticonObject))
+            if (messengerContact.ClientType == IMAddressInfoType.Yahoo && (messageObject is EmoticonObject))
             {
                 throw new NotSupportedException("A Yahoo Messenger contact cannot receive custom emoticon.");
             }
 
-            if ((messengerContact.ClientType == ClientType.PhoneMember || messengerContact.MobileAccess) && (messageObject is EmoticonObject || messageObject is NudgeObject || messageObject is UserTypingObject))
+            if ((messengerContact.ClientType == IMAddressInfoType.Telephone || messengerContact.MobileAccess) && (messageObject is EmoticonObject || messageObject is NudgeObject || messageObject is UserTypingObject))
             {
                 throw new NotSupportedException("A Phone Contact cannot receive " + messageObject.GetType().ToString() + " messages.");
             }
@@ -391,7 +391,7 @@ namespace MSNPSharp.Utilities
         /// <exception cref="InvalidOperationException">Throw when sending a custom emoticon to a Yahoo Messenger contact.</exception>
         private void SendYIMMessage(Contact yimContact, MessageObject messageObject)
         {
-            if (yimContact.IsMessengerUser && yimContact.ClientType == ClientType.EmailMember)
+            if (yimContact.IsMessengerUser && yimContact.ClientType == IMAddressInfoType.Yahoo)
             {
                 if (messageObject is EmoticonObject)
                 {
@@ -439,7 +439,7 @@ namespace MSNPSharp.Utilities
         /// <exception cref="InvalidOperationException">Throw when sending a custom emoticon to a Yahoo Messenger contact.</exception>
         private void SendMobileMessage(Contact mobileContact, MessageObject messageObject)
         {
-            if (mobileContact.ClientType == ClientType.PhoneMember || mobileContact.MobileAccess)
+            if (mobileContact.ClientType == IMAddressInfoType.Telephone || mobileContact.MobileAccess)
             {
                 if (messageObject is EmoticonObject || messageObject is NudgeObject || messageObject is TextMessageObject)
                 {
@@ -517,13 +517,13 @@ namespace MSNPSharp.Utilities
             CheckContact(contact, messageObject);
 
             //Process YIM contact.
-            if (contact.ClientType == ClientType.EmailMember)
+            if (contact.ClientType == IMAddressInfoType.Yahoo)
             {
                 SendYIMMessage(contact, messageObject);
                 return;
             }
 
-            if (contact.ClientType == ClientType.PhoneMember)
+            if (contact.ClientType == IMAddressInfoType.Telephone)
             {
                 SendMobileMessage(contact, messageObject);
             }
@@ -556,7 +556,7 @@ namespace MSNPSharp.Utilities
             {
                 bool created = HasConversation(cId);
                 bool pending = IsPendingConversation(cId);
-                if (cId.NetworkType != ClientType.EmailMember)
+                if (cId.NetworkType != IMAddressInfoType.Yahoo)
                 {
                     if (cId.RemoteOwner.Status != PresenceStatus.Offline)
                     {
@@ -589,7 +589,7 @@ namespace MSNPSharp.Utilities
                     }
                 }
 
-                if (cId.NetworkType == ClientType.EmailMember) //Yahoo!
+                if (cId.NetworkType == IMAddressInfoType.Yahoo) //Yahoo!
                 {
                     CheckContact(cId.RemoteOwner, messageObject);
                     SendMessage(cId.RemoteOwner, messageObject);
@@ -604,7 +604,7 @@ namespace MSNPSharp.Utilities
         {
             bool created = HasConversation(pendingId);
             bool pending = IsPendingConversation(pendingId);
-            bool otherNetwork = (pendingId.RemoteOwner.ClientType != ClientType.PassportMember);
+            bool otherNetwork = (pendingId.RemoteOwner.ClientType != IMAddressInfoType.WindowsLive);
 
             if (pending)
                 RemovePendingConversation(pendingId);
@@ -689,7 +689,7 @@ namespace MSNPSharp.Utilities
                 return cId;
             }
 
-            if (remoteContact.ClientType != ClientType.PassportMember)
+            if (remoteContact.ClientType != IMAddressInfoType.WindowsLive)
                 throw new InvalidOperationException("The remoteContact: " + remoteContact + " is not a PassportMember.");
 
             Conversation activeConversation = null;
@@ -752,7 +752,7 @@ namespace MSNPSharp.Utilities
 
             if (created)
             {
-                if (cId.NetworkType == ClientType.PassportMember) //Only passport conversation contains a conversation object. Other conversation, like Yahoo does not.
+                if (cId.NetworkType == IMAddressInfoType.WindowsLive) //Only passport conversation contains a conversation object. Other conversation, like Yahoo does not.
                 {
                     List<Conversation> overflowConversations = new List<Conversation>(10);
                     lock (SyncObject)

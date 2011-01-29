@@ -517,10 +517,10 @@ namespace MSNPSharp
     }
 
     /// <summary>
-    /// Email account type.
+    /// Instant message address info type.
     /// <remarks>If you add any new value here, remember to change the <see cref="ContactList.GetContact(string)"/> method.</remarks>
     /// </summary>
-    public enum ClientType : int
+    public enum IMAddressInfoType : int
     {
         /// <summary>
         /// No client
@@ -528,29 +528,59 @@ namespace MSNPSharp
         None = 0,
 
         /// <summary>
-        /// Passport member
+        /// Passport address
         /// </summary>
-        PassportMember = 1,
+        WindowsLive = 1,
 
         /// <summary>
-        /// Live Communication Server
+        /// Office Communicator address
         /// </summary>
-        LCS = 2,
+        OfficeCommunicator = 2,
 
         /// <summary>
-        /// Phone member
+        /// Telephone number
         /// </summary>
-        PhoneMember = 4,
+        Telephone = 4,
+
+        /// <summary>
+        /// Mobile network
+        /// </summary>
+        MobileNetwork = 8,
 
         /// <summary>
         /// MSN group
         /// </summary>
-        CircleMember = 9,
+        Circle = 9,
 
         /// <summary>
-        /// Email member, currently Yahoo!
+        /// Temporary group
         /// </summary>
-        EmailMember = 32
+        TemporaryGroup = 10,
+
+        /// <summary>
+        /// CID
+        /// </summary>
+        Cid = 11,
+
+        /// <summary>
+        /// Connect
+        /// </summary>
+        Connect = 13,
+
+        /// <summary>
+        /// Remote network, like FB
+        /// </summary>
+        RemoteNetwork = 14,
+
+        /// <summary>
+        /// Smtp
+        /// </summary>
+        Smtp = 16,
+
+        /// <summary>
+        /// Yahoo! address
+        /// </summary>
+        Yahoo = 32
     }
 
     /// <summary>

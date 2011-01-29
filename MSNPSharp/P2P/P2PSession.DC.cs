@@ -249,7 +249,7 @@ namespace MSNPSharp.P2P
                 slpMessage.BodyValues["Bridge"] = "TCPv1";
 
                 Guid remoteGuid = message.FromEndPoint;
-                Contact remote = ns.ContactList.GetContact(message.FromEmailAccount, ClientType.PassportMember);
+                Contact remote = ns.ContactList.GetContact(message.FromEmailAccount, IMAddressInfoType.WindowsLive);
 
                 DCNonceType dcNonceType;
                 Guid remoteNonce = ParseDCNonce(message.BodyValues, out dcNonceType);
@@ -358,7 +358,7 @@ namespace MSNPSharp.P2P
                 bodyValues.ContainsKey("Listening") &&
                 bodyValues["Listening"].ToString().ToLowerInvariant().IndexOf("true") >= 0)
             {
-                Contact remote = ns.ContactList.GetContact(message.FromEmailAccount, ClientType.PassportMember);
+                Contact remote = ns.ContactList.GetContact(message.FromEmailAccount, IMAddressInfoType.WindowsLive);
                 Guid remoteGuid = message.FromEndPoint;
 
                 DCNonceType dcNonceType;
@@ -420,7 +420,7 @@ namespace MSNPSharp.P2P
             NSMessageHandler nsMessageHandler,
             P2PSession startupSession)
         {
-            Contact from = nsMessageHandler.ContactList.GetContact(message.FromEmailAccount, ClientType.PassportMember);
+            Contact from = nsMessageHandler.ContactList.GetContact(message.FromEmailAccount, IMAddressInfoType.WindowsLive);
             IPEndPoint[] ipEndPoints = SelectIPEndPoint(message.BodyValues, nsMessageHandler);
 
             if (from.DirectBridge != null && ipEndPoints != null && ipEndPoints.Length > 0)

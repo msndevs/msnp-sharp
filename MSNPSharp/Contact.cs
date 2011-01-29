@@ -76,7 +76,7 @@ namespace MSNPSharp
         private bool hasInitialized = false;
 
         private PresenceStatus status = PresenceStatus.Offline;
-        private ClientType clientType = ClientType.PassportMember;
+        private IMAddressInfoType clientType = IMAddressInfoType.WindowsLive;
         private CirclePersonalMembershipRole circleRole = CirclePersonalMembershipRole.None;
 
         private List<ContactGroup> contactGroups = new List<ContactGroup>(0);
@@ -135,17 +135,17 @@ namespace MSNPSharp
         {
         }
 
-        protected internal Contact(string abId, string account, ClientType cliType, long cid, NSMessageHandler handler)
+        protected internal Contact(string abId, string account, IMAddressInfoType cliType, long cid, NSMessageHandler handler)
         {
             Initialized(new Guid(abId), account, cliType, cid, handler);
         }
 
-        protected internal Contact(Guid abId, string account, ClientType cliType, long cid, NSMessageHandler handler)
+        protected internal Contact(Guid abId, string account, IMAddressInfoType cliType, long cid, NSMessageHandler handler)
         {
             Initialized(abId, account, cliType, cid, handler);
         }
 
-        protected virtual void Initialized(Guid abId, string account, ClientType cliType, long cid, NSMessageHandler handler)
+        protected virtual void Initialized(Guid abId, string account, IMAddressInfoType cliType, long cid, NSMessageHandler handler)
         {
             if (hasInitialized)
                 return;
@@ -545,7 +545,7 @@ namespace MSNPSharp
         /// <summary>
         /// The type of contact's email account.
         /// </summary>
-        public ClientType ClientType
+        public IMAddressInfoType ClientType
         {
             get
             {
@@ -697,7 +697,7 @@ namespace MSNPSharp
             }
             set
             {
-                if (NSMessageHandler != null && Guid != Guid.Empty && ClientType == ClientType.PassportMember)
+                if (NSMessageHandler != null && Guid != Guid.Empty && ClientType == IMAddressInfoType.WindowsLive)
                 {
                     if (value)
                     {
@@ -1577,12 +1577,12 @@ namespace MSNPSharp
             return Guid.Empty;
         }
 
-        internal static string MakeHash(string account, ClientType type, Guid abId)
+        internal static string MakeHash(string account, IMAddressInfoType type, Guid abId)
         {
             return type.ToString() + ":" + account.ToLowerInvariant() + ";via=" + abId.ToString("D").ToLowerInvariant();
         }
 
-        internal static string MakeHash(string account, ClientType type, string abId)
+        internal static string MakeHash(string account, IMAddressInfoType type, string abId)
         {
             return type.ToString() + ":" + account.ToLowerInvariant() + ";via=" + abId.ToLowerInvariant();
         }

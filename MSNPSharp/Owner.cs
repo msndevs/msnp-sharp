@@ -62,16 +62,16 @@ namespace MSNPSharp
         private RoamLiveProperty roamLiveProperty = RoamLiveProperty.Unspecified;
 
         public Owner(string abId, string account, long cid, NSMessageHandler handler)
-            : base(abId, account, ClientType.PassportMember, cid, handler)
+            : base(abId, account, IMAddressInfoType.WindowsLive, cid, handler)
         {
         }
 
         public Owner(Guid abId, string account, long cid, NSMessageHandler handler)
-            : base(abId, account, ClientType.PassportMember, cid, handler)
+            : base(abId, account, IMAddressInfoType.WindowsLive, cid, handler)
         {
         }
 
-        protected override void Initialized(Guid abId, string account, ClientType cliType, long cid, NSMessageHandler handler)
+        protected override void Initialized(Guid abId, string account, IMAddressInfoType cliType, long cid, NSMessageHandler handler)
         {
             base.Initialized(abId, account, cliType, cid, handler);
 
