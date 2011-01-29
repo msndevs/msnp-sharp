@@ -146,43 +146,47 @@ namespace MSNPSharp
     }
 
     /// <summary>
-    /// One of the four lists used in the messenger network
+    /// Roles used in the messenger network
     /// </summary>
-    /// <remarks>
-    /// <list type="bullet">
-    /// <item>AllowedList - all contacts who are allowed to see <i>your</i> status</item>
-    /// <item>ReverseList - all contacts who have <i>you</i> on <i>their</i> contactlist</item>
-    /// <item>ForwardList - all contacts in your contactlist. You can send messages to those people</item>
-    /// <item>BlockedList - all contacts who you have blocked</item>
-    /// </list>
-    /// </remarks>
     [FlagsAttribute]
-    public enum MSNLists
+    public enum RoleLists
     {
         /// <summary>
         /// No msn list
         /// </summary>
         None = 0,
         /// <summary>
-        /// All contacts in your contactlist.
+        /// All contacts in your contactlist. You can send messages to those people.
         /// </summary>
-        ForwardList = 1,
+        Forward = 1,
         /// <summary>
         /// All contacts who are allowed to see your status.
         /// </summary>
-        AllowedList = 2,
+        Allow = 2,
         /// <summary>
         /// All contacts who you have blocked.
         /// </summary>
-        BlockedList = 4,
+        Block = 4,
         /// <summary>
         /// All contacts who have you on their contactlist.
         /// </summary>
-        ReverseList = 8,
+        Reverse = 8,
         /// <summary>
         /// All pending (for approval) contacts.
         /// </summary>
-        PendingList = 16
+        Pending = 16,
+        /// <summary>
+        /// Forward+Block
+        /// </summary>
+        HideCompat = 5,
+        /// <summary>
+        /// Application contact
+        /// </summary>
+        ApplicationContact = 32,
+        /// <summary>
+        /// Show me offline but you can receive/send offline messages.
+        /// </summary>
+        Hide = 64
     }
 
     /// <summary>

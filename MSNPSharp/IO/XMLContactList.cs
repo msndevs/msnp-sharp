@@ -82,7 +82,7 @@ namespace MSNPSharp.IO
             {
                 foreach (string role in ms.Keys)
                 {
-                    MSNLists msnlist = NSMessageHandler.ContactService.GetMSNList(role);
+                    RoleLists msnlist = NSMessageHandler.ContactService.GetMSNList(role);
                     foreach (BaseMember bm in ms[role].Values)
                     {
                         long cid = 0;
@@ -790,7 +790,7 @@ namespace MSNPSharp.IO
                         if (account != null && type != ClientType.None)
                         {
                             account = account.ToLowerInvariant();
-                            MSNLists msnlist = NSMessageHandler.ContactService.GetMSNList(memberrole);
+                            RoleLists msnlist = NSMessageHandler.ContactService.GetMSNList(memberrole);
 
                             if (bm.Deleted)
                             {
@@ -814,7 +814,7 @@ namespace MSNPSharp.IO
                                             contact.RemoveFromList(msnlist);
 
                                             // Fire ReverseRemoved
-                                            if (msnlist == MSNLists.ReverseList)
+                                            if (msnlist == RoleLists.Reverse)
                                             {
                                                 NSMessageHandler.ContactService.OnReverseRemoved(new ContactEventArgs(contact));
                                             }
@@ -1747,8 +1747,8 @@ namespace MSNPSharp.IO
     
                                     if (contact != null)
                                     {
-                                        contact.RemoveFromList(MSNLists.ForwardList);
-                                        NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, MSNLists.ForwardList));
+                                        contact.RemoveFromList(RoleLists.Forward);
+                                        NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, RoleLists.Forward));
     
                                         contact.Guid = Guid.Empty;
                                         contact.SetIsMessengerUser(false);
@@ -1759,7 +1759,7 @@ namespace MSNPSharp.IO
                                         NSMessageHandler.OnContactOffline(new ContactEventArgs(contact));
     
     
-                                        if (MSNLists.None == contact.Lists)
+                                        if (RoleLists.None == contact.Lists)
                                         {
                                             NSMessageHandler.ContactList.Remove(contact.Mail, contact.ClientType);
                                             contact.NSMessageHandler = null;
@@ -1769,7 +1769,7 @@ namespace MSNPSharp.IO
                                 else
                                 {
                                     UpdateContact(contactType);
-                                    NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, MSNLists.ForwardList));
+                                    NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, RoleLists.Forward));
                                 }
                             }
                         }
@@ -2382,7 +2382,7 @@ namespace MSNPSharp.IO
 
                     if (contact.IsMessengerUser)
                     {
-                        contact.AddToList(MSNLists.ForwardList); //IsMessengerUser is only valid in AddressBook member
+                        contact.AddToList(RoleLists.Forward); //IsMessengerUser is only valid in AddressBook member
                     }
 
                     if (!string.IsNullOrEmpty(displayName))
@@ -2445,7 +2445,7 @@ namespace MSNPSharp.IO
                         needsDelete |= true;
                     }
 
-                    if (needsDelete && contact.Lists == MSNLists.None)
+                    if (needsDelete && contact.Lists == RoleLists.None)
                     {
                         contactList.Remove(account, type);
                     }

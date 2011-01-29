@@ -86,9 +86,9 @@ namespace MSNPSharp
         public class ListEnumerator : IEnumerator<Contact>
         {
             private Enumerator baseEnum;
-            private MSNLists listFilter;
+            private RoleLists listFilter;
 
-            public ListEnumerator(Enumerator listEnum, MSNLists filter)
+            public ListEnumerator(Enumerator listEnum, RoleLists filter)
             {
                 baseEnum = listEnum;
                 listFilter = filter;
@@ -96,7 +96,7 @@ namespace MSNPSharp
 
             public virtual bool MoveNext()
             {
-                if (listFilter == MSNLists.None)
+                if (listFilter == RoleLists.None)
                 {
                     return baseEnum.MoveNext();
                 }
@@ -145,7 +145,7 @@ namespace MSNPSharp
         public class EmailListEnumerator : ContactList.ListEnumerator
         {
             public EmailListEnumerator(Enumerator listEnum)
-                : base(listEnum, MSNLists.None)
+                : base(listEnum, RoleLists.None)
             {
             }
 
@@ -168,7 +168,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.ListEnumerator(GetEnumerator(), MSNLists.ForwardList);
+                return new ContactList.ListEnumerator(GetEnumerator(), RoleLists.Forward);
             }
         }
 
@@ -176,7 +176,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.ListEnumerator(GetEnumerator(), MSNLists.AllowedList);
+                return new ContactList.ListEnumerator(GetEnumerator(), RoleLists.Allow);
             }
         }
 
@@ -184,7 +184,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.ListEnumerator(GetEnumerator(), MSNLists.BlockedList);
+                return new ContactList.ListEnumerator(GetEnumerator(), RoleLists.Block);
             }
         }
 
@@ -192,7 +192,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.ListEnumerator(GetEnumerator(), MSNLists.ReverseList);
+                return new ContactList.ListEnumerator(GetEnumerator(), RoleLists.Reverse);
             }
         }
 
@@ -200,7 +200,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.ListEnumerator(GetEnumerator(), MSNLists.PendingList);
+                return new ContactList.ListEnumerator(GetEnumerator(), RoleLists.Pending);
             }
         }
 
@@ -208,7 +208,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.ListEnumerator(GetEnumerator(), MSNLists.None);
+                return new ContactList.ListEnumerator(GetEnumerator(), RoleLists.None);
             }
         }
 

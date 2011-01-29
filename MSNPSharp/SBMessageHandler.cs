@@ -1264,7 +1264,7 @@ namespace MSNPSharp
             Contact contact = NSMessageHandler.ContactList.GetContact(account, ClientType.PassportMember);
 
             // Not in contact list (anonymous). Update it's name and caps.
-            if (contact.Lists == MSNLists.None && NSMessageHandler.BotMode)
+            if (contact.Lists == RoleLists.None && NSMessageHandler.BotMode)
             {
                 if (supportMPOP)
                 {
@@ -1342,7 +1342,7 @@ namespace MSNPSharp
                 Contact contact = NSMessageHandler.ContactList.GetContact(account, ClientType.PassportMember);
 
                 // Not in contact list (anonymous). Update it's name and caps.
-                if (contact.Lists == MSNLists.None && NSMessageHandler.BotMode)
+                if (contact.Lists == RoleLists.None && NSMessageHandler.BotMode)
                 {
                     if (supportMPOP)
                     {
