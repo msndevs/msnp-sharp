@@ -1727,7 +1727,9 @@ namespace MSNPSharpClient
                     onlineCount++;
                 }
             }
-            favoritesNode.Text = "Favorites (" + onlineCount + "/" + favoritesNode.Nodes.Count + ")";
+            string newText = "Favorites (" + onlineCount + "/" + favoritesNode.Nodes.Count + ")";
+            if (favoritesNode.Text != newText)
+                favoritesNode.Text = newText;
 
             onlineCount = 0;
             foreach (TreeNode nodeCircle in circlesNode.Nodes)
@@ -1737,7 +1739,10 @@ namespace MSNPSharpClient
                     onlineCount++;
                 }
             }
-            circlesNode.Text = "Circles (" + onlineCount + "/" + circlesNode.Nodes.Count + ")";
+
+            newText = "Circles (" + onlineCount + "/" + circlesNode.Nodes.Count + ")";
+            if (circlesNode.Text != newText)
+                circlesNode.Text = newText;
         }
 
         private void SortByStatus(Contact contactToUpdate)
@@ -1745,8 +1750,10 @@ namespace MSNPSharpClient
             TreeNode selectedNode = treeViewFavoriteList.SelectedNode;
             bool isExpanded = (selectedNode != null && selectedNode.IsExpanded);
 
-            treeViewFavoriteList.BeginUpdate();
-            toolStripSortBygroup.Checked = false;
+            //treeViewFavoriteList.BeginUpdate();
+
+            if (toolStripSortBygroup.Checked)
+                toolStripSortBygroup.Checked = false;
 
             SortByFavAndCircle(contactToUpdate);
 
@@ -1862,7 +1869,9 @@ namespace MSNPSharpClient
                     contactNode = contactToUpdate.Online ? onlineNode.Nodes.Add(contactToUpdate.Hash, text) : offlineNode.Nodes.Add(contactToUpdate.Hash, text);
                 }
 
-                contactNode.Text = text;
+                if (contactNode.Text != text)
+                    contactNode.Text = text;
+
                 contactNode.ImageIndex = contactNode.SelectedImageIndex = ImageIndexes.GetStatusIndex(contactToUpdate.Status);
                 contactNode.NodeFont = contactToUpdate.Blocked ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
                 contactNode.Tag = contactToUpdate;
@@ -1878,15 +1887,24 @@ namespace MSNPSharpClient
                 }
             }
 
-            onlineNode.Text = "Online (" + onlineNode.Nodes.Count.ToString() + ")";
-            offlineNode.Text = "Offline (" + offlineNode.Nodes.Count.ToString() + ")";
-            mobileNode.Text = "Mobile (" + mobileNode.Nodes.Count.ToString() + ")";
+            string newText = "Online (" + onlineNode.Nodes.Count.ToString() + ")";
+            if (onlineNode.Text != newText)
+                onlineNode.Text = newText;
+
+            newText = "Offline (" + offlineNode.Nodes.Count.ToString() + ")";
+            if (offlineNode.Text != newText)
+                offlineNode.Text = newText;
+
+            newText = "Mobile (" + mobileNode.Nodes.Count.ToString() + ")";
+            if (mobileNode.Text != newText)
+                mobileNode.Text = newText;
 
             treeViewFavoriteList.Sort();
 
             if (selectedNode != null)
             {
                 treeViewFavoriteList.SelectedNode = selectedNode;
+
                 if (isExpanded && treeViewFavoriteList.SelectedNode != null)
                 {
                     treeViewFavoriteList.SelectedNode.Expand();
@@ -1903,7 +1921,7 @@ namespace MSNPSharpClient
                 }
             }
 
-            treeViewFavoriteList.EndUpdate();
+            //treeViewFavoriteList.EndUpdate();
             treeViewFavoriteList.AllowDrop = false;
         }
 
