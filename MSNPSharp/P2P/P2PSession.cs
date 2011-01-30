@@ -362,17 +362,17 @@ namespace MSNPSharp.P2P
             if (version == P2PVersion.P2PV1)
             {
                 localContact = (slp.ToEmailAccount == ns.ContactList.Owner.Mail) ?
-                    ns.ContactList.Owner : ns.ContactList.GetContact(slp.ToEmailAccount, IMAddressInfoType.WindowsLive);
+                    ns.ContactList.Owner : ns.ContactList.GetContactWithCreate(slp.ToEmailAccount, IMAddressInfoType.WindowsLive);
 
-                remoteContact = ns.ContactList.GetContact(slp.FromEmailAccount, IMAddressInfoType.WindowsLive);
+                remoteContact = ns.ContactList.GetContactWithCreate(slp.FromEmailAccount, IMAddressInfoType.WindowsLive);
             }
             else
             {
                 localContact = (slp.ToEmailAccount == ns.ContactList.Owner.Mail) ?
-                    ns.ContactList.Owner : ns.ContactList.GetContact(slp.ToEmailAccount, IMAddressInfoType.WindowsLive);
+                    ns.ContactList.Owner : ns.ContactList.GetContactWithCreate(slp.ToEmailAccount, IMAddressInfoType.WindowsLive);
                 localContactEndPointID = slp.ToEndPoint;
 
-                remoteContact = ns.ContactList.GetContact(slp.FromEmailAccount, IMAddressInfoType.WindowsLive);
+                remoteContact = ns.ContactList.GetContactWithCreate(slp.FromEmailAccount, IMAddressInfoType.WindowsLive);
                 remoteContactEndPointID = slp.FromEndPoint;
             }
 

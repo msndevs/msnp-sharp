@@ -807,7 +807,7 @@ namespace MSNPSharp.IO
 
                                     if (NSMessageHandler.ContactList.HasContact(account, type))
                                     {
-                                        Contact contact = NSMessageHandler.ContactList.GetContact(account, type);
+                                        Contact contact = NSMessageHandler.ContactList.GetContactWithCreate(account, type);
                                         contact.CID = cid;
                                         if (contact.HasLists(msnlist))
                                         {
@@ -1519,7 +1519,7 @@ namespace MSNPSharp.IO
             {
                 newContactList = new Dictionary<long, ContactType>();
                 oldContactInverseList = new Dictionary<long, Contact>();
-                oldContactList = circle.ContactList.ToArray();
+                oldContactList = circle.ContactList.ToArray(IMAddressInfoType.Circle);
                 foreach (Contact contact in oldContactList)
                 {
                     oldContactInverseList[contact.CID] = contact;
@@ -1554,7 +1554,8 @@ namespace MSNPSharp.IO
                 if (!oldContactInverseList.ContainsKey(contactType.contactInfo.CID) &&
                     circle.ContactList.HasContact(contactType.contactInfo.passportName, IMAddressInfoType.WindowsLive))
                 {
-                    circle.NSMessageHandler.ContactService.OnCircleMemberJoined(new CircleMemberEventArgs(circle, circle.ContactList[contactType.contactInfo.passportName, IMAddressInfoType.WindowsLive]));
+                    circle.NSMessageHandler.ContactService.OnCircleMemberJoined(new CircleMemberEventArgs(circle, 
+                        circle.ContactList.GetContactWithCreate(contactType.contactInfo.passportName, IMAddressInfoType.WindowsLive)));
                 }
             }
 
@@ -2341,7 +2342,7 @@ namespace MSNPSharp.IO
 
                     if (isDefaultAddressBook)
                     {
-                        contact = NSMessageHandler.ContactList.GetContact(account, type);
+                        contact = NSMessageHandler.ContactList.GetContactWithCreate(account, type);
                         contactList = NSMessageHandler.ContactList;
                     }
                     else
@@ -2356,7 +2357,7 @@ namespace MSNPSharp.IO
                         }
 
                         CirclePersonalMembershipRole membershipRole = GetCircleMemberRoleFromNetworkInfo(cinfo.NetworkInfoList);
-                        contact = circle.ContactList.GetContact(account, type);
+                        contact = circle.ContactList.GetContactWithCreate(account, type);
                         contactList = circle.ContactList;
                         contact.CircleRole = membershipRole;
                         string tempName = GetCircleMemberDisplayNameFromNetworkInfo(cinfo.NetworkInfoList);

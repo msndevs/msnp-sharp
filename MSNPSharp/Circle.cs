@@ -262,7 +262,7 @@ namespace MSNPSharp
                                 string mail = typeAccount[1];
                                 if (HasMember(mail, type))
                                 {
-                                    return ContactList.GetContact(mail, type);
+                                    return ContactList.GetContactWithCreate(mail, type);
                                 }
 
                                 return null;
@@ -292,7 +292,7 @@ namespace MSNPSharp
                             string mail = typeAccount[1];
                             if (HasMember(mail, type))
                             {
-                                return ContactList.GetContact(mail, type);
+                                return ContactList.GetContactWithCreate(mail, type);
                             }
 
                             return null;

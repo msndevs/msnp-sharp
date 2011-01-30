@@ -1076,7 +1076,7 @@ namespace MSNPSharp
                 otheremail,
                 delegate(object service, ABContactAddCompletedEventArgs e)
                 {
-                    Contact contact = NSMessageHandler.ContactList.GetContact(account, ct);
+                    Contact contact = NSMessageHandler.ContactList.GetContactWithCreate(account, ct);
                     contact.Guid = new Guid(e.Result.ABContactAddResult.guid);
 
                     if (!contact.OnBlockedList)
@@ -1410,7 +1410,7 @@ namespace MSNPSharp
 
             if (NSMessageHandler.ContactList.HasContact(account, network))
             {
-                Contact contact = NSMessageHandler.ContactList.GetContact(account, network);
+                Contact contact = NSMessageHandler.ContactList.GetContactWithCreate(account, network);
 
                 if (contact.OnPendingList)
                 {
