@@ -40,6 +40,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Collections.Generic;
 using System.Web.Services.Protocols;
+using System.Text.RegularExpressions;
 
 namespace MSNPSharp
 {
@@ -769,8 +770,8 @@ namespace MSNPSharp
                                     RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abservice, MsnServiceType.AB, ABAddObject, abAddRequest));
                                 }
                             }
-                            else if ((recursiveCall == 0 && partnerScenario == PartnerScenario.Initial)
-                                || (e.Error.Message.Contains("Need to do full sync")))
+                            else if ((recursiveCall == 0  && partnerScenario == PartnerScenario.Initial)
+                                || (e.Error.Message.Contains("Full sync required")))
                             {
                                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError, 
                                     "Need to do full sync of current addressbook list, addressbook list will be request again. Method: FindMemberShip");
@@ -1140,8 +1141,8 @@ namespace MSNPSharp
                                 else
                                 {
                                     // without membership, contact service adds this contact to AL automatically.
-                                    Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(2);
-                                    hashlist.Add(contact.Hash, RoleLists.Allow);
+                                    Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(0);
+                                    hashlist.Add(contact.Hash, Contact.GetListForADL(contact.Lists) | RoleLists.Allow); //you MUST put forward list here or other contact can't see you.
                                     string payload = ConstructLists(hashlist, false)[0];
                                     NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
                                     contact.AddToList(RoleLists.Allow);
@@ -1153,6 +1154,64 @@ namespace MSNPSharp
                     );
                 }
            );
+        }
+
+        private void FindContactsByContactIds(List<Guid> contactIds, Guid abId, ABFindByContactsCompletedEventHandler onSuccess)
+        {
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
+            {
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindByContacts", new MSNPSharpException("You don't have access right on this action anymore.")));
+            }
+            else
+            {
+                MsnServiceState ABFindByContactsObject = new MsnServiceState(PartnerScenario.ContactMsgrAPI, "ABFindByContacts", true);
+                ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABFindByContactsObject);
+                abService.ABFindByContactsCompleted += delegate(object service, ABFindByContactsCompletedEventArgs e)
+                {
+                    OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
+
+                    if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                        return;
+
+                    if (!e.Cancelled && e.Error == null)
+                    {
+                        if (onSuccess != null)
+                        {
+                            onSuccess(service, e);
+                        }
+                    }
+                };
+
+                ABFindByContactsRequestType request = new ABFindByContactsRequestType();
+                request.abId = abId.ToString("D").ToLowerInvariant();
+                List<string> stringContactIds = new List<string>(0);
+
+                foreach (Guid contactId in contactIds)
+                {
+                    stringContactIds.Add(contactId.ToString("D").ToLowerInvariant());
+                }
+
+                request.contactIds = stringContactIds.ToArray();
+                request.abView = "Full";
+                RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, ABFindByContactsObject, request));
+            }
+        }
+
+        private Guid GetConflictObjectId(string xmlErrorMessage)
+        {
+            Match match = Regex.Match(xmlErrorMessage, @"<conflictObjectId>([A-Za-z0-9\-]+)</conflictObjectId>", RegexOptions.IgnoreCase);
+            if (match.Success)
+                return new Guid(match.Groups[1].Value);
+            return Guid.Empty;
+        }
+
+        internal class FakeABContactAddCompletedEventArgs : ABContactAddCompletedEventArgs
+        {
+            public FakeABContactAddCompletedEventArgs(ABContactAddResponse response)
+                : base(new object[] { response }, null, false, null)
+            {
+
+            }
         }
 
         private void AddNewOrPendingContact(string account, bool pending, string invitation, IMAddressInfoType network, string otheremail, ABContactAddCompletedEventHandler onSuccess)
@@ -1178,6 +1237,68 @@ namespace MSNPSharp
                         {
                             onSuccess(service, e);
                         }
+                    }
+                    else
+                    {
+                        if ((e.Error.Message.Contains("Hidden Contact with Same PUID Already Exists") ||
+                            e.Error.Message.Contains("Contact Already Exists"))
+                            && e.Error is SoapException)
+                        {
+                            SoapException soapException = e.Error as SoapException;
+                            Guid conflictContactId = GetConflictObjectId(soapException.Detail.InnerXml);
+                            if (conflictContactId == Guid.Empty)
+                            {
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                                    "Cannot get conflict object Id from :\r\n " +
+                                    e.Error.Message + "\r\n" +
+                                    "Add new contact :" + account + " failed.");
+                                return;
+                            }
+
+
+                            //Retrieve the hidden contact.
+                            FindContactsByContactIds(new List<Guid>(new Guid[] { conflictContactId }),
+                                new Guid(WebServiceConstants.MessengerIndividualAddressBookId),
+                                //Update the hidden contact to a messenger contact.
+                                delegate(object s, ABFindByContactsCompletedEventArgs result)
+                                {
+                                    if (result.Result.ABFindByContactsResult.contacts.Length == 0)
+                                    {
+                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                                            "AddNewOrPendingContact cannot retrieve contact by contactId: " +
+                                            conflictContactId.ToString("D"));
+                                        return;
+                                    }
+
+                                    ContactType contactRetrieved = result.Result.ABFindByContactsResult.contacts[0];
+                                    ContactType contactToChange = new ContactType();
+                                    contactToChange.contactId = conflictContactId.ToString("D").ToLowerInvariant();
+                                    contactToChange.contactInfo = new contactInfoType();
+                                    contactToChange.contactInfo.passportName = contactRetrieved.contactInfo.passportName;
+                                    contactToChange.contactInfo.isMessengerUser = true;
+                                    contactToChange.contactInfo.isMessengerUserSpecified = true;
+
+                                    contactToChange.contactInfo.MessengerMemberInfo = new MessengerMemberInfo();
+                                    contactToChange.contactInfo.MessengerMemberInfo.DisplayName = contactRetrieved.contactInfo.displayName;
+
+                                    contactToChange.propertiesChanged = "IsMessengerUser MessengerMemberInfo";
+                                    UpdateContact(contactToChange, WebServiceConstants.MessengerIndividualAddressBookId,
+                                        delegate
+                                        {
+                                            if (onSuccess != null)
+                                            {
+                                                ABContactAddResponse fakeResponse = new ABContactAddResponse();
+                                                fakeResponse.ABContactAddResult = new ABContactAddResultType();
+                                                fakeResponse.ABContactAddResult.guid = conflictContactId.ToString("D").ToLowerInvariant();
+                                                FakeABContactAddCompletedEventArgs fakeArgs = new FakeABContactAddCompletedEventArgs(fakeResponse);
+
+                                                onSuccess(service, fakeArgs);
+                                            }
+                                        });
+                                }
+                            );
+                        }
+
                     }
                 };
 
@@ -1373,12 +1494,12 @@ namespace MSNPSharp
 
         #region UpdateContact
 
-        internal void UpdateContact(Contact contact, Guid abId)
+        internal void UpdateContact(Contact contact, Guid abId, ABContactUpdateCompletedEventHandler onSuccess)
         {
-            UpdateContact(contact, abId.ToString("D"));
+            UpdateContact(contact, abId.ToString("D"), onSuccess);
         }
 
-        internal void UpdateContact(Contact contact, string abId)
+        internal void UpdateContact(Contact contact, string abId, ABContactUpdateCompletedEventHandler onSuccess)
         {
             string lowerId = abId.ToLowerInvariant();
 
@@ -1395,33 +1516,32 @@ namespace MSNPSharp
                 return;
 
             ContactType abContactType = AddressBook.SelectContactFromAddressBook(lowerId, contact.Guid);
+            ContactType contactToChange = new ContactType();
 
             List<string> propertiesChanged = new List<string>();
-            ABContactUpdateRequestType request = new ABContactUpdateRequestType();
-            request.abId = WebServiceConstants.MessengerIndividualAddressBookId;
-            request.contacts = new ContactType[] { new ContactType() };
-            request.contacts[0].contactId = contact.Guid.ToString();
-            request.contacts[0].contactInfo = new contactInfoType();
+
+            contactToChange.contactId = contact.Guid.ToString();
+            contactToChange.contactInfo = new contactInfoType();
 
             // Comment
             if (abContactType.contactInfo.comment != contact.Comment)
             {
                 propertiesChanged.Add(PropertyString.Comment);
-                request.contacts[0].contactInfo.comment = contact.Comment;
+                contactToChange.contactInfo.comment = contact.Comment;
             }
 
             // DisplayName
             if (abContactType.contactInfo.displayName != contact.Name)
             {
                 propertiesChanged.Add(PropertyString.DisplayName);
-                request.contacts[0].contactInfo.displayName = contact.Name;
+                contactToChange.contactInfo.displayName = contact.Name;
             }
 
             //HasSpace
             if (abContactType.contactInfo.hasSpace != contact.HasSpace && abContactType.contactInfo.hasSpaceSpecified)
             {
                 propertiesChanged.Add(PropertyString.HasSpace);
-                request.contacts[0].contactInfo.hasSpace = contact.HasSpace;
+                contactToChange.contactInfo.hasSpace = contact.HasSpace;
             }
 
             // Annotations
@@ -1448,7 +1568,7 @@ namespace MSNPSharp
             if (annotationsChanged.Count > 0)
             {
                 propertiesChanged.Add(PropertyString.Annotation);
-                request.contacts[0].contactInfo.annotations = annotationsChanged.ToArray();
+                contactToChange.contactInfo.annotations = annotationsChanged.ToArray();
             }
 
 
@@ -1461,18 +1581,18 @@ namespace MSNPSharp
                         if (abContactType.contactInfo.isMessengerUser != contact.IsMessengerUser)
                         {
                             propertiesChanged.Add(PropertyString.IsMessengerUser);
-                            request.contacts[0].contactInfo.isMessengerUser = contact.IsMessengerUser;
-                            request.contacts[0].contactInfo.isMessengerUserSpecified = true;
+                            contactToChange.contactInfo.isMessengerUser = contact.IsMessengerUser;
+                            contactToChange.contactInfo.isMessengerUserSpecified = true;
                             propertiesChanged.Add(PropertyString.MessengerMemberInfo); // Pang found WLM2009 add this.
-                            request.contacts[0].contactInfo.MessengerMemberInfo = new MessengerMemberInfo(); // But forgot to add this...
-                            request.contacts[0].contactInfo.MessengerMemberInfo.DisplayName = NSMessageHandler.ContactList.Owner.Name; // and also this :)
+                            contactToChange.contactInfo.MessengerMemberInfo = new MessengerMemberInfo(); // But forgot to add this...
+                            contactToChange.contactInfo.MessengerMemberInfo.DisplayName = NSMessageHandler.ContactList.Owner.Name; // and also this :)
                         }
 
                         // ContactType
                         if (abContactType.contactInfo.contactType != contact.ContactType)
                         {
                             propertiesChanged.Add(PropertyString.ContactType);
-                            request.contacts[0].contactInfo.contactType = contact.ContactType;
+                            contactToChange.contactInfo.contactType = contact.ContactType;
                         }
                     }
                     break;
@@ -1486,10 +1606,10 @@ namespace MSNPSharp
                                 if (em.email.ToLowerInvariant() == contact.Mail.ToLowerInvariant() && em.isMessengerEnabled != contact.IsMessengerUser)
                                 {
                                     propertiesChanged.Add(PropertyString.ContactEmail);
-                                    request.contacts[0].contactInfo.emails = new contactEmailType[] { new contactEmailType() };
-                                    request.contacts[0].contactInfo.emails[0].contactEmailType1 = ContactEmailTypeType.Messenger2;
-                                    request.contacts[0].contactInfo.emails[0].isMessengerEnabled = contact.IsMessengerUser;
-                                    request.contacts[0].contactInfo.emails[0].propertiesChanged = PropertyString.IsMessengerEnabled; //"IsMessengerEnabled";
+                                    contactToChange.contactInfo.emails = new contactEmailType[] { new contactEmailType() };
+                                    contactToChange.contactInfo.emails[0].contactEmailType1 = ContactEmailTypeType.Messenger2;
+                                    contactToChange.contactInfo.emails[0].isMessengerEnabled = contact.IsMessengerUser;
+                                    contactToChange.contactInfo.emails[0].propertiesChanged = PropertyString.IsMessengerEnabled; //"IsMessengerEnabled";
                                     break;
                                 }
                             }
@@ -1506,10 +1626,10 @@ namespace MSNPSharp
                                 if (ph.number == contact.Mail && ph.isMessengerEnabled != contact.IsMessengerUser)
                                 {
                                     propertiesChanged.Add(PropertyString.ContactPhone);
-                                    request.contacts[0].contactInfo.phones = new contactPhoneType[] { new contactPhoneType() };
-                                    request.contacts[0].contactInfo.phones[0].contactPhoneType1 = ContactPhoneTypeType.ContactPhoneMobile;
-                                    request.contacts[0].contactInfo.phones[0].isMessengerEnabled = contact.IsMessengerUser;
-                                    request.contacts[0].contactInfo.phones[0].propertiesChanged = PropertyString.IsMessengerEnabled; //"IsMessengerEnabled";
+                                    contactToChange.contactInfo.phones = new contactPhoneType[] { new contactPhoneType() };
+                                    contactToChange.contactInfo.phones[0].contactPhoneType1 = ContactPhoneTypeType.ContactPhoneMobile;
+                                    contactToChange.contactInfo.phones[0].isMessengerEnabled = contact.IsMessengerUser;
+                                    contactToChange.contactInfo.phones[0].propertiesChanged = PropertyString.IsMessengerEnabled; //"IsMessengerEnabled";
                                     break;
                                 }
                             }
@@ -1520,24 +1640,42 @@ namespace MSNPSharp
 
             if (propertiesChanged.Count > 0)
             {
-                MsnServiceState ABContactUpdateObject = new MsnServiceState(contact.IsMessengerUser ? PartnerScenario.ContactSave : PartnerScenario.Timer, "ABContactUpdate", true);
-                ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABContactUpdateObject);
-                abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
-                {
-                    OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
-
-                    if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
-                        return;
-
-                    if (!e.Cancelled && e.Error == null)
-                    {
-                        abRequest(PartnerScenario.ContactSave, null);
-                    }
-                };
-                request.contacts[0].propertiesChanged = String.Join(PropertyString.propertySeparator, propertiesChanged.ToArray());
-
-                RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, ABContactUpdateObject, request));
+                contactToChange.propertiesChanged = String.Join(PropertyString.propertySeparator, propertiesChanged.ToArray());
+                UpdateContact(contactToChange, WebServiceConstants.MessengerIndividualAddressBookId, onSuccess);
             }
+        }
+
+        private void UpdateContact(ContactType contact, string abId, ABContactUpdateCompletedEventHandler onSuccess)
+        {
+            ABContactUpdateRequestType request = new ABContactUpdateRequestType();
+            request.abId = abId;
+            request.contacts = new ContactType[] { contact };
+            request.options = new ABContactUpdateRequestTypeOptions();
+            request.options.EnableAllowListManagementSpecified = true;
+            request.options.EnableAllowListManagement = true;
+
+            MsnServiceState ABContactUpdateObject = new MsnServiceState(contact.contactInfo.isMessengerUser ? PartnerScenario.ContactSave : PartnerScenario.Timer, "ABContactUpdate", true);
+            ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABContactUpdateObject);
+            abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
+            {
+                OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
+
+                if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
+
+                if (!e.Cancelled && e.Error == null)
+                {
+                    abRequest(PartnerScenario.ContactSave, delegate
+                    {
+                        if (onSuccess != null)
+                            onSuccess(service, e);
+                    }
+                    );
+                }
+            };
+
+            RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, ABContactUpdateObject, request));
+
         }
 
         internal void UpdateMe()

@@ -27,7 +27,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Web.Services.WebServiceBindingAttribute(Name="SharingServiceBinding", Namespace="http://www.msn.com/webservices/AddressBook")]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(abType))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(Annotation[]))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(Membership[]))]
     public partial class SharingServiceBinding : System.Web.Services.Protocols.SoapHttpClientProtocol {
@@ -279,7 +278,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Web.Services.WebServiceBindingAttribute(Name="ABServiceBinding", Namespace="http://www.msn.com/webservices/AddressBook")]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(abType))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(Annotation[]))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(Membership[]))]
     public partial class ABServiceBinding : System.Web.Services.Protocols.SoapHttpClientProtocol {
@@ -321,6 +319,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         private System.Threading.SendOrPostCallback BreakConnectionOperationCompleted;
         
         private System.Threading.SendOrPostCallback AddDynamicItemOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback ABFindByContactsOperationCompleted;
         
         private bool useDefaultCredentialsSetExplicitly;
         
@@ -434,6 +434,9 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         /// <remarks/>
         public event AddDynamicItemCompletedEventHandler AddDynamicItemCompleted;
+        
+        /// <remarks/>
+        public event ABFindByContactsCompletedEventHandler ABFindByContactsCompleted;
         
         /// <remarks/>
         [System.Web.Services.Protocols.SoapHeaderAttribute("ABAuthHeaderValue")]
@@ -964,6 +967,39 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ABAuthHeaderValue")]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ServiceHeaderValue", Direction=System.Web.Services.Protocols.SoapHeaderDirection.Out)]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ABApplicationHeaderValue")]
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://www.msn.com/webservices/AddressBook/ABFindByContacts", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Bare)]
+        [return: System.Xml.Serialization.XmlElementAttribute("ABFindByContactsResponse", Namespace="http://www.msn.com/webservices/AddressBook")]
+        public ABFindByContactsResponse ABFindByContacts([System.Xml.Serialization.XmlElementAttribute("ABFindByContacts", Namespace="http://www.msn.com/webservices/AddressBook")] ABFindByContactsRequestType ABFindByContacts1) {
+            object[] results = this.Invoke("ABFindByContacts", new object[] {
+                        ABFindByContacts1});
+            return ((ABFindByContactsResponse)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void ABFindByContactsAsync(ABFindByContactsRequestType ABFindByContacts1) {
+            this.ABFindByContactsAsync(ABFindByContacts1, null);
+        }
+        
+        /// <remarks/>
+        public void ABFindByContactsAsync(ABFindByContactsRequestType ABFindByContacts1, object userState) {
+            if ((this.ABFindByContactsOperationCompleted == null)) {
+                this.ABFindByContactsOperationCompleted = new System.Threading.SendOrPostCallback(this.OnABFindByContactsOperationCompleted);
+            }
+            this.InvokeAsync("ABFindByContacts", new object[] {
+                        ABFindByContacts1}, this.ABFindByContactsOperationCompleted, userState);
+        }
+        
+        private void OnABFindByContactsOperationCompleted(object arg) {
+            if ((this.ABFindByContactsCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.ABFindByContactsCompleted(this, new ABFindByContactsCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
         public new void CancelAsync(object userState) {
             base.CancelAsync(userState);
         }
@@ -987,7 +1023,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Web.Services.WebServiceBindingAttribute(Name="WhatsUpServiceBinding", Namespace="http://www.msn.com/webservices/AddressBook")]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(abType))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(Annotation[]))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(Membership[]))]
     public partial class WhatsUpServiceBinding : System.Web.Services.Protocols.SoapHttpClientProtocol {
@@ -6758,6 +6793,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private ContactType[] contactsField;
         
+        private ABContactUpdateRequestTypeOptions optionsField;
+        
         public ABContactUpdateRequestType() {
             this.abIdField = "00000000-0000-0000-0000-000000000000";
         }
@@ -6780,6 +6817,50 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.contactsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public ABContactUpdateRequestTypeOptions options {
+            get {
+                return this.optionsField;
+            }
+            set {
+                this.optionsField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class ABContactUpdateRequestTypeOptions {
+        
+        private bool enableAllowListManagementField;
+        
+        private bool enableAllowListManagementFieldSpecified;
+        
+        /// <remarks/>
+        public bool EnableAllowListManagement {
+            get {
+                return this.enableAllowListManagementField;
+            }
+            set {
+                this.enableAllowListManagementField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool EnableAllowListManagementSpecified {
+            get {
+                return this.enableAllowListManagementFieldSpecified;
+            }
+            set {
+                this.enableAllowListManagementFieldSpecified = value;
             }
         }
     }
@@ -7283,6 +7364,179 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class ABFindByContactsResponseType {
+        
+        private ContactType[] contactsField;
+        
+        private abType abField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute("Contact", IsNullable=false)]
+        public ContactType[] contacts {
+            get {
+                return this.contactsField;
+            }
+            set {
+                this.contactsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public abType ab {
+            get {
+                return this.abField;
+            }
+            set {
+                this.abField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class abType {
+        
+        private string abIdField;
+        
+        private abInfoType abInfoField;
+        
+        private string lastChangeField;
+        
+        private string dynamicItemLastChangedField;
+        
+        private string recentActivityItemLastChangedField;
+        
+        private string createDateField;
+        
+        private object propertiesChangedField;
+        
+        /// <remarks/>
+        public string abId {
+            get {
+                return this.abIdField;
+            }
+            set {
+                this.abIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public abInfoType abInfo {
+            get {
+                return this.abInfoField;
+            }
+            set {
+                this.abInfoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string lastChange {
+            get {
+                return this.lastChangeField;
+            }
+            set {
+                this.lastChangeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string DynamicItemLastChanged {
+            get {
+                return this.dynamicItemLastChangedField;
+            }
+            set {
+                this.dynamicItemLastChangedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string RecentActivityItemLastChanged {
+            get {
+                return this.recentActivityItemLastChangedField;
+            }
+            set {
+                this.recentActivityItemLastChangedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string createDate {
+            get {
+                return this.createDateField;
+            }
+            set {
+                this.createDateField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public object propertiesChanged {
+            get {
+                return this.propertiesChangedField;
+            }
+            set {
+                this.propertiesChangedField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class ABFindByContactsRequestType {
+        
+        private string abIdField;
+        
+        private string abViewField;
+        
+        private string[] contactIdsField;
+        
+        /// <remarks/>
+        public string abId {
+            get {
+                return this.abIdField;
+            }
+            set {
+                this.abIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string abView {
+            get {
+                return this.abViewField;
+            }
+            set {
+                this.abViewField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute("guid", IsNullable=false)]
+        public string[] contactIds {
+            get {
+                return this.contactIdsField;
+            }
+            set {
+                this.contactIdsField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
     public partial class ABFindAllResultType {
         
         private GroupType[] groupsField;
@@ -7572,99 +7826,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.publicDisplayNameField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class abType {
-        
-        private string abIdField;
-        
-        private abInfoType abInfoField;
-        
-        private string lastChangeField;
-        
-        private string dynamicItemLastChangedField;
-        
-        private string recentActivityItemLastChangedField;
-        
-        private string createDateField;
-        
-        private object propertiesChangedField;
-        
-        /// <remarks/>
-        public string abId {
-            get {
-                return this.abIdField;
-            }
-            set {
-                this.abIdField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public abInfoType abInfo {
-            get {
-                return this.abInfoField;
-            }
-            set {
-                this.abInfoField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string lastChange {
-            get {
-                return this.lastChangeField;
-            }
-            set {
-                this.lastChangeField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string DynamicItemLastChanged {
-            get {
-                return this.dynamicItemLastChangedField;
-            }
-            set {
-                this.dynamicItemLastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string RecentActivityItemLastChanged {
-            get {
-                return this.recentActivityItemLastChangedField;
-            }
-            set {
-                this.recentActivityItemLastChangedField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string createDate {
-            get {
-                return this.createDateField;
-            }
-            set {
-                this.createDateField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public object propertiesChanged {
-            get {
-                return this.propertiesChangedField;
-            }
-            set {
-                this.propertiesChangedField = value;
             }
         }
     }
@@ -8687,6 +8848,27 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class ABFindByContactsResponse {
+        
+        private ABFindByContactsResponseType aBFindByContactsResultField;
+        
+        /// <remarks/>
+        public ABFindByContactsResponseType ABFindByContactsResult {
+            get {
+                return this.aBFindByContactsResultField;
+            }
+            set {
+                this.aBFindByContactsResultField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
     public partial class GetContactsRecentActivityResponse {
         
         private GetContactsRecentActivityResultType getContactsRecentActivityResultField;
@@ -9218,6 +9400,32 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             get {
                 this.RaiseExceptionIfNecessary();
                 return ((AddDynamicItemResponseType)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.4927")]
+    public delegate void ABFindByContactsCompletedEventHandler(object sender, ABFindByContactsCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.4927")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class ABFindByContactsCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal ABFindByContactsCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public ABFindByContactsResponse Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((ABFindByContactsResponse)(this.results[0]));
             }
         }
     }
