@@ -382,7 +382,7 @@ namespace MSNPSharp
         IsAuthenticatedWebIMUser = 0x40,
         UNKNOWN_0x80 = 0x80,
         SupportsOfflineIM = 0x100,
-        UNKNOWN_0x200 = 0x200,
+        VideoFromBing = 0x200,
         SupportsNudges = 0x400,   // (((:)))
         UNKNOWN_0x1000 = 0x1000,
         SupportsPeerToPeerMixerRelay = 0x8000,
