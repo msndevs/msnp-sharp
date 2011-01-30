@@ -376,7 +376,7 @@ namespace MSNPSharp
             internal set
             {
                 hasSpace = value;
-                NSMessageHandler.ContactService.UpdateContact(this, AddressBookId);
+                NSMessageHandler.ContactService.UpdateContact(this, AddressBookId, null);
             }
         }
 
@@ -563,7 +563,7 @@ namespace MSNPSharp
                         if (!AutoSubscribeToUpdates)
                         {
                             contactType = MessengerContactType.LivePending;
-                            NSMessageHandler.ContactService.UpdateContact(this, AddressBookId);
+                            NSMessageHandler.ContactService.UpdateContact(this, AddressBookId, null);
                         }
                     }
                     else
@@ -571,7 +571,7 @@ namespace MSNPSharp
                         if (contactType != MessengerContactType.Regular)
                         {
                             contactType = MessengerContactType.Regular;
-                            NSMessageHandler.ContactService.UpdateContact(this, AddressBookId);
+                            NSMessageHandler.ContactService.UpdateContact(this, AddressBookId, null);
                         }
                     }
                 }
@@ -594,7 +594,14 @@ namespace MSNPSharp
                 if (NSMessageHandler != null && Guid != Guid.Empty && IsMessengerUser != value)
                 {
                     isMessengerUser = value;
-                    NSMessageHandler.ContactService.UpdateContact(this, AddressBookId);
+                    NSMessageHandler.ContactService.UpdateContact(this, AddressBookId, 
+                        delegate  //If you don't add this, you can't see the contact online until your next login
+                        {
+                            Dictionary<string, MSNLists> hashlist = new Dictionary<string, MSNLists>(2);
+                            hashlist.Add(Hash, Lists ^ MSNLists.ReverseList);
+                            string payload = ContactService.ConstructLists(hashlist, false)[0];
+                            NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
+                        });
                 }
 
                 NotifyManager();
@@ -613,7 +620,7 @@ namespace MSNPSharp
                 if (NSMessageHandler != null && Guid != Guid.Empty && Comment != value)
                 {
                     comment = value;
-                    NSMessageHandler.ContactService.UpdateContact(this, AddressBookId);
+                    NSMessageHandler.ContactService.UpdateContact(this, AddressBookId, null);
                 }
             }
         }
@@ -632,7 +639,7 @@ namespace MSNPSharp
                 if (NSMessageHandler != null && Guid != Guid.Empty && NickName != value)
                 {
                     nickName = value;
-                    NSMessageHandler.ContactService.UpdateContact(this, AddressBookId);
+                    NSMessageHandler.ContactService.UpdateContact(this, AddressBookId, null);
                 }
             }
         }
@@ -1294,6 +1301,16 @@ namespace MSNPSharp
         internal bool HasLists(MSNLists msnlists)
         {
             return ((lists & msnlists) == msnlists);
+        }
+
+        internal static MSNLists GetListForADL(MSNLists currentContactList)
+        {
+            if ((currentContactList & MSNLists.ReverseList) == MSNLists.ReverseList)
+            {
+                return currentContactList ^ MSNLists.ReverseList;
+            }
+
+            return currentContactList;
         }
 
 

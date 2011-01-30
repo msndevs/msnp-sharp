@@ -295,13 +295,11 @@
 			<xsd:element name="Suffix" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="NameTitle" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="passportName" type="xsd:string" minOccurs="0"/>
-			<xsd:element name="IsPassportNameHidden" type="xsd:boolean" minOccurs="0"/>
 			<xsd:element name="displayName" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="puid" type="xsd:long" minOccurs="0"/>
 			<xsd:element name="CID" type="xsd:long" minOccurs="0"/>
 			<xsd:element name="BrandIdList" type="xsd:anyType" minOccurs="0"/>
 			<xsd:element name="comment" type="xsd:string" minOccurs="0"/>
-			<xsd:element name="IsNotMobileVisible" type="xsd:boolean" minOccurs="0"/>
 			<xsd:element name="isMobileIMEnabled" type="xsd:boolean" minOccurs="0"/>
 			<xsd:element name="isMessengerUser" type="xsd:boolean" minOccurs="0"/>
 			<xsd:element name="isFavorite" type="xsd:boolean" minOccurs="0"/>
@@ -329,6 +327,7 @@
 			</xsd:element>
 			<xsd:element name="Gender" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="TimeZone" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="TrustLevel" type="xsd:int" minOccurs="0"/>
 			<xsd:element name="NetworkInfoList" minOccurs="0">
 				<xsd:complexType>
 					<xsd:sequence>
@@ -338,10 +337,13 @@
 			</xsd:element>
 			<xsd:element name="PublicDisplayName" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="IsAutoUpdateDisabled" type="xsd:boolean" minOccurs="0"/>
+			<xsd:element name="IsHidden" type="xsd:boolean" minOccurs="0"/>
+			<xsd:element name="IsPassportNameHidden" type="xsd:boolean" minOccurs="0"/>
+			<xsd:element name="IsNotMobileVisible" type="xsd:boolean" minOccurs="0"/>
+			<xsd:element name="IsShellContact" type="xsd:boolean" minOccurs="0"/>
 			<xsd:element name="MessengerMemberInfo" type="msnab:MessengerMemberInfo" minOccurs="0"/>
 			<xsd:element name="PropertiesChanged" type="xsd:anyType" minOccurs="0"/>
 			<xsd:element name="clientErrorData" type="xsd:string" minOccurs="0"/>
-			<xsd:element name="IsHidden" type="xsd:boolean" minOccurs="0"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:complexType name="contactEmailType">
@@ -606,6 +608,7 @@
 	<xsd:complexType name="ContactFilterType">
 		<xsd:sequence>
 			<xsd:element name="IncludeHiddenContacts" type="xsd:boolean"/>
+			<xsd:element name="IncludeShellContacts" type="xsd:boolean" minOccurs="0"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:complexType name="filterOptionsType">
@@ -916,6 +919,12 @@
 	<xsd:complexType name="locale">
 		<xsd:sequence>
 			<xsd:element name="string" type="xsd:string" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="pageContextType">
+		<xsd:sequence>
+			<xsd:element name="PageSize" type="xsd:int"/>
+			<xsd:element name="Direction" type="xsd:string"/>
 		</xsd:sequence>
 	</xsd:complexType>
 </xsd:schema>
