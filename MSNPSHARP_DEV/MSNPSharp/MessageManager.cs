@@ -679,7 +679,7 @@ namespace MSNPSharp.Utilities
         /// <param name="conversationID"></param>
         /// <param name="remoteContact"></param>
         /// <returns>The updated conversation Id.</returns>
-        /// <exception cref="InvalidOperationException">The remote contact is not a <see cref="ClientType.PassportMember"/></exception>
+        /// <exception cref="InvalidOperationException">The remote contact is not a WindowsLive contact.</exception>
         public ConversationID InviteContactToConversation(ConversationID conversationID, Contact remoteContact)
         {
             ConversationID cId = conversationID;
@@ -725,7 +725,7 @@ namespace MSNPSharp.Utilities
         /// <param name="conversationID"></param>
         /// <param name="contacts"></param>
         /// <returns>The updated conversation Id.</returns>
-        /// <exception cref="InvalidOperationException">The remote contact is not a <see cref="ClientType.PassportMember"/></exception>
+        /// <exception cref="InvalidOperationException">The remote contact is not a WindowsLive contact</exception>
         public ConversationID InviteContactToConversation(ConversationID conversationID, Contact[] contacts)
         {
             ConversationID cId = conversationID;
