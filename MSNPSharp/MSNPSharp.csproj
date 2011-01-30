@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -423,6 +423,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\MSNPSharp_logo_128.png" />
+    <None Include="Web References\MSNWS.MSNABSharingService\ABFindByContactsResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
     <None Include="Web References\MSNWS.MSNSecurityTokenService\addressing-04-08.xsd">
       <SubType>Designer</SubType>
     </None>
