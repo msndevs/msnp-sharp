@@ -920,26 +920,19 @@ namespace MSNPSharp
         /// <summary>
         /// The IM network we get the message.
         /// </summary>
-        public NetworkType Network
+        public IMAddressInfoType Network
         {
             get
             {
                 if (From != null)
                 {
-                    switch (From.ClientType)
-                    {
-                        case IMAddressInfoType.Yahoo:
-                            return NetworkType.Yahoo;
+                    if (From.ClientType == IMAddressInfoType.None)
+                        return IMAddressInfoType.WindowsLive;
 
-                        case IMAddressInfoType.Telephone:
-                            return NetworkType.Mobile;
-
-                        default:
-                            return NetworkType.WindowsLive;
-                    }
+                    return From.ClientType;
                 }
 
-                return NetworkType.None;
+                return IMAddressInfoType.None;
             }
         }
 

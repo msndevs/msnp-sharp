@@ -518,7 +518,6 @@ namespace MSNPSharp
 
     /// <summary>
     /// Instant message address info type.
-    /// <remarks>If you add any new value here, remember to change the <see cref="ContactList.GetContact(string)"/> method.</remarks>
     /// </summary>
     public enum IMAddressInfoType : int
     {
@@ -584,16 +583,6 @@ namespace MSNPSharp
     }
 
     /// <summary>
-    /// Type of profiles that store in msn space.
-    /// </summary>
-    public enum ProfileType
-    {
-        GeneralProfile,
-        PublicProfile,
-        SocialProfile
-    }
-
-    /// <summary>
     /// Specifies an error a MSN Server can send.
     /// </summary>	
     public enum MSNError
@@ -611,9 +600,13 @@ namespace MSNPSharp
         /// </summary>
         InvalidParameter = 201,
         /// <summary>
+        /// Invalid federated user
+        /// </summary>
+        InvalidFederatedUser = 203,
+        /// <summary>
         /// Invalid contact network
         /// </summary>
-        InvalidContactNetwork = 204,
+        UnroutableUser = 204,
         /// <summary>
         /// Invalid user.
         /// </summary>
@@ -651,9 +644,9 @@ namespace MSNPSharp
         /// </summary>
         UserAlreadyOnList = 216,
         /// <summary>
-        /// User is not online.
+        /// User is not accepting instant messages.
         /// </summary>
-        UserNotOnline = 217,
+        NotAcceptingIMs = 217,
         /// <summary>
         /// Already in stated mode.
         /// </summary>
@@ -662,6 +655,10 @@ namespace MSNPSharp
         /// User is in opposite (conflicting) list.
         /// </summary>
         UserInOppositeList = 219,
+        /// <summary>
+        /// NotAcceptingPages
+        /// </summary>
+        NotAcceptingPages = 220,
         /// <summary>
         /// Too Many Groups.
         /// </summary>
@@ -691,13 +688,25 @@ namespace MSNPSharp
         /// </summary>
         CannotRemoveGroupZero = 230,
         /// <summary>
+        /// InvalidMsisdn
+        /// </summary>
+        InvalidMsisdn = 232,
+        /// <summary>
+        /// UnknownMsisdn
+        /// </summary>
+        UnknownMsisdn = 233,
+        /// <summary>
+        /// UnknownKeitaiDomain
+        /// </summary>
+        UnknownKeitaiDomain = 234,
+        /// <summary>
         /// If <d/> domain element specified in <ml/> mail list, at least one <c/> contact  must be exists
         /// </summary>
         EmptyDomainElement = 240,
         /// <summary>
         /// ADL/RML commands accept FL(1)/AL(2)/BL(4) BUT RL(8)/PL(16).
         /// </summary>
-        InvalidMembershipForADLRML = 241,
+        InvalidXmlData = 241,
         /// <summary>
         /// Switchboard request failed.
         /// </summary>
@@ -707,9 +716,21 @@ namespace MSNPSharp
         /// </summary>
         SwitchboardTransferFailed = 281,
         /// <summary>
-        /// P2P Error.
+        /// Unknown P2P application.
         /// </summary>
-        P2PError = 282,
+        UnknownP2PApp = 282,
+        /// <summary>
+        /// UnknownUunApp
+        /// </summary>
+        UnknownUunApp = 283,
+        /// <summary>
+        /// MessageTooLong
+        /// </summary>
+        MessageTooLong = 285,
+        /// <summary>
+        /// SmsJustOutOfFunds
+        /// </summary>
+        SmsJustOutOfFunds = 290,
         /// <summary>
         /// Required field is missing.
         /// </summary>
@@ -725,7 +746,35 @@ namespace MSNPSharp
         /// <summary>
         /// Error accessing contact list.
         /// </summary>
-        ErrorAccessingContactListRem = 403,
+        AddressBookError = 403,
+        /// <summary>
+        /// SmsSubscriptionRequired
+        /// </summary>
+        SmsSubscriptionRequired = 413,
+        /// <summary>
+        /// SmsSubscriptionDisabled
+        /// </summary>
+        SmsSubscriptionDisabled = 414,
+        /// <summary>
+        /// SmsOutOfFunds
+        /// </summary>
+        SmsOutOfFunds = 415,
+        /// <summary>
+        /// SmsDisabledMarket
+        /// </summary>
+        SmsDisabledMarket = 416,
+        /// <summary>
+        /// SmsDisabledGlobal
+        /// </summary>
+        SmsDisabledGlobal = 417,
+        /// <summary>
+        /// TryAgainLater
+        /// </summary>
+        TryAgainLater = 418,
+        /// <summary>
+        /// NoMarketSpecified
+        /// </summary>
+        NoMarketSpecified = 419,
         /// <summary>
         /// Invalid account permissions.
         /// </summary>
@@ -743,17 +792,25 @@ namespace MSNPSharp
         /// </summary>
         CommandDisabled = 502,
         /// <summary>
-        /// Ups failure
+        /// UpsDown
         /// </summary>
-        UpsFailure = 509,
+        UpsDown = 504,
+        /// <summary>
+        /// FederatedPartnerError
+        /// </summary>
+        FederatedPartnerError = 508,
+        /// <summary>
+        /// PageModeMessageError
+        /// </summary>
+        PageModeMessageError = 509,
         /// <summary>
         /// File operation failed. 
         /// </summary>
         FileOperationFailed = 510,
         /// <summary>
-        /// Banned. 
+        /// DetailedError. 
         /// </summary>
-        Banned = 511,
+        DetailedError = 511,
         /// <summary>
         /// Memory allocation failure.
         /// </summary>
@@ -762,6 +819,22 @@ namespace MSNPSharp
         /// Challenge response failed.
         /// </summary>
         ChallengeResponseFailed = 540,
+
+        SmsAccountMuted = 550,
+        SmsAccountDisabled = 551,
+        SmsAccountMaxed = 552,
+        SmsInternalServerError = 580,
+        SmsCarrierInvalid = 590,
+        SmsCarrierNoRoute = 591,
+        SmsCarrierErrored = 592,
+        SmsAddressMappingFull = 593,
+        SmsIncorrectSourceCountry = 594,
+        SmsMobileCacheFull = 595,
+        SmsIncorrectFormat = 596,
+        SmsInvalidText = 597,
+        SmsMessageTooLong = 598,
+
+
         /// <summary>
         /// Server is busy.
         /// </summary>
@@ -787,6 +860,10 @@ namespace MSNPSharp
         /// </summary>
         ServerUnavailable = 605,
         /// <summary>
+        /// PagingUnavailable
+        /// </summary>
+        PagingUnavailable = 606,
+        /// <summary>
         /// Connection creation failed.
         /// </summary>
         CouldNotCreateConnection = 700,
@@ -794,38 +871,23 @@ namespace MSNPSharp
         /// Bad CVR parameters sent.
         /// </summary>
         BadCVRParameters = 710,
-        /// <summary>
-        /// Write is blocking.
-        /// </summary>
-        WriteIsBlocking = 711,
-        /// <summary>
-        /// Session is overloaded.
-        /// </summary>
-        SessionIsOverloaded = 712,
-        /// <summary>
-        /// Calling too rapdly.
-        /// </summary>
-        CallingTooRapdly = 713,
-        /// <summary>
-        /// Too many sessions.
-        /// </summary>
-        TooManySessions = 714,
-        /// <summary>
-        /// Not expected command.
-        /// </summary>
+
+        SessionRestricted = 711,
+        SessionOverloaded = 712,
+        UserTooActive = 713,
         NotExpected = 715,
-        /// <summary>
-        /// Bad friend file.
-        /// </summary>
         BadFriendFile = 717,
-        /// <summary>
-        /// Not expected CVR.
-        /// </summary>
+        UserRestricted = 718,
+        SessionFederated = 719,
+        UserFederated = 726,
         NotExpectedCVR = 731,
+        RoamingLogoff = 733,
+        TooManyEndpoints = 734,
+
         /// <summary>
         /// Changing too rapdly.
         /// </summary>
-        ChangingTooRapdly = 800,
+        RateLimitExceeded = 800,
         /// <summary>
         /// Server too busy.
         /// </summary>
@@ -843,6 +905,10 @@ namespace MSNPSharp
         /// </summary>
         NotAcceptingNewUsers = 920,
         /// <summary>
+        /// Timed out.
+        /// </summary>
+        TimedOut = 921,
+        /// <summary>
         /// Kids without parental consent.
         /// </summary>
         KidsWithoutParentalConsent = 923,
@@ -850,18 +916,23 @@ namespace MSNPSharp
         /// Passport not yet verified.
         /// </summary>
         PassportNotYetVerified = 924,
-        /// <summary>
-        /// Bad Ticket.
-        /// </summary>
-        BadTicket = 928,
+
+        ManagedUserLimitedAccessWrongClient = 926,
+        managedUserAccessDenied = 927,
+        AuthError = 928,
+
         /// <summary>
         /// Account not on this server
         /// </summary>
-        AccountNotOnThisServer = 931,
+        DomainReserved = 931,
         /// <summary>
-        /// The ADL command indicates some invalid circle to server.
+        /// The ADL command indicates some invalid contact to server.
         /// </summary>
-        InvalidCircleMembership = 933
+        InvalidContactList = 933,
+        /// <summary>
+        /// Invalid signature
+        /// </summary>
+        InvalidSignature = 935
     }
 
     /// <summary>
@@ -1005,8 +1076,12 @@ namespace MSNPSharp
         public const string ProfileSocial = "ProfileSocial";
         public const string ProfileExpression = "ProfileExpression";
         public const string ProfileEducation = "ProfileEducation";
+        public const string ProfilePicture = "ProfilePicture";
+        public const string ProfileStatus = "ProfileStatus";
+        public const string ProfilePage = "ProfilePage";
         public const string OneWayRelationship = "OneWayRelationship";
         public const string TwoWayRelationship = "TwoWayRelationship";
+        public const string WebProfileList = "WebProfileList";
         public const string ApplicationRead = "ApplicationRead";
         public const string ApplicationWrite = "ApplicationWrite";
     }
@@ -1697,23 +1772,6 @@ namespace MSNPSharp
     }
 
     #endregion
-
-    public enum NetworkType
-    {
-        None,
-        /// <summary>
-        /// MSN Network
-        /// </summary>
-        WindowsLive,
-        /// <summary>
-        /// Yahoo Messenger Network.
-        /// </summary>
-        Yahoo,
-        /// <summary>
-        /// MSN mobile network.
-        /// </summary>
-        Mobile
-    }
 
     internal enum ConversationState : int
     {
