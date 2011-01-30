@@ -1442,7 +1442,7 @@ namespace MSNPSharp
                 {
                     if (ContactList.HasContact(account, type))
                     {
-                        contact = ContactList.GetContact(account, type);
+                        contact = ContactList.GetContactWithCreate(account, type);
                     }
                 }
                 else
@@ -1753,7 +1753,7 @@ namespace MSNPSharp
                             "[OnNLNReceived] User not found in the specific circle: " + fullaccount + ", a contact was created by NSCommand.");
                     }
 
-                    contact = circle.ContactList.GetContact(account, type);
+                    contact = circle.ContactList.GetContactWithCreate(account, type);
 
                     contact.SetName(MSNHttpUtility.NSDecode(message.CommandValues[2].ToString()));
                     contact.EndPointData[Guid.Empty].ClientCapabilities = newcaps;
@@ -1813,7 +1813,7 @@ namespace MSNPSharp
             {
                 type = (IMAddressInfoType)int.Parse(fullaccount.Split(':')[0]);
                 account = fullaccount.Split(':')[1].ToLowerInvariant();
-                contact = ContactList.GetContact(account, type);
+                contact = ContactList.GetContactWithCreate(account, type);
 
                 #region Contact Status
 
@@ -1936,7 +1936,7 @@ namespace MSNPSharp
                         return;
                     }
 
-                    contact = circle.ContactList.GetContact(account, type);
+                    contact = circle.ContactList.GetContactWithCreate(account, type);
                     PresenceStatus oldStatus = contact.Status;
 
                     if (oldStatus != PresenceStatus.Offline)
@@ -1961,7 +1961,7 @@ namespace MSNPSharp
                 account = fullaccount.Split(':')[1].ToLowerInvariant();
 
                 contact = (account == ContactList.Owner.Mail.ToLowerInvariant() && type == IMAddressInfoType.WindowsLive)
-                ? ContactList.Owner : ContactList.GetContact(account, type);
+                ? ContactList.Owner : ContactList.GetContactWithCreate(account, type);
 
                 #region Contact Staus
 
@@ -2064,7 +2064,7 @@ namespace MSNPSharp
 
                                 if (ContactList.HasContact(sourceEmail, IMAddressInfoType.WindowsLive))
                                 {
-                                    sourceContact = ContactList.GetContact(sourceEmail, IMAddressInfoType.WindowsLive);
+                                    sourceContact = ContactList.GetContactWithCreate(sourceEmail, IMAddressInfoType.WindowsLive);
                                     if (sourceContact.Status == PresenceStatus.Hidden || sourceContact.Status == PresenceStatus.Offline)
                                     {
                                         // If not return, we will get a 217 error (User not online).
@@ -2072,7 +2072,7 @@ namespace MSNPSharp
                                     }
                                 }
 
-                                sourceContact = ContactList.GetContact(sourceEmail, IMAddressInfoType.WindowsLive);
+                                sourceContact = ContactList.GetContactWithCreate(sourceEmail, IMAddressInfoType.WindowsLive);
 
                                 if (slpMessage.ContentType == "application/x-msnmsgr-transreqbody" ||
                                     slpMessage.ContentType == "application/x-msnmsgr-transrespbody" ||
@@ -2268,7 +2268,7 @@ namespace MSNPSharp
                 name = message.CommandValues[5].ToString();
             }
 
-            Contact callingContact = ContactList.GetContact(account, IMAddressInfoType.WindowsLive);
+            Contact callingContact = ContactList.GetContactWithCreate(account, IMAddressInfoType.WindowsLive);
             if (callingContact.Lists == RoleLists.None)
             {
                 anonymous = true;
@@ -2414,7 +2414,7 @@ namespace MSNPSharp
                 return;
             }
 
-            Contact from = ContactList.GetContact(sender, (IMAddressInfoType)senderType);
+            Contact from = ContactList.GetContactWithCreate(sender, (IMAddressInfoType)senderType);
             Contact to = ContactList.Owner;
 
             MimeMessage mimeMessage = message.InnerMessage as MimeMessage;
@@ -3127,7 +3127,7 @@ namespace MSNPSharp
 
                     if (circle.HasMember(id, AccountParseOption.ParseAsFullCircleAccount))
                     {
-                        Contact contact = circle.ContactList.GetContact(memberAccount, memberType);
+                        Contact contact = circle.ContactList.GetContactWithCreate(memberAccount, memberType);
                         OnJoinedCircleConversation(new CircleMemberEventArgs(circle, contact));
                     }
                 }

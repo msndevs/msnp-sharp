@@ -995,7 +995,7 @@ namespace MSNPSharp
                 throw new MSNPSharpException("Contact not on your contact list.");
             }
 
-            Contact contact = NSMessageHandler.ContactList.GetContact(contactMail, type);  //Only contacts on default addressbook can join conversations.
+            Contact contact = NSMessageHandler.ContactList.GetContactWithCreate(contactMail, type);  //Only contacts on default addressbook can join conversations.
             if (contact.Status == PresenceStatus.Offline)
             {
                 throw new InvalidOperationException("Contact " + contactMail + " not online, please send offline message instead.");

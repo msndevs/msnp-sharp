@@ -40,8 +40,8 @@ namespace MSNPSharp
 {
     using MSNPSharp.Core;
 
-    [Serializable()]
-    public class ContactList : Dictionary<int, Contact>
+    [Serializable]
+    public class ContactList : Dictionary<IMAddressInfoType, Dictionary<string, Contact>>
     {
         private static IMAddressInfoType[] addressTypes = (IMAddressInfoType[])Enum.GetValues(typeof(IMAddressInfoType));
 
@@ -53,42 +53,33 @@ namespace MSNPSharp
         private Guid addressBookId = Guid.Empty;
         private Owner owner = null;
 
-        private ContactList()
-        {
-        }
-
-        private void Initialize(NSMessageHandler handler, Owner owner)
-        {
-            nsMessageHandler = handler;
-            this.owner = owner;
-        }
-
         public ContactList(NSMessageHandler handler)
+            : this(WebServiceConstants.MessengerIndividualAddressBookId, null, handler)
         {
-            addressBookId = new Guid(WebServiceConstants.MessengerIndividualAddressBookId);
-            nsMessageHandler = handler;
         }
 
         public ContactList(string abId, Owner owner, NSMessageHandler handler)
+            : this(new Guid(abId), owner, handler)
         {
-            addressBookId = new Guid(abId);
-            Initialize(handler, owner);
         }
 
         public ContactList(Guid abId, Owner owner, NSMessageHandler handler)
         {
-            addressBookId = abId;
-            Initialize(handler, owner);
+            Reset();
+
+            this.addressBookId = abId;
+            this.nsMessageHandler = handler;
+            this.owner = owner;
         }
 
         #region ListEnumerators
 
         public class ListEnumerator : IEnumerator<Contact>
         {
-            private Enumerator baseEnum;
+            private Dictionary<string, Contact>.Enumerator baseEnum;
             private RoleLists listFilter;
 
-            public ListEnumerator(Enumerator listEnum, RoleLists filter)
+            public ListEnumerator(Dictionary<string, Contact>.Enumerator listEnum, RoleLists filter)
             {
                 baseEnum = listEnum;
                 listFilter = filter;
@@ -100,15 +91,14 @@ namespace MSNPSharp
                 {
                     return baseEnum.MoveNext();
                 }
-                else
+
+                while (baseEnum.MoveNext())
                 {
-                    while (baseEnum.MoveNext())
-                    {
-                        if (Current.HasLists(listFilter))
-                            return true;
-                    }
-                    return false;
+                    if (Current.HasLists(listFilter))
+                        return true;
                 }
+
+                return false;
             }
 
             object IEnumerator.Current
@@ -144,7 +134,7 @@ namespace MSNPSharp
 
         public class EmailListEnumerator : ContactList.ListEnumerator
         {
-            public EmailListEnumerator(Enumerator listEnum)
+            public EmailListEnumerator(Dictionary<string, Contact>.Enumerator listEnum)
                 : base(listEnum, RoleLists.None)
             {
             }
@@ -164,61 +154,109 @@ namespace MSNPSharp
 
         #region Lists
 
-        public ContactList.ListEnumerator Forward
-        {
-            get
-            {
-                return new ContactList.ListEnumerator(GetEnumerator(), RoleLists.Forward);
-            }
-        }
+        #region windows live
 
-        public ContactList.ListEnumerator Allowed
-        {
-            get
-            {
-                return new ContactList.ListEnumerator(GetEnumerator(), RoleLists.Allow);
-            }
-        }
-
-        public ContactList.ListEnumerator BlockedList
-        {
-            get
-            {
-                return new ContactList.ListEnumerator(GetEnumerator(), RoleLists.Block);
-            }
-        }
-
-        public ContactList.ListEnumerator Reverse
-        {
-            get
-            {
-                return new ContactList.ListEnumerator(GetEnumerator(), RoleLists.Reverse);
-            }
-        }
-
-        public ContactList.ListEnumerator Pending
-        {
-            get
-            {
-                return new ContactList.ListEnumerator(GetEnumerator(), RoleLists.Pending);
-            }
-        }
-
+        /// <summary>
+        /// All Windows Live contacts including Forward, Allow, Block, Reverse, Pending, Email, Hide.
+        /// </summary>
         public ContactList.ListEnumerator All
         {
             get
             {
-                return new ContactList.ListEnumerator(GetEnumerator(), RoleLists.None);
+                return new ContactList.ListEnumerator(base[IMAddressInfoType.WindowsLive].GetEnumerator(), RoleLists.None);
             }
         }
 
+        /// <summary>
+        /// All Windows Live contacts on your address book.
+        /// </summary>
+        public ContactList.ListEnumerator Forward
+        {
+            get
+            {
+                return new ContactList.ListEnumerator(base[IMAddressInfoType.WindowsLive].GetEnumerator(), RoleLists.Forward);
+            }
+        }
+
+        /// <summary>
+        /// All Windows Live contacts on your allowed list who can send instant messages.
+        /// </summary>
+        public ContactList.ListEnumerator Allowed
+        {
+            get
+            {
+                return new ContactList.ListEnumerator(base[IMAddressInfoType.WindowsLive].GetEnumerator(), RoleLists.Allow);
+            }
+        }
+
+        /// <summary>
+        /// All Windows Live contacts on your allowed list who CANNOT send instant messages.
+        /// </summary>
+        public ContactList.ListEnumerator BlockedList
+        {
+            get
+            {
+                return new ContactList.ListEnumerator(base[IMAddressInfoType.WindowsLive].GetEnumerator(), RoleLists.Block);
+            }
+        }
+
+        /// <summary>
+        /// All Windows Live contacts on your hidden list who CANNOT see your status but CAN send offline messages.
+        /// </summary>
+        public ContactList.ListEnumerator HiddenList
+        {
+            get
+            {
+                return new ContactList.ListEnumerator(base[IMAddressInfoType.WindowsLive].GetEnumerator(), RoleLists.Hide);
+            }
+        }
+
+        /// <summary>
+        /// All Windows Live contacts who have you on their contactlist.
+        /// </summary>
+        public ContactList.ListEnumerator Reverse
+        {
+            get
+            {
+                return new ContactList.ListEnumerator(base[IMAddressInfoType.WindowsLive].GetEnumerator(), RoleLists.Reverse);
+            }
+        }
+
+        /// <summary>
+        ///  All pending Windows Live contacts.
+        /// </summary>
+        public ContactList.ListEnumerator Pending
+        {
+            get
+            {
+                return new ContactList.ListEnumerator(base[IMAddressInfoType.WindowsLive].GetEnumerator(), RoleLists.Pending);
+            }
+        }
+
+        /// <summary>
+        /// All Windows Live contacts on your email list. IsMessengerUser property is false.
+        /// </summary>
         public ContactList.ListEnumerator Email
         {
             get
             {
-                return new ContactList.EmailListEnumerator(GetEnumerator());
+                return new ContactList.EmailListEnumerator(base[IMAddressInfoType.WindowsLive].GetEnumerator());
             }
         }
+
+        #endregion
+
+        #region circle
+
+        public ContactList.ListEnumerator Circles
+        {
+            get
+            {
+                return new ContactList.ListEnumerator(base[IMAddressInfoType.Circle].GetEnumerator(), RoleLists.None);
+            }
+        }
+
+        #endregion
 
         #endregion
 
@@ -228,8 +266,7 @@ namespace MSNPSharp
             {
                 if (syncRoot == null)
                 {
-                    object newobj = new object();
-                    Interlocked.CompareExchange(ref syncRoot, newobj, null);
+                    Interlocked.CompareExchange(ref syncRoot, new object(), null);
                 }
                 return syncRoot;
             }
@@ -261,7 +298,6 @@ namespace MSNPSharp
         /// Get the specified contact.
         /// <remarks>If the contact does not exist, return null</remarks>
         /// </summary>
-        /// <param name="account"></param>
         /// <returns>
         /// If the contact does not exist, returns null.
         /// </returns>
@@ -270,7 +306,7 @@ namespace MSNPSharp
             foreach (IMAddressInfoType addressType in addressTypes)
             {
                 if (HasContact(account, addressType))
-                    return GetContact(account, addressType);
+                    return GetContactWithCreate(account, addressType);
             }
 
             return null;
@@ -289,6 +325,7 @@ namespace MSNPSharp
         internal Contact GetContact(string account, string name)
         {
             Contact contact = GetContact(account);
+
             if (contact != null)
                 lock (SyncRoot)
                     contact.SetName(name);
@@ -309,7 +346,7 @@ namespace MSNPSharp
         /// </returns>
         internal Contact GetContact(string account, string name, IMAddressInfoType type)
         {
-            Contact contact = GetContact(account, type);
+            Contact contact = GetContactWithCreate(account, type);
 
             lock (SyncRoot)
                 contact.SetName(name);
@@ -326,20 +363,21 @@ namespace MSNPSharp
         /// A <see cref="Contact"/> object.
         /// If the contact does not exist, create it.
         /// </returns>
-        internal Contact GetContact(string account, IMAddressInfoType type)
+        internal Contact GetContactWithCreate(string account, IMAddressInfoType type)
         {
-            int hash = Contact.MakeHash(account, type, AddressBookId.ToString("D")).GetHashCode();
-            if (ContainsKey(hash))
+            string hash = Contact.MakeHash(account, type, AddressBookId.ToString("D"));
+
+            if (base[type].ContainsKey(hash))
             {
-                return this[hash];
+                return base[type][hash];
             }
 
             Contact tmpContact = new Contact(AddressBookId, account, type, 0, nsMessageHandler);
 
             lock (SyncRoot)
-                Add(hash, tmpContact);
+                base[type][hash] = tmpContact;
 
-            return GetContact(account, type);
+            return GetContactWithCreate(account, type);
         }
 
         public Contact GetContactByGuid(Guid guid)
@@ -348,10 +386,13 @@ namespace MSNPSharp
             {
                 lock (SyncRoot)
                 {
-                    foreach (Contact contact in Values)
+                    foreach (IMAddressInfoType addressType in addressTypes)
                     {
-                        if (contact.Guid == guid)
-                            return contact;
+                        foreach (Contact contact in base[addressType].Values)
+                        {
+                            if (contact.Guid == guid)
+                                return contact;
+                        }
                     }
                 }
             }
@@ -364,40 +405,43 @@ namespace MSNPSharp
             {
                 lock (SyncRoot)
                 {
-                    foreach (Contact contact in Values)
+                    foreach (IMAddressInfoType addressType in addressTypes)
                     {
-                        if (contact.CID == cid)
-                            return contact;
+                        foreach (Contact contact in base[addressType].Values)
+                        {
+                            if (contact.CID == cid)
+                                return contact;
+                        }
                     }
-                }                
+                }
             }
             return null;
         }
+        /*
+                public Contact this[string account]
+                {
+                    get
+                    {
+                        return GetContact(account);
+                    }
+                    set
+                    {
+                        this[account, value.ClientType] = value;
+                    }
+                }
 
-        public Contact this[string account]
-        {
-            get
-            {
-                return GetContact(account);
-            }
-            set
-            {
-                this[account, value.ClientType] = value;
-            }
-        }
-
-        public Contact this[string account, IMAddressInfoType type]
-        {
-            get
-            {
-                return GetContact(account, type);
-            }
-            set
-            {
-                this[account, type] = value;
-            }
-        }
-
+                public Contact this[string account, IMAddressInfoType type]
+                {
+                    get
+                    {
+                        return GetContact(account, type);
+                    }
+                    set
+                    {
+                        this[account, type] = value;
+                    }
+                }
+        */
         /// <summary>
         /// Check whether the specified account is in the contact list.
         /// </summary>
@@ -421,25 +465,20 @@ namespace MSNPSharp
         /// <returns></returns>
         public bool HasContact(string account, IMAddressInfoType type)
         {
-            return ContainsKey(Contact.MakeHash(account, type, AddressBookId.ToString("D")).GetHashCode());
-        }
-
-        public void CopyTo(Contact[] array, int index)
-        {
-            lock (SyncRoot)
-                Values.CopyTo(array, index);
+            string hash = Contact.MakeHash(account, type, AddressBookId.ToString("D"));
+            return base[type].ContainsKey(hash);
         }
 
         /// <summary>
         /// Copy the whole contact list out.
         /// </summary>
         /// <returns></returns>
-        public Contact[] ToArray()
+        public Contact[] ToArray(IMAddressInfoType type)
         {
             lock (SyncRoot)
             {
-                Contact[] array = new Contact[Values.Count];
-                CopyTo(array, 0);
+                Contact[] array = new Contact[base[type].Values.Count];
+                base[type].Values.CopyTo(array, 0);
                 return array;
             }
         }
@@ -464,9 +503,10 @@ namespace MSNPSharp
         /// <param name="type"></param>
         internal void Remove(string account, IMAddressInfoType type)
         {
+            string hash = Contact.MakeHash(account, type, AddressBookId.ToString("D"));
             lock (SyncRoot)
             {
-                Remove(Contact.MakeHash(account, type, AddressBookId.ToString("D")).GetHashCode());
+                base[type].Remove(hash);
             }
         }
 
@@ -518,8 +558,15 @@ namespace MSNPSharp
                 Owner.LocalEndPointClientCapabilitiesEx = ClientCapabilitiesEx.None;
             }
 
-            Clear();
             owner = null;
+
+            lock (SyncRoot)
+            {
+                foreach (IMAddressInfoType addressType in addressTypes)
+                {
+                    base[addressType] = new Dictionary<string, Contact>();
+                }
+            }
         }
     }
 };
