@@ -258,7 +258,7 @@ namespace MSNPSharp.IO
                     if (!ms.ContainsKey(memberrole))
                         ms.Add(memberrole, new SerializableDictionary<string, BaseMember>(0));
     
-                    ms[memberrole][Contact.MakeHash(account, type, WebServiceConstants.MessengerIndividualAddressBookId)] = member;
+                    ms[memberrole][Contact.MakeHash(account, type)] = member;
                 }
     
                 switch (scene)
@@ -286,7 +286,7 @@ namespace MSNPSharp.IO
                 SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
                 if (ms != null)
                 {
-                    string hash = Contact.MakeHash(account, type, WebServiceConstants.MessengerIndividualAddressBookId);
+                    string hash = Contact.MakeHash(account, type);
                     if (ms.ContainsKey(memberrole) && ms[memberrole].ContainsKey(hash))
                     {
                         ms[memberrole].Remove(hash);
@@ -481,7 +481,7 @@ namespace MSNPSharp.IO
         private bool HasMemberhip(string servicetype, string account, IMAddressInfoType type, string memberrole)
         {
             SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
-            return (ms != null) && ms.ContainsKey(memberrole) && ms[memberrole].ContainsKey(Contact.MakeHash(account, type, WebServiceConstants.MessengerIndividualAddressBookId));
+            return (ms != null) && ms.ContainsKey(memberrole) && ms[memberrole].ContainsKey(Contact.MakeHash(account, type));
         }
 
         /// <summary>
@@ -494,7 +494,7 @@ namespace MSNPSharp.IO
         /// <returns>If the member not exist, return null.</returns>
         public BaseMember SelectBaseMember(string servicetype, string account, IMAddressInfoType type, string memberrole)
         {
-            string hash = Contact.MakeHash(account, type, WebServiceConstants.MessengerIndividualAddressBookId);
+            string hash = Contact.MakeHash(account, type);
             SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
             if ((ms != null) && ms.ContainsKey(memberrole) && ms[memberrole].ContainsKey(hash))
             {
@@ -799,7 +799,7 @@ namespace MSNPSharp.IO
                                 if (type != IMAddressInfoType.Circle)
                                 {
                                     if (HasMemberhip(messengerServiceClone.ServiceType, account, type, memberrole) &&
-                                        WebServiceDateTimeConverter.ConvertToDateTime(MembershipList[messengerServiceClone.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type, WebServiceConstants.MessengerIndividualAddressBookId)].LastChanged)
+                                        WebServiceDateTimeConverter.ConvertToDateTime(MembershipList[messengerServiceClone.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type)].LastChanged)
                                         < WebServiceDateTimeConverter.ConvertToDateTime(bm.LastChanged))
                                     {
                                         RemoveMemberhip(messengerServiceClone.ServiceType, account, type, memberrole, Scenario.DeltaRequest);
@@ -836,9 +836,9 @@ namespace MSNPSharp.IO
                                 {
 
                                     if (false == MembershipList[messengerServiceClone.ServiceType].Memberships.ContainsKey(memberrole) ||
-                                        /*new*/ false == MembershipList[messengerServiceClone.ServiceType].Memberships[memberrole].ContainsKey(Contact.MakeHash(account, type, WebServiceConstants.MessengerIndividualAddressBookId)) ||
+                                        /*new*/ false == MembershipList[messengerServiceClone.ServiceType].Memberships[memberrole].ContainsKey(Contact.MakeHash(account, type)) ||
                                         /*probably membershipid=0*/ WebServiceDateTimeConverter.ConvertToDateTime(bm.LastChanged)
-                                        > WebServiceDateTimeConverter.ConvertToDateTime(MembershipList[messengerServiceClone.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type, WebServiceConstants.MessengerIndividualAddressBookId)].LastChanged))
+                                        > WebServiceDateTimeConverter.ConvertToDateTime(MembershipList[messengerServiceClone.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type)].LastChanged))
                                     {
                                         AddMemberhip(messengerServiceClone.ServiceType, account, type, memberrole, bm, Scenario.DeltaRequest);
                                     }
@@ -975,7 +975,7 @@ namespace MSNPSharp.IO
         Dictionary<string, long> wlInverseConnections = new Dictionary<string, long>();
 
         [NonSerialized]
-        private CircleList pendingAcceptionCircleList;
+        Dictionary<Guid, Circle> pendingAcceptionCircleList = new Dictionary<Guid, Circle>();
 
         [NonSerialized]
         Dictionary<Guid, string> pendingCreateCircleList = new Dictionary<Guid, string>();
@@ -994,13 +994,10 @@ namespace MSNPSharp.IO
         /// <summary>
         /// A collection of all circles which are pending acception.
         /// </summary>
-        internal CircleList PendingAcceptionCircleList
+        internal Dictionary<Guid, Circle> PendingAcceptionCircleList
         {
             get
             {
-                if (pendingAcceptionCircleList == null && NSMessageHandler != null)
-                    pendingAcceptionCircleList = new CircleList(NSMessageHandler);
-
                 return pendingAcceptionCircleList;
             }
         }
@@ -1358,7 +1355,7 @@ namespace MSNPSharp.IO
 
             lock (PendingAcceptionCircleList)
             {
-                PendingAcceptionCircleList.AddCircle(circle);
+                PendingAcceptionCircleList[circle.AddressBookId] = circle;
             }
 
             JoinCircleInvitationEventArgs joinArgs = new JoinCircleInvitationEventArgs(circle, invitor);
@@ -1492,10 +1489,13 @@ namespace MSNPSharp.IO
                     return null;
                 }
 
-                Circle circle = NSMessageHandler.CircleList[new Guid(abId), inverseInfo.Content.Info.HostedDomain];
+                string circleMail = abId + "@" + inverseInfo.Content.Info.HostedDomain;
+                string circleHash = Contact.MakeHash(circleMail, IMAddressInfoType.Circle);
 
-                if (circle == null)
-                    circle = CreateCircle(meContact, hidden, inverseInfo);
+                Circle circle = NSMessageHandler.CircleList.ContainsKey(circleHash) ?
+                    (Circle)NSMessageHandler.CircleList[circleHash]
+                    :
+                    CreateCircle(meContact, hidden, inverseInfo);
 
                 return circle;
             }
@@ -1989,7 +1989,9 @@ namespace MSNPSharp.IO
                     Circle tempCircle = null;
                     if (inversoeInfo != null)
                     {
-                        tempCircle = NSMessageHandler.CircleList[new Guid(abId), inversoeInfo.Content.Info.HostedDomain];
+                        string circleMail = abId + "@" + inversoeInfo.Content.Info.HostedDomain;
+                        string circleHash = Contact.MakeHash(circleMail, IMAddressInfoType.Circle);
+                        tempCircle = (Circle)NSMessageHandler.CircleList[circleHash];
                     }
     
                     //1. Remove corresponding addressbook page.
@@ -2005,7 +2007,9 @@ namespace MSNPSharp.IO
                     BreakWLConnection(initiatorCID);
     
                     //5. Remove the presentation data structure for a circle.
-                    NSMessageHandler.CircleList.RemoveCircle(new Guid(abId), CircleString.DefaultHostDomain);
+                    string circleMail2 = abId + "@" + CircleString.DefaultHostDomain;
+                    string circleHash2 = Contact.MakeHash(circleMail2, IMAddressInfoType.Circle);
+                    NSMessageHandler.CircleList.Remove(circleHash2);
     
                     if (tempCircle != null)
                     {
@@ -2116,19 +2120,19 @@ namespace MSNPSharp.IO
 
         private bool AddCircleToCircleList(Circle circle)
         {
-            bool result = NSMessageHandler.CircleList.AddCircle(circle);
+            NSMessageHandler.CircleList[circle.Hash] = circle;
 
             lock (PendingAcceptionCircleList)
             {
-                if (PendingAcceptionCircleList[circle.AddressBookId, circle.HostDomain] != null)
+                if (PendingAcceptionCircleList.ContainsKey(circle.AddressBookId))
                 {
-                    NSMessageHandler.ContactService.OnJoinedCircleCompleted(new CircleEventArgs(NSMessageHandler.CircleList[circle.AddressBookId, circle.HostDomain]));
+                    NSMessageHandler.ContactService.OnJoinedCircleCompleted(new CircleEventArgs(circle));
                 }
 
-                PendingAcceptionCircleList.RemoveCircle(circle.AddressBookId, circle.HostDomain);
+                PendingAcceptionCircleList.Remove(circle.AddressBookId);
             }
 
-            return result;
+            return true;
         }
 
         /// <summary>
@@ -2200,7 +2204,10 @@ namespace MSNPSharp.IO
                 return false;
             }
 
-            if (NSMessageHandler.CircleList[new Guid(lowerId), CircleString.DefaultHostDomain] != null)
+            string circleMail = lowerId + "@" + CircleString.DefaultHostDomain;
+            string circleHash = Contact.MakeHash(circleMail, IMAddressInfoType.Circle);
+
+            if (NSMessageHandler.CircleList.ContainsKey(circleHash))
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "[RestoreCircleFromAddressBook] circle already exists, restore skipped:" + lowerId);
                 return false;
