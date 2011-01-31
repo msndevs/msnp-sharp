@@ -1095,11 +1095,31 @@ namespace MSNPSharp
         /// </summary>
         protected virtual void SendInitialMessage()
         {
-            // VER: MSN Protocol used
-
             (MessageProcessor as NSMessageProcessor).ResetTransactionID();
 
+            // 1) VER: MSN Protocol used
             MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP18", "CVR0" }));
+
+            // 2) CVR: Send client information
+            MsnProtocol msnProtocol = MsnProtocol.MSNP18;
+            Credentials oldcred = Credentials;
+            Credentials = new Credentials(oldcred.Account, oldcred.Password, msnProtocol);
+
+            MessageProcessor.SendMessage(new NSMessage("CVR",
+                new string[] { 
+                    "0x040c", //The LCIDs in .net framework are different from Windows API: "0x" + CultureInfo.CurrentCulture.LCID.ToString("x4")
+                    "winnt",
+                    "5.1",
+                    "i386",
+                    Credentials.ClientInfo.MessengerClientName, 
+                    Credentials.ClientInfo.MessengerClientBuildVer,
+                    Credentials.ClientInfo.MessengerClientBrand,
+                    Credentials.Account
+                })
+            );
+
+            // 3) USR: Begin login procedure
+            MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "I", Credentials.Account }));
         }
 
         /// <summary>
@@ -1112,23 +1132,6 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnVERReceived(NSMessage message)
         {
-            MsnProtocol msnProtocol = (MsnProtocol)Convert.ToInt32(message.CommandValues[0].ToString().Substring("MSNP".Length, 2));
-            Credentials oldcred = Credentials;
-            Credentials = new Credentials(oldcred.Account, oldcred.Password, msnProtocol);
-
-            // CVR: Send client information back
-            MessageProcessor.SendMessage(new NSMessage("CVR",
-                new string[] { 
-                    "0x040c", //The LCIDs in .net framework are different from Windows API: "0x" + CultureInfo.CurrentCulture.LCID.ToString("x4")
-                    "winnt",
-                    "5.1",
-                    "i386",
-                    Credentials.ClientInfo.MessengerClientName, 
-                    Credentials.ClientInfo.MessengerClientBuildVer,
-                    Credentials.ClientInfo.MessengerClientBrand,
-                    Credentials.Account
-                })
-           );
         }
 
         /// <summary>
@@ -1140,9 +1143,7 @@ namespace MSNPSharp
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnCVRReceived(NSMessage message)
-        {
-            // USR: Begin login procedure
-            MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SSO", "I", Credentials.Account }));
+        {           
         }
 
         /// <summary>
