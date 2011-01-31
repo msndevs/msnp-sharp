@@ -1442,7 +1442,7 @@ namespace MSNPSharp
                 {
                     if (ContactList.HasContact(account, type))
                     {
-                        contact = ContactList.GetContactWithCreate(account, type);
+                        contact = ContactList.GetContact(account, type);
                     }
                 }
                 else
@@ -2064,7 +2064,7 @@ namespace MSNPSharp
 
                                 if (ContactList.HasContact(sourceEmail, IMAddressInfoType.WindowsLive))
                                 {
-                                    sourceContact = ContactList.GetContactWithCreate(sourceEmail, IMAddressInfoType.WindowsLive);
+                                    sourceContact = ContactList.GetContact(sourceEmail, IMAddressInfoType.WindowsLive);
                                     if (sourceContact.Status == PresenceStatus.Hidden || sourceContact.Status == PresenceStatus.Offline)
                                     {
                                         // If not return, we will get a 217 error (User not online).
@@ -2414,7 +2414,7 @@ namespace MSNPSharp
                 return;
             }
 
-            Contact from = ContactList.GetContactWithCreate(sender, (IMAddressInfoType)senderType);
+            Contact from = ContactList.GetContact(sender, (IMAddressInfoType)senderType);
             Contact to = ContactList.Owner;
 
             MimeMessage mimeMessage = message.InnerMessage as MimeMessage;

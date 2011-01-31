@@ -1699,7 +1699,7 @@ namespace MSNPSharpClient
                 ContactGroup favGroup = messenger.ContactGroups.FavoriteGroup;
                 if (favGroup != null && contactToUpdate.HasGroup(favGroup))
                 {
-                    Contact contact = messenger.ContactList[contactToUpdate.Mail, contactToUpdate.ClientType];
+                    Contact contact = messenger.ContactList.GetContact(contactToUpdate.Mail, contactToUpdate.ClientType);
                     string text = contact.Name;
                     if (contact.PersonalMessage != null && !String.IsNullOrEmpty(contact.PersonalMessage.Message))
                     {
@@ -2173,7 +2173,7 @@ namespace MSNPSharpClient
             //This demo shows you how to invite a contact to your circle.
             if (messenger.ContactList.HasContact("freezingsoft@hotmail.com", IMAddressInfoType.WindowsLive))
             {
-                messenger.ContactService.InviteCircleMember(sender as Circle, messenger.ContactList["freezingsoft@hotmail.com", IMAddressInfoType.WindowsLive], "hello");
+                messenger.ContactService.InviteCircleMember(sender as Circle, messenger.ContactList.GetContact("freezingsoft@hotmail.com", IMAddressInfoType.WindowsLive), "hello");
                 messenger.ContactService.InviteCircleMemberCompleted += new EventHandler<CircleMemberEventArgs>(ContactService_CircleMemberInvited);
             }
         }

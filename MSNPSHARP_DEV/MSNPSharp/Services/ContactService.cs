@@ -1410,7 +1410,7 @@ namespace MSNPSharp
 
             if (NSMessageHandler.ContactList.HasContact(account, network))
             {
-                Contact contact = NSMessageHandler.ContactList.GetContactWithCreate(account, network);
+                Contact contact = NSMessageHandler.ContactList.GetContact(account, network);
 
                 if (contact.OnPendingList)
                 {
