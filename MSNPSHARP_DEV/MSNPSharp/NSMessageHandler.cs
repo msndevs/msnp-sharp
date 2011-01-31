@@ -622,17 +622,6 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Sets whether the contact list owner has a mobile device enabled.
-        /// </summary>
-        internal void SetMobileDevice(bool enabled)
-        {
-            if (ContactList.Owner == null)
-                throw new MSNPSharpException("Not a valid owner");
-
-            MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MBE", enabled ? "Y" : "N" }));
-        }
-
-        /// <summary>
         /// Sends a mobile message to the specified remote contact. This only works when the remote contact has it's mobile device enabled and has MSN-direct enabled.
         /// </summary>
         /// <param name="receiver"></param>
@@ -976,24 +965,6 @@ namespace MSNPSharp
             );
         }
 
-        internal void BroadCastStatus()
-        {
-            // check whether we are allowed to send a CHG command
-            if (IsSignedIn == false)
-                throw new MSNPSharpException("Can't set status. You must wait for the SignedIn event before you can set an initial status.");
-
-            string context = String.Empty;
-
-            if (ContactList.Owner.DisplayImage != null)
-                context = ContactList.Owner.DisplayImage.Context;
-
-            ClientCapabilitiesEx capsext = ContactList.Owner.LocalEndPointClientCapabilitiesEx;
-            string capacities = ((long)ContactList.Owner.LocalEndPointClientCapabilities).ToString() + ":" + ((long)capsext).ToString();
-
-            MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(ContactList.Owner.Status), capacities, context }));
-        }
-
-
         #endregion
 
         #region Circle
@@ -1081,14 +1052,6 @@ namespace MSNPSharp
             }
         }
 
-        internal void SendSwitchBoardClosedNotify(string sessionId, string host)
-        {
-            if (ContactList.Owner.MPOPEnable && ContactList.Owner.HasSignedInWithMultipleEndPoints)
-            {
-                MessageProcessor.SendMessage(new NSPayLoadMessage("UUN", new string[] { ContactList.Owner.Mail, "5" }, sessionId + ";" + host));
-                RemoveSession(sessionId);
-            }
-        }
 
         #endregion
 
@@ -1414,7 +1377,7 @@ namespace MSNPSharp
                 string circleMail = usernameAndCircle[1].Substring("via=9:".Length);
                 IMAddressInfoType circleType = IMAddressInfoType.Circle;
                 string circleHash = Contact.MakeHash(circleMail, circleType);
-                
+
                 if (!CircleList.ContainsKey(circleHash))
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnUBXReceived] Cannot retrieve circle for user: " + fullaccount);
@@ -1745,7 +1708,7 @@ namespace MSNPSharp
                     {
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
                             "[OnNLNReceived] Cannot update status for user, circle not found: " + fullaccount);
-                        
+
                         return;
                     }
 
@@ -2830,56 +2793,8 @@ namespace MSNPSharp
                     #region NORMAL USER
                     if (AutoSynchronize)
                     {
-                        ContactService.msRequest(
-                            PartnerScenario.MessengerPendingList,
-                            null /******************************************
-                                  * 
-                                  * ALL CHANGES WILL BE MADE BY msRequest()
-                                  * 
-                                  ******************************************
-                            delegate
-                            {
-                                XmlDocument xmlDoc = new XmlDocument();
-                                xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
-                                XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
-                                string domain = String.Empty;
-                                foreach (XmlNode domainNode in domains)
-                                {
-                                    domain = domainNode.Attributes["n"].Value;
-                                    XmlNode contactNode = domainNode.FirstChild;
-                                    do
-                                    {
-                                        string account = contactNode.Attributes["n"].Value + "@" + domain;
-                                        ClientType type = (ClientType)int.Parse(contactNode.Attributes["t"].Value);
-                                        MSNLists list = (MSNLists)int.Parse(contactNode.Attributes["l"].Value);
-                                        string displayName = account;
-                                        try
-                                        {
-                                            displayName = contactNode.Attributes["f"].Value;
-                                        }
-                                        catch (Exception)
-                                        {
-                                        }
-
-                                        if (ContactList.HasContact(account, type))
-                                        {
-                                            Contact contact = ContactList.GetContact(account, type);
-
-                                            // Fire ReverseAdded. If this contact on Pending list other person added us, otherwise we added and other person accepted.
-                                            if (contact.OnPendingList || contact.OnReverseList)
-                                            {
-                                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "ADL received, ReverseAdded event fired. Contact is in list: " + contact.Lists.ToString());
-                                                ContactService.OnReverseAdded(new ContactEventArgs(contact));
-                                            }
-                                        }
-
-                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, account + ":" + type + " was added to your " + list.ToString(), GetType().Name);
-
-                                    } while (contactNode.NextSibling != null);
-                                }
-
-                            }*****/
-                                   );
+                        // ALL CHANGES WILL BE MADE BY msRequest()
+                        ContactService.msRequest(PartnerScenario.MessengerPendingList, null);
                     }
                     #endregion
                     #region BOT MODE
@@ -3090,7 +3005,7 @@ namespace MSNPSharp
                     return;
 
                 string hash = Contact.MakeHash(typeMail[1], (IMAddressInfoType)int.Parse(typeMail[0]));
-                
+
                 if (!CircleList.ContainsKey(hash))
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
