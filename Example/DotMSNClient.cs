@@ -1554,12 +1554,12 @@ namespace MSNPSharpClient
 
         private bool initialExpand = true;
 
-        private string GetCircleDisplayName(Circle circle)
+        private string GetCircleDisplayName(Circle circle, int count)
         {
             if (circle == null)
                 return string.Empty;
 
-            return circle.Name + " (" + circle.ContactList.Values.Count.ToString() + " members)";
+            return circle.Name + " (" + count + " members)";
         }
 
 
@@ -1596,9 +1596,10 @@ namespace MSNPSharpClient
                 favoritesNode.Nodes.Clear();
                 circlesNode.Nodes.Clear();
 
-                foreach (Circle circle in Messenger.CircleList)
+                foreach (Circle circle in Messenger.CircleList.Values)
                 {
-                    TreeNode circleNode = circlesNode.Nodes.Add(circle.Hash, GetCircleDisplayName(circle), ImageIndexes.Circle, ImageIndexes.Circle);
+                    int contactCount = circle.ContactList[IMAddressInfoType.WindowsLive].Count;
+                    TreeNode circleNode = circlesNode.Nodes.Add(circle.Hash, GetCircleDisplayName(circle, contactCount), ImageIndexes.Circle, ImageIndexes.Circle);
                     circleNode.NodeFont = PARENT_NODE_FONT;
                     circleNode.Tag = circle;
 
@@ -1653,18 +1654,21 @@ namespace MSNPSharpClient
             {
                 // Circle event
                 Circle circle = contactToUpdate as Circle;
-                bool isDeleted = (Messenger.CircleList[circle.AddressBookId, circle.HostDomain] == null);
+
+                bool isDeleted = (!Messenger.CircleList.ContainsKey(circle.Hash));
 
                 if (!isDeleted)
                 {
                     TreeNode circlenode = circlesNode.Nodes.ContainsKey(circle.Hash) ?
-                        circlesNode.Nodes[circle.Hash] : circlesNode.Nodes.Add(circle.Hash, GetCircleDisplayName(circle), ImageIndexes.Circle, ImageIndexes.Circle);
+                        circlesNode.Nodes[circle.Hash] : circlesNode.Nodes.Add(circle.Hash, GetCircleDisplayName(circle, 0), ImageIndexes.Circle, ImageIndexes.Circle);
 
                     circlenode.NodeFont = PARENT_NODE_FONT;
                     circlenode.Tag = circle;
 
+                    int count = 0;
                     foreach (Contact contact in circle.ContactList.All)
                     {
+                        count++;
                         // Get real passport contact to chat with... If this contact isn't on our forward list, show add contact form...
                         string text2 = contact.Name;
                         if (contact.PersonalMessage != null && !String.IsNullOrEmpty(contact.PersonalMessage.Message))
@@ -1685,7 +1689,7 @@ namespace MSNPSharpClient
                         newnode.Tag = contact;
                     }
 
-                    circlenode.Text = GetCircleDisplayName(circle);
+                    circlenode.Text = GetCircleDisplayName(circle, circlenode.Nodes.Count);
                 }
                 else
                 {

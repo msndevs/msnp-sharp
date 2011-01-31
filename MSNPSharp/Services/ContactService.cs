@@ -569,9 +569,9 @@ namespace MSNPSharp
                     if (NSMessageHandler.CircleList.Count > 0)
                     {
                         hashlist = new Dictionary<string, RoleLists>(NSMessageHandler.CircleList.Count);
-                        lock (NSMessageHandler.CircleList.SyncRoot)
+                        lock (NSMessageHandler.ContactList.SyncRoot)
                         {
-                            foreach (Circle circle in NSMessageHandler.CircleList)
+                            foreach (Circle circle in NSMessageHandler.CircleList.Values)
                             {
                                 if (circle.ADLCount == 0)
                                     continue;

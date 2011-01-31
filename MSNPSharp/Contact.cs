@@ -160,7 +160,7 @@ namespace MSNPSharp
 
             SetName(account);
             siblingString = ClientType.ToString() + ":" + account.ToLowerInvariant();
-            hash = MakeHash(Mail, ClientType, AddressBookId);
+            hash = MakeHash(Mail, ClientType);
             EndPointData[Guid.Empty] = new EndPointData(account, Guid.Empty);
 
             if (NSMessageHandler != null)
@@ -1584,14 +1584,9 @@ namespace MSNPSharp
             return Guid.Empty;
         }
 
-        internal static string MakeHash(string account, IMAddressInfoType type, Guid abId)
+        internal static string MakeHash(string account, IMAddressInfoType type)
         {
-            return type.ToString() + ":" + account.ToLowerInvariant() + ";via=" + abId.ToString("D").ToLowerInvariant();
-        }
-
-        internal static string MakeHash(string account, IMAddressInfoType type, string abId)
-        {
-            return type.ToString() + ":" + account.ToLowerInvariant() + ";via=" + abId.ToLowerInvariant();
+            return type.ToString() + ":" + account.ToLowerInvariant();
         }
 
         internal bool HasLists(RoleLists msnlists)

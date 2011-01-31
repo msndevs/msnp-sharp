@@ -34,6 +34,7 @@ using System;
 using System.IO;
 using System.Collections;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace MSNPSharp
 {
@@ -260,7 +261,7 @@ namespace MSNPSharp
         /// <summary>
         /// A collection of all circles which are defined by the user who logged into the messenger network.
         /// </summary>
-        public CircleList CircleList
+        public Dictionary<string, Contact> CircleList
         {
             get
             {

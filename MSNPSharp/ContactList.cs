@@ -305,7 +305,7 @@ namespace MSNPSharp
             set
             {
                 IMAddressInfoType key = value.ClientType;
-                string hash = Contact.MakeHash(account, value.ClientType, AddressBookId.ToString("D"));
+                string hash = Contact.MakeHash(account, value.ClientType);
                 base[key][hash] = value;
             }
         }
@@ -319,7 +319,7 @@ namespace MSNPSharp
             set
             {
                 IMAddressInfoType key = value.ClientType;
-                string hash = Contact.MakeHash(account, value.ClientType, AddressBookId.ToString("D"));
+                string hash = Contact.MakeHash(account, value.ClientType);
                 base[key][hash] = value;
             }
         }
@@ -346,7 +346,7 @@ namespace MSNPSharp
 
         public Contact GetContact(string account, IMAddressInfoType type)
         {
-            string hash = Contact.MakeHash(account, type, AddressBookId.ToString("D"));
+            string hash = Contact.MakeHash(account, type);
             if (base[type].ContainsKey(hash))
             {
                 return base[type][hash];
@@ -415,7 +415,7 @@ namespace MSNPSharp
         /// <returns></returns>
         public bool HasContact(string account, IMAddressInfoType type)
         {
-            string hash = Contact.MakeHash(account, type, AddressBookId.ToString("D"));
+            string hash = Contact.MakeHash(account, type);
             return base[type].ContainsKey(hash);
         }
 
@@ -437,7 +437,7 @@ namespace MSNPSharp
         /// <param name="type"></param>
         public bool Remove(string account, IMAddressInfoType type)
         {
-            string hash = Contact.MakeHash(account, type, AddressBookId.ToString("D"));
+            string hash = Contact.MakeHash(account, type);
             lock (SyncRoot)
             {
                 return base[type].Remove(hash);
@@ -537,7 +537,7 @@ namespace MSNPSharp
         /// </returns>
         internal Contact GetContactWithCreate(string account, IMAddressInfoType type)
         {
-            string hash = Contact.MakeHash(account, type, AddressBookId.ToString("D"));
+            string hash = Contact.MakeHash(account, type);
 
             if (base[type].ContainsKey(hash))
             {

@@ -47,7 +47,6 @@
     <Compile Include="Apps\P2PActivity.cs" />
     <Compile Include="Apps\P2PApplication.cs" />
     <Compile Include="Circle.cs" />
-    <Compile Include="CircleList.cs" />
     <Compile Include="Comparers.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="ConnectivityException.cs" />
