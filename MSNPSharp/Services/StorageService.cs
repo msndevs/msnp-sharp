@@ -1029,21 +1029,23 @@ namespace MSNPSharp
                 // 1. Getprofile
                 NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.RoamingIdentityChanged);
 
+                bool updateDocumentResult = false;
                 // 1.1 UpdateDocument
                 if (!String.IsNullOrEmpty(NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID))
                 {
-                    UpdatePhotoDocumentSync(PartnerScenario.RoamingIdentityChanged,
+                    updateDocumentResult = UpdatePhotoDocumentSync(PartnerScenario.RoamingIdentityChanged,
                         NSMessageHandler.ContactService.Deltas.Profile.Photo.Name,
                         NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID,
                         mem.ToArray());
 
-
                     // UpdateDynamicItem
-                    UpdateDynamicItemSync(PartnerScenario.RoamingIdentityChanged);
-
+                    if (updateDocumentResult)
+                    {
+                        updateDocumentResult = UpdateDynamicItemSync(PartnerScenario.RoamingIdentityChanged);
+                    }
                 }
 
-                if (String.IsNullOrEmpty(NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID) &&
+                if (updateDocumentResult == false &&
                     NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile)
                 {
                     string resourceId = string.Empty;
