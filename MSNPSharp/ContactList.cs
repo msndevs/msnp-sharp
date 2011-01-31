@@ -260,6 +260,8 @@ namespace MSNPSharp
 
         #endregion
 
+        #region Properties
+
         public object SyncRoot
         {
             get
@@ -294,6 +296,36 @@ namespace MSNPSharp
             }
         }
 
+        public Contact this[string account]
+        {
+            get
+            {
+                return GetContact(account);
+            }
+            set
+            {
+                IMAddressInfoType key = value.ClientType;
+                string hash = Contact.MakeHash(account, value.ClientType, AddressBookId.ToString("D"));
+                base[key][hash] = value;
+            }
+        }
+
+        public Contact this[string account, IMAddressInfoType type]
+        {
+            get
+            {
+                return GetContact(account, type);
+            }
+            set
+            {
+                IMAddressInfoType key = value.ClientType;
+                string hash = Contact.MakeHash(account, value.ClientType, AddressBookId.ToString("D"));
+                base[key][hash] = value;
+            }
+        }
+
+        #endregion
+
         /// <summary>
         /// Get the specified contact.
         /// <remarks>If the contact does not exist, return null</remarks>
@@ -306,11 +338,151 @@ namespace MSNPSharp
             foreach (IMAddressInfoType addressType in addressTypes)
             {
                 if (HasContact(account, addressType))
-                    return GetContactWithCreate(account, addressType);
+                    return GetContact(account, addressType);
             }
 
             return null;
         }
+
+        public Contact GetContact(string account, IMAddressInfoType type)
+        {
+            string hash = Contact.MakeHash(account, type, AddressBookId.ToString("D"));
+            if (base[type].ContainsKey(hash))
+            {
+                return base[type][hash];
+            }
+            return null;
+        }
+
+        public Contact GetContactByGuid(Guid guid)
+        {
+            if (guid != Guid.Empty)
+            {
+                lock (SyncRoot)
+                {
+                    foreach (IMAddressInfoType addressType in addressTypes)
+                    {
+                        foreach (Contact contact in base[addressType].Values)
+                        {
+                            if (contact.Guid == guid)
+                                return contact;
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        public Contact GetContactByCID(long cid)
+        {
+            if (cid != 0)
+            {
+                lock (SyncRoot)
+                {
+                    foreach (IMAddressInfoType addressType in addressTypes)
+                    {
+                        foreach (Contact contact in base[addressType].Values)
+                        {
+                            if (contact.CID == cid)
+                                return contact;
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Check whether the specified account is in the contact list.
+        /// </summary>
+        /// <param name="account"></param>
+        /// <returns></returns>
+        public bool HasContact(string account)
+        {
+            foreach (IMAddressInfoType ct in addressTypes)
+            {
+                if (HasContact(account, ct))
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Check whether the account with specified client type is in the contact list.
+        /// </summary>
+        /// <param name="account"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public bool HasContact(string account, IMAddressInfoType type)
+        {
+            string hash = Contact.MakeHash(account, type, AddressBookId.ToString("D"));
+            return base[type].ContainsKey(hash);
+        }
+
+        public bool HasMultiType(string account)
+        {
+            int typecount = 0;
+            foreach (IMAddressInfoType ct in addressTypes)
+            {
+                if (HasContact(account, ct) && ++typecount > 1)
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Remove a contact with specified account and client type.
+        /// </summary>
+        /// <param name="account"></param>
+        /// <param name="type"></param>
+        public bool Remove(string account, IMAddressInfoType type)
+        {
+            string hash = Contact.MakeHash(account, type, AddressBookId.ToString("D"));
+            lock (SyncRoot)
+            {
+                return base[type].Remove(hash);
+            }
+        }
+
+        /// <summary>
+        /// Reset the contact list and clear the owner.
+        /// </summary>
+        public void Reset()
+        {
+            if (Owner != null)
+            {
+                Owner.Emoticons.Clear();
+                Owner.EndPointData.Clear();
+                Owner.LocalEndPointClientCapabilities = ClientCapabilities.None;
+                Owner.LocalEndPointClientCapabilitiesEx = ClientCapabilitiesEx.None;
+            }
+
+            owner = null;
+
+            lock (SyncRoot)
+            {
+                foreach (IMAddressInfoType addressType in addressTypes)
+                {
+                    base[addressType] = new Dictionary<string, Contact>();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Copy the whole contact list out.
+        /// </summary>
+        /// <returns></returns>
+        public Contact[] ToArray(IMAddressInfoType type)
+        {
+            lock (SyncRoot)
+            {
+                Contact[] array = new Contact[base[type].Values.Count];
+                base[type].Values.CopyTo(array, 0);
+                return array;
+            }
+        }
+
+        #region Internal
 
         /// <summary>
         /// Get the specified contact.
@@ -377,110 +549,7 @@ namespace MSNPSharp
             lock (SyncRoot)
                 base[type][hash] = tmpContact;
 
-            return GetContactWithCreate(account, type);
-        }
-
-        public Contact GetContactByGuid(Guid guid)
-        {
-            if (guid != Guid.Empty)
-            {
-                lock (SyncRoot)
-                {
-                    foreach (IMAddressInfoType addressType in addressTypes)
-                    {
-                        foreach (Contact contact in base[addressType].Values)
-                        {
-                            if (contact.Guid == guid)
-                                return contact;
-                        }
-                    }
-                }
-            }
-            return null;
-        }
-
-        public Contact GetContactByCID(long cid)
-        {
-            if (cid != 0)
-            {
-                lock (SyncRoot)
-                {
-                    foreach (IMAddressInfoType addressType in addressTypes)
-                    {
-                        foreach (Contact contact in base[addressType].Values)
-                        {
-                            if (contact.CID == cid)
-                                return contact;
-                        }
-                    }
-                }
-            }
-            return null;
-        }
-        /*
-                public Contact this[string account]
-                {
-                    get
-                    {
-                        return GetContact(account);
-                    }
-                    set
-                    {
-                        this[account, value.ClientType] = value;
-                    }
-                }
-
-                public Contact this[string account, IMAddressInfoType type]
-                {
-                    get
-                    {
-                        return GetContact(account, type);
-                    }
-                    set
-                    {
-                        this[account, type] = value;
-                    }
-                }
-        */
-        /// <summary>
-        /// Check whether the specified account is in the contact list.
-        /// </summary>
-        /// <param name="account"></param>
-        /// <returns></returns>
-        public bool HasContact(string account)
-        {
-            foreach (IMAddressInfoType ct in addressTypes)
-            {
-                if (HasContact(account, ct))
-                    return true;
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Check whether the account with specified client type is in the contact list.
-        /// </summary>
-        /// <param name="account"></param>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        public bool HasContact(string account, IMAddressInfoType type)
-        {
-            string hash = Contact.MakeHash(account, type, AddressBookId.ToString("D"));
-            return base[type].ContainsKey(hash);
-        }
-
-        /// <summary>
-        /// Copy the whole contact list out.
-        /// </summary>
-        /// <returns></returns>
-        public Contact[] ToArray(IMAddressInfoType type)
-        {
-            lock (SyncRoot)
-            {
-                Contact[] array = new Contact[base[type].Values.Count];
-                base[type].Values.CopyTo(array, 0);
-                return array;
-            }
+            return GetContact(account, type);
         }
 
         /// <summary>
@@ -493,20 +562,6 @@ namespace MSNPSharp
             {
                 if (HasContact(account, ct))
                     Remove(account, ct);
-            }
-        }
-
-        /// <summary>
-        /// Remove a contact with specified account and client type.
-        /// </summary>
-        /// <param name="account"></param>
-        /// <param name="type"></param>
-        internal void Remove(string account, IMAddressInfoType type)
-        {
-            string hash = Contact.MakeHash(account, type, AddressBookId.ToString("D"));
-            lock (SyncRoot)
-            {
-                base[type].Remove(hash);
             }
         }
 
@@ -534,39 +589,6 @@ namespace MSNPSharp
             this.owner = owner;
         }
 
-        public bool HasMultiType(string account)
-        {
-            int typecount = 0;
-            foreach (IMAddressInfoType ct in addressTypes)
-            {
-                if (HasContact(account, ct) && ++typecount > 1)
-                    return true;
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Reset the contact list and clear the owner.
-        /// </summary>
-        public void Reset()
-        {
-            if (Owner != null)
-            {
-                Owner.Emoticons.Clear();
-                Owner.EndPointData.Clear();
-                Owner.LocalEndPointClientCapabilities = ClientCapabilities.None;
-                Owner.LocalEndPointClientCapabilitiesEx = ClientCapabilitiesEx.None;
-            }
-
-            owner = null;
-
-            lock (SyncRoot)
-            {
-                foreach (IMAddressInfoType addressType in addressTypes)
-                {
-                    base[addressType] = new Dictionary<string, Contact>();
-                }
-            }
-        }
+        #endregion
     }
 };

@@ -807,7 +807,7 @@ namespace MSNPSharp.IO
 
                                     if (NSMessageHandler.ContactList.HasContact(account, type))
                                     {
-                                        Contact contact = NSMessageHandler.ContactList.GetContactWithCreate(account, type);
+                                        Contact contact = NSMessageHandler.ContactList.GetContact(account, type);
                                         contact.CID = cid;
                                         if (contact.HasLists(msnlist))
                                         {
