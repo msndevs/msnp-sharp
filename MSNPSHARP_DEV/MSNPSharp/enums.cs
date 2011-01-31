@@ -382,7 +382,7 @@ namespace MSNPSharp
         IsAuthenticatedWebIMUser = 0x40,
         _0x80 = 0x80,
         SupportsOfflineIM = 0x100,
-        SharingVideoSupport = 0x200,
+        SupportsSharingVideo = 0x200,
         SupportsNudges = 0x400,   // (((:)))
         _0x800 = 0x800,
         SharingEnabled = 0x1000,
