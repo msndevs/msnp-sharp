@@ -87,15 +87,18 @@ namespace MSNPSharp
 
             public virtual bool MoveNext()
             {
-                if (listFilter == RoleLists.None)
-                {
-                    return baseEnum.MoveNext();
-                }
-
                 while (baseEnum.MoveNext())
                 {
-                    if (Current.HasLists(listFilter))
-                        return true;
+                    if (Current.ContactType != MessengerContactType.Circle)
+                    {
+                        if (listFilter == RoleLists.None)
+                        {
+                            return true;
+                        }
+
+                        if (Current.HasLists(listFilter))
+                            return true;
+                    }
                 }
 
                 return false;
@@ -163,7 +166,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.ListEnumerator(base[IMAddressInfoType.WindowsLive].GetEnumerator(), RoleLists.None);
+                return new ContactList.ListEnumerator(base[IMAddressInfoType.None].GetEnumerator(), RoleLists.None);
             }
         }
 
@@ -174,7 +177,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.ListEnumerator(base[IMAddressInfoType.WindowsLive].GetEnumerator(), RoleLists.Forward);
+                return new ContactList.ListEnumerator(base[IMAddressInfoType.None].GetEnumerator(), RoleLists.Forward);
             }
         }
 
@@ -185,7 +188,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.ListEnumerator(base[IMAddressInfoType.WindowsLive].GetEnumerator(), RoleLists.Allow);
+                return new ContactList.ListEnumerator(base[IMAddressInfoType.None].GetEnumerator(), RoleLists.Allow);
             }
         }
 
@@ -196,7 +199,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.ListEnumerator(base[IMAddressInfoType.WindowsLive].GetEnumerator(), RoleLists.Block);
+                return new ContactList.ListEnumerator(base[IMAddressInfoType.None].GetEnumerator(), RoleLists.Block);
             }
         }
 
@@ -207,7 +210,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.ListEnumerator(base[IMAddressInfoType.WindowsLive].GetEnumerator(), RoleLists.Hide);
+                return new ContactList.ListEnumerator(base[IMAddressInfoType.None].GetEnumerator(), RoleLists.Hide);
             }
         }
 
@@ -218,7 +221,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.ListEnumerator(base[IMAddressInfoType.WindowsLive].GetEnumerator(), RoleLists.Reverse);
+                return new ContactList.ListEnumerator(base[IMAddressInfoType.None].GetEnumerator(), RoleLists.Reverse);
             }
         }
 
@@ -229,7 +232,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.ListEnumerator(base[IMAddressInfoType.WindowsLive].GetEnumerator(), RoleLists.Pending);
+                return new ContactList.ListEnumerator(base[IMAddressInfoType.None].GetEnumerator(), RoleLists.Pending);
             }
         }
 
@@ -240,7 +243,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.EmailListEnumerator(base[IMAddressInfoType.WindowsLive].GetEnumerator());
+                return new ContactList.EmailListEnumerator(base[IMAddressInfoType.None].GetEnumerator());
             }
         }
 
@@ -547,7 +550,10 @@ namespace MSNPSharp
             Contact tmpContact = new Contact(AddressBookId, account, type, 0, nsMessageHandler);
 
             lock (SyncRoot)
+            {
                 base[type][hash] = tmpContact;
+                base[IMAddressInfoType.None][hash] = tmpContact;
+            }
 
             return GetContact(account, type);
         }
