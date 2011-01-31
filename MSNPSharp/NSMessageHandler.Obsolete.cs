@@ -40,6 +40,37 @@ namespace MSNPSharp
 
     partial class NSMessageHandler
     {
+        [Obsolete(@"Obsoleted in 4.0, please use RoleLists instead.", true)]
+        public enum MSNLists
+        {
+        }
+
+        [Obsolete(@"Obsoleted in 4.0, please use ClientCapabilities instead.", true)]
+        public enum ClientCapacities
+        {
+        }
+
+        [Obsolete(@"Obsoleted in 4.0, please use ClientCapabilitiesEx instead.", true)]
+        public enum ClientCapacitiesEx
+        {
+        }
+
+        [Obsolete(@"Obsoleted in 4.0, please use IMAddressInfoType instead.", true)]
+        public enum ClientType
+        {
+        }
+
+        /// <summary>
+        /// Sets whether the contact list owner has a mobile device enabled.
+        /// </summary>
+        [Obsolete(@"Obsoleted in 4.0", true)]
+        internal void SetMobileDevice(bool enabled)
+        {
+            if (ContactList.Owner == null)
+                throw new MSNPSharpException("Not a valid owner");
+
+            MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MBE", enabled ? "Y" : "N" }));
+        }
 
         /// <summary>
         /// The owner of the contactlist. This is the identity that logged into the messenger network.
