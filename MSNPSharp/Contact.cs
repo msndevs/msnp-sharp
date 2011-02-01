@@ -1055,7 +1055,10 @@ namespace MSNPSharp
             }
         }
 
-
+        internal void SetColorScheme(Color color)
+        {
+            colorScheme = color;
+        }
 
         internal void SetHasSpace(bool hasSpaceValue)
         {
