@@ -179,5 +179,16 @@ namespace MSNPSharp
 
             return base.ContextEqual(contextPlain);
         }
+
+        public string Payload
+        {
+            get
+            {
+                string pload = String.Format(
+                    "<Data><Scene>{0}</Scene></Data>", MSNHttpUtility.XmlEncode(base.ContextPlain));
+
+                return pload;
+            }
+        }
     }
 };

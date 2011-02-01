@@ -291,6 +291,44 @@ namespace MSNPSharp
                 }
             }
         }
+        
+        public override SceneImage SceneImage
+        {
+            get
+            {
+                return base.SceneImage;
+            }
+            internal set
+            {
+                if (value != null)
+                {
+                    if (base.SceneImage != null)
+                    {
+                        if (value.Sha == base.SceneImage.Sha)
+                        {
+                            return;
+                        }
+                    }
+
+                    SetSceneImageAndFireSceneImageChangedEvent(value);
+                    value.Creator = Mail;
+                }
+
+                if (NSMessageHandler != null)
+                {
+                    NSMessageHandler.SetSceneImage(value);
+                }
+            }
+        }
+
+        public void SetSceneImage(Image image)
+        {
+            SerializableMemoryStream sms = new SerializableMemoryStream();
+            image.Save(sms, image.RawFormat);
+
+            SceneImage = new SceneImage(NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant(), sms);
+
+        }
 
         /// <summary>
         /// Personel message
