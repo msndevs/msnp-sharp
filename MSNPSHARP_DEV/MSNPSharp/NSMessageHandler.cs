@@ -838,6 +838,17 @@ namespace MSNPSharp
             StorageService.UpdateProfile(ContactList.Owner.Name, pmsg.Message);
         }
 
+        /// <summary>
+        /// Sets the scene image.
+        /// </summary>
+        internal void SetSceneImage(SceneImage scimg)
+        {
+            if (ContactList.Owner == null)
+                throw new MSNPSharpException("Not a valid owner");
+
+            MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", scimg.Payload));
+        }
+
         internal void SetEndPointCapabilities()
         {
             if (ContactList.Owner == null)
@@ -930,6 +941,9 @@ namespace MSNPSharp
                     }
 
                     SetPersonalMessage(ContactList.Owner.PersonalMessage);
+                    
+                    if (!contactList.Owner.SceneImage.IsDefaultImage)
+                        SetSceneImage(contactList.Owner.SceneImage);
 
                     // Set screen name
                     SetScreenName(ContactList.Owner.Name);
@@ -1602,12 +1616,16 @@ namespace MSNPSharp
                 int color;
                 if (int.TryParse(colorSchemeNode.InnerXml, out color))
                 {
+                    /*
                     int red = color & 0xFF;
                     int green = ((color & 0xFF00) >> 8) & 0xFF;
                     int blue = ((color & 0xFF0000) >> 16) & 0xFF;
                     color = (255 << 24) | (red << 16) | (green << 8) | blue;
 
                     return System.Drawing.Color.FromArgb(color);
+                    */
+
+                    return System.Drawing.ColorTranslator.FromOle(color);
                 }
             }
 
