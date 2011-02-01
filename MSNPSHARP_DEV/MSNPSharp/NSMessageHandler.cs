@@ -42,6 +42,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Drawing;
 
 namespace MSNPSharp
 {
@@ -839,14 +840,17 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Sets the scene image.
+        /// Sets the scene image and scheme context.
         /// </summary>
-        internal void SetSceneImage(SceneImage scimg)
+        internal void SetSceneData(SceneImage scimg, Color sccolor)
         {
             if (ContactList.Owner == null)
                 throw new MSNPSharpException("Not a valid owner");
 
-            MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", scimg.Payload));
+            string pload = String.Format("<Data><Scene>{0}</Scene><ColorScheme>{1}</ColorScheme></Data>",
+                MSNHttpUtility.XmlEncode(scimg.ContextPlain), ColorTranslator.ToOle(sccolor).ToString());
+
+            MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", pload));
         }
 
         internal void SetEndPointCapabilities()
@@ -943,7 +947,7 @@ namespace MSNPSharp
                     SetPersonalMessage(ContactList.Owner.PersonalMessage);
                     
                     if (!contactList.Owner.SceneImage.IsDefaultImage)
-                        SetSceneImage(contactList.Owner.SceneImage);
+                        SetSceneData(contactList.Owner.SceneImage, contactList.Owner.ColorScheme);
 
                     // Set screen name
                     SetScreenName(ContactList.Owner.Name);
@@ -1453,7 +1457,7 @@ namespace MSNPSharp
                     }
 
                     // Get the color scheme
-                    System.Drawing.Color color = GetColorSchemeFromUBXXmlData(xmlDoc);
+                    Color color = GetColorSchemeFromUBXXmlData(xmlDoc);
                     if (contact.ColorScheme != color)
                     {
                         contact.ColorScheme = color;
@@ -1603,14 +1607,14 @@ namespace MSNPSharp
             return string.Empty;
         }
 
-        private System.Drawing.Color GetColorSchemeFromUBXXmlData(XmlDocument ubxData)
+        private Color GetColorSchemeFromUBXXmlData(XmlDocument ubxData)
         {
             XmlNode colorSchemeNode = ubxData.SelectSingleNode(@"//Data/ColorScheme");
             if (colorSchemeNode != null)
             {
                 if (string.IsNullOrEmpty(colorSchemeNode.InnerXml))
                 {
-                    return System.Drawing.Color.Empty;
+                    return Color.Empty;
                 }
 
                 int color;
@@ -1622,14 +1626,14 @@ namespace MSNPSharp
                     int blue = ((color & 0xFF0000) >> 16) & 0xFF;
                     color = (255 << 24) | (red << 16) | (green << 8) | blue;
 
-                    return System.Drawing.Color.FromArgb(color);
+                    return Color.FromArgb(color);
                     */
 
-                    return System.Drawing.ColorTranslator.FromOle(color);
+                    return ColorTranslator.FromOle(color);
                 }
             }
 
-            return System.Drawing.Color.Empty;
+            return Color.Empty;
         }
 
         private List<EndPointData> GetEndPointDataFromUBXXmlData(string endpointAccount, XmlDocument ubxData, bool isPrivateEndPoint)

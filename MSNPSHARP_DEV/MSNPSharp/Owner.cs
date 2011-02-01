@@ -313,21 +313,52 @@ namespace MSNPSharp
                     SetSceneImageAndFireSceneImageChangedEvent(value);
                     value.Creator = Mail;
                 }
+            }
+        }
 
-                if (NSMessageHandler != null)
+        public override Color ColorScheme
+        {
+            get
+            {
+                return base.ColorScheme;
+            }
+            internal set
+            {
+                if (ColorScheme != value)
                 {
-                    NSMessageHandler.SetSceneImage(value);
+                    base.ColorScheme = value;
+                    NSMessageHandler.ContactService.Deltas.Profile.ColorScheme = ColorTranslator.ToOle(value);
+
+                    base.OnColorSchemeChanged();
+                    NSMessageHandler.ContactService.Deltas.Save(true);
                 }
             }
         }
 
-        public void SetSceneImage(Image image)
+        /// <summary>
+        /// Set the scene image and the scheme color for the owner.
+        /// </summary>
+        /// <returns>
+        /// This will return false if the scene image and color scheme are the same than the current one. 
+        /// The result give false if the image given is null.
+        /// </returns>
+        public bool SetSceneData(Image imageScene, Color schemeColor)
         {
+            if (imageScene == null)
+                return false;
+
             SerializableMemoryStream sms = new SerializableMemoryStream();
-            image.Save(sms, image.RawFormat);
+            imageScene.Save(sms, imageScene.RawFormat);
 
             SceneImage = new SceneImage(NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant(), sms);
+            ColorScheme = schemeColor;
 
+            if (NSMessageHandler != null)
+            {
+                NSMessageHandler.SetSceneData(SceneImage, ColorScheme);
+            }
+
+            return true;
         }
 
         /// <summary>

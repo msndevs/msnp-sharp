@@ -462,6 +462,7 @@ namespace MSNPSharp
             NSMessageHandler.ContactList.Owner.SetName(mydispName);
             NSMessageHandler.ContactList.Owner.SetPersonalMessage(pm);
             NSMessageHandler.ContactList.Owner.CreateDefaultDisplayImage(Deltas.Profile.Photo.DisplayImage);
+            NSMessageHandler.ContactList.Owner.SetColorScheme(System.Drawing.ColorTranslator.FromOle(Deltas.Profile.ColorScheme));
 
             if (NSMessageHandler.AutoSynchronize)
             {

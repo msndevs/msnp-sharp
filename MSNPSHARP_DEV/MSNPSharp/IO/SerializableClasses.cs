@@ -333,6 +333,7 @@ namespace MSNPSharp.IO
     {
         private string displayName = string.Empty;
         private string personalMessage = string.Empty;
+        private int colorScheme = 0;
         private ProfilePhoto photo = new ProfilePhoto();
         private bool hasExpressionProfile = true;
         private ProfileResource expressionProfile = new ProfileResource();
@@ -404,6 +405,20 @@ namespace MSNPSharp.IO
             }
         }
 
+        /// <summary>
+        /// Color scheme of owner, in BGR form.
+        /// </summary>
+        public int ColorScheme
+        {
+            get
+            {
+                return colorScheme;
+            }
+            set
+            {
+                colorScheme = value;
+            }
+        }
 
     }
 
