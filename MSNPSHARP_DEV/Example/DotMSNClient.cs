@@ -574,11 +574,24 @@ namespace MSNPSharpClient
                 return;
             }
 
+            Messenger.ContactList.Owner.SceneImageChanged += new EventHandler<SceneImageChangedEventArgs>(Owner_SceneImageChanged);
             Messenger.ContactList.Owner.DisplayImageChanged += new EventHandler<DisplayImageChangedEventArgs>(Owner_DisplayImageChanged);
             Messenger.ContactList.Owner.PersonalMessageChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
             Messenger.ContactList.Owner.ScreenNameChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
             Messenger.ContactList.Owner.PlacesChanged += new EventHandler<PlaceChangedEventArgs>(Owner_PlacesChanged);
             Messenger.ContactList.Owner.StatusChanged += new EventHandler<StatusChangedEventArgs>(Owner_StatusChanged);
+        }
+
+        void Owner_SceneImageChanged(object sender, SceneImageChangedEventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler<SceneImageChangedEventArgs>(Owner_SceneImageChanged), sender, e);
+                return;
+            }
+
+            tableLayoutPanel3.BackgroundImage = e.NewSceneImage.Image;
+
         }
 
         void Nameserver_ContactOnline(object sender, ContactEventArgs e)
@@ -2331,6 +2344,14 @@ namespace MSNPSharpClient
             }
         }
 
+        private void btnSetTheme_Click(object sender, EventArgs e)
+        {
+            if (openImageDialog.ShowDialog() == DialogResult.OK)
+            {
+                Image newImage = Image.FromFile(openImageDialog.FileName, true);
+                messenger.Owner.SetScene(newImage, Color.White);
+            }
+        }
       
     }
 }

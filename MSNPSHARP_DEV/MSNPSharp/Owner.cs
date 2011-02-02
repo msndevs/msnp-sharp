@@ -342,7 +342,7 @@ namespace MSNPSharp
         /// <returns>
         /// The result will return false if the image scene and color are the same, compared to the current one.
         /// </returns>
-        public bool SetSceneData(Image imageScene, Color schemeColor)
+        public bool SetScene(Image imageScene, Color schemeColor)
         {
             if (imageScene == SceneImage.Image && schemeColor == ColorScheme)
                 return false;
