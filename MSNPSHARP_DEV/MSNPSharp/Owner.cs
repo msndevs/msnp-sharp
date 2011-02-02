@@ -310,8 +310,8 @@ namespace MSNPSharp
                         }
                     }
 
-                    SetSceneImageAndFireSceneImageChangedEvent(value);
                     value.Creator = Mail;
+                    base.SceneImage = value;
                 }
             }
         }
@@ -330,7 +330,6 @@ namespace MSNPSharp
                     NSMessageHandler.ContactService.Deltas.Profile.ColorScheme = ColorTranslator.ToOle(value);
 
                     base.OnColorSchemeChanged();
-                    NSMessageHandler.ContactService.Deltas.Save(true);
                 }
             }
         }
@@ -338,25 +337,43 @@ namespace MSNPSharp
         /// <summary>
         /// Set the scene image and the scheme color for the owner.
         /// </summary>
+        /// <param name="imageScene">Set this to null or the default display image if you want the default MSN scene.</param>
+        /// <param name="schemeColor"></param>
         /// <returns>
-        /// This will return false if the scene image and color scheme are the same than the current one. 
-        /// The result give false if the image given is null.
+        /// The result will return false if the image scene and color are the same, compared to the current one.
         /// </returns>
         public bool SetSceneData(Image imageScene, Color schemeColor)
         {
-            if (imageScene == null)
+            if (imageScene == SceneImage.Image && schemeColor == ColorScheme)
                 return false;
 
-            SerializableMemoryStream sms = new SerializableMemoryStream();
-            imageScene.Save(sms, imageScene.RawFormat);
+            bool scSaved = false;
 
-            SceneImage = new SceneImage(NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant(), sms);
+
             ColorScheme = schemeColor;
+            if (imageScene != SceneImage.Image)
+            {
+                if (imageScene != null)
+                {
+                    MemoryStream sms = new MemoryStream();
+                    imageScene.Save(sms, imageScene.RawFormat);
+
+                    SceneImage = new SceneImage(NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant(), sms);
+                }
+                else
+                    SceneImage = new SceneImage(NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant(), true);
+
+                scSaved = true;
+            }
+            
+            if (scSaved)
+                SaveOriginalSceneImageAndFireSceneImageChangedEvent(
+                    new SceneImageChangedEventArgs(SceneImage, DisplayImageChangedType.TransmissionCompleted, false));
+            else
+                NSMessageHandler.ContactService.Deltas.Save(true);
 
             if (NSMessageHandler != null)
-            {
                 NSMessageHandler.SetSceneData(SceneImage, ColorScheme);
-            }
 
             return true;
         }

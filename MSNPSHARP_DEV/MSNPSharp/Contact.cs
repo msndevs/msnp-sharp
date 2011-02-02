@@ -1238,7 +1238,7 @@ namespace MSNPSharp
 
         internal void SaveOriginalSceneImageAndFireSceneImageChangedEvent(SceneImageChangedEventArgs arg)
         {
-            SaveImage(SceneImage);
+            SaveImage(sceneImage);
             OnSceneImageChanged(arg);
         }
 
