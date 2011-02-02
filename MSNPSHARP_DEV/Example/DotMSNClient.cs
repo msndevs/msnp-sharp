@@ -1062,6 +1062,11 @@ namespace MSNPSharpClient
             displayImageBox.Image = Messenger.ContactList.Owner.DisplayImage.Image;
             displayImageBox.SizeMode = PictureBoxSizeMode.Zoom;
 
+            if (Messenger.Owner.SceneImage != null && Messenger.Owner.SceneImage.Image != null)
+            {
+                tableLayoutPanel3.BackgroundImage = Messenger.Owner.SceneImage.Image;
+            }
+
             UpdateContactlist(sender, e);
         }
 
