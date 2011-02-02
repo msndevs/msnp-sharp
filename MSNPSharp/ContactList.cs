@@ -488,15 +488,42 @@ namespace MSNPSharp
         /// <param name="type"></param>
         public bool Remove(string account, IMAddressInfoType type)
         {
+            bool removed = false;
+
             if (type != IMAddressInfoType.None)
             {
                 string hash = Contact.MakeHash(account, type);
+
                 lock (SyncRoot)
                 {
-                    return base[type].Remove(hash);
+                    removed = base[type].Remove(hash);
+
+                    if (removed)
+                    {
+                        bool found = false;
+
+                        foreach (IMAddressInfoType deleteList in addressTypes)
+                        {
+                            if (deleteList != IMAddressInfoType.None)
+                            {
+                                if (base[deleteList].ContainsKey(hash))
+                                {
+                                    found = true; // Can't be deleted...
+                                    break;
+                                }
+                            }
+                        }
+
+                        // None found. It is time to remove from none list, too.
+                        if (!found)
+                        {
+                            base[IMAddressInfoType.None].Remove(hash);
+                        }
+                    }
                 }
             }
-            return false;
+
+            return removed;
         }
 
         /// <summary>
