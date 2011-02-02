@@ -1060,6 +1060,11 @@ namespace MSNPSharp
             colorScheme = color;
         }
 
+        internal void SetSceneImage(SceneImage scene)
+        {
+            sceneImage = scene;
+        }
+
         internal void SetHasSpace(bool hasSpaceValue)
         {
             hasSpace = hasSpaceValue;
@@ -1372,7 +1377,7 @@ namespace MSNPSharp
             if (NSMessageHandler.ContactService.Deltas == null)
                 return;
 
-            if (displayImage != null && !sceneImage.IsDefaultImage) //Not default, no need to restore.
+            if (sceneImage != null && !sceneImage.IsDefaultImage) //Not default, no need to restore.
                 return;
 
             string Sha = string.Empty;
