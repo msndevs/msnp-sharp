@@ -848,7 +848,7 @@ namespace MSNPSharp
                 throw new MSNPSharpException("Not a valid owner");
 
             string pload = String.Format("<Data><Scene>{0}</Scene><ColorScheme>{1}</ColorScheme></Data>",
-                MSNHttpUtility.XmlEncode(scimg.ContextPlain), ColorTranslator.ToOle(sccolor).ToString());
+                scimg.IsDefaultImage ? string.Empty : MSNHttpUtility.XmlEncode(scimg.ContextPlain), ColorTranslator.ToOle(sccolor).ToString());
 
             MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", pload));
         }
