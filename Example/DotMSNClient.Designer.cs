@@ -80,6 +80,7 @@ namespace MSNPSharpClient
             this.tableLayoutPanel6 = new System.Windows.Forms.TableLayoutPanel();
             this.pnlLogin = new System.Windows.Forms.Panel();
             this.pnlNameAndPM = new System.Windows.Forms.Panel();
+            this.btnSetTheme = new System.Windows.Forms.Button();
             this.btnSetMusic = new System.Windows.Forms.Button();
             this.lblPM = new System.Windows.Forms.TextBox();
             this.lblName = new System.Windows.Forms.TextBox();
@@ -90,8 +91,8 @@ namespace MSNPSharpClient
             this.tableLayoutPanel7 = new System.Windows.Forms.TableLayoutPanel();
             this.comboPlaces = new System.Windows.Forms.ComboBox();
             this.comboStatus = new System.Windows.Forms.ComboBox();
-            this.statusBar = new System.Windows.Forms.Label();
             this.logoImageBox = new System.Windows.Forms.PictureBox();
+            this.statusBar = new System.Windows.Forms.Label();
             this.userMenuStrip.SuspendLayout();
             this.sortContextMenu.SuspendLayout();
             this.groupContextMenu.SuspendLayout();
@@ -215,7 +216,7 @@ namespace MSNPSharpClient
             // 
             this.openImageDialog.Filter = "Supported Images|*.png;*.jpg;*.jpeg;*.gif";
             this.openImageDialog.Multiselect = true;
-            this.openImageDialog.Title = "Select display image";
+            this.openImageDialog.Title = "Select image";
             // 
             // tmrKeepOnLine
             // 
@@ -639,6 +640,7 @@ namespace MSNPSharpClient
             // 
             // pnlNameAndPM
             // 
+            this.pnlNameAndPM.Controls.Add(this.btnSetTheme);
             this.pnlNameAndPM.Controls.Add(this.btnSetMusic);
             this.pnlNameAndPM.Controls.Add(this.lblPM);
             this.pnlNameAndPM.Controls.Add(this.lblName);
@@ -649,22 +651,34 @@ namespace MSNPSharpClient
             this.pnlNameAndPM.TabIndex = 15;
             this.pnlNameAndPM.Visible = false;
             // 
+            // btnSetTheme
+            // 
+            this.btnSetTheme.Location = new System.Drawing.Point(3, 48);
+            this.btnSetTheme.Name = "btnSetTheme";
+            this.btnSetTheme.Size = new System.Drawing.Size(57, 22);
+            this.btnSetTheme.TabIndex = 9;
+            this.btnSetTheme.Tag = "0";
+            this.btnSetTheme.Text = "Theme";
+            this.btnSetTheme.UseVisualStyleBackColor = true;
+            this.btnSetTheme.Click += new System.EventHandler(this.btnSetTheme_Click);
+            // 
             // btnSetMusic
             // 
-            this.btnSetMusic.Location = new System.Drawing.Point(233, 25);
+            this.btnSetMusic.Location = new System.Drawing.Point(3, 25);
             this.btnSetMusic.Name = "btnSetMusic";
-            this.btnSetMusic.Size = new System.Drawing.Size(33, 22);
+            this.btnSetMusic.Size = new System.Drawing.Size(57, 22);
             this.btnSetMusic.TabIndex = 8;
             this.btnSetMusic.Tag = "0";
-            this.btnSetMusic.Text = "M";
+            this.btnSetMusic.Text = "Music";
             this.btnSetMusic.UseVisualStyleBackColor = true;
             this.btnSetMusic.Click += new System.EventHandler(this.btnSetMusic_Click);
             // 
             // lblPM
             // 
-            this.lblPM.Location = new System.Drawing.Point(3, 26);
+            this.lblPM.Location = new System.Drawing.Point(66, 25);
+            this.lblPM.Multiline = true;
             this.lblPM.Name = "lblPM";
-            this.lblPM.Size = new System.Drawing.Size(228, 21);
+            this.lblPM.Size = new System.Drawing.Size(200, 44);
             this.lblPM.TabIndex = 7;
             this.lblPM.Leave += new System.EventHandler(this.lblName_Leave);
             // 
@@ -737,6 +751,7 @@ namespace MSNPSharpClient
             this.comboPlaces.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboPlaces.DropDownWidth = 220;
             this.comboPlaces.FormattingEnabled = true;
+            this.comboPlaces.ItemHeight = 15;
             this.comboPlaces.Location = new System.Drawing.Point(137, 3);
             this.comboPlaces.Name = "comboPlaces";
             this.comboPlaces.Size = new System.Drawing.Size(129, 23);
@@ -764,16 +779,6 @@ namespace MSNPSharpClient
             this.comboStatus.SelectedIndexChanged += new System.EventHandler(this.comboStatus_SelectedIndexChanged);
             this.comboStatus.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.comboStatus_KeyPress);
             // 
-            // statusBar
-            // 
-            this.statusBar.AutoSize = true;
-            this.statusBar.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.statusBar.Location = new System.Drawing.Point(3, 604);
-            this.statusBar.Name = "statusBar";
-            this.statusBar.Size = new System.Drawing.Size(637, 30);
-            this.statusBar.TabIndex = 10;
-            this.statusBar.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
             // logoImageBox
             // 
             this.logoImageBox.Image = global::MSNPSharpClient.Properties.Resources.app_banner;
@@ -783,6 +788,16 @@ namespace MSNPSharpClient
             this.logoImageBox.Size = new System.Drawing.Size(257, 124);
             this.logoImageBox.TabIndex = 1;
             this.logoImageBox.TabStop = false;
+            // 
+            // statusBar
+            // 
+            this.statusBar.AutoSize = true;
+            this.statusBar.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.statusBar.Location = new System.Drawing.Point(3, 604);
+            this.statusBar.Name = "statusBar";
+            this.statusBar.Size = new System.Drawing.Size(637, 30);
+            this.statusBar.TabIndex = 10;
+            this.statusBar.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // ClientForm
             // 
@@ -890,6 +905,7 @@ namespace MSNPSharpClient
         private ComboBox comboStatus;
         private PictureBox displayImageBox;
         private PictureBox logoImageBox;
+        private Button btnSetTheme;
 
     }
 }
