@@ -403,7 +403,7 @@ namespace MSNPSharp
         CustomEmoticonsCapable = 0x8000000,
         SupportsUTF8MoodMessages = 0x10000000,
         FTURNCapable = 0x20000000,
-        _0x40000000 = 0x40000000,
+        SupportsP4Activity = 0x40000000, // I think this is P4. Because it contains 4, and advertised between UTF8MoodMessages and MultipartyIM :-)))
         SupportsMultipartyConversations = 0x80000000,
 
         Default = SupportsPeerToPeerV2 | RTCVideoEnabled | SupportsOfflineIM | SupportsNudges
