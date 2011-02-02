@@ -390,7 +390,7 @@ namespace MSNPSharp
         _0x4000 = 0x4000,
         SupportsPeerToPeerMixerRelay = 0x8000,
         _0x10000 = 0x10000,
-        _0x20000 = 0x20000,
+        ConvWindowFileTransfer = 0x20000,
         VideoCallSupports16x9 = 0x40000,
         SupportsPeerToPeerEnveloping = 0x80000,
         _0x100000 = 0x100000,
