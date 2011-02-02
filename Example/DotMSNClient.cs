@@ -1616,7 +1616,7 @@ namespace MSNPSharpClient
 
                 foreach (Circle circle in Messenger.CircleList.Values)
                 {
-                    int contactCount = circle.ContactList[IMAddressInfoType.WindowsLive].Count;
+                    int contactCount = circle.ContactList[IMAddressInfoType.None].Count;
                     TreeNode circleNode = circlesNode.Nodes.Add(circle.Hash, GetCircleDisplayName(circle, contactCount), ImageIndexes.Circle, ImageIndexes.Circle);
                     circleNode.NodeFont = PARENT_NODE_FONT;
                     circleNode.Tag = circle;
