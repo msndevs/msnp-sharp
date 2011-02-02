@@ -92,8 +92,8 @@ namespace MSNPSharp.IO
         /// </summary>
         public SerializableDictionary<string, byte[]> UserSceneSlots
         {
-            get { return userTileSlots; }
-            set { userTileSlots = value; }
+            get { return userSceneSlots; }
+            set { userSceneSlots = value; }
         }
 
         /// <summary>
@@ -335,7 +335,7 @@ namespace MSNPSharp.IO
         {
             if (imageKey != null)
             {
-                if (HasImage(imageKey, isDisplayImage ? UserTileSlots : userSceneSlots))
+                if (HasImage(imageKey, isDisplayImage ? UserTileSlots : UserSceneSlots))
                 {
                     AddRelationship(siblingAccount, imageKey, isDisplayImage ? UserImageRelationships : UserSceneRelationships);
                     return true;

@@ -311,7 +311,7 @@ namespace MSNPSharp
                     }
 
                     value.Creator = Mail;
-                    base.SceneImage = value;
+                    base.SetSceneImage(value);
                 }
             }
         }
@@ -347,9 +347,6 @@ namespace MSNPSharp
             if (imageScene == SceneImage.Image && schemeColor == ColorScheme)
                 return false;
 
-            bool scSaved = false;
-
-
             ColorScheme = schemeColor;
             if (imageScene != SceneImage.Image)
             {
@@ -363,12 +360,9 @@ namespace MSNPSharp
                 else
                     SceneImage = new SceneImage(NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant(), true);
 
-                scSaved = true;
-            }
-            
-            if (scSaved)
                 SaveOriginalSceneImageAndFireSceneImageChangedEvent(
                     new SceneImageChangedEventArgs(SceneImage, DisplayImageChangedType.TransmissionCompleted, false));
+            }
             else
                 NSMessageHandler.ContactService.Deltas.Save(true);
 
