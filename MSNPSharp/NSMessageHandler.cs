@@ -2966,7 +2966,9 @@ namespace MSNPSharp
                         XmlNode contactNode = domainNode.FirstChild;
                         do
                         {
-                            if (contactNode.Attributes["t"] != null)
+                            if (contactNode.Attributes["t"] != null &&
+                                contactNode.Attributes["t"].Value != null &&
+                                contactNode.Attributes["t"].Value != "0")
                             {
                                 IMAddressInfoType type = (IMAddressInfoType)Enum.Parse(typeof(IMAddressInfoType), contactNode.Attributes["t"].Value);
                                 string account = (contactNode.Attributes["n"].Value + "@" + domain).ToLowerInvariant();

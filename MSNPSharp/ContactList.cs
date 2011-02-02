@@ -76,8 +76,8 @@ namespace MSNPSharp
 
         public class ListEnumerator : IEnumerator<Contact>
         {
-            private Dictionary<string, Contact>.Enumerator baseEnum;
-            private RoleLists listFilter;
+            protected Dictionary<string, Contact>.Enumerator baseEnum;
+            protected RoleLists listFilter;
 
             public ListEnumerator(Dictionary<string, Contact>.Enumerator listEnum, RoleLists filter)
             {
@@ -148,6 +148,32 @@ namespace MSNPSharp
                 {
                     if (Current.Guid != Guid.Empty && Current.IsMessengerUser == false)
                         return true;
+                }
+                return false;
+            }
+        }
+
+        public class CircleListEnumerator : ContactList.ListEnumerator
+        {
+            public CircleListEnumerator(Dictionary<string, Contact>.Enumerator listEnum, RoleLists filter)
+                : base(listEnum, filter)
+            {
+            }
+
+            public override bool MoveNext()
+            {
+                while (baseEnum.MoveNext())
+                {
+                    if (Current.ContactType == MessengerContactType.Circle)
+                    {
+                        if (listFilter == RoleLists.None)
+                        {
+                            return true;
+                        }
+
+                        if (Current.HasLists(listFilter))
+                            return true;
+                    }
                 }
                 return false;
             }
@@ -255,7 +281,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.ListEnumerator(base[IMAddressInfoType.Circle].GetEnumerator(), RoleLists.None);
+                return new ContactList.CircleListEnumerator(base[IMAddressInfoType.Circle].GetEnumerator(), RoleLists.None);
             }
         }
 
@@ -307,9 +333,7 @@ namespace MSNPSharp
             }
             set
             {
-                IMAddressInfoType key = value.ClientType;
-                string hash = Contact.MakeHash(account, value.ClientType);
-                base[key][hash] = value;
+                this[account, value.ClientType] = value;
             }
         }
 
@@ -322,8 +346,22 @@ namespace MSNPSharp
             set
             {
                 IMAddressInfoType key = value.ClientType;
-                string hash = Contact.MakeHash(account, value.ClientType);
-                base[key][hash] = value;
+
+                if (type != IMAddressInfoType.None)
+                {
+                    Contact c = GetContactWithCreate(account, type);
+
+                    if (!Object.ReferenceEquals(c, value))
+                    {
+                        string hash = Contact.MakeHash(account, type);
+
+                        lock (SyncRoot)
+                        {
+                            base[key][hash] = value;
+                            base[IMAddressInfoType.None][hash] = value;
+                        }
+                    }
+                }
             }
         }
 
@@ -340,19 +378,25 @@ namespace MSNPSharp
         {
             foreach (IMAddressInfoType addressType in addressTypes)
             {
-                if (HasContact(account, addressType))
-                    return GetContact(account, addressType);
+                if (addressType != IMAddressInfoType.None)
+                {
+                    if (HasContact(account, addressType))
+                        return GetContact(account, addressType);
+                }
             }
 
             return null;
         }
 
-        public Contact GetContact(string account, IMAddressInfoType type)
+        public Contact GetContact(string account, IMAddressInfoType addressType)
         {
-            string hash = Contact.MakeHash(account, type);
-            if (base[type].ContainsKey(hash))
+            if (addressType != IMAddressInfoType.None)
             {
-                return base[type][hash];
+                string hash = Contact.MakeHash(account, addressType);
+                if (base[addressType].ContainsKey(hash))
+                {
+                    return base[addressType][hash];
+                }
             }
             return null;
         }
@@ -404,7 +448,7 @@ namespace MSNPSharp
         {
             foreach (IMAddressInfoType ct in addressTypes)
             {
-                if (HasContact(account, ct))
+                if (ct != IMAddressInfoType.None && HasContact(account, ct))
                     return true;
             }
             return false;
@@ -414,12 +458,16 @@ namespace MSNPSharp
         /// Check whether the account with specified client type is in the contact list.
         /// </summary>
         /// <param name="account"></param>
-        /// <param name="type"></param>
+        /// <param name="addressType"></param>
         /// <returns></returns>
-        public bool HasContact(string account, IMAddressInfoType type)
+        public bool HasContact(string account, IMAddressInfoType addressType)
         {
-            string hash = Contact.MakeHash(account, type);
-            return base[type].ContainsKey(hash);
+            if (addressType != IMAddressInfoType.None)
+            {
+                string hash = Contact.MakeHash(account, addressType);
+                return base[addressType].ContainsKey(hash);
+            }
+            return false;
         }
 
         public bool HasMultiType(string account)
@@ -440,11 +488,15 @@ namespace MSNPSharp
         /// <param name="type"></param>
         public bool Remove(string account, IMAddressInfoType type)
         {
-            string hash = Contact.MakeHash(account, type);
-            lock (SyncRoot)
+            if (type != IMAddressInfoType.None)
             {
-                return base[type].Remove(hash);
+                string hash = Contact.MakeHash(account, type);
+                lock (SyncRoot)
+                {
+                    return base[type].Remove(hash);
+                }
             }
+            return false;
         }
 
         /// <summary>
@@ -540,6 +592,9 @@ namespace MSNPSharp
         /// </returns>
         internal Contact GetContactWithCreate(string account, IMAddressInfoType type)
         {
+            if (type == IMAddressInfoType.None)
+                return null;
+
             string hash = Contact.MakeHash(account, type);
 
             if (base[type].ContainsKey(hash))
