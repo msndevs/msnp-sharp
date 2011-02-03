@@ -1292,7 +1292,7 @@ namespace MSNPSharp.IO
                                     forwardList.Ab.abId + "\r\nName: " + forwardList.Ab.abInfo.name +
                                     "\r\nType: " + forwardList.Ab.abInfo.AddressBookType + "\r\nMembers:");
     
-                        string id = forwardList.Ab.abId + "@" + CircleString.DefaultHostDomain;
+                        string id = forwardList.Ab.abId + "@" + Circle.DefaultHostDomain;
                         foreach (ContactType contact in forwardList.Contacts)
                         {
                             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "PassportName: " + contact.contactInfo.passportName + ", DisplayName: " + contact.contactInfo.displayName + ", Type: " + contact.contactInfo.contactType);
@@ -2012,7 +2012,7 @@ namespace MSNPSharp.IO
                     BreakWLConnection(initiatorCID);
     
                     //5. Remove the presentation data structure for a circle.
-                    string circleMail2 = abId + "@" + CircleString.DefaultHostDomain;
+                    string circleMail2 = abId + "@" + Circle.DefaultHostDomain;
                     string circleHash2 = Contact.MakeHash(circleMail2, IMAddressInfoType.Circle);
                     NSMessageHandler.CircleList.Remove(circleHash2);
     
@@ -2209,7 +2209,7 @@ namespace MSNPSharp.IO
                 return false;
             }
 
-            string circleMail = lowerId + "@" + CircleString.DefaultHostDomain;
+            string circleMail = lowerId + "@" + Circle.DefaultHostDomain;
             string circleHash = Contact.MakeHash(circleMail, IMAddressInfoType.Circle);
 
             if (NSMessageHandler.CircleList.ContainsKey(circleHash))
