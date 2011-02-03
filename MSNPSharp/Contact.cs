@@ -1614,7 +1614,7 @@ namespace MSNPSharp
                     // via=;
                     string via = memberAndNetwork[1].Replace("via=", String.Empty);
                     string[] viaNetwork = via.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
-                    if (viaNetwork.Length > 0)
+                    if (viaNetwork.Length > 1)
                     {
                         viaAccountAddressType = (IMAddressInfoType)Enum.Parse(typeof(IMAddressInfoType), viaNetwork[0].ToString());
                         viaAccount = viaNetwork[1].ToLowerInvariant();
@@ -1629,7 +1629,7 @@ namespace MSNPSharp
 
                 string[] member = memberAndNetwork[0].Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
 
-                if (member.Length > 0)
+                if (member.Length > 1)
                 {
                     accountAddressType = (IMAddressInfoType)Enum.Parse(typeof(IMAddressInfoType), member[0].ToString());
                     account = member[1].ToLowerInvariant();

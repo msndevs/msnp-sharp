@@ -52,12 +52,15 @@ namespace MSNPSharp
         /// </summary>
         public string Message
         {
-            get { return message; }
+            get
+            {
+                return message;
+            }
         }
 
 
         internal CircleInviter(ContactType inviter, string inviterMessage)
-            :base(WebServiceConstants.MessengerIndividualAddressBookId, inviter.contactInfo.passportName, IMAddressInfoType.WindowsLive, inviter.contactInfo.CID, null)
+            : base(WebServiceConstants.MessengerIndividualAddressBookId, inviter.contactInfo.passportName, IMAddressInfoType.WindowsLive, inviter.contactInfo.CID, null)
         {
             if (inviterMessage != null)
                 message = inviterMessage;
@@ -85,10 +88,12 @@ namespace MSNPSharp
         private ContactType hiddenRepresentative = null;
         private ABFindContactsPagedResultTypeAB abinfo = null;
 
-
         public string HostDomain
         {
-            get { return hostDomain; }
+            get
+            {
+                return hostDomain;
+            }
         }
 
         public ContactList ContactList
@@ -183,7 +188,7 @@ namespace MSNPSharp
             mmm.ContentHeaders["Content-Transfer-Encoding"] = "7bit";
             mmm.ContentHeaders["Message-Type"] = "Nudge";
             mmm.InnerBody = Encoding.ASCII.GetBytes("ID: 1\r\n\r\n");
-            
+
             NSPayLoadMessage nspayload = new NSPayLoadMessage("SDG", mmm.ToString());
             NSMessageHandler.MessageProcessor.SendMessage(nspayload);
         }
@@ -240,225 +245,6 @@ namespace MSNPSharp
             return segmentCounter++;
         }
 
-        /// <summary>
-        /// Get a specific contact from circle's contact list by the information provided.
-        /// </summary>
-        /// <param name="account">The contact information</param>
-        /// <param name="option">The parse option for the account parameter</param>
-        /// <returns></returns>
-        internal Contact GetMember(string account, AccountParseOption option)
-        {
-            string lowerAccount = account.ToLowerInvariant();
-            try
-            {
-                switch (option)
-                {
-                    case AccountParseOption.ParseAsClientTypeAndAccount:
-                        {
-                            string[] typeAccount = lowerAccount.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
-                            if (typeAccount.Length >= 2)
-                            {
-                                IMAddressInfoType type = (IMAddressInfoType)(int.Parse(typeAccount[0]));
-                                string mail = typeAccount[1];
-                                if (HasMember(mail, type))
-                                {
-                                    return ContactList.GetContactWithCreate(mail, type);
-                                }
-
-                                return null;
-
-                            }
-                        }
-                        break;
-                    case AccountParseOption.ParseAsFullCircleAccount:
-                        {
-                            string[] sp = lowerAccount.Split(new string[] { CircleString.ViaCircleGroupSplitter }, StringSplitOptions.RemoveEmptyEntries);
-                            if (sp.Length < 2)
-                            {
-                                return null;
-                            }
-
-                            string[] idDomain = sp[1].Split(new char[] { '@' }, StringSplitOptions.RemoveEmptyEntries);
-                            if (idDomain.Length < 2)
-                                return null;
-                            string[] typeAccount = sp[0].Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
-                            if (typeAccount.Length < 2)
-                                return null;
-                            Guid abid = new Guid(idDomain[0]);
-                            if (abid != AddressBookId || idDomain[1].ToLowerInvariant() != HostDomain)  //Is it the correct circle selected?
-                                return null;
-
-                            IMAddressInfoType type = (IMAddressInfoType)(int.Parse(typeAccount[0]));
-                            string mail = typeAccount[1];
-                            if (HasMember(mail, type))
-                            {
-                                return ContactList.GetContactWithCreate(mail, type);
-                            }
-
-                            return null;
-                        }
-
-                }
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Get contact from circle error: account: " + account +
-                    " in " + ToString() + "\r\nError Message: " + ex.Message);
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Remove a specific contact from circle's contact list by the information provided.
-        /// </summary>
-        /// <param name="account">The contact information</param>
-        /// <param name="option">The parse option for the account parameter</param>
-        /// <returns></returns>
-        internal bool RemoveMember(string account, AccountParseOption option)
-        {
-            string lowerAccount = account.ToLowerInvariant();
-            try
-            {
-                switch (option)
-                {
-                    case AccountParseOption.ParseAsClientTypeAndAccount:
-                        {
-                            string[] typeAccount = lowerAccount.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
-                            if (typeAccount.Length >= 2)
-                            {
-                                IMAddressInfoType type = (IMAddressInfoType)(int.Parse(typeAccount[0]));
-                                string mail = typeAccount[1];
-                                if (HasMember(mail, type))
-                                {
-                                    ContactList.Remove(account, type);
-                                    return true;
-                                }
-
-                                return false;
-
-                            }
-                        }
-                        break;
-                    case AccountParseOption.ParseAsFullCircleAccount:
-                        {
-                            string[] sp = lowerAccount.Split(new string[] { CircleString.ViaCircleGroupSplitter }, StringSplitOptions.RemoveEmptyEntries);
-                            if (sp.Length < 2)
-                            {
-                                return false;
-                            }
-
-                            string[] idDomain = sp[1].Split(new char[] { '@' }, StringSplitOptions.RemoveEmptyEntries);
-                            if (idDomain.Length < 2)
-                                return false;
-                            string[] typeAccount = sp[0].Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
-                            if (typeAccount.Length < 2)
-                                return false;
-                            Guid abid = new Guid(idDomain[0]);
-                            if (abid != AddressBookId || idDomain[1].ToLowerInvariant() != HostDomain)  //Is it the correct circle selected?
-                                return false;
-
-                            IMAddressInfoType type = (IMAddressInfoType)(int.Parse(typeAccount[0]));
-                            string mail = typeAccount[1];
-                            if (HasMember(mail, type))
-                            {
-                                ContactList.Remove(account, type);
-                                return true;
-                            }
-
-                            return false;
-                        }
-
-                }
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Remove contact from circle error: account: " + account +
-                    " in " + ToString() + "\r\nError Message: " + ex.Message);
-            }
-
-            return false;
-        }
-
-
-        /// <summary>
-        /// Check whether a specific contact exists in circle's contact list by the information provided.
-        /// </summary>
-        /// <param name="account">The contact information</param>
-        /// <param name="option">The parse option for the account parameter</param>
-        /// <returns></returns>
-        internal bool HasMember(string account, AccountParseOption option)
-        {
-            string lowerAccount = account.ToLowerInvariant();
-            try
-            {
-                switch (option)
-                {
-                    case AccountParseOption.ParseAsClientTypeAndAccount:
-                        {
-                            string[] typeAccount = lowerAccount.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
-                            if (typeAccount.Length >= 2)
-                            {
-                                IMAddressInfoType type = (IMAddressInfoType)(int.Parse(typeAccount[0]));
-                                string mail = typeAccount[1];
-                                return HasMember(mail, type);
-                            }
-                        }
-                        break;
-                    case AccountParseOption.ParseAsFullCircleAccount:
-                        {
-                            string[] sp = lowerAccount.Split(new string[] { CircleString.ViaCircleGroupSplitter }, StringSplitOptions.RemoveEmptyEntries);
-                            if (sp.Length < 2)
-                            {
-                                return false;
-                            }
-
-                            string[] idDomain = sp[1].Split(new char[] { '@' }, StringSplitOptions.RemoveEmptyEntries);
-                            if (idDomain.Length < 2)
-                                return false;
-                            string[] typeAccount = sp[0].Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
-                            if (typeAccount.Length < 2)
-                                return false;
-                            Guid abid = new Guid(idDomain[0]);
-                            if (abid != AddressBookId || idDomain[1].ToLowerInvariant() != HostDomain)  //Is it the correct circle selected?
-                                return false;
-
-                            IMAddressInfoType type = (IMAddressInfoType)(int.Parse(typeAccount[0]));
-                            string mail = typeAccount[1];
-                            return HasMember(mail, type);
-                        }
-
-                }
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Verifying membership error: account: " + account +
-                    " in " + ToString() + "\r\nError Message: " + ex.Message);
-            }
-
-            return false;
-        }
-
-
-        internal bool HasMember(string account, IMAddressInfoType type)
-        {
-            lock (ContactList)
-                return ContactList.HasContact(account, type);
-        }
-
-        internal bool HasMember(Guid contactId)
-        {
-            lock (ContactList)
-                return (ContactList.GetContactByGuid(contactId) != null);
-
-        }
-
-        internal bool HasMember(long CID)
-        {
-            lock (ContactList)
-                return (ContactList.GetContactByCID(CID) != null);
-        }
-
         internal void SetAddressBookInfo(ABFindContactsPagedResultTypeAB abInfo)
         {
             abinfo = abInfo;
@@ -473,4 +259,4 @@ namespace MSNPSharp
 
         #endregion
     }
-}
+};

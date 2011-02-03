@@ -1398,8 +1398,7 @@ namespace MSNPSharp
             Contact contact = null;
             if (viaAccountAddressType == IMAddressInfoType.Circle)
             {
-                string circleHash = Contact.MakeHash(viaAccount, viaAccountAddressType);
-                Circle circle = CircleList.ContainsKey(circleHash) ? (Circle)CircleList[circleHash] : null;
+                Circle circle = ContactList.GetCircle(viaAccount);
 
                 if (circle == null)
                 {
@@ -1723,8 +1722,7 @@ namespace MSNPSharp
             {
                 #region Circle Status, or Circle Member status
 
-                string circleHash = Contact.MakeHash(viaAccount, viaAccountAddressType);
-                Circle circle = CircleList.ContainsKey(circleHash) ? (Circle)CircleList[circleHash] : null;
+                Circle circle = ContactList.GetCircle(viaAccount);
 
                 if (newcaps != ClientCapabilities.None &&
                     newcapsex != ClientCapabilitiesEx.None)  //This is NOT a circle's presence status.
@@ -1892,8 +1890,7 @@ namespace MSNPSharp
             {
                 #region Circle and CircleMemberStatus
 
-                string circleHash = Contact.MakeHash(viaAccount, viaAccountAddressType);
-                Circle circle = CircleList.ContainsKey(circleHash) ? (Circle)CircleList[circleHash] : null;
+                Circle circle = ContactList.GetCircle(viaAccount);
 
                 if (circle == null)
                 {
@@ -3115,19 +3112,23 @@ namespace MSNPSharp
                 if (typeCircleID.Length < 2)
                     return;
 
-                string hash = Contact.MakeHash(typeCircleID[1], (IMAddressInfoType)int.Parse(typeCircleID[0]));
-
-                if (!CircleList.ContainsKey(hash))
+                if (IMAddressInfoType.Circle != (IMAddressInfoType)int.Parse(typeCircleID[0]))
                     return;
 
-                Circle circle = (Circle)CircleList[hash];
+                Circle circle = ContactList.GetCircle(typeCircleID[1]);
 
-                string fullAccount = typeAccount + ";via=" + circleID;
-                if (!circle.HasMember(fullAccount, AccountParseOption.ParseAsFullCircleAccount))
+                if (circle == null)
                     return;
 
-                Contact member = circle.GetMember(fullAccount, AccountParseOption.ParseAsFullCircleAccount);
-                OnLeftCircleConversation(new CircleMemberEventArgs(circle, member));
+                string[] member = typeAccount.Split(':');
+                string memberAccount = member[1];
+                IMAddressInfoType memberNetwork = (IMAddressInfoType)int.Parse(member[0]);
+
+                if (!circle.ContactList.HasContact(memberAccount, memberNetwork))
+                    return;
+
+                Contact c = circle.ContactList.GetContact(memberAccount, memberNetwork);
+                OnLeftCircleConversation(new CircleMemberEventArgs(circle, c));
             }
 
             #endregion
@@ -3161,29 +3162,33 @@ namespace MSNPSharp
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnSDGReceived] Error: Cannot find circle guid and host domain in id: " + typeMail[1]);
                     return;
                 }
-                string hash = Contact.MakeHash(typeMail[1], (IMAddressInfoType)int.Parse(typeMail[0]));
 
-                if (!CircleList.ContainsKey(hash))
+                if (IMAddressInfoType.Circle != (IMAddressInfoType)int.Parse(typeMail[0]))
+                    return;
+
+                Circle circle = ContactList.GetCircle(typeMail[1]);
+
+                if (circle == null)
                 {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnSDGReceived] Error: Cannot find circle " + typeMail[1] + " in your circle list.");
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, 
+                        "[OnSDGReceived] Error: Cannot find circle " + typeMail[1] + " in your circle list.");
                     return;
                 }
 
-                Circle circle = (Circle)CircleList[hash];
+                string fullAccount = mmMessage.RoutingHeaders[MimeHeaderStrings.From].Value.ToLowerInvariant();
+                string[] member = fullAccount.Split(':');
+                string memberAccount = member[1];
+                IMAddressInfoType memberNetwork = (IMAddressInfoType)int.Parse(member[0]);
 
-                // 1:username@hotmail.com;via=9:guid@live.com
-                string fullAccount = mmMessage.RoutingHeaders[MimeHeaderStrings.From].Value + ";via=" + mmMessage.RoutingHeaders[MimeHeaderStrings.To].Value;
-                fullAccount = fullAccount.ToLowerInvariant();
-
-                Contact member = circle.GetMember(fullAccount, AccountParseOption.ParseAsFullCircleAccount);
-
-                if (member == null)
+                if (!circle.ContactList.HasContact(memberAccount, memberNetwork))
                 {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnSDGReceived] Error: Cannot find circle type in id: " + mmMessage.To);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                        "[OnSDGReceived] Error: Cannot find contact: " + memberAccount);
                     return;
                 }
 
-                CircleMemberEventArgs arg = new CircleMemberEventArgs(circle, member);
+                Contact c = circle.ContactList.GetContact(memberAccount, memberNetwork);
+                CircleMemberEventArgs arg = new CircleMemberEventArgs(circle, c);
 
                 if (mmMessage.ContentHeaders.ContainsKey(MimeHeaderStrings.Content_Type) &&
                     mmMessage.ContentHeaders.ContainsKey(MimeHeaderStrings.Message_Subtype))
@@ -3194,7 +3199,7 @@ namespace MSNPSharp
                         //Typing
                         OnCircleTypingMessageReceived(arg);
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                            "Circle: " + circle.ToString() + "\r\nMember: " + member.ToString() + "\r\nIs typing....");
+                            "Circle: " + circle.ToString() + "\r\nMember: " + c.ToString() + "\r\nIs typing....");
                     }
                 }
 
@@ -3213,10 +3218,10 @@ namespace MSNPSharp
                         }
 
                         txtMessage.ParseHeader(strDic);
-                        CircleTextMessageEventArgs textMessageArg = new CircleTextMessageEventArgs(txtMessage, circle, member);
+                        CircleTextMessageEventArgs textMessageArg = new CircleTextMessageEventArgs(txtMessage, circle, c);
                         OnCircleTextMessageReceived(textMessageArg);
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                            "Circle: " + circle.ToString() + "\r\nMember: " + member.ToString() + "\r\nSend you a text message:\r\n" + txtMessage.ToDebugString());
+                            "Circle: " + circle.ToString() + "\r\nMember: " + c.ToString() + "\r\nSend you a text message:\r\n" + txtMessage.ToDebugString());
 
                     }
 
@@ -3226,7 +3231,7 @@ namespace MSNPSharp
                         //Nudge
                         OnCircleNudgeReceived(arg);
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                            "Circle: " + circle.ToString() + "\r\nMember: " + member.ToString() + "\r\nSend you a nudge.");
+                            "Circle: " + circle.ToString() + "\r\nMember: " + c.ToString() + "\r\nSend you a nudge.");
                     }
                 }
             }

@@ -401,6 +401,14 @@ namespace MSNPSharp
             return null;
         }
 
+        public Circle GetCircle(string account)
+        {
+            if (HasContact(account, IMAddressInfoType.Circle))
+                return (Circle)GetContact(account, IMAddressInfoType.Circle);
+
+            return null;
+        }
+
         public Contact GetContactByGuid(Guid guid)
         {
             if (guid != Guid.Empty)

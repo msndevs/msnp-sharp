@@ -1185,11 +1185,6 @@ namespace MSNPSharp
         public const string InvitationEmailExtendedFlags = "ab=0|i=0|e=0";
 
         public const string InvitationEmailExtendedFlagsByWeb = "ab=0|i=51|e=0";
-
-        /// <summary>
-        /// The "via" property string of a circle group member. The value of this constant is ";via=9:".
-        /// </summary>
-        public const string ViaCircleGroupSplitter = @";via=9:";
     }
 
     /// <summary>
