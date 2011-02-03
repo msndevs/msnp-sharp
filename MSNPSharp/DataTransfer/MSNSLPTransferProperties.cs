@@ -418,8 +418,8 @@ namespace MSNPSharp.DataTransfer
             {
                 bool supportMSNC10 = ((local.EndPointData[localEPID].ClientCapacities & ClientCapacities.CanHandleMSNC10) > 0 &&
                                       (remote.EndPointData[remoteEPID].ClientCapacities & ClientCapacities.CanHandleMSNC10) > 0);
-                bool supportP2Pv2 = ((local.EndPointData[localEPID].ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0 &&
-                                     (remote.EndPointData[remoteEPID].ClientCapacitiesEx & ClientCapacitiesEx.CanP2PV2) > 0);
+                bool supportP2Pv2 = ((local.EndPointData[localEPID].ClientCapacitiesEx & ClientCapacitiesEx.SupportsPeerToPeerV2) > 0 &&
+                                     (remote.EndPointData[remoteEPID].ClientCapacitiesEx & ClientCapacitiesEx.SupportsPeerToPeerV2) > 0);
 
 
 

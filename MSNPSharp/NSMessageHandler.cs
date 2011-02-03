@@ -80,9 +80,7 @@ namespace MSNPSharp
         private OIMService oimService = null;
         private MSNStorageService storageService = null;
         private WhatsUpService whatsUpService = null;
-        private ClientCapacities defaultClientCapacities = ClientCapacities.CanMultiPacketMSG | ClientCapacities.CanReceiveWinks | ClientCapacities.CanHandleMSNC10;
-        private ClientCapacitiesEx defaultClientCapacitiesEx = ClientCapacitiesEx.CanP2PV2 | ClientCapacitiesEx.RTCVideoEnabled;
-
+        
         private List<Regex> censorWords = new List<Regex>(0);
         private Dictionary<string, string> sessions = new Dictionary<string, string>(0);
         private Guid p2pInviteSchedulerId = Guid.Empty;
@@ -865,14 +863,14 @@ namespace MSNPSharp
                     isSetDefault = true;
 
                     //don't set the same status or it will result in disconnection
-                    ContactList.Owner.LocalEndPointClientCapacities = defaultClientCapacities;
+                    ContactList.Owner.LocalEndPointClientCapacities = ClientCapacities.Default;
 
                     if (BotMode)
                     {
                         ContactList.Owner.LocalEndPointClientCapacities |= ClientCapacities.IsBot;
                     }
 
-                    ContactList.Owner.LocalEndPointClientCapacitiesEx = defaultClientCapacitiesEx;
+                    ContactList.Owner.LocalEndPointClientCapacitiesEx = ClientCapacitiesEx.Default;
 
                     SetEndPointCapabilities();
                     SetPresenceStatusUUX(status);
@@ -2938,7 +2936,9 @@ namespace MSNPSharp
                         XmlNode contactNode = domainNode.FirstChild;
                         do
                         {
-                            if (contactNode.Attributes["t"] != null)
+                            if (contactNode.Attributes["t"] != null &&
+                                contactNode.Attributes["t"].Value != null &&
+                                contactNode.Attributes["t"].Value != "0")
                             {
                                 ClientType type = (ClientType)Enum.Parse(typeof(ClientType), contactNode.Attributes["t"].Value);
                                 string account = (contactNode.Attributes["n"].Value + "@" + domain).ToLowerInvariant();

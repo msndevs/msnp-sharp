@@ -278,7 +278,7 @@ namespace MSNPSharp
     [Flags]
     public enum ClientCapacities : long
     {
-        None = 0x00,
+        #region old values
         IsMobile = 0x01,
         MsnExplorer8User = 0x02,
         CanViewInkGIF = 0x04,
@@ -299,14 +299,12 @@ namespace MSNPSharp
         CanDirectIM = 0x4000,
         CanReceiveWinks = 0x8000,
         CanMSNSearch = 0x10000,
-        IsBot = 0x20000,
         CanReceiveVoiceClips = 0x40000,
         CanSecureChannel = 0x80000,
         CanSIP = 0x100000,
         CanTunneledSip = 0x200000,
         CanShareFolders = 0x400000,
         PageModeMessaging = 0x800000,
-        HasOneCare = 0x1000000,
         SupportP2PTURN = 0x2000000,
         SupportP2PUUNBootstrap = 0x4000000,
         IsUsingAlias = 0x8000000,
@@ -363,21 +361,137 @@ namespace MSNPSharp
         /// <summary>
         /// Mask for MSNC
         /// </summary>
-        CanHandleMSNCMask = 0xF0000000
+        CanHandleMSNCMask = 0xF0000000,
+
+        #endregion
+
+        #region new values
+        None = 0x00,
+        OnlineViaMobile = 0x01,
+        OnlineViaTexas = 0x02,
+        SupportsGifInk = 0x04,
+        SupportsIsfInk = 0x08,
+        WebCamDetected = 0x10,
+        SupportsChunking = 0x20,
+        MobileEnabled = 0x40,
+        WebWatchEnabled = 0x80,
+        SupportsActivities = 0x100,
+        OnlineViaWebIM = 0x200,
+        MobileDevice = 0x400,
+        OnlineViaFederatedInterface = 0x800,
+        HasSpace = 0x1000,
+        IsMceUser = 0x2000,
+        SupportsDirectIM = 0x4000,
+        SupportsWinks = 0x8000,
+        SupportsSharedSearch = 0x10000,
+        IsBot = 0x20000,
+        SupportsVoiceIM = 0x40000,
+        SupportsSChannel = 0x80000,
+        SupportsSipInvite = 0x100000,
+        SupportsMultipartyMedia = 0x200000,
+        SupportsSDrive = 0x400000,
+        SupportsPageModeMessaging = 0x800000,
+        HasOneCare = 0x1000000,
+        SupportsTurn = 0x2000000,
+        SupportsDirectBootstrapping = 0x4000000,
+        UsingAlias = 0x8000000,
+
+        /// <summary>
+        /// MSNC1
+        /// </summary>
+        AppVersion60 = 0x10000000,
+        /// <summary>
+        /// MSNC2
+        /// </summary>
+        AppVersion61 = 0x20000000,
+        /// <summary>
+        /// MSNC3
+        /// </summary>
+        AppVersion62 = 0x30000000,
+        /// <summary>
+        /// MSNC4
+        /// </summary>
+        AppVersion70 = 0x40000000,
+        /// <summary>
+        /// MSNC5
+        /// </summary>
+        AppVersion75 = 0x50000000,
+        /// <summary>
+        /// MSNC6
+        /// </summary>
+        AppVersion80 = 0x60000000,
+        /// <summary>
+        ///MSNC7
+        /// </summary>
+        AppVersion81 = 0x70000000,
+        /// <summary>
+        /// MSNC8 (MSNP15)
+        /// </summary>
+        AppVersion85 = 0x80000000,
+        /// <summary>
+        /// MSNC9 (MSNP16)
+        /// </summary>
+        AppVersion90 = 0x90000000,
+        /// <summary>
+        /// MSNC10 - MSN 14.0, Wave 3 (MSNP18)
+        /// </summary>
+        AppVersion2009 = 0xA0000000,
+        /// <summary>
+        /// MSNC11 - MSN 15.0, Wave 4 (MSNP21)
+        /// </summary>
+        AppVersion2011 = 0xB0000000,
+
+        AppVersion____ = 0xC0000000,
+        AppVersion2___ = 0xD0000000,
+        AppVersion20__ = 0xE0000000,
+
+        /// <summary>
+        /// Mask for MSNC
+        /// </summary>
+        AppVersionMask = 0xF0000000,
+
+        Default = SupportsChunking | SupportsActivities | SupportsWinks | AppVersion2009,
+        #endregion
     }
 
     [Flags]
     public enum ClientCapacitiesEx : long
     {
         None = 0x00,
+        IsSmsOnly = 0x01,
+        SupportsVoiceOverMsnp = 0x02,
+        SupportsUucpSipStack = 0x04,
+        SupportsApplicationMessages = 0x08,
         RTCVideoEnabled = 0x10,
-        /// <summary>
-        /// The client can handle new stack of MSNP2P.
-        /// </summary>
-        CanP2PV2 = 0x20,
-        CanP2PV1 = 0x400,   //I guess.
-        UNKnownEx1000 = 0x1000,
-        CanHandleMSNCExMask = 0x20000
+        SupportsPeerToPeerV2 = 0x20,
+        IsAuthenticatedWebIMUser = 0x40,
+        Supports1On1ViaGroup = 0x80,
+        SupportsOfflineIM = 0x100,
+        SupportsSharingVideo = 0x200,
+        SupportsNudges = 0x400,   // (((:)))
+        CircleVoiceIMEnabled = 0x800,
+        SharingEnabled = 0x1000,
+        MobileSuspendIMFanoutDisable = 0x2000,
+        _0x4000 = 0x4000,
+        SupportsPeerToPeerMixerRelay = 0x8000,
+        _0x10000 = 0x10000,
+        ConvWindowFileTransfer = 0x20000,
+        VideoCallSupports16x9 = 0x40000,
+        SupportsPeerToPeerEnveloping = 0x80000,
+        _0x100000 = 0x100000,
+        _0x200000 = 0x200000,
+        YahooIMDisabled = 0x400000,
+        SIPTunnelVersion2 = 0x800000,
+        VoiceClipSupportsWMAFormat = 0x1000000,
+        VoiceClipSupportsCircleIM = 0x2000000,
+        SupportsSocialNewsObjectTypes = 0x4000000,
+        CustomEmoticonsCapable = 0x8000000,
+        SupportsUTF8MoodMessages = 0x10000000,
+        FTURNCapable = 0x20000000,
+        SupportsP4Activity = 0x40000000,
+        SupportsMultipartyConversations = 0x80000000,
+
+        Default = SupportsPeerToPeerV2 | SupportsOfflineIM | SupportsNudges | SharingEnabled | ConvWindowFileTransfer | CustomEmoticonsCapable | SupportsUTF8MoodMessages | SupportsMultipartyConversations
     }
 
     /// <summary>
