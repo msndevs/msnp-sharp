@@ -2391,7 +2391,7 @@ namespace MSNPSharp
             //This is M$ style, you will never guess out the meaning of these numbers.
             ContentInfoType properties = new ContentInfoType();
             properties.Domain = 1;
-            properties.HostedDomain = CircleString.DefaultHostDomain;
+            properties.HostedDomain = Circle.DefaultHostDomain;
             properties.Type = 2;
             properties.MembershipAccess = 0;
             properties.IsPresenceEnabled = true;

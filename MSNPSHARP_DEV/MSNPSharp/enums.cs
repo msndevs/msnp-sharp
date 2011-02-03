@@ -1165,29 +1165,6 @@ namespace MSNPSharp
     }
 
     /// <summary>
-    /// Scheme string for PUT command.
-    /// </summary>
-    public static class CircleString
-    {
-        /// <summary>
-        /// The default windows live circle host domain: live.com.
-        /// </summary>
-        public const string DefaultHostDomain = "live.com";
-
-        /// <summary>
-        /// The default sender of join circle invitation email: Windows Live.
-        /// </summary>
-        public const string CircleInvitationEmailSender = "Windows Live";
-
-        /// <summary>
-        /// The extended-flags property of join circle invation email notification message.
-        /// </summary>
-        public const string InvitationEmailExtendedFlags = "ab=0|i=0|e=0";
-
-        public const string InvitationEmailExtendedFlagsByWeb = "ab=0|i=51|e=0";
-    }
-
-    /// <summary>
     /// Constants for webservice parameter.
     /// </summary>
     public static class WebServiceConstants

@@ -80,8 +80,13 @@ namespace MSNPSharp
     [Serializable()]
     public class Circle : Contact
     {
+        /// <summary>
+        /// live.com
+        /// </summary>
+        public const string DefaultHostDomain = "live.com";
+
         private ContactList contactList = null;
-        private string hostDomain = CircleString.DefaultHostDomain;
+        private string hostDomain = DefaultHostDomain;
         private long segmentCounter = 0;
 
         private ContactType meContact = null;
