@@ -1597,6 +1597,57 @@ namespace MSNPSharp
             return type.ToString() + ":" + account.ToLowerInvariant();
         }
 
+        internal static bool ParseFullAccount(
+            string fullAccount,
+            out IMAddressInfoType accountAddressType, out string account,
+            out IMAddressInfoType viaAccountAddressType, out string viaAccount)
+        {
+            accountAddressType = viaAccountAddressType = IMAddressInfoType.None;
+            account = viaAccount = String.Empty;
+
+            string[] memberAndNetwork = fullAccount.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+
+            if (memberAndNetwork.Length > 0)
+            {
+                if (memberAndNetwork.Length > 1)
+                {
+                    // via=;
+                    string via = memberAndNetwork[1].Replace("via=", String.Empty);
+                    string[] viaNetwork = via.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (viaNetwork.Length > 0)
+                    {
+                        viaAccountAddressType = (IMAddressInfoType)Enum.Parse(typeof(IMAddressInfoType), viaNetwork[0].ToString());
+                        viaAccount = viaNetwork[1].ToLowerInvariant();
+                    }
+                    else
+                    {
+                        // Assume windows live account
+                        viaAccountAddressType = IMAddressInfoType.WindowsLive;
+                        viaAccount = viaNetwork[0].ToLowerInvariant();
+                    }
+                }
+
+                string[] member = memberAndNetwork[0].Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+
+                if (member.Length > 0)
+                {
+                    accountAddressType = (IMAddressInfoType)Enum.Parse(typeof(IMAddressInfoType), member[0].ToString());
+                    account = member[1].ToLowerInvariant();
+                }
+                else
+                {
+                    // Assume windows live account
+                    accountAddressType = IMAddressInfoType.WindowsLive;
+                    account = member[0].ToString().ToLowerInvariant();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+
         internal bool HasLists(RoleLists msnlists)
         {
             return ((lists & msnlists) == msnlists);
