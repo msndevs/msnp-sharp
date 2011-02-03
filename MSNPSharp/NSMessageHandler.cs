@@ -1378,52 +1378,54 @@ namespace MSNPSharp
         protected virtual void OnUBXReceived(NSMessage message)
         {
             //check the payload length
-            if (message.InnerMessage == null)
+            if (message.InnerMessage == null || message.InnerBody == null || message.InnerBody.Length == 0)
                 return;
 
-            string fullaccount = message.CommandValues[0].ToString(); // 1:username@hotmail.com;via=9:guid@live.com
+            string fullAccount = message.CommandValues[0].ToString(); // 1:username@hotmail.com;via=9:guid@live.com
 
-            string account = string.Empty;
-            IMAddressInfoType type = IMAddressInfoType.WindowsLive;
-            Contact contact = null;
+            IMAddressInfoType accountAddressType;
+            string account;
+            IMAddressInfoType viaAccountAddressType;
+            string viaAccount;
 
-            if (fullaccount.Contains(CircleString.ViaCircleGroupSplitter))
+            if (false == Contact.ParseFullAccount(fullAccount,
+                out accountAddressType, out account,
+                out viaAccountAddressType, out viaAccount))
             {
-                string[] usernameAndCircle = fullaccount.Split(';');
-                type = (IMAddressInfoType)int.Parse(usernameAndCircle[0].Split(':')[0]);
-                account = usernameAndCircle[0].Split(':')[1].ToLowerInvariant();
+                return;
+            }
 
-                string circleMail = usernameAndCircle[1].Substring("via=9:".Length);
-                IMAddressInfoType circleType = IMAddressInfoType.Circle;
-                string circleHash = Contact.MakeHash(circleMail, circleType);
+            Contact contact = null;
+            if (viaAccountAddressType == IMAddressInfoType.Circle)
+            {
+                string circleHash = Contact.MakeHash(viaAccount, viaAccountAddressType);
+                Circle circle = CircleList.ContainsKey(circleHash) ? (Circle)CircleList[circleHash] : null;
 
-                if (!CircleList.ContainsKey(circleHash))
+                if (circle == null)
                 {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnUBXReceived] Cannot retrieve circle for user: " + fullaccount);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                        "[OnUBXReceived] Cannot retrieve circle for user: " + fullAccount);
                     return;
                 }
                 else
                 {
-                    Circle circle = (Circle)CircleList[circleHash];
-                    if (!circle.HasMember(fullaccount, AccountParseOption.ParseAsFullCircleAccount))
+                    if (!circle.ContactList.HasContact(account, accountAddressType))
                     {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnUBXReceived] Cannot retrieve user for from circle: " + fullaccount);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                            "[OnUBXReceived] Cannot retrieve user for from circle: " + fullAccount);
                         return;
                     }
 
-                    contact = circle.GetMember(fullaccount, AccountParseOption.ParseAsFullCircleAccount);
+                    contact = circle.ContactList.GetContact(account, accountAddressType);
                 }
             }
             else
             {
-                type = (IMAddressInfoType)int.Parse(fullaccount.Split(':')[0]);
-                account = fullaccount.Split(':')[1].ToLowerInvariant();
-
                 if (account != ContactList.Owner.Mail.ToLowerInvariant())
                 {
-                    if (ContactList.HasContact(account, type))
+                    if (ContactList.HasContact(account, accountAddressType))
                     {
-                        contact = ContactList.GetContact(account, type);
+                        contact = ContactList.GetContact(account, accountAddressType);
                     }
                 }
                 else
@@ -1432,7 +1434,7 @@ namespace MSNPSharp
                 }
             }
 
-            if (message.InnerBody != null && contact != null)
+            if (contact != null)
             {
                 contact.SetPersonalMessage(new PersonalMessage(message));
                 XmlDocument xmlDoc = new XmlDocument();
@@ -1519,10 +1521,10 @@ namespace MSNPSharp
                 }
                 catch (Exception xmlex)
                 {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnUBXReceived] Xml parse error: " + xmlex.Message);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                        "[OnUBXReceived] Xml parse error: " + xmlex.Message);
                 }
             }
-
         }
 
         private void OwnersSignOut()
@@ -1685,10 +1687,19 @@ namespace MSNPSharp
         {
             PresenceStatus newstatus = ParseStatus(message.CommandValues[0].ToString());
 
-            IMAddressInfoType type = IMAddressInfoType.None;
-            string account = string.Empty;
-            string fullaccount = message.CommandValues[1].ToString(); // 1:username@hotmail.com;via=9:guid@live.com
-            Contact contact = null;
+            IMAddressInfoType accountAddressType;
+            string account;
+            IMAddressInfoType viaAccountAddressType;
+            string viaAccount;
+            string fullAccount = message.CommandValues[1].ToString();
+
+            if (false == Contact.ParseFullAccount(fullAccount,
+                out accountAddressType, out account,
+                out viaAccountAddressType, out viaAccount))
+            {
+                return;
+            }
+
             ClientCapabilities newcaps = ClientCapabilities.None;
             ClientCapabilitiesEx newcapsex = ClientCapabilitiesEx.None;
 
@@ -1706,42 +1717,33 @@ namespace MSNPSharp
                 {
                     newcaps = (ClientCapabilities)Convert.ToInt64(message.CommandValues[3].ToString());
                 }
-
             }
 
-            if (fullaccount.Contains(CircleString.ViaCircleGroupSplitter))
+            if (viaAccountAddressType == IMAddressInfoType.Circle)
             {
                 #region Circle Status, or Circle Member status
 
-                string[] usernameAndCircle = fullaccount.Split(';');
-                type = (IMAddressInfoType)int.Parse(usernameAndCircle[0].Split(':')[0]);
-                account = usernameAndCircle[0].Split(':')[1].ToLowerInvariant();
-
-                string circleMail = usernameAndCircle[1].Substring("via=9:".Length);
-                IMAddressInfoType circleType = IMAddressInfoType.Circle;
-                string circleHash = Contact.MakeHash(circleMail, circleType);
-
+                string circleHash = Contact.MakeHash(viaAccount, viaAccountAddressType);
                 Circle circle = CircleList.ContainsKey(circleHash) ? (Circle)CircleList[circleHash] : null;
 
-                string capabilityString = message.CommandValues[3].ToString();
-
-                if (capabilityString != "0:0")  //This is NOT a circle's presence status.
+                if (newcaps != ClientCapabilities.None &&
+                    newcapsex != ClientCapabilitiesEx.None)  //This is NOT a circle's presence status.
                 {
                     if (circle == null)
                     {
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                            "[OnNLNReceived] Cannot update status for user, circle not found: " + fullaccount);
+                            "[OnNLNReceived] Cannot update status for user, circle not found: " + fullAccount);
 
                         return;
                     }
 
-                    if (!circle.HasMember(fullaccount, AccountParseOption.ParseAsFullCircleAccount))
+                    if (!circle.ContactList.HasContact(account, accountAddressType))
                     {
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                            "[OnNLNReceived] User not found in the specific circle: " + fullaccount + ", a contact was created by NSCommand.");
+                            "[OnNLNReceived] User not found in the specific circle: " + fullAccount + ", a contact was created by NSCommand.");
                     }
 
-                    contact = circle.ContactList.GetContactWithCreate(account, type);
+                    Contact contact = circle.ContactList.GetContact(account, accountAddressType);
 
                     contact.SetName(MSNHttpUtility.NSDecode(message.CommandValues[2].ToString()));
                     contact.EndPointData[Guid.Empty].ClientCapabilities = newcaps;
@@ -1777,9 +1779,10 @@ namespace MSNPSharp
                             return;
 
                         PresenceStatus oldCircleStatus = circle.Status;
-                        string[] guidDomain = circleMail.Split('@');
+                        string[] guidDomain = viaAccount.Split('@');
 
-                        if (guidDomain.Length != 0 && (oldCircleStatus == PresenceStatus.Offline || oldCircleStatus == PresenceStatus.Hidden))
+                        if (guidDomain.Length != 0 &&
+                            (oldCircleStatus == PresenceStatus.Offline || oldCircleStatus == PresenceStatus.Hidden))
                         {
                             //This is a PUT command send from server when we login.
                             JoinCircleConversation(new Guid(guidDomain[0]), guidDomain[1]);
@@ -1790,7 +1793,6 @@ namespace MSNPSharp
                         OnCircleStatusChanged(new CircleStatusChangedEventArgs(circle, oldCircleStatus));
 
                         OnCircleOnline(new CircleEventArgs(circle));
-
                         return;
                     }
                 }
@@ -1799,16 +1801,15 @@ namespace MSNPSharp
             }
             else
             {
-                type = (IMAddressInfoType)int.Parse(fullaccount.Split(':')[0]);
-                account = fullaccount.Split(':')[1].ToLowerInvariant();
-                contact = ContactList.GetContactWithCreate(account, type);
+                Contact contact = (account == ContactList.Owner.Mail.ToLowerInvariant() && accountAddressType == IMAddressInfoType.WindowsLive)
+                    ? ContactList.Owner : ContactList.GetContact(account, accountAddressType);
 
                 #region Contact Status
 
                 if (contact != null)
                 {
-
-                    if (IsSignedIn && account == ContactList.Owner.Mail.ToLowerInvariant() && type == IMAddressInfoType.WindowsLive)
+                    if (IsSignedIn && account == ContactList.Owner.Mail.ToLowerInvariant() &&
+                        accountAddressType == IMAddressInfoType.WindowsLive)
                     {
                         SetPresenceStatus(newstatus);
                         return;
@@ -1818,19 +1819,19 @@ namespace MSNPSharp
                     contact.EndPointData[Guid.Empty].ClientCapabilities = newcaps;
                     contact.EndPointData[Guid.Empty].ClientCapabilitiesEx = newcapsex;
 
-                    if (contact != ContactList.Owner && newDisplayImageContext.Length > 10)
+                    if (contact != ContactList.Owner)
                     {
-                        if (contact.DisplayImage != newDisplayImageContext)
+                        if (newDisplayImageContext.Length > 10 && contact.DisplayImage != newDisplayImageContext)
                         {
                             contact.UserTileLocation = newDisplayImageContext;
                             contact.FireDisplayImageContextChangedEvent(newDisplayImageContext);
                         }
-                    }
 
-                    if (contact != ContactList.Owner && message.CommandValues.Count >= 6 && type == IMAddressInfoType.Yahoo)
-                    {
-                        newDisplayImageContext = message.CommandValues[5].ToString();
-                        contact.UserTileURL = new Uri(HttpUtility.UrlDecode(newDisplayImageContext));
+                        if (message.CommandValues.Count >= 6)
+                        {
+                            newDisplayImageContext = message.CommandValues[5].ToString();
+                            contact.UserTileURL = new Uri(HttpUtility.UrlDecode(newDisplayImageContext));
+                        }
                     }
 
                     PresenceStatus oldStatus = contact.Status;
@@ -1858,10 +1859,19 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnFLNReceived(NSMessage message)
         {
-            IMAddressInfoType type = IMAddressInfoType.None;
-            string account = string.Empty;
-            string fullaccount = message.CommandValues[0].ToString(); // 1:username@hotmail.com;via=9:guid@live.com
-            Contact contact = null;
+            IMAddressInfoType accountAddressType;
+            string account;
+            IMAddressInfoType viaAccountAddressType;
+            string viaAccount;
+            string fullAccount = message.CommandValues[0].ToString();
+
+            if (false == Contact.ParseFullAccount(fullAccount,
+                out accountAddressType, out account,
+                out viaAccountAddressType, out viaAccount))
+            {
+                return;
+            }
+
             ClientCapabilities newCaps = ClientCapabilities.None;
             ClientCapabilitiesEx newCapsEx = ClientCapabilitiesEx.None;
 
@@ -1878,23 +1888,17 @@ namespace MSNPSharp
                 }
             }
 
-            if (fullaccount.Contains(CircleString.ViaCircleGroupSplitter))
+            if (viaAccountAddressType == IMAddressInfoType.Circle)
             {
                 #region Circle and CircleMemberStatus
 
-                string[] usernameAndCircle = fullaccount.Split(';');
-                type = (IMAddressInfoType)int.Parse(usernameAndCircle[0].Split(':')[0]);
-                account = usernameAndCircle[0].Split(':')[1].ToLowerInvariant();
-
-                string circleMail = usernameAndCircle[1].Substring("via=9:".Length);
-                IMAddressInfoType circleType = IMAddressInfoType.Circle;
-                string circleHash = Contact.MakeHash(circleMail, circleType);
+                string circleHash = Contact.MakeHash(viaAccount, viaAccountAddressType);
                 Circle circle = CircleList.ContainsKey(circleHash) ? (Circle)CircleList[circleHash] : null;
 
                 if (circle == null)
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                                "[OnFLNReceived] Cannot update status for user since circle not found: " + fullaccount);
+                        "[OnFLNReceived] Cannot update status for user since circle not found: " + fullAccount);
                     return;
                 }
 
@@ -1917,14 +1921,14 @@ namespace MSNPSharp
                 }
                 else
                 {
-                    if (!circle.HasMember(fullaccount, AccountParseOption.ParseAsFullCircleAccount))
+                    if (!circle.ContactList.HasContact(account, accountAddressType))
                     {
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                                    "[OnFLNReceived] Cannot update status for user since user not found in the specific circle: " + fullaccount);
+                            "[OnFLNReceived] Cannot update status for user since user not found in the specific circle: " + fullAccount);
                         return;
                     }
 
-                    contact = circle.ContactList.GetContactWithCreate(account, type);
+                    Contact contact = circle.ContactList.GetContact(account, accountAddressType);
                     PresenceStatus oldStatus = contact.Status;
 
                     if (oldStatus != PresenceStatus.Offline)
@@ -1945,11 +1949,8 @@ namespace MSNPSharp
             }
             else
             {
-                type = (IMAddressInfoType)int.Parse(fullaccount.Split(':')[0]);
-                account = fullaccount.Split(':')[1].ToLowerInvariant();
-
-                contact = (account == ContactList.Owner.Mail.ToLowerInvariant() && type == IMAddressInfoType.WindowsLive)
-                ? ContactList.Owner : ContactList.GetContactWithCreate(account, type);
+                Contact contact = (account == ContactList.Owner.Mail.ToLowerInvariant() && accountAddressType == IMAddressInfoType.WindowsLive)
+                    ? ContactList.Owner : ContactList.GetContactWithCreate(account, accountAddressType);
 
                 #region Contact Staus
 
@@ -1963,7 +1964,8 @@ namespace MSNPSharp
                         contact.EndPointData[Guid.Empty].ClientCapabilitiesEx = newCapsEx;
                     }
 
-                    if (contact != ContactList.Owner && message.CommandValues.Count >= 3 && type == IMAddressInfoType.Yahoo)
+                    if (contact != ContactList.Owner && message.CommandValues.Count >= 3 &&
+                        accountAddressType == IMAddressInfoType.Yahoo)
                     {
                         string newdp = message.CommandValues[2].ToString();
                         contact.UserTileURL = new Uri(HttpUtility.UrlDecode(newdp));
@@ -3034,7 +3036,7 @@ namespace MSNPSharp
                 if (!CircleList.ContainsKey(hash))
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                                "[OnNFYReceived] Cannot complete the operation since circle not found: " + mmm.From.ToString());
+                        "[OnNFYReceived] Cannot complete the operation since circle not found: " + mmm.From.ToString());
                     return;
                 }
 
@@ -3059,23 +3061,28 @@ namespace MSNPSharp
 
                 foreach (XmlNode node in ids)
                 {
-                    if (node.InnerText.Split(':').Length == 0)
-                        return;
+                    IMAddressInfoType accountAddressType;
+                    string account;
+                    IMAddressInfoType viaAccountAddressType;
+                    string viaAccount;
+                    string fullAccount = node.InnerText;
 
-                    string memberAccount = node.InnerText.Split(':')[1];
-                    if (memberAccount == ContactList.Owner.Mail.ToLowerInvariant())
+                    if (false == Contact.ParseFullAccount(fullAccount,
+                        out accountAddressType, out account,
+                        out viaAccountAddressType, out viaAccount))
+                    {
+                        continue;
+                    }
+
+                    if (account == ContactList.Owner.Mail.ToLowerInvariant())
                         continue;
 
-                    IMAddressInfoType memberType = (IMAddressInfoType)int.Parse(node.InnerText.Split(':')[0]);
-                    string id = node.InnerText + ";via=" + mmm.From.ToString();
-
-                    if (circle.HasMember(id, AccountParseOption.ParseAsFullCircleAccount))
+                    if (circle.ContactList.HasContact(account, accountAddressType))
                     {
-                        Contact contact = circle.ContactList.GetContactWithCreate(memberAccount, memberType);
+                        Contact contact = circle.ContactList.GetContact(account, accountAddressType);
                         OnJoinedCircleConversation(new CircleMemberEventArgs(circle, contact));
                     }
                 }
-
             }
 
             #endregion
