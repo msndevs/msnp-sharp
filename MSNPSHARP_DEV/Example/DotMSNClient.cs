@@ -113,11 +113,17 @@ namespace MSNPSharpClient
             messenger.Nameserver.ContactOnline += new EventHandler<ContactEventArgs>(Nameserver_ContactOnline);
             messenger.Nameserver.ContactOffline += new EventHandler<ContactEventArgs>(Nameserver_ContactOffline);
 
-            // ReverseAdded will fired after a contact adds you to his/her contact list.
-            messenger.ContactService.ReverseAdded += new EventHandler<ContactEventArgs>(Nameserver_ReverseAdded);
+
             // SynchronizationCompleted will fired after the updated operation for your contact list has completed.
             messenger.ContactService.SynchronizationCompleted += new EventHandler<EventArgs>(ContactService_SynchronizationCompleted);
+            // ReverseAdded will fired after a contact adds you to his/her contact list.
+            messenger.ContactService.ReverseAdded += new EventHandler<ContactEventArgs>(Nameserver_ReverseAdded);
 
+            messenger.ContactService.ReverseRemoved += new EventHandler<ContactEventArgs>(ContactService_ReverseRemoved);
+            // ContactAdded will fired after a contact added to any role list.
+            messenger.ContactService.ContactAdded += new EventHandler<ListMutateEventArgs>(ContactService_ContactAdded);
+            // ContactRemoved will fired after a contact removed from any role list.
+            messenger.ContactService.ContactRemoved += new EventHandler<ListMutateEventArgs>(ContactService_ContactRemoved);
 
             #region Circle events
 
@@ -165,7 +171,6 @@ namespace MSNPSharpClient
 
             #endregion
         }
-
 
         public static class ImageIndexes
         {
@@ -672,6 +677,22 @@ namespace MSNPSharpClient
             }
         }
 
+        void ContactService_ContactRemoved(object sender, ListMutateEventArgs e)
+        {
+            Trace.WriteLine(e.Contact.Hash + " removed from the " + e.AffectedList + " role list.");
+        }
+
+        void ContactService_ContactAdded(object sender, ListMutateEventArgs e)
+        {
+            Trace.WriteLine(e.Contact.Hash + " added to the " + e.AffectedList + " role list.");
+
+        }
+
+        void ContactService_ReverseRemoved(object sender, ContactEventArgs e)
+        {
+            Trace.WriteLine(e.Contact.Hash + " removed you their contact (forward) list.");
+        }
+
         void Nameserver_ReverseAdded(object sender, ContactEventArgs e)
         {
             if (InvokeRequired)
@@ -686,7 +707,7 @@ namespace MSNPSharpClient
             {
                 // Show pending window if it is necessary.
                 if (contact.OnPendingList || 
-                    (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList && !contact.OnPendingList))
+                    (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList))
                 {
                     ReverseAddedForm form = new ReverseAddedForm(contact);
                     form.FormClosed += delegate(object f, FormClosedEventArgs fce)
