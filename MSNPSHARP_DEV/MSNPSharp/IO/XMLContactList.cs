@@ -161,7 +161,8 @@ namespace MSNPSharp.IO
                 SerializableDictionary<Guid, ContactType> defaultPage = AddressbookContacts[WebServiceConstants.MessengerIndividualAddressBookId];
                 foreach (ContactType contactType in defaultPage.Values)
                 {
-                    ReturnState updateResult = UpdateContact(contactType); //Restore contacts.
+                    Contact tmpContact;
+                    ReturnState updateResult = UpdateContact(contactType, out tmpContact); //Restore contacts.
                     if ((updateResult & ReturnState.UpdateError) != ReturnState.None)
                     {
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[Initialize Error]: update contact error.");
@@ -1535,7 +1536,8 @@ namespace MSNPSharp.IO
                     if (!isRestore)
                         newContactList[contactType.contactInfo.CID] = contactType;
 
-                    if ((UpdateContact(contactType, lowerId, circle) & ReturnState.ProcessNextContact) == ReturnState.None)
+                    Contact tmpContact;
+                    if ((UpdateContact(contactType, lowerId, circle, out tmpContact) & ReturnState.ProcessNextContact) == ReturnState.None)
                     {
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "[UpdateCircleMembersFromAddressBookContactPage] Create circle member failed: " +
                             contactType.contactInfo.passportName + ", UpdateContact returns false.");
@@ -1769,8 +1771,11 @@ namespace MSNPSharp.IO
                                 }
                                 else
                                 {
-                                    UpdateContact(contactType);
-                                    NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, RoleLists.Forward));
+                                    if (UpdateContact(contactType, out contact) != ReturnState.UpdateError &&
+                                        contact != null)
+                                    {
+                                        NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, RoleLists.Forward));
+                                    }
                                 }
                             }
                         }
@@ -2283,16 +2288,17 @@ namespace MSNPSharp.IO
 
         }
 
-        private ReturnState UpdateContact(ContactType contactType)
+        private ReturnState UpdateContact(ContactType contactType, out Contact updatedContact)
         {
-            return UpdateContact(contactType, WebServiceConstants.MessengerIndividualAddressBookId, null);
+            return UpdateContact(contactType, WebServiceConstants.MessengerIndividualAddressBookId, null, out updatedContact);
         }
 
-        private ReturnState UpdateContact(ContactType contactType, string abId, Circle circle)
+        private ReturnState UpdateContact(ContactType contactType, string abId, Circle circle, out Contact updatedContact)
         {
             if (contactType.contactInfo == null)
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Cannot update contact, contact info is null.");
+                updatedContact = null;
                 return ReturnState.UpdateError;
             }
 
@@ -2360,6 +2366,7 @@ namespace MSNPSharp.IO
 
                             //This means we are restoring contacts from mcl file.
                             //We need to retore the circle first, then initialize this contact again.
+                            updatedContact = null;
                             return ReturnState.UpdateError;
                         }
 
@@ -2459,6 +2466,8 @@ namespace MSNPSharp.IO
                     }
 
                     #endregion
+
+                    updatedContact = contact;
                 }
                 else
                 {
@@ -2480,7 +2489,7 @@ namespace MSNPSharp.IO
                         if (circle == null)
                         {
                             Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Cannot update owner: " + account + " in addressbook: " + abId);
-
+                            updatedContact = null;
                             return ReturnState.UpdateError;
                         }
 
@@ -2520,7 +2529,13 @@ namespace MSNPSharp.IO
                     }
 
                     InitializeMyProperties();
+
+                    updatedContact = owner;
                 }
+            }
+            else
+            {
+                updatedContact = null;
             }
 
             return returnValue;
