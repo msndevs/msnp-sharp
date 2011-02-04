@@ -1133,6 +1133,7 @@ namespace MSNPSharp
     public static class ServiceFilterType
     {
         public const string Messenger = "Messenger";
+        public const string IMAvailability = "IMAvailability";
         public const string Invitation = "Invitation";
         public const string SocialNetwork = "SocialNetwork";
         public const string Profile = "Profile";
