@@ -45,7 +45,7 @@ namespace MSNPSharp.MSNWS.MSNOIMStoreService {
         
         /// <remarks/>
         public OIMStoreService() {
-            this.Url = global::MSNPSharp.Properties.Settings.Default.MSNPSharp_MSNWS_MSNOIMStoreService_OIMStoreService;
+            this.Url = "https://ows.messenger.msn.com/OimWS/oim.asmx";
             if ((this.IsLocalFileSystemWebService(this.Url) == true)) {
                 this.UseDefaultCredentials = true;
                 this.useDefaultCredentialsSetExplicitly = false;
