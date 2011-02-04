@@ -59,7 +59,7 @@ namespace MSNPSharp.MSNWS.MSNStorageService {
         
         /// <remarks/>
         public StorageService() {
-            this.Url = global::MSNPSharp.Properties.Settings.Default.MSNPSharp_MSNWS_MSNStorageService_StorageService;
+            this.Url = "https://storage.msn.com/storageservice/SchematizedStore.asmx";
             if ((this.IsLocalFileSystemWebService(this.Url) == true)) {
                 this.UseDefaultCredentials = true;
                 this.useDefaultCredentialsSetExplicitly = false;

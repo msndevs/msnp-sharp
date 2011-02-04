@@ -42,7 +42,7 @@ namespace MSNPSharp.MSNWS.MSNRSIService {
         
         /// <remarks/>
         public RSIService() {
-            this.Url = global::MSNPSharp.Properties.Settings.Default.MSNPSharp_MSNWS_MSNRSIService_RSIService;
+            this.Url = "https://rsi.hotmail.com/rsi/rsi.asmx";
             if ((this.IsLocalFileSystemWebService(this.Url) == true)) {
                 this.UseDefaultCredentials = true;
                 this.useDefaultCredentialsSetExplicitly = false;
