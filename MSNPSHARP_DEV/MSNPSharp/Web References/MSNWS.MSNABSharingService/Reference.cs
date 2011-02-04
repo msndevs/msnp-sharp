@@ -49,7 +49,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         /// <remarks/>
         public SharingServiceBinding() {
-            this.Url = global::MSNPSharp.Properties.Settings.Default.MSNPSharp_MSNWS_MSNABSharingService_SharingService;
+            this.Url = "https://contacts.msn.com/abservice/SharingService.asmx";
             if ((this.IsLocalFileSystemWebService(this.Url) == true)) {
                 this.UseDefaultCredentials = true;
                 this.useDefaultCredentialsSetExplicitly = false;

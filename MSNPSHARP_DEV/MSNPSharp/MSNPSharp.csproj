@@ -129,11 +129,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Properties\Settings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <DependentUpon>Settings.settings</DependentUpon>
-    </Compile>
     <Compile Include="ProxySocket\AuthMethod.cs" />
     <Compile Include="ProxySocket\AuthNone.cs" />
     <Compile Include="ProxySocket\AuthUserPass.cs" />
@@ -194,10 +189,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
     <None Include="Web References\MSNWS.MSNABSharingService\ABContactAddResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
@@ -332,7 +323,7 @@
   </ItemGroup>
   <ItemGroup>
     <WebReferenceUrl Include="http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNABSharingService/msnab_sharingservice.wsdl">
-      <UrlBehavior>Dynamic</UrlBehavior>
+      <UrlBehavior>Static</UrlBehavior>
       <RelPath>Web References\MSNWS.MSNABSharingService\</RelPath>
       <UpdateFromURL>http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNABSharingService/msnab_sharingservice.wsdl</UpdateFromURL>
       <ServiceLocationURL>
@@ -343,7 +334,7 @@
       <CachedSettingsPropName>MSNPSharp_MSNWS_MSNABSharingService_SharingService</CachedSettingsPropName>
     </WebReferenceUrl>
     <WebReferenceUrl Include="http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNOIMStoreService/oim_ws.wsdl">
-      <UrlBehavior>Dynamic</UrlBehavior>
+      <UrlBehavior>Static</UrlBehavior>
       <RelPath>Web References\MSNWS.MSNOIMStoreService\</RelPath>
       <UpdateFromURL>http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNOIMStoreService/oim_ws.wsdl</UpdateFromURL>
       <ServiceLocationURL>
@@ -354,7 +345,7 @@
       <CachedSettingsPropName>MSNPSharp_MSNWS_MSNOIMStoreService_OIMStoreService</CachedSettingsPropName>
     </WebReferenceUrl>
     <WebReferenceUrl Include="http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNRSIService/rsi_ws.wsdl">
-      <UrlBehavior>Dynamic</UrlBehavior>
+      <UrlBehavior>Static</UrlBehavior>
       <RelPath>Web References\MSNWS.MSNRSIService\</RelPath>
       <UpdateFromURL>http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNRSIService/rsi_ws.wsdl</UpdateFromURL>
       <ServiceLocationURL>
@@ -365,7 +356,7 @@
       <CachedSettingsPropName>MSNPSharp_MSNWS_MSNRSIService_RSIService</CachedSettingsPropName>
     </WebReferenceUrl>
     <WebReferenceUrl Include="http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.wsdl">
-      <UrlBehavior>Dynamic</UrlBehavior>
+      <UrlBehavior>Static</UrlBehavior>
       <RelPath>Web References\MSNWS.MSNSecurityTokenService\</RelPath>
       <UpdateFromURL>http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.wsdl</UpdateFromURL>
       <ServiceLocationURL>
@@ -376,7 +367,7 @@
       <CachedSettingsPropName>MSNPSharp_MSNWS_MSNSecurityTokenService_SecurityTokenService</CachedSettingsPropName>
     </WebReferenceUrl>
     <WebReferenceUrl Include="http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl">
-      <UrlBehavior>Dynamic</UrlBehavior>
+      <UrlBehavior>Static</UrlBehavior>
       <RelPath>Web References\MSNWS.MSNStorageService\</RelPath>
       <UpdateFromURL>http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl</UpdateFromURL>
       <ServiceLocationURL>
