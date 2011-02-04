@@ -184,6 +184,16 @@
       </xsd:extension>
     </xsd:complexContent>
   </xsd:complexType>
+  <xsd:complexType name="ExternalIDMember">
+    <xsd:complexContent mixed="false">
+      <xsd:extension base="msnab:BaseMember">
+        <xsd:sequence>
+          <xsd:element name="SourceID" type="xsd:string" />
+          <xsd:element name="ObjectID" type="xsd:string" />
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
   <xsd:simpleType name="Guid">
     <xsd:restriction base="xsd:string">
       <xsd:pattern value="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}" />

@@ -331,10 +331,10 @@
     <WebReferences Include="Web References\" />
   </ItemGroup>
   <ItemGroup>
-    <WebReferenceUrl Include="http://127.0.0.1/msnws/WebServiceDefAndSchemas/MSNABSharingService/msnab_sharingservice.wsdl">
+    <WebReferenceUrl Include="http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNABSharingService/msnab_sharingservice.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
       <RelPath>Web References\MSNWS.MSNABSharingService\</RelPath>
-      <UpdateFromURL>http://127.0.0.1/msnws/WebServiceDefAndSchemas/MSNABSharingService/msnab_sharingservice.wsdl</UpdateFromURL>
+      <UpdateFromURL>http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNABSharingService/msnab_sharingservice.wsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>
@@ -342,10 +342,10 @@
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>MSNPSharp_MSNWS_MSNABSharingService_SharingService</CachedSettingsPropName>
     </WebReferenceUrl>
-    <WebReferenceUrl Include="http://127.0.0.1/msnws/WebServiceDefAndSchemas/MSNOIMStoreService/oim_ws.wsdl">
+    <WebReferenceUrl Include="http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNOIMStoreService/oim_ws.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
       <RelPath>Web References\MSNWS.MSNOIMStoreService\</RelPath>
-      <UpdateFromURL>http://127.0.0.1/msnws/WebServiceDefAndSchemas/MSNOIMStoreService/oim_ws.wsdl</UpdateFromURL>
+      <UpdateFromURL>http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNOIMStoreService/oim_ws.wsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>
@@ -353,10 +353,10 @@
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>MSNPSharp_MSNWS_MSNOIMStoreService_OIMStoreService</CachedSettingsPropName>
     </WebReferenceUrl>
-    <WebReferenceUrl Include="http://127.0.0.1/msnws/WebServiceDefAndSchemas/MSNRSIService/rsi_ws.wsdl">
+    <WebReferenceUrl Include="http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNRSIService/rsi_ws.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
       <RelPath>Web References\MSNWS.MSNRSIService\</RelPath>
-      <UpdateFromURL>http://127.0.0.1/msnws/WebServiceDefAndSchemas/MSNRSIService/rsi_ws.wsdl</UpdateFromURL>
+      <UpdateFromURL>http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNRSIService/rsi_ws.wsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>
@@ -364,10 +364,10 @@
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>MSNPSharp_MSNWS_MSNRSIService_RSIService</CachedSettingsPropName>
     </WebReferenceUrl>
-    <WebReferenceUrl Include="http://127.0.0.1/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.wsdl">
+    <WebReferenceUrl Include="http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
       <RelPath>Web References\MSNWS.MSNSecurityTokenService\</RelPath>
-      <UpdateFromURL>http://127.0.0.1/msnws/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.wsdl</UpdateFromURL>
+      <UpdateFromURL>http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.wsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>
@@ -375,10 +375,10 @@
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>MSNPSharp_MSNWS_MSNSecurityTokenService_SecurityTokenService</CachedSettingsPropName>
     </WebReferenceUrl>
-    <WebReferenceUrl Include="http://127.0.0.1/msnws/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl">
+    <WebReferenceUrl Include="http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl">
       <UrlBehavior>Dynamic</UrlBehavior>
       <RelPath>Web References\MSNWS.MSNStorageService\</RelPath>
-      <UpdateFromURL>http://127.0.0.1/msnws/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl</UpdateFromURL>
+      <UpdateFromURL>http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl</UpdateFromURL>
       <ServiceLocationURL>
       </ServiceLocationURL>
       <CachedDynamicPropName>

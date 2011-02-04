@@ -918,6 +918,7 @@ namespace MSNPSharp.IO
                             case MembershipType.Service:
                             case MembershipType.Everyone:
                             case MembershipType.Partner:
+                            case MembershipType.ExternalID:
                                 account = bm.Type + "/" + bm.MembershipId;
                                 break;
 
