@@ -1,7 +1,7 @@
-﻿#region Copyright (c) 2002-2011, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice
+﻿#region
 /*
 Copyright (c) 2002-2011, Bas Geertsema, Xih Solutions
-(http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice.
+(http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice, Andy Phan.
 All rights reserved. http://code.google.com/p/msnp-sharp/
 
 Redistribution and use in source and binary forms, with or without
