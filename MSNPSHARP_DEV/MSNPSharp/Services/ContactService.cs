@@ -719,10 +719,10 @@ namespace MSNPSharp
                 request.serviceFilter = new FindMembershipRequestTypeServiceFilter();
                 request.serviceFilter.Types = new string[]
                 {
-                    ServiceFilterType.Messenger,
+                    ServiceFilterType.Messenger/*,
                     ServiceFilterType.Profile,
                     ServiceFilterType.IMAvailability,
-                    ServiceFilterType.SocialNetwork /*,
+                    ServiceFilterType.SocialNetwork,
                     ServiceFilterType.Invitation,
                     ServiceFilterType.Folder,
                     ServiceFilterType.OfficeLiveWebNotification*/
