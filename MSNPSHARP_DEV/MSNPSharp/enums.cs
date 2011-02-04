@@ -1115,6 +1115,7 @@ namespace MSNPSharp
         public const string Partner = "Partner";
         public const string Domain = "Domain";
         public const string Circle = "Circle";
+        public const string ExternalID = "ExternalID";
 
     }
 
