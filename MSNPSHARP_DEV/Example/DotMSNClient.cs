@@ -1116,6 +1116,7 @@ namespace MSNPSharpClient
             pnlNameAndPM.Visible = false;
             comboPlaces.Visible = false;
             propertyGrid.SelectedObject = null;
+            tableLayoutPanel3.BackgroundImage = Properties.Resources.my_scene;
 
             treeViewFavoriteList.Nodes.Clear();
             treeViewFilterList.Nodes.Clear();
