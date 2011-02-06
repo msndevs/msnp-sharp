@@ -58,6 +58,7 @@ namespace MSNPSharp.IO
 
         private SerializableDictionary<string, string> userSceneRelationships = new SerializableDictionary<string, string>();
         private SerializableDictionary<string, byte[]> userSceneSlots = new SerializableDictionary<string, byte[]>(MaxSlot);
+        private SerializableDictionary<string, uint> visitCountScene = new SerializableDictionary<string, uint>(MaxSlot);
 
         public SerializableDictionary<string, string> UserImageRelationships
         {
@@ -76,6 +77,12 @@ namespace MSNPSharp.IO
         {
             get { return visitCount; }
             set { visitCount = value; }
+        }
+
+        public SerializableDictionary<string, uint> VisitCountScene
+        {
+            get { return visitCountScene; }
+            set { visitCountScene = value; }
         }
 
         /// <summary>
@@ -149,6 +156,21 @@ namespace MSNPSharp.IO
 
         #region Private methods
 
+        private SerializableDictionary<string, uint> GetVisit(bool isDisplayImage)
+        {
+            return isDisplayImage ? VisitCount : VisitCountScene;
+        }
+
+        private SerializableDictionary<string, string> GetRelationShip(bool isDisplayImage)
+        {
+            return isDisplayImage ? UserImageRelationships : UserSceneRelationships;
+        }
+
+        private SerializableDictionary<string, byte[]> GetTile(bool isDisplayImage)
+        {
+            return isDisplayImage ? UserTileSlots : UserSceneSlots;
+        }
+
         private bool HasRelationship(string siblingAccount, SerializableDictionary<string, string> dictRelation)
         {
             lock (dictRelation)
@@ -163,20 +185,17 @@ namespace MSNPSharp.IO
 
         private bool HasRelationshipAndImage(string siblingAccount, out string imageKey, bool isDisplayImage)
         {
-            SerializableDictionary<string, byte[]> userImage = (isDisplayImage) ? UserTileSlots : UserSceneSlots;
-            SerializableDictionary<string, string> userRelation = (isDisplayImage) ? userImageRelationships : UserSceneRelationships;
-
             imageKey = string.Empty;
-            if (!HasRelationship(siblingAccount, userRelation))
+            if (!HasRelationship(siblingAccount, GetRelationShip(isDisplayImage)))
             {
                 return false;
             }
 
             string imgKey = string.Empty;
-            lock (userRelation)
-                imgKey = userRelation[siblingAccount.ToLowerInvariant()];
+            lock (GetRelationShip(isDisplayImage))
+                imgKey = GetRelationShip(isDisplayImage)[siblingAccount.ToLowerInvariant()];
 
-            if (!HasImage(imgKey, userImage))
+            if (!HasImage(imgKey, GetTile(isDisplayImage)))
                 return false;
 
             imageKey = imgKey;
@@ -200,27 +219,26 @@ namespace MSNPSharp.IO
 
         private void AddImageAndRelationship(string siblingAccount, string imageKey, byte[] data, bool isDisplayImage)
         {
-            AddImage(imageKey, data, isDisplayImage ? UserTileSlots : UserSceneSlots);
-            AddRelationship(siblingAccount, imageKey, isDisplayImage ? UserImageRelationships : UserSceneRelationships);
+            AddImage(imageKey, data, GetTile(isDisplayImage));
+            AddRelationship(siblingAccount, imageKey, GetRelationShip(isDisplayImage));
         }
 
-        private bool RemoveImage(string imageKey)
+        private bool RemoveImage(string imageKey, bool isDisplayImage)
         {
             bool noerror = true;
 
-            lock (UserTileSlots)
-                noerror |= UserTileSlots.Remove(imageKey);
+            noerror |= GetTile(isDisplayImage).Remove(imageKey);
 
-            lock (VisitCount)
-                noerror |= VisitCount.Remove(imageKey);
+            lock (GetVisit(isDisplayImage))
+                noerror |= GetVisit(isDisplayImage).Remove(imageKey);
 
-            lock (UserImageRelationships)
+            lock (GetRelationShip(isDisplayImage))
             {
-                Dictionary<string, string> cp = new Dictionary<string, string>(UserImageRelationships);
+                Dictionary<string, string> cp = new Dictionary<string, string>(GetRelationShip(isDisplayImage));
                 foreach (string account in cp.Keys)
                 {
                     if (cp[account] == imageKey)
-                        UserImageRelationships.Remove(account);
+                        GetRelationShip(isDisplayImage).Remove(account);
                 }
             }
 
@@ -245,15 +263,16 @@ namespace MSNPSharp.IO
         /// 
         /// </summary>
         /// <param name="imageKey"></param>
-        /// <remarks>This function does NOT exam whether the correspondent slot exist.</remarks>
-        private uint IncreaseVisitCount(string imageKey)
+        /// <param name="isDisplayImage"></param>
+        /// <remarks>This function does NOT examine whether the correspondent slot does exist.</remarks>
+        private uint IncreaseVisitCount(string imageKey, bool isDisplayImage)
         {
-            lock (VisitCount)
+            lock (GetVisit(isDisplayImage))
             {
-                if (!VisitCount.ContainsKey(imageKey))
-                    VisitCount[imageKey] = 0;
+                if (!GetVisit(isDisplayImage).ContainsKey(imageKey))
+                    GetVisit(isDisplayImage)[imageKey] = 0;
 
-                return ++VisitCount[imageKey];
+                return ++GetVisit(isDisplayImage)[imageKey];
             }
         }
 
@@ -274,12 +293,12 @@ namespace MSNPSharp.IO
             return 0;
         }
 
-        private bool GetLeastVisitImage(out string imageKey)
+        private bool GetLeastVisitImage(out string imageKey, bool isDisplayImage)
         {
             imageKey = string.Empty;
-            lock (VisitCount)
+            lock (GetVisit(isDisplayImage))
             {
-                if (VisitCount.Count == 0)
+                if (GetVisit(isDisplayImage).Count == 0)
                     return false;
                 uint minValue = uint.MaxValue;
                 uint maxValue = 0;
@@ -287,18 +306,18 @@ namespace MSNPSharp.IO
 
                 string lastKey = string.Empty;
 
-                foreach (string key in VisitCount.Keys)
+                foreach (string key in GetVisit(isDisplayImage).Keys)
                 {
-                    if (VisitCount[key] <= minValue)
+                    if (GetVisit(isDisplayImage)[key] <= minValue)
                     {
-                        minValue = VisitCount[key];
+                        minValue = GetVisit(isDisplayImage)[key];
                         lastKey = key;
                     }
 
-                    if (VisitCount[key] >= maxValue)
-                        maxValue = VisitCount[key];
+                    if (GetVisit(isDisplayImage)[key] >= maxValue)
+                        maxValue = GetVisit(isDisplayImage)[key];
 
-                    sum += VisitCount[key];
+                    sum += GetVisit(isDisplayImage)[key];
                 }
 
                 if (string.IsNullOrEmpty(lastKey))
@@ -307,23 +326,19 @@ namespace MSNPSharp.IO
                 imageKey = lastKey;
                 if (maxValue == uint.MaxValue)  //Prevent overflow.
                 {
-                    uint avg = (uint)(sum / (ulong)VisitCount.Count);
+                    uint avg = (uint)(sum / (ulong)GetVisit(isDisplayImage).Count);
                     if (avg == uint.MaxValue)
                         avg = 0;
 
-                    lock (VisitCount)
+                    Dictionary<string, uint> cp = new Dictionary<string, uint>(GetVisit(isDisplayImage));
+                    foreach (string imgKey in cp.Keys)
                     {
-                        Dictionary<string, uint> cp = new Dictionary<string, uint>(VisitCount);
-                        foreach (string imgKey in cp.Keys)
-                        {
-                            if (cp[imgKey] == uint.MaxValue)
-                                VisitCount[imgKey] = avg;
-                        }
+                        if (cp[imgKey] == uint.MaxValue)
+                            GetVisit(isDisplayImage)[imgKey] = avg;
                     }
                 }
 
                 return true;
-
             }
         }
 
@@ -335,9 +350,9 @@ namespace MSNPSharp.IO
         {
             if (imageKey != null)
             {
-                if (HasImage(imageKey, isDisplayImage ? UserTileSlots : UserSceneSlots))
+                if (HasImage(imageKey, GetTile(isDisplayImage)))
                 {
-                    AddRelationship(siblingAccount, imageKey, isDisplayImage ? UserImageRelationships : UserSceneRelationships);
+                    AddRelationship(siblingAccount, imageKey, GetRelationShip(isDisplayImage));
                     return true;
                 }
             }
@@ -350,15 +365,10 @@ namespace MSNPSharp.IO
             imageKey = string.Empty;
             if (HasRelationshipAndImage(siblingAccount, out imageKey, isDisplayImage))
             {
-                lock (isDisplayImage ? UserTileSlots : UserSceneSlots)
+                lock (GetTile(isDisplayImage))
                 {
-                    if (isDisplayImage)
-                    {
-                        IncreaseVisitCount(imageKey);
-                        return UserTileSlots[imageKey];
-                    }
-                    else
-                        return UserSceneSlots[imageKey];
+                    IncreaseVisitCount(imageKey, isDisplayImage);
+                    return GetTile(isDisplayImage)[imageKey];
                 }
             }
 
@@ -367,24 +377,20 @@ namespace MSNPSharp.IO
 
         internal bool SaveImageAndRelationship(string siblingAccount, string imageKey, byte[] userTile, bool isDisplayImage)
         {
-            lock (isDisplayImage ? UserTileSlots : UserSceneSlots)
+            lock (GetTile(isDisplayImage))
             {
-                // Only display images will have visit counts, at the moment
-                if (isDisplayImage)
+                if (GetTile(isDisplayImage).Count == MaxSlot)
                 {
-                    if (UserTileSlots.Count == MaxSlot)
+                    //The heaven is full.
+                    string deleteKey = string.Empty;
+                    if (GetLeastVisitImage(out deleteKey, isDisplayImage))
                     {
-                        //The heaven is full.
-                        string deleteKey = string.Empty;
-                        if (GetLeastVisitImage(out deleteKey))
-                        {
-                            RemoveImage(deleteKey);
-                        }
-                        else
-                        {
-                            //OMG no one want to give a place?
-                            return false;
-                        }
+                        RemoveImage(deleteKey, isDisplayImage);
+                    }
+                    else
+                    {
+                        //OMG no one want to give a place?
+                        return false;
                     }
                 }
 
