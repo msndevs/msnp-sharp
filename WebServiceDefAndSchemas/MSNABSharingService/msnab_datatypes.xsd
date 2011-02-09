@@ -326,7 +326,7 @@
 			<xsd:element name="birthdate" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="primaryEmailType" type="msnab:ContactEmailTypeType" minOccurs="0"/>
 			<xsd:element name="PrimaryLocation" type="msnab:ContactLocationTypeType" minOccurs="0"/>
-			<xsd:element name="PrimaryPhone" type="msnab:ContactPhoneTypeType" minOccurs="0"/>
+			<xsd:element name="PrimaryPhone" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="IsPrivate" type="xsd:boolean" minOccurs="0"/>
 			<xsd:element name="Anniversary" type="xsd:string" minOccurs="0">
 				<xsd:annotation>
@@ -380,26 +380,12 @@
 	</xsd:simpleType>
 	<xsd:complexType name="contactPhoneType">
 		<xsd:sequence>
-			<xsd:element name="contactPhoneType" type="msnab:ContactPhoneTypeType"/>
+			<xsd:element name="contactPhoneType" type="xsd:string"/>
 			<xsd:element name="number" type="xsd:string"/>
 			<xsd:element name="isMessengerEnabled" type="xsd:boolean"/>
 			<xsd:element name="propertiesChanged" type="xsd:string"/>
 		</xsd:sequence>
 	</xsd:complexType>
-	<xsd:simpleType name="ContactPhoneTypeType">
-		<xsd:restriction base="xsd:string">
-			<xsd:enumeration value="ContactPhonePersonal"/>
-			<xsd:enumeration value="ContactPhoneBusiness"/>
-			<xsd:enumeration value="ContactPhoneMobile"/>
-			<xsd:enumeration value="ContactPhonePager"/>
-			<xsd:enumeration value="ContactPhoneOther"/>
-			<xsd:enumeration value="ContactPhoneFax"/>
-			<xsd:enumeration value="Personal2"/>
-			<xsd:enumeration value="Business2"/>
-			<xsd:enumeration value="BusinessFax"/>
-			<xsd:enumeration value="BusinessMobile"/>
-		</xsd:restriction>
-	</xsd:simpleType>
 	<xsd:complexType name="contactLocationType">
 		<xsd:sequence>
 			<xsd:element name="contactLocationType" type="msnab:ContactLocationTypeType"/>
