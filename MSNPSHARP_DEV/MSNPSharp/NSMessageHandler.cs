@@ -648,6 +648,7 @@ namespace MSNPSharp
                 TextMessage txtMsg = new TextMessage(text);
                 MimeMessage mimeMessage = new MimeMessage();
                 mimeMessage.InnerMessage = txtMsg;
+                mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/plain; charset=UTF-8";
                 mimeMessage.MimeHeader["Dest-Agent"] = "mobile";
 
                 NSMessage nsMessage = new NSMessage("UUM", new string[] { to, ((int)receiver.ClientType).ToString(), ((int)NetworkMessageType.Text).ToString() });
