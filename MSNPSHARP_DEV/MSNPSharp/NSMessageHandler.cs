@@ -3341,13 +3341,13 @@ namespace MSNPSharp
             switch (type)
             {
                 case "PHH":
-                    ContactList.Owner.SetHomePhone(number);
+                    ContactList.Owner.PhoneNumbers[ContactPhoneTypes.ContactPhonePersonal] = number;
                     break;
                 case "PHW":
-                    ContactList.Owner.SetWorkPhone(number);
+                    ContactList.Owner.PhoneNumbers[ContactPhoneTypes.ContactPhoneBusiness] = number;
                     break;
                 case "PHM":
-                    ContactList.Owner.SetMobilePhone(number);
+                    ContactList.Owner.PhoneNumbers[ContactPhoneTypes.ContactPhoneMobile] = number;
                     break;
                 case "MBE":
                     ContactList.Owner.SetMobileDevice((number == "Y") ? true : false);

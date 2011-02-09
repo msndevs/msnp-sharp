@@ -1355,7 +1355,7 @@ namespace MSNPSharp
 
                     case IMAddressInfoType.Telephone:
                         request.contacts[0].contactInfo.phones = new contactPhoneType[] { new contactPhoneType() };
-                        request.contacts[0].contactInfo.phones[0].contactPhoneType1 = ContactPhoneTypeType.ContactPhoneMobile;
+                        request.contacts[0].contactInfo.phones[0].contactPhoneType1 = ContactPhoneTypes.ContactPhoneMobile;
                         request.contacts[0].contactInfo.phones[0].number = account;
                         request.contacts[0].contactInfo.phones[0].isMessengerEnabled = true;
                         request.contacts[0].contactInfo.phones[0].propertiesChanged =
@@ -1629,7 +1629,7 @@ namespace MSNPSharp
                                 {
                                     propertiesChanged.Add(PropertyString.ContactPhone);
                                     contactToChange.contactInfo.phones = new contactPhoneType[] { new contactPhoneType() };
-                                    contactToChange.contactInfo.phones[0].contactPhoneType1 = ContactPhoneTypeType.ContactPhoneMobile;
+                                    contactToChange.contactInfo.phones[0].contactPhoneType1 = ContactPhoneTypes.ContactPhoneMobile;
                                     contactToChange.contactInfo.phones[0].isMessengerEnabled = contact.IsMessengerUser;
                                     contactToChange.contactInfo.phones[0].propertiesChanged = PropertyString.IsMessengerEnabled; //"IsMessengerEnabled";
                                     break;
