@@ -2548,33 +2548,15 @@ namespace MSNPSharp.IO
 
         private bool SetContactPhones(Contact contact, contactInfoType cinfo)
         {
-            if (cinfo == null)
+            if (cinfo == null || cinfo.phones == null)
                 return false;
-
-            if (cinfo.phones == null)
-                return false;
-
 
             foreach (contactPhoneType cp in cinfo.phones)
             {
-                switch (cp.contactPhoneType1)
-                {
-                    case ContactPhoneTypeType.ContactPhoneMobile:
-                        contact.SetMobilePhone(cp.number);
-                        break;
-
-                    case ContactPhoneTypeType.ContactPhonePersonal:
-                        contact.SetHomePhone(cp.number);
-                        break;
-
-                    case ContactPhoneTypeType.ContactPhoneBusiness:
-                        contact.SetWorkPhone(cp.number);
-                        break;
-                }
+                contact.PhoneNumbers[cp.contactPhoneType1] = cp.number;
             }
 
             return true;
-
         }
 
         /// <summary>
