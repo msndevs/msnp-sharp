@@ -1144,6 +1144,21 @@ namespace MSNPSharp
         public const string CommunityQuestionAnswer = "CommunityQuestionAnswer";
     }
 
+    public static class ContactPhoneTypes
+    {
+        public const string ContactPhonePersonal = "ContactPhonePersonal";
+        public const string ContactPhoneBusiness = "ContactPhoneBusiness";
+        public const string ContactPhoneMobile = "ContactPhoneMobile";
+        public const string ContactPhonePager = "ContactPhonePager";
+        public const string ContactPhoneOther = "ContactPhoneOther";
+        public const string ContactPhoneFax = "ContactPhoneFax";
+        public const string Personal2 = "Personal2";
+        public const string Business2 = "Business2";
+        public const string BusinessFax = "BusinessFax";
+        public const string BusinessMobile = "BusinessMobile";
+        public const string Company = "Company";
+    }
+
     /// <summary>
     /// Property string for <see cref="MSNPSharp.MSNWS.MSNABSharingService.ContactType"/>
     /// </summary>
