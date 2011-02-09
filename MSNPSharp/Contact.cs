@@ -61,9 +61,7 @@ namespace MSNPSharp
         private string name = string.Empty;
         private string nickName = string.Empty;
 
-        private string homePhone = string.Empty;
-        private string workPhone = string.Empty;
-        private string mobilePhone = string.Empty;
+        private Dictionary<string, string> phoneNumbers = new Dictionary<string, string>();
         private string contactType = string.Empty;
         private string comment = string.Empty;
         private string siblingString = string.Empty;
@@ -392,7 +390,8 @@ namespace MSNPSharp
         {
             get
             {
-                return homePhone;
+                return phoneNumbers.ContainsKey(ContactPhoneTypes.ContactPhonePersonal) ?
+                    phoneNumbers[ContactPhoneTypes.ContactPhonePersonal] : string.Empty;
             }
         }
 
@@ -400,7 +399,8 @@ namespace MSNPSharp
         {
             get
             {
-                return workPhone;
+                return phoneNumbers.ContainsKey(ContactPhoneTypes.ContactPhoneBusiness) ?
+                    phoneNumbers[ContactPhoneTypes.ContactPhoneBusiness] : string.Empty;
             }
         }
 
@@ -408,7 +408,16 @@ namespace MSNPSharp
         {
             get
             {
-                return mobilePhone;
+                return phoneNumbers.ContainsKey(ContactPhoneTypes.ContactPhoneMobile) ?
+                    phoneNumbers[ContactPhoneTypes.ContactPhoneMobile] : string.Empty;
+            }
+        }
+
+        public Dictionary<string, string> PhoneNumbers
+        {
+            get
+            {
+                return phoneNumbers;
             }
         }
 
@@ -1006,11 +1015,6 @@ namespace MSNPSharp
             comment = note;
         }
 
-        internal void SetHomePhone(string number)
-        {
-            homePhone = number;
-        }
-
         internal void SetIsMessengerUser(bool isMessengerEnabled)
         {
             isMessengerUser = isMessengerEnabled;
@@ -1031,16 +1035,6 @@ namespace MSNPSharp
         internal void SetMobileDevice(bool enabled)
         {
             mobileDevice = enabled;
-        }
-
-        internal void SetMobilePhone(string number)
-        {
-            mobilePhone = number;
-        }
-
-        internal void SetWorkPhone(string number)
-        {
-            workPhone = number;
         }
 
         internal void SetName(string newName)

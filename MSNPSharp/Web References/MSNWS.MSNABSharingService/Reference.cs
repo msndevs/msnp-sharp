@@ -4272,9 +4272,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool primaryLocationFieldSpecified;
         
-        private ContactPhoneTypeType primaryPhoneField;
-        
-        private bool primaryPhoneFieldSpecified;
+        private string primaryPhoneField;
         
         private bool isPrivateField;
         
@@ -4717,23 +4715,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public ContactPhoneTypeType PrimaryPhone {
+        public string PrimaryPhone {
             get {
                 return this.primaryPhoneField;
             }
             set {
                 this.primaryPhoneField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool PrimaryPhoneSpecified {
-            get {
-                return this.primaryPhoneFieldSpecified;
-            }
-            set {
-                this.primaryPhoneFieldSpecified = value;
             }
         }
         
@@ -5088,7 +5075,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
     public partial class contactPhoneType {
         
-        private ContactPhoneTypeType contactPhoneType1Field;
+        private string contactPhoneType1Field;
         
         private string numberField;
         
@@ -5098,7 +5085,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute("contactPhoneType")]
-        public ContactPhoneTypeType contactPhoneType1 {
+        public string contactPhoneType1 {
             get {
                 return this.contactPhoneType1Field;
             }
@@ -5136,43 +5123,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
                 this.propertiesChangedField = value;
             }
         }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.4927")]
-    [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public enum ContactPhoneTypeType {
-        
-        /// <remarks/>
-        ContactPhonePersonal,
-        
-        /// <remarks/>
-        ContactPhoneBusiness,
-        
-        /// <remarks/>
-        ContactPhoneMobile,
-        
-        /// <remarks/>
-        ContactPhonePager,
-        
-        /// <remarks/>
-        ContactPhoneOther,
-        
-        /// <remarks/>
-        ContactPhoneFax,
-        
-        /// <remarks/>
-        Personal2,
-        
-        /// <remarks/>
-        Business2,
-        
-        /// <remarks/>
-        BusinessFax,
-        
-        /// <remarks/>
-        BusinessMobile,
     }
     
     /// <remarks/>
