@@ -357,6 +357,8 @@ namespace MSNPSharp.Apps
 
             p2pChunk.WriteBytes(_dataStream, P2PSession.Bridge.MaxDataSize);
 
+            AckHandler ackHandler = null;
+
             if (P2PVersion == P2PVersion.P2PV1)
             {
                 p2pChunk.V1Header.Flags = P2PFlag.FileData;
@@ -371,8 +373,16 @@ namespace MSNPSharp.Apps
 
                 if (p2pv2NextRAK < DateTime.Now)
                 {
+                    _sendingData = false; // Activate when ack received.
+
                     p2pChunk.V2Header.OperationCode |= (byte)OperationCode.RAK;
                     p2pv2NextRAK = DateTime.Now.AddSeconds(8);
+
+                    ackHandler = delegate(P2PMessage ack)
+                    {
+                        _sendingData = true; // Ack received, continue sending...
+                        SendChunk();
+                    };
                 }
             }
 
@@ -391,7 +401,7 @@ namespace MSNPSharp.Apps
             }
             else
             {
-                SendMessage(p2pChunk, null);
+                SendMessage(p2pChunk, ackHandler);
             }
 
             OnProgressed(EventArgs.Empty);
