@@ -1020,7 +1020,8 @@ namespace MSNPSharp
             string putPayloadXML = "<circle><roster><id>IM</id><user><id>1:" + ContactList.Owner.Mail + "</id></user></roster></circle>";
             mmMessage.InnerBody = System.Text.Encoding.ASCII.GetBytes(putPayloadXML);
 
-            NSPayLoadMessage nsMessage = new NSPayLoadMessage("PUT", mmMessage.ToString());
+            NSMessage nsMessage = new NSMessage("PUT");
+            nsMessage.InnerMessage = mmMessage;
             MessageProcessor.SendMessage(nsMessage);
         }
 

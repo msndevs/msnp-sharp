@@ -194,7 +194,8 @@ namespace MSNPSharp
             mmm.ContentHeaders["Message-Type"] = "Nudge";
             mmm.InnerBody = Encoding.ASCII.GetBytes("ID: 1\r\n\r\n");
 
-            NSPayLoadMessage nspayload = new NSPayLoadMessage("SDG", mmm.ToString());
+            NSMessage nspayload = new NSMessage("SDG");
+            nspayload.InnerMessage = mmm;
             NSMessageHandler.MessageProcessor.SendMessage(nspayload);
         }
 
@@ -218,7 +219,8 @@ namespace MSNPSharp
 
             mmm.InnerBody = Encoding.UTF8.GetBytes(textMessage.Text);
 
-            NSPayLoadMessage nspayload = new NSPayLoadMessage("SDG", mmm.ToString());
+            NSMessage nspayload = new NSMessage("SDG");
+            nspayload.InnerMessage = mmm;
             NSMessageHandler.MessageProcessor.SendMessage(nspayload);
         }
 
@@ -241,7 +243,8 @@ namespace MSNPSharp
 
             mmm.InnerBody = Encoding.ASCII.GetBytes("\r\n");
 
-            NSPayLoadMessage nspayload = new NSPayLoadMessage("SDG", mmm.ToString());
+            NSMessage nspayload = new NSMessage("SDG");
+            nspayload.InnerMessage = mmm;
             NSMessageHandler.MessageProcessor.SendMessage(nspayload);
         }
 

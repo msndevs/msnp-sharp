@@ -45,8 +45,18 @@ namespace MSNPSharp
     {
         private Image image = null;
         private bool isDefaultImage = false;
-        private Image defaultImage = Properties.Resources.default_scene;
+
         private static string defaultLocation = "SceneDefault";
+        private static Image defaultImage = Properties.Resources.default_scene;
+
+        public static Image DefaultImage
+        {
+            get
+            {
+                return defaultImage;
+            }
+        }
+        
 
         public bool IsDefaultImage
         {
@@ -77,9 +87,9 @@ namespace MSNPSharp
             if (isDefault)
             {
                 Location = defaultLocation;
-                PersistentStream stream = new PersistentStream(new MemoryStream());
-                (defaultImage.Clone() as Image).Save(stream, defaultImage.RawFormat);
-                DataStream = stream;
+                //PersistentStream stream = new PersistentStream(new MemoryStream());
+                //(defaultImage.Clone() as Image).Save(stream, defaultImage.RawFormat);
+                //DataStream = stream;
             }
 
             isDefaultImage = isDefault;
