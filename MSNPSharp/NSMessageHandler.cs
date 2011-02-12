@@ -908,10 +908,10 @@ namespace MSNPSharp
             if (IsSignedIn == false)
                 throw new MSNPSharpException("Can't set status. You must wait for the SignedIn event before you can set an initial status.");
 
-            string context = String.Empty;
+            string context = "0";
             bool isSetDefault = false;
 
-            if (ContactList.Owner.DisplayImage != null)
+            if (ContactList.Owner.DisplayImage != null && ContactList.Owner.DisplayImage.Image != null)
                 context = ContactList.Owner.DisplayImage.Context;
 
             if (status == PresenceStatus.Offline)
