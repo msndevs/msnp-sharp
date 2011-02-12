@@ -402,9 +402,9 @@ namespace MSNPSharp
 
                 string capacities = ((long)LocalEndPointClientCapabilities).ToString() + ":" + ((long)LocalEndPointClientCapabilitiesEx).ToString();
 
-                string context = String.Empty;
+                string context = "0";
 
-                if (DisplayImage != null)
+                if (DisplayImage != null && DisplayImage.Image != null)
                     context = DisplayImage.Context;
 
                 NSMessageHandler.MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { NSMessageHandler.ParseStatus(Status), capacities, context }));
