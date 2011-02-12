@@ -322,9 +322,9 @@ namespace MSNPSharp
 
                 string capacities = ((long)LocalEndPointClientCapacities).ToString() + ":" + ((long)LocalEndPointClientCapacitiesEx).ToString();
 
-                string context = String.Empty;
+                string context = "0";
 
-                if (DisplayImage != null)
+                if (DisplayImage != null && DisplayImage.Image != null)
                     context = DisplayImage.Context;
 
                 NSMessageHandler.MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { NSMessageHandler.ParseStatus(Status), capacities, context }));

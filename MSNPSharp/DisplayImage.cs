@@ -45,9 +45,16 @@ namespace MSNPSharp
     {
         private Image image = null;
         private bool isDefaultImage = false;
-        private Image defaultImage = Properties.Resources.WLXLarge_default;
-        private static string defaultLocation = "MSNPSharpDefault";
+        private const string defaultLocation = "MSNPSharpDefault";
 
+        public static Image DefaultImage
+        {
+            get
+            {
+                return Properties.Resources.WLXLarge_default;
+            }
+        }
+        
         public bool IsDefaultImage
         {
             get 
@@ -78,9 +85,10 @@ namespace MSNPSharp
             if (isDefault)
             {
                 Location = defaultLocation;
-                PersistentStream stream = new PersistentStream(new MemoryStream());
-                (defaultImage.Clone() as Image).Save(stream, defaultImage.RawFormat);
-                DataStream = stream;
+                // There is no need to create a stream for the default image.
+                //PersistentStream stream = new PersistentStream(new MemoryStream());
+                //(defaultImage.Clone() as Image).Save(stream, defaultImage.RawFormat);
+                //DataStream = stream;
             }
 
             isDefaultImage = isDefault;

@@ -721,7 +721,11 @@ namespace MSNPSharpClient
         {
             Text = "Conversation with " + ConversationID.RemoteOwner.Mail + " - MSNPSharp";
             Icon = (Icon)((ConversationID.RemoteOwner.ClientType == ClientType.PassportMember) ? Properties.Resources.msn_ico : Properties.Resources.yahoo_ico);
-            displayOwner.Image = _messenger.ContactList.Owner.DisplayImage.Image;
+
+            if (_messenger.ContactList.Owner.DisplayImage.Image != null)
+                displayOwner.Image = _messenger.ContactList.Owner.DisplayImage.Image;
+            else
+                displayOwner.Image = DisplayImage.DefaultImage;
 
             lock (richTextHistory.Emotions)
             {
@@ -751,7 +755,12 @@ namespace MSNPSharpClient
         private void ConversationForm_Shown(object sender, EventArgs e)
         {
             if (!isYIM)
-                displayUser.Image = ConversationID.RemoteOwner.DisplayImage.Image;
+            {
+                if (ConversationID.RemoteOwner.DisplayImage.Image != null)
+                    displayUser.Image = ConversationID.RemoteOwner.DisplayImage.Image;
+                else
+                    displayUser.Image = DisplayImage.DefaultImage;
+            }
             else
                 displayUser.Image = Properties.Resources.YahooMessenger_logo.Clone() as Image;
 
