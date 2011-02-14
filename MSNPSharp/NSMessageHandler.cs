@@ -946,7 +946,7 @@ namespace MSNPSharp
                     }
 
                     SetPersonalMessage(ContactList.Owner.PersonalMessage);
-                    
+
                     if (!contactList.Owner.SceneImage.IsDefaultImage)
                         SetSceneData(contactList.Owner.SceneImage, contactList.Owner.ColorScheme);
 
@@ -1163,7 +1163,7 @@ namespace MSNPSharp
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnCVRReceived(NSMessage message)
-        {           
+        {
         }
 
         /// <summary>
@@ -1832,16 +1832,16 @@ namespace MSNPSharp
                             newDisplayImageContext = message.CommandValues[5].ToString();
                             contact.UserTileURL = new Uri(HttpUtility.UrlDecode(newDisplayImageContext));
                         }
+
+                        PresenceStatus oldStatus = contact.Status;
+                        contact.SetStatus(newstatus);
+
+                        // The contact changed status
+                        OnContactStatusChanged(new ContactStatusChangedEventArgs(contact, oldStatus));
+
+                        // The contact goes online
+                        OnContactOnline(new ContactEventArgs(contact));
                     }
-
-                    PresenceStatus oldStatus = contact.Status;
-                    contact.SetStatus(newstatus);
-
-                    // The contact changed status
-                    OnContactStatusChanged(new ContactStatusChangedEventArgs(contact, oldStatus));
-
-                    // The contact goes online
-                    OnContactOnline(new ContactEventArgs(contact));
                 }
                 #endregion
             }
@@ -3172,7 +3172,7 @@ namespace MSNPSharp
 
                 if (circle == null)
                 {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, 
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
                         "[OnSDGReceived] Error: Cannot find circle " + typeMail[1] + " in your circle list.");
                     return;
                 }
