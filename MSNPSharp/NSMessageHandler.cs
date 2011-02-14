@@ -80,7 +80,7 @@ namespace MSNPSharp
         private OIMService oimService = null;
         private MSNStorageService storageService = null;
         private WhatsUpService whatsUpService = null;
-        
+
         private List<Regex> censorWords = new List<Regex>(0);
         private Dictionary<string, string> sessions = new Dictionary<string, string>(0);
         private Guid p2pInviteSchedulerId = Guid.Empty;
@@ -1428,7 +1428,7 @@ namespace MSNPSharp
                                 contact.EndPointData[epData.Id] = epData;
                             }
                         }
-                    } 
+                    }
 
                     #endregion
 
@@ -1452,7 +1452,7 @@ namespace MSNPSharp
                         }
 
 
-                        if (contact is Owner )
+                        if (contact is Owner)
                         {
                             TriggerPlaceChangeEvent(epList);
 
@@ -1462,7 +1462,7 @@ namespace MSNPSharp
                                 OwnersSignOut();
                             }
                         }
-                    } 
+                    }
 
                     #endregion
                 }
@@ -1471,7 +1471,7 @@ namespace MSNPSharp
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnUBXReceived] Xml parse error: " + xmlex.Message);
                 }
             }
-           
+
         }
 
         private void OwnersSignOut()
@@ -1733,20 +1733,23 @@ namespace MSNPSharp
                         }
                     }
 
-                    if (contact != ContactList.Owner && message.CommandValues.Count >= 6 && type == ClientType.EmailMember)
+                    if (contact != ContactList.Owner)
                     {
-                        newDisplayImageContext = message.CommandValues[5].ToString();
-                        contact.UserTileURL = new Uri(HttpUtility.UrlDecode(newDisplayImageContext));
+                        if (message.CommandValues.Count >= 6 && type == ClientType.EmailMember)
+                        {
+                            newDisplayImageContext = message.CommandValues[5].ToString();
+                            contact.UserTileURL = new Uri(HttpUtility.UrlDecode(newDisplayImageContext));
+                        }
+
+                        PresenceStatus oldStatus = contact.Status;
+                        contact.SetStatus(newstatus);
+
+                        // The contact changed status
+                        OnContactStatusChanged(new ContactStatusChangedEventArgs(contact, oldStatus));
+
+                        // The contact goes online
+                        OnContactOnline(new ContactEventArgs(contact));
                     }
-
-                    PresenceStatus oldStatus = contact.Status;
-                    contact.SetStatus(newstatus);
-
-                    // The contact changed status
-                    OnContactStatusChanged(new ContactStatusChangedEventArgs(contact, oldStatus));
-
-                    // The contact goes online
-                    OnContactOnline(new ContactEventArgs(contact));
                 }
                 #endregion
             }
@@ -1846,7 +1849,7 @@ namespace MSNPSharp
                     }
 
                     return;
-                } 
+                }
 
                 #endregion
             }
@@ -2047,9 +2050,9 @@ namespace MSNPSharp
                 }
             }
         }
-    
 
-        
+
+
 
         /// <summary>
         /// Called when a UUN command has been received.
@@ -2302,11 +2305,11 @@ namespace MSNPSharp
             int.TryParse(message.CommandValues[4].ToString(), out messageType);
             NetworkMessageType networkMessageType = (NetworkMessageType)messageType;
 
-            if (!(receiverType == (int)ContactList.Owner.ClientType && 
+            if (!(receiverType == (int)ContactList.Owner.ClientType &&
                 receiver.ToLowerInvariant() == ContactList.Owner.Mail.ToLowerInvariant()))
             {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, 
-                    "[OnUBMReceived] The receiver is not owner, receiver account = " + receiver 
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                    "[OnUBMReceived] The receiver is not owner, receiver account = " + receiver
                     + ", receiver type = " + (ClientType)receiverType);
 
                 return;
@@ -2379,8 +2382,8 @@ namespace MSNPSharp
                     OnCrossNetworkMessageReceived(new CrossNetworkMessageEventArgs(from, to, (int)NetworkMessageType.Text, mimeMessage.InnerMessage as TextMessage));
                 }
             }
-            
-          
+
+
         }
 
         protected virtual void OnCrossNetworkMessageReceived(CrossNetworkMessageEventArgs e)
@@ -2427,18 +2430,22 @@ namespace MSNPSharp
                 node = xmlDoc.SelectSingleNode(@"//NotificationData/Service");
                 if (node != null)
                 {
-                    if (node.InnerText != "ABCHInternal") return;
+                    if (node.InnerText != "ABCHInternal")
+                        return;
 
                     node = xmlDoc.SelectSingleNode(@"//NotificationData/CID");
-                    if (node == null) return;
-                    if (node.InnerText != ContactList.Owner.CID.ToString()) return;
+                    if (node == null)
+                        return;
+                    if (node.InnerText != ContactList.Owner.CID.ToString())
+                        return;
 
                     ContactService.ServerNotificationRequest(PartnerScenario.ABChangeNotifyAlert, null, null);
                 }
                 else
                 {
                     node = xmlDoc.SelectSingleNode(@"//NotificationData/CircleId");
-                    if (node == null) return;
+                    if (node == null)
+                        return;
 
                     string abId = node.InnerText;
                     node = xmlDoc.SelectSingleNode(@"//NotificationData/Role");
@@ -2728,7 +2735,7 @@ namespace MSNPSharp
                 NetworkMessage networkMessage = message as NetworkMessage;
                 if (networkMessage.InnerBody != null) //Payload ADL command
                 {
-                    #region NORMAL USER 
+                    #region NORMAL USER
                     if (AutoSynchronize)
                     {
                         ContactService.msRequest(
@@ -3545,7 +3552,7 @@ namespace MSNPSharp
             {
                 //This is profile, the content is nothing.
             }
-            else 
+            else
             {
                 MimeMessage innerMimeMessage = new MimeMessage(false);
                 innerMimeMessage.CreateFromParentMessage(mimeMessage);
@@ -3760,7 +3767,8 @@ namespace MSNPSharp
 
                 processed = ProcessNetworkMessage(message);
 
-                if (processed) return;
+                if (processed)
+                    return;
 
                 // Check whether it is a numeric error command
                 if (nsMessage.Command[0] >= '0' && nsMessage.Command[0] <= '9' && processed == false)
