@@ -43,6 +43,9 @@ namespace MSNPSharp.P2P
     using MSNPSharp.Apps;
     using MSNPSharp.Core;
 
+    /// <summary>
+    /// 
+    /// </summary>
     public enum P2PSessionStatus
     {
         Error,
@@ -53,6 +56,9 @@ namespace MSNPSharp.P2P
         Closed
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
     public class P2PSessionEventArgs : EventArgs
     {
         private P2PSession p2pSession;
@@ -65,12 +71,19 @@ namespace MSNPSharp.P2P
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="session"></param>
         public P2PSessionEventArgs(P2PSession session)
         {
             this.p2pSession = session;
         }
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
     public partial class P2PSession : IDisposable
     {
         private static Random random = new Random();
@@ -482,6 +495,10 @@ namespace MSNPSharp.P2P
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sendDCInvite"></param>
         public void Accept(bool sendDCInvite)
         {
             if (status != P2PSessionStatus.WaitingForLocal)
@@ -523,6 +540,9 @@ namespace MSNPSharp.P2P
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public void Decline()
         {
             if (status != P2PSessionStatus.WaitingForLocal)
@@ -566,6 +586,9 @@ namespace MSNPSharp.P2P
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public void Close()
         {
             if (status == P2PSessionStatus.Closing)
@@ -611,6 +634,9 @@ namespace MSNPSharp.P2P
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public void Dispose()
         {
             remoteContact.DirectBridgeEstablished -= RemoteDirectBridgeEstablished;
@@ -623,6 +649,10 @@ namespace MSNPSharp.P2P
 
         #region Event Handlers
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="e"></param>
         protected virtual void OnClosing(ContactEventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, String.Format("P2PSession {0} closing", sessionId), GetType().Name);
@@ -635,6 +665,10 @@ namespace MSNPSharp.P2P
             DisposeApp();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="e"></param>
         protected virtual void OnClosed(ContactEventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, String.Format("P2PSession {0} closed", sessionId), GetType().Name);
@@ -653,6 +687,10 @@ namespace MSNPSharp.P2P
             DisposeApp();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="e"></param>
         protected virtual void OnError(EventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, String.Format("P2PSession {0} error", sessionId), GetType().Name);
@@ -665,6 +703,10 @@ namespace MSNPSharp.P2P
             DisposeApp();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="e"></param>
         protected virtual void OnActive(EventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, String.Format("P2PSession {0} active", sessionId), GetType().Name);
@@ -709,6 +751,13 @@ namespace MSNPSharp.P2P
 
         #region Public Methods
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="bridge"></param>
+        /// <param name="p2pMessage"></param>
+        /// <param name="slp"></param>
+        /// <returns></returns>
         public bool ProcessP2PMessage(P2PBridge bridge, P2PMessage p2pMessage, SLPMessage slp)
         {
             ResetTimeoutTimer();
@@ -864,12 +913,20 @@ namespace MSNPSharp.P2P
             }
         }
 
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="msg"></param>
         public void Send(P2PMessage msg)
         {
             Send(msg, null);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <param name="ackHandler"></param>
         public void Send(P2PMessage msg, AckHandler ackHandler)
         {
             ResetTimeoutTimer();
@@ -983,7 +1040,11 @@ namespace MSNPSharp.P2P
 
         #endregion
 
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="correction"></param>
+        /// <returns></returns>
         public uint NextLocalIdentifier(int correction)
         {
             uint abs = (uint)Math.Abs(correction);
@@ -1036,6 +1097,10 @@ namespace MSNPSharp.P2P
                 localIdentifier++;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public ushort IncreaseDataPacketNumber()
         {
             return ++dataPacketNumber;

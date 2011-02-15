@@ -44,6 +44,9 @@ namespace MSNPSharp.Apps
 
     #region P2PApplicationAttribute
 
+    /// <summary>
+    /// P2P attribute used in classes, which can be used to implement the class as a P2P application.
+    /// </summary>
     [AttributeUsageAttribute(AttributeTargets.Class)]
     public class P2PApplicationAttribute : Attribute
     {
@@ -66,6 +69,11 @@ namespace MSNPSharp.Apps
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="appID"></param>
+        /// <param name="eufGuid"></param>
         public P2PApplicationAttribute(uint appID, string eufGuid)
         {
             this.appId = appID;
@@ -76,6 +84,9 @@ namespace MSNPSharp.Apps
 
     #region P2PApplicationStatus
 
+    /// <summary>
+    /// 
+    /// </summary>
     public enum P2PApplicationStatus
     {
         Waiting,
@@ -87,6 +98,9 @@ namespace MSNPSharp.Apps
 
     #endregion
 
+    /// <summary>
+    /// 
+    /// </summary>
     public abstract class P2PApplication : IDisposable
     {
         #region Events
@@ -251,6 +265,10 @@ namespace MSNPSharp.Apps
 
         #region Methods
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="slp"></param>
         public virtual void SetupInviteMessage(SLPMessage slp)
         {
             slp.BodyValues["EUF-GUID"] = ApplicationEufGuid.ToString("B").ToUpperInvariant();
@@ -258,6 +276,11 @@ namespace MSNPSharp.Apps
             slp.BodyValues["Context"] = InvitationContext;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="invitation"></param>
+        /// <returns></returns>
         public virtual bool ValidateInvitation(SLPMessage invitation)
         {
             bool ret = invitation.ToEmailAccount.ToLowerInvariant() == local.Mail.ToLowerInvariant();
@@ -268,13 +291,29 @@ namespace MSNPSharp.Apps
             return ret;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="bridge"></param>
+        /// <param name="data"></param>
+        /// <param name="reset"></param>
+        /// <returns></returns>
         public abstract bool ProcessData(P2PBridge bridge, byte[] data, bool reset);
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="p2pMessage"></param>
         public void SendMessage(P2PMessage p2pMessage)
         {
             SendMessage(p2pMessage, null);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="p2pMessage"></param>
+        /// <param name="ackHandler"></param>
         public virtual void SendMessage(P2PMessage p2pMessage, AckHandler ackHandler)
         {
             Debug.Assert(p2pMessage.Version == version);
@@ -288,15 +327,25 @@ namespace MSNPSharp.Apps
             p2pSession.Send(p2pMessage, ackHandler);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public virtual void BridgeIsReady()
         {
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public virtual void Start()
         {
             OnTransferStarted(EventArgs.Empty);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sendDCInvite"></param>
         public virtual void Accept(bool sendDCInvite)
         {
             if (WarnIfP2PSessionDisposed("accept"))
@@ -305,6 +354,9 @@ namespace MSNPSharp.Apps
             p2pSession.Accept(sendDCInvite);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public virtual void Decline()
         {
             if (WarnIfP2PSessionDisposed("decline"))
@@ -313,6 +365,9 @@ namespace MSNPSharp.Apps
             p2pSession.Decline();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public virtual void Abort()
         {
             OnTransferAborted(new ContactEventArgs(Local));
@@ -323,6 +378,9 @@ namespace MSNPSharp.Apps
             p2pSession.Close();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public virtual void Dispose()
         {
             P2PSession = null; // Unregister events
@@ -341,6 +399,10 @@ namespace MSNPSharp.Apps
 
         #region Protected
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="e"></param>
         protected virtual void OnTransferStarted(EventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Transfer started", GetType().Name);
@@ -351,6 +413,10 @@ namespace MSNPSharp.Apps
                 TransferStarted(this, e);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="e"></param>
         protected virtual void OnTransferFinished(EventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Transfer finished", GetType().Name);
@@ -361,6 +427,10 @@ namespace MSNPSharp.Apps
                 TransferFinished(this, e);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="e"></param>
         protected virtual void OnTransferAborted(ContactEventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, String.Format("Transfer aborted ({0})", e.Contact == Local ? "locally" : "remotely"), GetType().Name);
@@ -371,6 +441,10 @@ namespace MSNPSharp.Apps
                 TransferAborted(this, e);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="e"></param>
         protected virtual void OnTransferError(EventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Transfer error", GetType().Name);
@@ -445,6 +519,9 @@ namespace MSNPSharp.Apps
             }
         };
 
+        /// <summary>
+        /// 
+        /// </summary>
         static P2PApplication()
         {
             try
@@ -462,6 +539,13 @@ namespace MSNPSharp.Apps
 
         #region CreateInstance
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="eufGuid"></param>
+        /// <param name="appId"></param>
+        /// <param name="withSession"></param>
+        /// <returns></returns>
         public static P2PApplication CreateInstance(Guid eufGuid, uint appId, P2PSession withSession)
         {
             if (withSession != null && eufGuid != Guid.Empty && p2pAppCache.ContainsKey(eufGuid))
@@ -485,6 +569,11 @@ namespace MSNPSharp.Apps
 
         #region RegisterApplication/UnregisterApplication
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="assembly"></param>
+        /// <returns></returns>
         public static int RegisterApplication(Assembly assembly)
         {
             int count = 0;
@@ -499,11 +588,22 @@ namespace MSNPSharp.Apps
             return count;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="appType"></param>
+        /// <returns></returns>
         public static bool RegisterApplication(Type appType)
         {
             return RegisterApplication(appType, false);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="appType"></param>
+        /// <param name="overrideExisting"></param>
+        /// <returns></returns>
         public static bool RegisterApplication(Type appType, bool overrideExisting)
         {
             if (appType == null)
@@ -573,6 +673,11 @@ namespace MSNPSharp.Apps
             return added;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="assembly"></param>
+        /// <returns></returns>
         public static int UnregisterApplication(Assembly assembly)
         {
             int count = 0;
@@ -587,6 +692,11 @@ namespace MSNPSharp.Apps
             return count;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="appType"></param>
+        /// <returns></returns>
         public static bool UnregisterApplication(Type appType)
         {
             bool unregistered = false;

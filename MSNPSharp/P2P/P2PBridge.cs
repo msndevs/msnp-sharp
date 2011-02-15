@@ -39,6 +39,9 @@ namespace MSNPSharp.P2P
 {
     #region P2PMessageEventArgs
 
+    /// <summary>
+    /// 
+    /// </summary>
     public class P2PMessageEventArgs : EventArgs
     {
         private P2PMessage p2pMessage;
@@ -50,12 +53,19 @@ namespace MSNPSharp.P2P
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="p2pMessage"></param>
         public P2PMessageEventArgs(P2PMessage p2pMessage)
         {
             this.p2pMessage = p2pMessage;
         }
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
     public class P2PMessageSessionEventArgs : P2PMessageEventArgs
     {
         private P2PSession p2pSession;
@@ -67,6 +77,11 @@ namespace MSNPSharp.P2P
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="p2pMessage"></param>
+        /// <param name="p2pSession"></param>
         public P2PMessageSessionEventArgs(P2PMessage p2pMessage, P2PSession p2pSession)
             : base(p2pMessage)
         {
@@ -76,8 +91,13 @@ namespace MSNPSharp.P2P
 
     #endregion
 
+    /// <summary>
+    /// 
+    /// </summary>
     public abstract class P2PBridge : IDisposable
     {
+        #region Events & Fields
+
         public event EventHandler<EventArgs> BridgeOpened;
         public event EventHandler<EventArgs> BridgeSynced;
         public event EventHandler<EventArgs> BridgeClosed;
@@ -92,6 +112,10 @@ namespace MSNPSharp.P2P
         protected Dictionary<P2PSession, P2PSendQueue> sendQueues = new Dictionary<P2PSession, P2PSendQueue>();
         protected Dictionary<P2PSession, P2PSendList> sendingQueues = new Dictionary<P2PSession, P2PSendList>();
         protected List<P2PSession> stoppedSessions = new List<P2PSession>();
+
+        #endregion
+
+        #region Properties
 
         public abstract bool IsOpen
         {
@@ -141,6 +165,12 @@ namespace MSNPSharp.P2P
             }
         }
 
+        #endregion
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="queueSize"></param>
         protected P2PBridge(int queueSize)
         {
             this.queueSize = queueSize;
@@ -150,6 +180,9 @@ namespace MSNPSharp.P2P
                 String.Format("P2PBridge {0} created", this.ToString()), GetType().Name);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public virtual void Dispose()
         {
             sendQueues.Clear();
@@ -160,6 +193,11 @@ namespace MSNPSharp.P2P
                String.Format("P2PBridge {0} disposed", this.ToString()), GetType().Name);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="session"></param>
+        /// <returns></returns>
         public virtual bool SuitableFor(P2PSession session)
         {
             Contact remote = Remote;
@@ -167,6 +205,11 @@ namespace MSNPSharp.P2P
             return (session != null) && (remote != null) && (session.Remote.IsSibling(remote));
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="session"></param>
+        /// <returns></returns>
         public virtual bool Ready(P2PSession session)
         {
             if (queueSize == 0)
@@ -178,6 +221,14 @@ namespace MSNPSharp.P2P
             return IsOpen && (sendingQueues[session].Count < queueSize) && (!stoppedSessions.Contains(session));
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="session"></param>
+        /// <param name="remote"></param>
+        /// <param name="remoteGuid"></param>
+        /// <param name="msg"></param>
+        /// <param name="ackHandler"></param>
         public virtual void Send(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage msg, AckHandler ackHandler)
         {
             if (remote == null)
@@ -262,6 +313,9 @@ namespace MSNPSharp.P2P
             return msgs;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         protected virtual void ProcessSendQueues()
         {
             foreach (KeyValuePair<P2PSession, P2PSendQueue> pair in sendQueues)
@@ -297,8 +351,19 @@ namespace MSNPSharp.P2P
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Queues are all empty", GetType().Name);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="session"></param>
+        /// <param name="remote"></param>
+        /// <param name="remoteGuid"></param>
+        /// <param name="msg"></param>
         protected abstract void SendOnePacket(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage msg);
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="session"></param>
         public virtual void StopSending(P2PSession session)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
@@ -310,6 +375,10 @@ namespace MSNPSharp.P2P
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Session is already in stopped list", GetType().Name);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="session"></param>
         public virtual void ResumeSending(P2PSession session)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
@@ -324,6 +393,11 @@ namespace MSNPSharp.P2P
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Session not present in stopped list", GetType().Name);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="session"></param>
+        /// <param name="newBridge"></param>
         public virtual void MigrateQueue(P2PSession session, P2PBridge newBridge)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
@@ -361,6 +435,11 @@ namespace MSNPSharp.P2P
                 newBridge.AddQueue(session, newQueue);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="session"></param>
+        /// <param name="queue"></param>
         public virtual void AddQueue(P2PSession session, P2PSendQueue queue)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
@@ -380,6 +459,10 @@ namespace MSNPSharp.P2P
             ProcessSendQueues();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="e"></param>
         protected virtual void OnBridgeOpened(EventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
@@ -391,6 +474,10 @@ namespace MSNPSharp.P2P
             ProcessSendQueues();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="e"></param>
         protected internal virtual void OnBridgeSynced(EventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
@@ -400,6 +487,10 @@ namespace MSNPSharp.P2P
                 BridgeSynced(this, e);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="e"></param>
         protected virtual void OnBridgeClosed(EventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
@@ -409,6 +500,10 @@ namespace MSNPSharp.P2P
                 BridgeClosed(this, e);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="e"></param>
         protected virtual void OnBridgeSent(P2PMessageSessionEventArgs e)
         {
             if (e.P2PMessage.Header.Identifier != 0)

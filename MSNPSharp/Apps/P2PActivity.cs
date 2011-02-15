@@ -43,6 +43,9 @@ namespace MSNPSharp.Apps
     using MSNPSharp.P2P;
     using MSNPSharp.Core;
 
+    /// <summary>
+    /// 
+    /// </summary>
     [P2PApplication(0, "6A13AF9C-5308-4F35-923A-67E8DDA40C2F")]
     public class P2PActivity : P2PApplication
     {
@@ -58,6 +61,10 @@ namespace MSNPSharp.Apps
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="p2pSess"></param>
         public P2PActivity(P2PSession p2pSess)
             : base(p2pSess.Version, p2pSess.Remote, p2pSess.RemoteContactEndPointID)
         {
@@ -82,6 +89,13 @@ namespace MSNPSharp.Apps
             sending = false;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="remote"></param>
+        /// <param name="applicationID"></param>
+        /// <param name="activityName"></param>
+        /// <param name="activityData"></param>
         public P2PActivity(Contact remote, uint applicationID, string activityName, string activityData)
             : base(remote.P2PVersionSupported, remote, remote.SelectRandomEPID())
         {
