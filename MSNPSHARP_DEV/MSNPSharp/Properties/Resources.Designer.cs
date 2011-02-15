@@ -69,6 +69,13 @@ namespace MSNPSharp.Properties {
             }
         }
         
+        internal static System.Drawing.Bitmap default_image {
+            get {
+                object obj = ResourceManager.GetObject("default_image", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
         internal static System.Drawing.Bitmap default_scene {
             get {
                 object obj = ResourceManager.GetObject("default_scene", resourceCulture);
@@ -107,13 +114,6 @@ namespace MSNPSharp.Properties {
         internal static string WhatsupServiceAppID {
             get {
                 return ResourceManager.GetString("WhatsupServiceAppID", resourceCulture);
-            }
-        }
-        
-        internal static System.Drawing.Bitmap WLXLarge_default {
-            get {
-                object obj = ResourceManager.GetObject("WLXLarge_default", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
             }
         }
         

@@ -46,14 +46,13 @@ namespace MSNPSharp
         private Image image = null;
         private bool isDefaultImage = false;
 
-        private static Image defaultImage = Properties.Resources.WLXLarge_default;
-        private static string defaultLocation = "MSNPSharpDefault";
+        private const string defaultLocation = "MSNPSharpDefault";
 
         public static Image DefaultImage
         {
             get
             {
-                return defaultImage;
+                return Properties.Resources.default_image;
             }
         }
         

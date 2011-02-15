@@ -501,9 +501,9 @@ namespace MSNPSharpClient
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.txtSearch.ForeColor = System.Drawing.SystemColors.ScrollBar;
-            this.txtSearch.Location = new System.Drawing.Point(6, 4);
+            this.txtSearch.Location = new System.Drawing.Point(9, 4);
             this.txtSearch.Name = "txtSearch";
-            this.txtSearch.Size = new System.Drawing.Size(279, 21);
+            this.txtSearch.Size = new System.Drawing.Size(260, 21);
             this.txtSearch.TabIndex = 9;
             this.txtSearch.Text = "Search contacts";
             this.txtSearch.TextChanged += new System.EventHandler(this.txtSearch_TextChanged);
@@ -515,12 +515,12 @@ namespace MSNPSharpClient
             this.btnAddNew.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.btnAddNew.BackColor = System.Drawing.SystemColors.Control;
-            this.btnAddNew.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.btnAddNew.Location = new System.Drawing.Point(334, 2);
+            this.btnAddNew.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.btnAddNew.Location = new System.Drawing.Point(329, 3);
             this.btnAddNew.Name = "btnAddNew";
-            this.btnAddNew.Size = new System.Drawing.Size(44, 22);
+            this.btnAddNew.Size = new System.Drawing.Size(46, 22);
             this.btnAddNew.TabIndex = 7;
-            this.btnAddNew.Text = "+";
+            this.btnAddNew.Text = "add";
             this.btnAddNew.UseVisualStyleBackColor = true;
             this.btnAddNew.Click += new System.EventHandler(this.btnAddNew_Click);
             // 
@@ -531,9 +531,9 @@ namespace MSNPSharpClient
             this.btnSortBy.BackColor = System.Drawing.SystemColors.Control;
             this.btnSortBy.Cursor = System.Windows.Forms.Cursors.Arrow;
             this.btnSortBy.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.btnSortBy.Location = new System.Drawing.Point(290, 2);
+            this.btnSortBy.Location = new System.Drawing.Point(279, 3);
             this.btnSortBy.Name = "btnSortBy";
-            this.btnSortBy.Size = new System.Drawing.Size(44, 22);
+            this.btnSortBy.Size = new System.Drawing.Size(46, 22);
             this.btnSortBy.TabIndex = 0;
             this.btnSortBy.Text = "sort";
             this.btnSortBy.UseVisualStyleBackColor = true;
@@ -545,9 +545,9 @@ namespace MSNPSharpClient
             this.tableLayoutPanel3.BackgroundImage = global::MSNPSharpClient.Properties.Resources.my_scene;
             this.tableLayoutPanel3.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.tableLayoutPanel3.ColumnCount = 3;
-            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 257F));
+            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 260F));
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 380F));
+            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 388F));
             this.tableLayoutPanel3.Controls.Add(this.tableLayoutPanel4, 2, 0);
             this.tableLayoutPanel3.Controls.Add(this.logoImageBox, 0, 0);
             this.tableLayoutPanel3.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -565,37 +565,38 @@ namespace MSNPSharpClient
             this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanel4.Controls.Add(this.tableLayoutPanel5, 0, 0);
             this.tableLayoutPanel4.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tableLayoutPanel4.Location = new System.Drawing.Point(266, 3);
+            this.tableLayoutPanel4.Location = new System.Drawing.Point(258, 3);
             this.tableLayoutPanel4.Name = "tableLayoutPanel4";
             this.tableLayoutPanel4.RowCount = 1;
             this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 126F));
             this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 126F));
-            this.tableLayoutPanel4.Size = new System.Drawing.Size(374, 122);
+            this.tableLayoutPanel4.Size = new System.Drawing.Size(382, 122);
             this.tableLayoutPanel4.TabIndex = 0;
             // 
             // tableLayoutPanel5
             // 
             this.tableLayoutPanel5.ColumnCount = 2;
             this.tableLayoutPanel5.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel5.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 87F));
-            this.tableLayoutPanel5.Controls.Add(this.displayImageBox, 1, 0);
+            this.tableLayoutPanel5.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 100F));
             this.tableLayoutPanel5.Controls.Add(this.panel1, 0, 0);
+            this.tableLayoutPanel5.Controls.Add(this.displayImageBox, 1, 0);
             this.tableLayoutPanel5.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tableLayoutPanel5.Location = new System.Drawing.Point(3, 3);
+            this.tableLayoutPanel5.Location = new System.Drawing.Point(2, 2);
+            this.tableLayoutPanel5.Margin = new System.Windows.Forms.Padding(2);
             this.tableLayoutPanel5.Name = "tableLayoutPanel5";
             this.tableLayoutPanel5.RowCount = 1;
             this.tableLayoutPanel5.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel5.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 120F));
-            this.tableLayoutPanel5.Size = new System.Drawing.Size(368, 120);
+            this.tableLayoutPanel5.Size = new System.Drawing.Size(378, 122);
             this.tableLayoutPanel5.TabIndex = 0;
             // 
             // displayImageBox
             // 
             this.displayImageBox.BackColor = System.Drawing.Color.Transparent;
             this.displayImageBox.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.displayImageBox.Location = new System.Drawing.Point(284, 3);
+            this.displayImageBox.Location = new System.Drawing.Point(279, 6);
+            this.displayImageBox.Margin = new System.Windows.Forms.Padding(1, 6, 1, 1);
             this.displayImageBox.Name = "displayImageBox";
-            this.displayImageBox.Size = new System.Drawing.Size(80, 80);
+            this.displayImageBox.Size = new System.Drawing.Size(96, 96);
             this.displayImageBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
             this.displayImageBox.TabIndex = 3;
             this.displayImageBox.TabStop = false;
@@ -607,7 +608,7 @@ namespace MSNPSharpClient
             this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel1.Location = new System.Drawing.Point(3, 3);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(275, 114);
+            this.panel1.Size = new System.Drawing.Size(272, 116);
             this.panel1.TabIndex = 4;
             // 
             // tableLayoutPanel6
@@ -622,7 +623,7 @@ namespace MSNPSharpClient
             this.tableLayoutPanel6.RowCount = 2;
             this.tableLayoutPanel6.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanel6.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
-            this.tableLayoutPanel6.Size = new System.Drawing.Size(275, 114);
+            this.tableLayoutPanel6.Size = new System.Drawing.Size(272, 116);
             this.tableLayoutPanel6.TabIndex = 5;
             // 
             // pnlLogin
@@ -635,7 +636,7 @@ namespace MSNPSharpClient
             this.pnlLogin.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlLogin.Location = new System.Drawing.Point(3, 3);
             this.pnlLogin.Name = "pnlLogin";
-            this.pnlLogin.Size = new System.Drawing.Size(269, 73);
+            this.pnlLogin.Size = new System.Drawing.Size(266, 75);
             this.pnlLogin.TabIndex = 1;
             // 
             // pnlNameAndPM
@@ -647,7 +648,7 @@ namespace MSNPSharpClient
             this.pnlNameAndPM.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlNameAndPM.Location = new System.Drawing.Point(0, 0);
             this.pnlNameAndPM.Name = "pnlNameAndPM";
-            this.pnlNameAndPM.Size = new System.Drawing.Size(269, 73);
+            this.pnlNameAndPM.Size = new System.Drawing.Size(266, 75);
             this.pnlNameAndPM.TabIndex = 15;
             this.pnlNameAndPM.Visible = false;
             // 
@@ -678,7 +679,7 @@ namespace MSNPSharpClient
             this.lblPM.Location = new System.Drawing.Point(66, 25);
             this.lblPM.Multiline = true;
             this.lblPM.Name = "lblPM";
-            this.lblPM.Size = new System.Drawing.Size(200, 44);
+            this.lblPM.Size = new System.Drawing.Size(197, 44);
             this.lblPM.TabIndex = 7;
             this.lblPM.Leave += new System.EventHandler(this.lblName_Leave);
             // 
@@ -686,14 +687,14 @@ namespace MSNPSharpClient
             // 
             this.lblName.Location = new System.Drawing.Point(3, 1);
             this.lblName.Name = "lblName";
-            this.lblName.Size = new System.Drawing.Size(263, 21);
+            this.lblName.Size = new System.Drawing.Size(260, 21);
             this.lblName.TabIndex = 6;
             this.lblName.Leave += new System.EventHandler(this.lblName_Leave);
             // 
             // cbRobotMode
             // 
             this.cbRobotMode.AutoSize = true;
-            this.cbRobotMode.Location = new System.Drawing.Point(3, 54);
+            this.cbRobotMode.Location = new System.Drawing.Point(7, 54);
             this.cbRobotMode.Name = "cbRobotMode";
             this.cbRobotMode.Size = new System.Drawing.Size(136, 19);
             this.cbRobotMode.TabIndex = 11;
@@ -705,16 +706,16 @@ namespace MSNPSharpClient
             // 
             this.accountTextBox.Location = new System.Drawing.Point(3, 2);
             this.accountTextBox.Name = "accountTextBox";
-            this.accountTextBox.Size = new System.Drawing.Size(263, 21);
+            this.accountTextBox.Size = new System.Drawing.Size(260, 21);
             this.accountTextBox.TabIndex = 9;
             this.accountTextBox.Text = "testmsnpsharp@hotmail.com";
             this.accountTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.login_KeyPress);
             // 
             // loginButton
             // 
-            this.loginButton.Location = new System.Drawing.Point(145, 50);
+            this.loginButton.Location = new System.Drawing.Point(152, 50);
             this.loginButton.Name = "loginButton";
-            this.loginButton.Size = new System.Drawing.Size(121, 22);
+            this.loginButton.Size = new System.Drawing.Size(111, 22);
             this.loginButton.TabIndex = 8;
             this.loginButton.Tag = "0";
             this.loginButton.Text = "> Sign in";
@@ -726,7 +727,7 @@ namespace MSNPSharpClient
             this.passwordTextBox.Location = new System.Drawing.Point(3, 27);
             this.passwordTextBox.Name = "passwordTextBox";
             this.passwordTextBox.PasswordChar = '*';
-            this.passwordTextBox.Size = new System.Drawing.Size(263, 21);
+            this.passwordTextBox.Size = new System.Drawing.Size(260, 21);
             this.passwordTextBox.TabIndex = 10;
             this.passwordTextBox.Text = "tstmsnpsharp";
             this.passwordTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.login_KeyPress);
@@ -734,27 +735,30 @@ namespace MSNPSharpClient
             // tableLayoutPanel7
             // 
             this.tableLayoutPanel7.ColumnCount = 2;
-            this.tableLayoutPanel7.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel7.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel7.Controls.Add(this.comboPlaces, 0, 0);
+            this.tableLayoutPanel7.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 54.13534F));
+            this.tableLayoutPanel7.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 45.86466F));
             this.tableLayoutPanel7.Controls.Add(this.comboStatus, 0, 0);
+            this.tableLayoutPanel7.Controls.Add(this.comboPlaces, 1, 0);
             this.tableLayoutPanel7.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tableLayoutPanel7.Location = new System.Drawing.Point(3, 82);
+            this.tableLayoutPanel7.Location = new System.Drawing.Point(3, 84);
             this.tableLayoutPanel7.Name = "tableLayoutPanel7";
             this.tableLayoutPanel7.RowCount = 1;
             this.tableLayoutPanel7.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel7.Size = new System.Drawing.Size(269, 29);
+            this.tableLayoutPanel7.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.tableLayoutPanel7.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.tableLayoutPanel7.Size = new System.Drawing.Size(266, 29);
             this.tableLayoutPanel7.TabIndex = 0;
             // 
             // comboPlaces
             // 
             this.comboPlaces.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboPlaces.DropDownWidth = 220;
+            this.comboPlaces.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.comboPlaces.FormattingEnabled = true;
             this.comboPlaces.ItemHeight = 15;
-            this.comboPlaces.Location = new System.Drawing.Point(137, 3);
+            this.comboPlaces.Location = new System.Drawing.Point(146, 3);
             this.comboPlaces.Name = "comboPlaces";
-            this.comboPlaces.Size = new System.Drawing.Size(129, 23);
+            this.comboPlaces.Size = new System.Drawing.Size(117, 23);
             this.comboPlaces.TabIndex = 6;
             this.comboPlaces.Visible = false;
             this.comboPlaces.SelectedIndexChanged += new System.EventHandler(this.comboPlaces_SelectedIndexChanged);
@@ -773,7 +777,7 @@ namespace MSNPSharpClient
             "Offline"});
             this.comboStatus.Location = new System.Drawing.Point(3, 3);
             this.comboStatus.Name = "comboStatus";
-            this.comboStatus.Size = new System.Drawing.Size(128, 21);
+            this.comboStatus.Size = new System.Drawing.Size(137, 21);
             this.comboStatus.TabIndex = 5;
             this.comboStatus.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.comboStatus_DrawItem);
             this.comboStatus.SelectedIndexChanged += new System.EventHandler(this.comboStatus_SelectedIndexChanged);
@@ -785,7 +789,7 @@ namespace MSNPSharpClient
             this.logoImageBox.Location = new System.Drawing.Point(0, 0);
             this.logoImageBox.Margin = new System.Windows.Forms.Padding(0);
             this.logoImageBox.Name = "logoImageBox";
-            this.logoImageBox.Size = new System.Drawing.Size(257, 124);
+            this.logoImageBox.Size = new System.Drawing.Size(255, 124);
             this.logoImageBox.TabIndex = 1;
             this.logoImageBox.TabStop = false;
             // 
@@ -901,11 +905,11 @@ namespace MSNPSharpClient
         private Button loginButton;
         private TextBox passwordTextBox;
         private TableLayoutPanel tableLayoutPanel7;
-        private ComboBox comboPlaces;
         private ComboBox comboStatus;
         private PictureBox displayImageBox;
         private PictureBox logoImageBox;
         private Button btnSetTheme;
+        private ComboBox comboPlaces;
 
     }
 }
