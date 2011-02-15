@@ -415,7 +415,7 @@ namespace MSNPSharpClient
             this.displayUser.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.displayUser.Location = new System.Drawing.Point(3, 166);
             this.displayUser.Name = "displayUser";
-            this.displayUser.Size = new System.Drawing.Size(100, 101);
+            this.displayUser.Size = new System.Drawing.Size(100, 100);
             this.displayUser.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.displayUser.TabIndex = 0;
             this.displayUser.TabStop = false;
