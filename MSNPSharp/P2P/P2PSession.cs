@@ -44,7 +44,7 @@ namespace MSNPSharp.P2P
     using MSNPSharp.Core;
 
     /// <summary>
-    /// 
+    /// Enum list of <see cref="P2PSessionStatus"/>'s current status.
     /// </summary>
     public enum P2PSessionStatus
     {
@@ -56,9 +56,6 @@ namespace MSNPSharp.P2P
         Closed
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
     public class P2PSessionEventArgs : EventArgs
     {
         private P2PSession p2pSession;
@@ -71,10 +68,6 @@ namespace MSNPSharp.P2P
             }
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="session"></param>
         public P2PSessionEventArgs(P2PSession session)
         {
             this.p2pSession = session;
@@ -82,7 +75,7 @@ namespace MSNPSharp.P2P
     }
 
     /// <summary>
-    /// 
+    /// Class where you can hold a P2P session.
     /// </summary>
     public partial class P2PSession : IDisposable
     {
@@ -90,9 +83,21 @@ namespace MSNPSharp.P2P
 
         #region Events
 
+        /// <summary>
+        /// Fired if there was an error processing a P2P message.
+        /// </summary>
         public event EventHandler<EventArgs> Error;
+        /// <summary>
+        /// Fired if the session has started.
+        /// </summary>
         public event EventHandler<EventArgs> Activated;
+        /// <summary>
+        /// Fired after being notified the session is going to close.
+        /// </summary>
         public event EventHandler<ContactEventArgs> Closing;
+        /// <summary>
+        /// Fired after the session was successfully closed.
+        /// </summary>
         public event EventHandler<ContactEventArgs> Closed;
 
         #endregion
@@ -496,7 +501,7 @@ namespace MSNPSharp.P2P
         }
 
         /// <summary>
-        /// 
+        /// Accept the received invitation.
         /// </summary>
         /// <param name="sendDCInvite"></param>
         public void Accept(bool sendDCInvite)
@@ -541,7 +546,7 @@ namespace MSNPSharp.P2P
         }
 
         /// <summary>
-        /// 
+        /// Reject the received invitation.
         /// </summary>
         public void Decline()
         {
@@ -587,7 +592,7 @@ namespace MSNPSharp.P2P
         }
 
         /// <summary>
-        /// 
+        /// Close the session.
         /// </summary>
         public void Close()
         {
@@ -635,7 +640,7 @@ namespace MSNPSharp.P2P
         }
 
         /// <summary>
-        /// 
+        /// Release the resources the <see cref="P2PSession"/> may have used.
         /// </summary>
         public void Dispose()
         {
@@ -649,10 +654,6 @@ namespace MSNPSharp.P2P
 
         #region Event Handlers
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="e"></param>
         protected virtual void OnClosing(ContactEventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, String.Format("P2PSession {0} closing", sessionId), GetType().Name);
@@ -665,10 +666,6 @@ namespace MSNPSharp.P2P
             DisposeApp();
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="e"></param>
         protected virtual void OnClosed(ContactEventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, String.Format("P2PSession {0} closed", sessionId), GetType().Name);
@@ -687,10 +684,6 @@ namespace MSNPSharp.P2P
             DisposeApp();
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="e"></param>
         protected virtual void OnError(EventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, String.Format("P2PSession {0} error", sessionId), GetType().Name);
@@ -703,10 +696,6 @@ namespace MSNPSharp.P2P
             DisposeApp();
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="e"></param>
         protected virtual void OnActive(EventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, String.Format("P2PSession {0} active", sessionId), GetType().Name);
