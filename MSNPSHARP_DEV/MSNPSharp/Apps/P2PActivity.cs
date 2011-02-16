@@ -44,8 +44,9 @@ namespace MSNPSharp.Apps
     using MSNPSharp.Core;
 
     /// <summary>
-    /// 
+    /// A P2P application which can be used in P2P activities.
     /// </summary>
+    /// <remarks>P2P activities can be defined as examples, including scene images, emoticons and display image's etc...</remarks>
     [P2PApplication(0, "6A13AF9C-5308-4F35-923A-67E8DDA40C2F")]
     public class P2PActivity : P2PApplication
     {
@@ -61,10 +62,7 @@ namespace MSNPSharp.Apps
             }
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="p2pSess"></param>
+
         public P2PActivity(P2PSession p2pSess)
             : base(p2pSess.Version, p2pSess.Remote, p2pSess.RemoteContactEndPointID)
         {
@@ -90,7 +88,7 @@ namespace MSNPSharp.Apps
         }
 
         /// <summary>
-        /// 
+        /// P2PActivity constructor.
         /// </summary>
         /// <param name="remote"></param>
         /// <param name="applicationID"></param>

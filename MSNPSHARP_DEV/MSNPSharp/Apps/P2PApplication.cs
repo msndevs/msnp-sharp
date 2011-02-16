@@ -72,8 +72,8 @@ namespace MSNPSharp.Apps
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="appID"></param>
-        /// <param name="eufGuid"></param>
+        /// <param name="appID">Application ID</param>
+        /// <param name="eufGuid">GUID for the P2P application</param>
         public P2PApplicationAttribute(uint appID, string eufGuid)
         {
             this.appId = appID;
@@ -85,7 +85,7 @@ namespace MSNPSharp.Apps
     #region P2PApplicationStatus
 
     /// <summary>
-    /// 
+    /// List of current P2PApplication statuses.
     /// </summary>
     public enum P2PApplicationStatus
     {
@@ -99,15 +99,28 @@ namespace MSNPSharp.Apps
     #endregion
 
     /// <summary>
-    /// 
+    /// Class where you can inherit this class to produce P2P applications
     /// </summary>
     public abstract class P2PApplication : IDisposable
     {
         #region Events
 
+        /// <summary>
+        /// Called if the transfer has begun.
+        /// </summary>
+        /// <param name="e"></param>
         public event EventHandler<EventArgs> TransferStarted;
+        /// <summary>
+        /// Called after the transfer has finished.
+        /// </summary>
         public event EventHandler<EventArgs> TransferFinished;
+        /// <summary>
+        /// Called after the transfer has been cancelled by the user.
+        /// </summary>
         public event EventHandler<ContactEventArgs> TransferAborted;
+        /// <summary>
+        /// Called if the transfer has encountered an error.
+        /// </summary>
         public event EventHandler<EventArgs> TransferError;
 
         #endregion
@@ -266,7 +279,7 @@ namespace MSNPSharp.Apps
         #region Methods
 
         /// <summary>
-        /// 
+        /// Prepare the invite message body values.
         /// </summary>
         /// <param name="slp"></param>
         public virtual void SetupInviteMessage(SLPMessage slp)
@@ -277,7 +290,7 @@ namespace MSNPSharp.Apps
         }
 
         /// <summary>
-        /// 
+        /// Check if the invitation was made by the owner.
         /// </summary>
         /// <param name="invitation"></param>
         /// <returns></returns>
@@ -301,7 +314,7 @@ namespace MSNPSharp.Apps
         public abstract bool ProcessData(P2PBridge bridge, byte[] data, bool reset);
 
         /// <summary>
-        /// 
+        /// Send a P2P message.
         /// </summary>
         /// <param name="p2pMessage"></param>
         public void SendMessage(P2PMessage p2pMessage)
@@ -310,7 +323,7 @@ namespace MSNPSharp.Apps
         }
 
         /// <summary>
-        /// 
+        /// Send a message with the specified <see cref="P2PMessage"/> and <see cref="AckHandler"/> (for P2Pv2).
         /// </summary>
         /// <param name="p2pMessage"></param>
         /// <param name="ackHandler"></param>
@@ -335,7 +348,7 @@ namespace MSNPSharp.Apps
         }
 
         /// <summary>
-        /// 
+        /// Begin the P2P transfer, thus call the <see cref="OnTransferStarted"/> event.
         /// </summary>
         public virtual void Start()
         {
@@ -343,7 +356,7 @@ namespace MSNPSharp.Apps
         }
 
         /// <summary>
-        /// 
+        /// Accept the P2P session.
         /// </summary>
         /// <param name="sendDCInvite"></param>
         public virtual void Accept(bool sendDCInvite)
@@ -355,7 +368,7 @@ namespace MSNPSharp.Apps
         }
 
         /// <summary>
-        /// 
+        /// Reject the P2P session.
         /// </summary>
         public virtual void Decline()
         {
@@ -366,7 +379,7 @@ namespace MSNPSharp.Apps
         }
 
         /// <summary>
-        /// 
+        /// End the P2P session.
         /// </summary>
         public virtual void Abort()
         {
@@ -379,7 +392,7 @@ namespace MSNPSharp.Apps
         }
 
         /// <summary>
-        /// 
+        /// Free the resources for this <see cref="P2PApplication"/>.
         /// </summary>
         public virtual void Dispose()
         {
@@ -399,10 +412,6 @@ namespace MSNPSharp.Apps
 
         #region Protected
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="e"></param>
         protected virtual void OnTransferStarted(EventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Transfer started", GetType().Name);
@@ -413,10 +422,6 @@ namespace MSNPSharp.Apps
                 TransferStarted(this, e);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="e"></param>
         protected virtual void OnTransferFinished(EventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Transfer finished", GetType().Name);
@@ -427,10 +432,6 @@ namespace MSNPSharp.Apps
                 TransferFinished(this, e);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="e"></param>
         protected virtual void OnTransferAborted(ContactEventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, String.Format("Transfer aborted ({0})", e.Contact == Local ? "locally" : "remotely"), GetType().Name);
@@ -441,10 +442,6 @@ namespace MSNPSharp.Apps
                 TransferAborted(this, e);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="e"></param>
         protected virtual void OnTransferError(EventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Transfer error", GetType().Name);
@@ -519,9 +516,6 @@ namespace MSNPSharp.Apps
             }
         };
 
-        /// <summary>
-        /// 
-        /// </summary>
         static P2PApplication()
         {
             try
@@ -540,12 +534,11 @@ namespace MSNPSharp.Apps
         #region CreateInstance
 
         /// <summary>
-        /// 
+        /// Create a new P2PApplication instance with the parameters provided.
         /// </summary>
         /// <param name="eufGuid"></param>
         /// <param name="appId"></param>
         /// <param name="withSession"></param>
-        /// <returns></returns>
         public static P2PApplication CreateInstance(Guid eufGuid, uint appId, P2PSession withSession)
         {
             if (withSession != null && eufGuid != Guid.Empty && p2pAppCache.ContainsKey(eufGuid))
@@ -570,7 +563,7 @@ namespace MSNPSharp.Apps
         #region RegisterApplication/UnregisterApplication
 
         /// <summary>
-        /// 
+        /// Register a P2P application through an assembly.
         /// </summary>
         /// <param name="assembly"></param>
         /// <returns></returns>
@@ -589,7 +582,7 @@ namespace MSNPSharp.Apps
         }
 
         /// <summary>
-        /// 
+        /// Register a P2P application, which inherits P2PApplication.
         /// </summary>
         /// <param name="appType"></param>
         /// <returns></returns>
@@ -599,7 +592,7 @@ namespace MSNPSharp.Apps
         }
 
         /// <summary>
-        /// 
+        /// Register a P2P application which inherits P2PApplication, with option to override the existing class.
         /// </summary>
         /// <param name="appType"></param>
         /// <param name="overrideExisting"></param>
@@ -638,14 +631,14 @@ namespace MSNPSharp.Apps
                             while (p2pAppCache[att.EufGuid].Remove(app))
                             {
                                 Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                                    String.Format("Application has unregistered! EufGuid: {0}, AppId: {1}, AppType: {2}", att.EufGuid, att.AppId, appType), "P2PApplication");
+                                    String.Format("Application has been unregistered! EufGuid: {0}, AppId: {1}, AppType: {2}", att.EufGuid, att.AppId, appType), "P2PApplication");
                             }
 
                             p2pAppCache[att.EufGuid].Add(app);
                             added = true;
 
                             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
-                                String.Format("New application registered in force mode! EufGuid: {0}, AppId: {1}, AppType: {2}", att.EufGuid, att.AppId, appType), "P2PApplication");
+                                String.Format("New application has been registered in force mode! EufGuid: {0}, AppId: {1}, AppType: {2}", att.EufGuid, att.AppId, appType), "P2PApplication");
                         }
                         else
                         {
@@ -674,10 +667,9 @@ namespace MSNPSharp.Apps
         }
 
         /// <summary>
-        /// 
+        /// Remove a P2P application from an assembly. 
         /// </summary>
         /// <param name="assembly"></param>
-        /// <returns></returns>
         public static int UnregisterApplication(Assembly assembly)
         {
             int count = 0;
@@ -693,10 +685,9 @@ namespace MSNPSharp.Apps
         }
 
         /// <summary>
-        /// 
+        /// Remove a P2P application from the registered list of applications.
         /// </summary>
         /// <param name="appType"></param>
-        /// <returns></returns>
         public static bool UnregisterApplication(Type appType)
         {
             bool unregistered = false;
