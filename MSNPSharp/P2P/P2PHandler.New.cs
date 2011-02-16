@@ -121,20 +121,7 @@ namespace MSNPSharp.P2P
 
         #endregion
 
-        #region RegisterAckHandler & ProcessP2PMessage
-
-        public void RegisterAckHandler(P2PMessage msg, AckHandler handler)
-        {
-            if (msg.Version == P2PVersion.P2PV2)
-            {
-                msg.V2Header.OperationCode |= (byte)OperationCode.RAK;
-                ackHandlersV2[msg.V2Header.Identifier + msg.Header.MessageSize] = new KeyValuePair<P2PMessage, AckHandler>(msg, handler);
-            }
-            else if (msg.Version == P2PVersion.P2PV1)
-            {
-                ackHandlersV1[msg.V1Header.AckSessionId] = new KeyValuePair<P2PMessage, AckHandler>(msg, handler);
-            }
-        }
+        #region ProcessP2PMessage
 
         public void ProcessP2PMessage(P2PBridge bridge, Contact source, Guid sourceGuid, P2PMessage p2pMessage)
         {
@@ -219,6 +206,23 @@ namespace MSNPSharp.P2P
         #endregion
 
         #region Internal & Protected
+
+        #region RegisterAckHandler
+
+        internal void RegisterAckHandler(P2PMessage msg, AckHandler handler)
+        {
+            if (msg.Version == P2PVersion.P2PV2)
+            {
+                msg.V2Header.OperationCode |= (byte)OperationCode.RAK;
+                ackHandlersV2[msg.V2Header.Identifier + msg.Header.MessageSize] = new KeyValuePair<P2PMessage, AckHandler>(msg, handler);
+            }
+            else if (msg.Version == P2PVersion.P2PV1)
+            {
+                ackHandlersV1[msg.V1Header.AckSessionId] = new KeyValuePair<P2PMessage, AckHandler>(msg, handler);
+            }
+        }
+
+        #endregion
 
         #region GetBridge & BridgeClosed
 

@@ -70,7 +70,7 @@ namespace MSNPSharp.Apps
         }
 
         /// <summary>
-        /// 
+        /// Initializes a new instance of the P2PApplicationAttribute class.
         /// </summary>
         /// <param name="appID">Application ID</param>
         /// <param name="eufGuid">GUID for the P2P application</param>
@@ -108,16 +108,18 @@ namespace MSNPSharp.Apps
         /// <summary>
         /// Called if the transfer has begun.
         /// </summary>
-        /// <param name="e"></param>
         public event EventHandler<EventArgs> TransferStarted;
+
         /// <summary>
         /// Called after the transfer has finished.
         /// </summary>
         public event EventHandler<EventArgs> TransferFinished;
+
         /// <summary>
         /// Called after the transfer has been cancelled by the user.
         /// </summary>
         public event EventHandler<ContactEventArgs> TransferAborted;
+
         /// <summary>
         /// Called if the transfer has encountered an error.
         /// </summary>
@@ -279,7 +281,7 @@ namespace MSNPSharp.Apps
         #region Methods
 
         /// <summary>
-        /// Prepare the invite message body values.
+        /// Prepares the invite message.
         /// </summary>
         /// <param name="slp"></param>
         public virtual void SetupInviteMessage(SLPMessage slp)
@@ -290,7 +292,7 @@ namespace MSNPSharp.Apps
         }
 
         /// <summary>
-        /// Check if the invitation was made by the owner.
+        /// Checks if the invitation was valid.
         /// </summary>
         /// <param name="invitation"></param>
         /// <returns></returns>
@@ -314,7 +316,7 @@ namespace MSNPSharp.Apps
         public abstract bool ProcessData(P2PBridge bridge, byte[] data, bool reset);
 
         /// <summary>
-        /// Send a P2P message.
+        /// Sends a P2P message.
         /// </summary>
         /// <param name="p2pMessage"></param>
         public void SendMessage(P2PMessage p2pMessage)
@@ -323,7 +325,7 @@ namespace MSNPSharp.Apps
         }
 
         /// <summary>
-        /// Send a message with the specified <see cref="P2PMessage"/> and <see cref="AckHandler"/> (for P2Pv2).
+        /// Sends a message with the specified <see cref="P2PMessage"/> and <see cref="AckHandler"/>.
         /// </summary>
         /// <param name="p2pMessage"></param>
         /// <param name="ackHandler"></param>
@@ -348,7 +350,7 @@ namespace MSNPSharp.Apps
         }
 
         /// <summary>
-        /// Begin the P2P transfer, thus call the <see cref="OnTransferStarted"/> event.
+        /// Begins the P2P transfer, thus calls the <see cref="TransferStarted"/> event.
         /// </summary>
         public virtual void Start()
         {
@@ -356,7 +358,7 @@ namespace MSNPSharp.Apps
         }
 
         /// <summary>
-        /// Accept the P2P session.
+        /// Accepts the P2P session.
         /// </summary>
         /// <param name="sendDCInvite"></param>
         public virtual void Accept(bool sendDCInvite)
@@ -368,7 +370,7 @@ namespace MSNPSharp.Apps
         }
 
         /// <summary>
-        /// Reject the P2P session.
+        /// Rejects the P2P session.
         /// </summary>
         public virtual void Decline()
         {
@@ -379,7 +381,7 @@ namespace MSNPSharp.Apps
         }
 
         /// <summary>
-        /// End the P2P session.
+        /// Ends the P2P session.
         /// </summary>
         public virtual void Abort()
         {
@@ -392,7 +394,7 @@ namespace MSNPSharp.Apps
         }
 
         /// <summary>
-        /// Free the resources for this <see cref="P2PApplication"/>.
+        /// Frees the resources for this <see cref="P2PApplication"/>.
         /// </summary>
         public virtual void Dispose()
         {
@@ -534,12 +536,12 @@ namespace MSNPSharp.Apps
         #region CreateInstance
 
         /// <summary>
-        /// Create a new P2PApplication instance with the parameters provided.
+        /// Creates a new P2PApplication instance with the parameters provided.
         /// </summary>
         /// <param name="eufGuid"></param>
         /// <param name="appId"></param>
         /// <param name="withSession"></param>
-        public static P2PApplication CreateInstance(Guid eufGuid, uint appId, P2PSession withSession)
+        internal static P2PApplication CreateInstance(Guid eufGuid, uint appId, P2PSession withSession)
         {
             if (withSession != null && eufGuid != Guid.Empty && p2pAppCache.ContainsKey(eufGuid))
             {
@@ -563,7 +565,7 @@ namespace MSNPSharp.Apps
         #region RegisterApplication/UnregisterApplication
 
         /// <summary>
-        /// Register a P2P application through an assembly.
+        /// Registers all P2P applications through an assembly.
         /// </summary>
         /// <param name="assembly"></param>
         /// <returns></returns>
@@ -582,7 +584,7 @@ namespace MSNPSharp.Apps
         }
 
         /// <summary>
-        /// Register a P2P application, which inherits P2PApplication.
+        /// Registers a P2P application, which inherits P2PApplication.
         /// </summary>
         /// <param name="appType"></param>
         /// <returns></returns>
@@ -592,7 +594,7 @@ namespace MSNPSharp.Apps
         }
 
         /// <summary>
-        /// Register a P2P application which inherits P2PApplication, with option to override the existing class.
+        /// Registers a P2P application which inherits P2PApplication, with option to override the existing class.
         /// </summary>
         /// <param name="appType"></param>
         /// <param name="overrideExisting"></param>
@@ -667,7 +669,7 @@ namespace MSNPSharp.Apps
         }
 
         /// <summary>
-        /// Remove a P2P application from an assembly. 
+        /// Unregisters all P2P applications from an assembly. 
         /// </summary>
         /// <param name="assembly"></param>
         public static int UnregisterApplication(Assembly assembly)
@@ -685,7 +687,7 @@ namespace MSNPSharp.Apps
         }
 
         /// <summary>
-        /// Remove a P2P application from the registered list of applications.
+        /// Unregisters a P2P application from the registered list of applications.
         /// </summary>
         /// <param name="appType"></param>
         public static bool UnregisterApplication(Type appType)
