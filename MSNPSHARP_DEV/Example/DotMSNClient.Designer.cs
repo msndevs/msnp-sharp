@@ -75,7 +75,6 @@ namespace MSNPSharpClient
             this.tableLayoutPanel3 = new System.Windows.Forms.TableLayoutPanel();
             this.tableLayoutPanel4 = new System.Windows.Forms.TableLayoutPanel();
             this.tableLayoutPanel5 = new System.Windows.Forms.TableLayoutPanel();
-            this.displayImageBox = new System.Windows.Forms.PictureBox();
             this.panel1 = new System.Windows.Forms.Panel();
             this.tableLayoutPanel6 = new System.Windows.Forms.TableLayoutPanel();
             this.pnlLogin = new System.Windows.Forms.Panel();
@@ -89,8 +88,9 @@ namespace MSNPSharpClient
             this.loginButton = new System.Windows.Forms.Button();
             this.passwordTextBox = new System.Windows.Forms.TextBox();
             this.tableLayoutPanel7 = new System.Windows.Forms.TableLayoutPanel();
-            this.comboPlaces = new System.Windows.Forms.ComboBox();
             this.comboStatus = new System.Windows.Forms.ComboBox();
+            this.comboPlaces = new System.Windows.Forms.ComboBox();
+            this.displayImageBox = new System.Windows.Forms.PictureBox();
             this.logoImageBox = new System.Windows.Forms.PictureBox();
             this.statusBar = new System.Windows.Forms.Label();
             this.userMenuStrip.SuspendLayout();
@@ -108,12 +108,12 @@ namespace MSNPSharpClient
             this.tableLayoutPanel3.SuspendLayout();
             this.tableLayoutPanel4.SuspendLayout();
             this.tableLayoutPanel5.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.displayImageBox)).BeginInit();
             this.panel1.SuspendLayout();
             this.tableLayoutPanel6.SuspendLayout();
             this.pnlLogin.SuspendLayout();
             this.pnlNameAndPM.SuspendLayout();
             this.tableLayoutPanel7.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.displayImageBox)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.logoImageBox)).BeginInit();
             this.SuspendLayout();
             // 
@@ -589,19 +589,6 @@ namespace MSNPSharpClient
             this.tableLayoutPanel5.Size = new System.Drawing.Size(378, 122);
             this.tableLayoutPanel5.TabIndex = 0;
             // 
-            // displayImageBox
-            // 
-            this.displayImageBox.BackColor = System.Drawing.Color.Transparent;
-            this.displayImageBox.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.displayImageBox.Location = new System.Drawing.Point(279, 6);
-            this.displayImageBox.Margin = new System.Windows.Forms.Padding(1, 6, 1, 1);
-            this.displayImageBox.Name = "displayImageBox";
-            this.displayImageBox.Size = new System.Drawing.Size(96, 96);
-            this.displayImageBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
-            this.displayImageBox.TabIndex = 3;
-            this.displayImageBox.TabStop = false;
-            this.displayImageBox.Click += new System.EventHandler(this.displayImageBox_Click);
-            // 
             // panel1
             // 
             this.panel1.Controls.Add(this.tableLayoutPanel6);
@@ -744,24 +731,10 @@ namespace MSNPSharpClient
             this.tableLayoutPanel7.Name = "tableLayoutPanel7";
             this.tableLayoutPanel7.RowCount = 1;
             this.tableLayoutPanel7.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel7.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
-            this.tableLayoutPanel7.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.tableLayoutPanel7.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 29F));
+            this.tableLayoutPanel7.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 29F));
             this.tableLayoutPanel7.Size = new System.Drawing.Size(266, 29);
             this.tableLayoutPanel7.TabIndex = 0;
-            // 
-            // comboPlaces
-            // 
-            this.comboPlaces.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboPlaces.DropDownWidth = 220;
-            this.comboPlaces.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.comboPlaces.FormattingEnabled = true;
-            this.comboPlaces.ItemHeight = 15;
-            this.comboPlaces.Location = new System.Drawing.Point(146, 3);
-            this.comboPlaces.Name = "comboPlaces";
-            this.comboPlaces.Size = new System.Drawing.Size(117, 23);
-            this.comboPlaces.TabIndex = 6;
-            this.comboPlaces.Visible = false;
-            this.comboPlaces.SelectedIndexChanged += new System.EventHandler(this.comboPlaces_SelectedIndexChanged);
             // 
             // comboStatus
             // 
@@ -782,6 +755,33 @@ namespace MSNPSharpClient
             this.comboStatus.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.comboStatus_DrawItem);
             this.comboStatus.SelectedIndexChanged += new System.EventHandler(this.comboStatus_SelectedIndexChanged);
             this.comboStatus.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.comboStatus_KeyPress);
+            // 
+            // comboPlaces
+            // 
+            this.comboPlaces.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboPlaces.DropDownWidth = 220;
+            this.comboPlaces.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.comboPlaces.FormattingEnabled = true;
+            this.comboPlaces.ItemHeight = 15;
+            this.comboPlaces.Location = new System.Drawing.Point(147, 3);
+            this.comboPlaces.Name = "comboPlaces";
+            this.comboPlaces.Size = new System.Drawing.Size(116, 23);
+            this.comboPlaces.TabIndex = 6;
+            this.comboPlaces.Visible = false;
+            this.comboPlaces.SelectedIndexChanged += new System.EventHandler(this.comboPlaces_SelectedIndexChanged);
+            // 
+            // displayImageBox
+            // 
+            this.displayImageBox.BackColor = System.Drawing.Color.Transparent;
+            this.displayImageBox.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.displayImageBox.Location = new System.Drawing.Point(279, 6);
+            this.displayImageBox.Margin = new System.Windows.Forms.Padding(1, 6, 1, 1);
+            this.displayImageBox.Name = "displayImageBox";
+            this.displayImageBox.Size = new System.Drawing.Size(96, 96);
+            this.displayImageBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            this.displayImageBox.TabIndex = 3;
+            this.displayImageBox.TabStop = false;
+            this.displayImageBox.Click += new System.EventHandler(this.displayImageBox_Click);
             // 
             // logoImageBox
             // 
@@ -834,7 +834,6 @@ namespace MSNPSharpClient
             this.tableLayoutPanel3.ResumeLayout(false);
             this.tableLayoutPanel4.ResumeLayout(false);
             this.tableLayoutPanel5.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.displayImageBox)).EndInit();
             this.panel1.ResumeLayout(false);
             this.tableLayoutPanel6.ResumeLayout(false);
             this.pnlLogin.ResumeLayout(false);
@@ -842,6 +841,7 @@ namespace MSNPSharpClient
             this.pnlNameAndPM.ResumeLayout(false);
             this.pnlNameAndPM.PerformLayout();
             this.tableLayoutPanel7.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.displayImageBox)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.logoImageBox)).EndInit();
             this.ResumeLayout(false);
 

@@ -501,7 +501,7 @@ namespace MSNPSharp.P2P
         }
 
         /// <summary>
-        /// Accept the received invitation.
+        /// Accepts the received invitation.
         /// </summary>
         /// <param name="sendDCInvite"></param>
         public void Accept(bool sendDCInvite)
@@ -546,7 +546,7 @@ namespace MSNPSharp.P2P
         }
 
         /// <summary>
-        /// Reject the received invitation.
+        /// Rejects the received invitation.
         /// </summary>
         public void Decline()
         {
@@ -592,7 +592,7 @@ namespace MSNPSharp.P2P
         }
 
         /// <summary>
-        /// Close the session.
+        /// Closes the session.
         /// </summary>
         public void Close()
         {
@@ -640,7 +640,7 @@ namespace MSNPSharp.P2P
         }
 
         /// <summary>
-        /// Release the resources the <see cref="P2PSession"/> may have used.
+        /// Releases the resources the <see cref="P2PSession"/> may have used.
         /// </summary>
         public void Dispose()
         {
