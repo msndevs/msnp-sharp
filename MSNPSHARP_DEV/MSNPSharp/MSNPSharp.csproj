@@ -149,6 +149,7 @@
     <Compile Include="Services\SecurityTokenServiceWrapper.cs">
     </Compile>
     <Compile Include="Services\SharingServiceBindingWrapper.cs" />
+    <Compile Include="Services\SoapLogExtension.cs" />
     <Compile Include="Services\StorageServiceWrapper.cs" />
     <Compile Include="Services\WhatsUpServiceBindingWrapper.cs" />
     <Compile Include="SingleSignOn.cs" />
