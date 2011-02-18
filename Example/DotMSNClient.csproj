@@ -78,6 +78,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="MSNPSharp_logo.ico" />
+    <None Include="app.config" />
     <None Include="Resources\Color_fontHS.png" />
     <None Include="Resources\app_banner.png" />
     <None Include="Resources\loading.gif" />
