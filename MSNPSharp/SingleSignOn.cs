@@ -209,7 +209,7 @@ namespace MSNPSharp
                 if (SSOTickets[tt].Expires < DateTime.Now)
                     return ExpiryState.Expired;
 
-                return (SSOTickets[tt].Expires < DateTime.Now.AddMinutes(1)) ? ExpiryState.WillExpireSoon : ExpiryState.NotExpired;
+                return (SSOTickets[tt].Expires < DateTime.Now.AddSeconds(10)) ? ExpiryState.WillExpireSoon : ExpiryState.NotExpired;
             }
             return ExpiryState.Expired;
         }
