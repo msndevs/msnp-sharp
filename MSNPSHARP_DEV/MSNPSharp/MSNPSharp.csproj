@@ -113,9 +113,6 @@
     <Compile Include="Core\NetworkMessage.cs" />
     <Compile Include="Core\NotificationMessage.cs" />
     <Compile Include="NSMessageHandler.cs" />
-    <Compile Include="NSMessageHandler.Obsolete.cs">
-      <DependentUpon>NSMessageHandler.cs</DependentUpon>
-    </Compile>
     <Compile Include="Core\NSMessage.cs" />
     <Compile Include="Core\NSMessagePool.cs" />
     <Compile Include="NSMessageProcessor.cs" />
@@ -187,6 +184,7 @@
     <Compile Include="Services\WhatsUpService.cs" />
     <Compile Include="Wink.cs" />
     <Compile Include="IO\XMLContactList.cs" />
+    <Compile Include="_Deprecated.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Web References\MSNWS.MSNABSharingService\ABContactAddResponse.datasource">
