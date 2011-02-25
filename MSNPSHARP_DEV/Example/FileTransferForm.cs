@@ -33,7 +33,7 @@ namespace MSNPSharpClient
         {
             string appPath = Path.GetFullPath(".");
 
-            Text = "File Transfer: " + p2pSession.Remote.Mail;
+            Text = "File Transfer: " + p2pSession.Remote.Account;
             txtFilePath.Text = Path.Combine(appPath, fileTransfer.Context.Filename);
             lblSize.Text = fileTransfer.Context.FileSize + " bytes";
 

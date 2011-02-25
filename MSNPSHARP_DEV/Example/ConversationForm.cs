@@ -666,8 +666,8 @@ namespace MSNPSharpClient
             richTextHistory.SelectionColor = Color.Navy;
             richTextHistory.SelectionIndent = 0;
             richTextHistory.AppendText("[" + DateTime.Now.ToLongTimeString() + "]" + " ");
-            richTextHistory.SelectionColor = c.Mail == _messenger.ContactList.Owner.Mail ? Color.Blue : Color.Black;
-            richTextHistory.AppendText(c.Name + " <" + c.Mail + ">" + Environment.NewLine);
+            richTextHistory.SelectionColor = c.Account == _messenger.ContactList.Owner.Account ? Color.Blue : Color.Black;
+            richTextHistory.AppendText(c.Name + " <" + c.Account + ">" + Environment.NewLine);
             richTextHistory.SelectionColor = message.Color;
             richTextHistory.SelectionIndent = 10;
             richTextHistory.AppendText(message.Text);
@@ -729,7 +729,7 @@ namespace MSNPSharpClient
 
         private void ConversationForm_Load(object sender, EventArgs e)
         {
-            Text = "Conversation with " + ConversationID.RemoteOwner.Mail + " - MSNPSharp";
+            Text = "Conversation with " + ConversationID.RemoteOwner.Account + " - MSNPSharp";
             Icon = (Icon)((ConversationID.RemoteOwner.ClientType == IMAddressInfoType.WindowsLive) ? Properties.Resources.msn_ico : Properties.Resources.yahoo_ico);
 
             if (_messenger.ContactList.Owner.DisplayImage.Image != null)
@@ -942,7 +942,7 @@ namespace MSNPSharpClient
             {
                 if (c.Online && c.ClientType == IMAddressInfoType.WindowsLive)
                 {
-                    onlineUsersDropDown.Items.Add(c.Mail, null, onlineUsersDropDown_Click).ToolTipText = c.Mail;
+                    onlineUsersDropDown.Items.Add(c.Account, null, onlineUsersDropDown_Click).ToolTipText = c.Account;
                 }
             }
 
@@ -1029,7 +1029,7 @@ namespace MSNPSharpClient
             MemoryStream mem = new MemoryStream();
             Bitmap img = new Bitmap(Image.FromFile(openCustomEmoticonDialog.FileName));
             img.Save(mem, ImageFormat.Png);
-            Emoticon emotest = new Emoticon(_messenger.Owner.Mail, mem, Path.GetFileName(openCustomEmoticonDialog.FileName), Path.GetFileName(openCustomEmoticonDialog.FileName));
+            Emoticon emotest = new Emoticon(_messenger.Owner.Account, mem, Path.GetFileName(openCustomEmoticonDialog.FileName), Path.GetFileName(openCustomEmoticonDialog.FileName));
             MSNObjectCatalog.GetInstance().Add(emotest);
             List<Emoticon> emolist = new List<Emoticon>();
             emolist.Add(emotest);
@@ -1144,7 +1144,7 @@ namespace MSNPSharpClient
         {
             if (!richTextHistory.InvokeRequired)
             {
-                DisplaySystemMessage("Activity session closed by " + e.Contact.Mail);
+                DisplaySystemMessage("Activity session closed by " + e.Contact.Account);
             }
             else
             {

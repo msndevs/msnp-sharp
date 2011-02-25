@@ -270,7 +270,7 @@ namespace MSNPSharp
                         if (NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL == docStream.PreAuthURL)
                         {
 
-                            DisplayImage newDisplayImage = new DisplayImage(NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant(), NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);
+                            DisplayImage newDisplayImage = new DisplayImage(NSMessageHandler.ContactList.Owner.Account.ToLowerInvariant(), NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);
 
                             NSMessageHandler.ContactList.Owner.DisplayImage = newDisplayImage;
                         }
@@ -366,7 +366,7 @@ namespace MSNPSharp
             photoStream.Data = photoData;
             createDocRequest.document.DocumentStreams = new PhotoStream[] { photoStream };
 
-            DisplayImage displayImage = new DisplayImage(NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant(), new MemoryStream(photoData));
+            DisplayImage displayImage = new DisplayImage(NSMessageHandler.ContactList.Owner.Account.ToLowerInvariant(), new MemoryStream(photoData));
 
             NSMessageHandler.ContactList.Owner.DisplayImage = displayImage;
 
@@ -583,7 +583,7 @@ namespace MSNPSharp
 
                 PassportDynamicItem newDynamicItem = new PassportDynamicItem();
                 newDynamicItem.Type = "Passport";
-                newDynamicItem.PassportName = NSMessageHandler.ContactList.Owner.Mail;
+                newDynamicItem.PassportName = NSMessageHandler.ContactList.Owner.Account;
 
                 AddDynamicItemRequestType addDynamicItemRequest = new AddDynamicItemRequestType();
                 addDynamicItemRequest.abId = WebServiceConstants.MessengerIndividualAddressBookId;
@@ -620,7 +620,7 @@ namespace MSNPSharp
 
                 PassportDynamicItem passportDyItem = new PassportDynamicItem();
                 passportDyItem.Type = "Passport";
-                passportDyItem.PassportName = NSMessageHandler.ContactList.Owner.Mail;
+                passportDyItem.PassportName = NSMessageHandler.ContactList.Owner.Account;
                 passportDyItem.Changes = "Notifications";
 
                 NotificationDataType notification = new NotificationDataType();
@@ -864,7 +864,7 @@ namespace MSNPSharp
                         }
                         stream.Close();
 
-                        DisplayImage newDisplayImage = new DisplayImage(NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant(), ms);
+                        DisplayImage newDisplayImage = new DisplayImage(NSMessageHandler.ContactList.Owner.Account.ToLowerInvariant(), ms);
 
                         NSMessageHandler.ContactList.Owner.DisplayImage = newDisplayImage;
                         if (callBackHandler != null)
@@ -1013,7 +1013,7 @@ namespace MSNPSharp
                 photo.Save(NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage, photo.RawFormat);
                 NSMessageHandler.ContactService.Deltas.Save(true);
 
-                DisplayImage newDisplayImage = new DisplayImage(NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant(), NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);
+                DisplayImage newDisplayImage = new DisplayImage(NSMessageHandler.ContactList.Owner.Account.ToLowerInvariant(), NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);
 
                 NSMessageHandler.ContactList.Owner.DisplayImage = newDisplayImage;
 

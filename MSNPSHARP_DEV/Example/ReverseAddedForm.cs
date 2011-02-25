@@ -15,8 +15,8 @@ namespace MSNPSharpClient
         {
             InitializeComponent();
 
-            Text = String.Format(Text, contact.Mail);
-            lblAdded.Text = String.Format(lblAdded.Text, contact.Name + " (" + contact.Mail + ")");
+            Text = String.Format(Text, contact.Account);
+            lblAdded.Text = String.Format(lblAdded.Text, contact.Name + " (" + contact.Account + ")");
         }
 
         public bool Blocked

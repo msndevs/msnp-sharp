@@ -234,7 +234,7 @@ namespace MSNPSharp
                 if (contact.Status != PresenceStatus.Offline)
                 {
                     _switchboard.Invite(contact);
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "SwitchBoard " + _switchboard.SessionHash + " inviting user: " + contact.Mail);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "SwitchBoard " + _switchboard.SessionHash + " inviting user: " + contact.Account);
                 }
             }
         }
@@ -620,7 +620,7 @@ namespace MSNPSharp
 
             if (RemoteOwner.Status == PresenceStatus.Offline)
             {
-                throw new InvalidOperationException("Contact " + RemoteOwner.Mail + " not online, please send offline message instead.");
+                throw new InvalidOperationException("Contact " + RemoteOwner.Account + " not online, please send offline message instead.");
             }
 
             if ((_type & ConversationType.SwitchBoard) == ConversationType.SwitchBoard)
@@ -1052,7 +1052,7 @@ namespace MSNPSharp
         /// <exception cref="NotSupportedException">Inviting mutiple YIM users into a YIM conversation, invite YIM users to a switchboard conversation, or passport members are invited into YIM conversation.</exception>
         public SBMessageHandler Invite(Contact contact)
         {
-            return Invite(contact.Mail, contact.ClientType);
+            return Invite(contact.Account, contact.ClientType);
         }
 
         /// <summary>

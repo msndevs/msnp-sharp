@@ -105,7 +105,7 @@ namespace MSNPSharp
                 msnpsharpDefaultImage.Save(sms, msnpsharpDefaultImage.RawFormat);
             }
 
-            DisplayImage displayImage = new DisplayImage(Mail.ToLowerInvariant(), sms);
+            DisplayImage displayImage = new DisplayImage(Account.ToLowerInvariant(), sms);
 
             this.DisplayImage = displayImage;
         }
@@ -135,7 +135,7 @@ namespace MSNPSharp
                     case PlaceChangedReason.SignedIn:
                         if (!EndPointData.ContainsKey(epId))
                         {
-                            PrivateEndPointData newEndPoint = new PrivateEndPointData(Mail, epId);
+                            PrivateEndPointData newEndPoint = new PrivateEndPointData(Account, epId);
                             newEndPoint.Name = placeName;
                             EndPointData[epId] = newEndPoint;
                             triggerEvent = true;
@@ -231,7 +231,7 @@ namespace MSNPSharp
         public void SignoutFromEverywhere()
         {
             Status = PresenceStatus.Hidden;
-            NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUN", new string[] { Mail, "8" }, "gtfo"));
+            NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUN", new string[] { Account, "8" }, "gtfo"));
             Status = PresenceStatus.Offline;
         }
 
@@ -250,7 +250,7 @@ namespace MSNPSharp
             if (EndPointData.ContainsKey(endPointID))
             {
                 NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUN",
-                    new string[] { Mail + ";" + endPointID.ToString("B").ToLowerInvariant(), "4" }, "goawyplzthxbye" + (MPOPMode == MPOP.AutoLogoff ? "-nomorempop" : String.Empty)));
+                    new string[] { Account + ";" + endPointID.ToString("B").ToLowerInvariant(), "4" }, "goawyplzthxbye" + (MPOPMode == MPOP.AutoLogoff ? "-nomorempop" : String.Empty)));
             }
             else
             {
@@ -283,7 +283,7 @@ namespace MSNPSharp
                     }
 
                     SetDisplayImageAndFireDisplayImageChangedEvent(value);
-                    value.Creator = Mail;
+                    value.Creator = Account;
 
                     MSNObjectCatalog.GetInstance().Add(base.DisplayImage);
 
@@ -310,7 +310,7 @@ namespace MSNPSharp
                         }
                     }
 
-                    value.Creator = Mail;
+                    value.Creator = Account;
                     base.SetSceneImage(value);
                 }
             }
@@ -355,10 +355,10 @@ namespace MSNPSharp
                     MemoryStream sms = new MemoryStream();
                     imageScene.Save(sms, imageScene.RawFormat);
 
-                    SceneImage = new SceneImage(NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant(), sms);
+                    SceneImage = new SceneImage(NSMessageHandler.ContactList.Owner.Account.ToLowerInvariant(), sms);
                 }
                 else
-                    SceneImage = new SceneImage(NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant(), true);
+                    SceneImage = new SceneImage(NSMessageHandler.ContactList.Owner.Account.ToLowerInvariant(), true);
 
                 SaveOriginalSceneImageAndFireSceneImageChangedEvent(
                     new SceneImageChangedEventArgs(SceneImage, DisplayImageChangedType.TransmissionCompleted, false));

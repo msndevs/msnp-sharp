@@ -199,8 +199,8 @@ namespace MSNPSharp.P2P
 
         protected override void SendOnePacket(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage msg)
         {
-            string target = remote.Mail.ToLowerInvariant();
-            string source = remote.NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant();
+            string target = remote.Account.ToLowerInvariant();
+            string source = remote.NSMessageHandler.ContactList.Owner.Account.ToLowerInvariant();
 
             if (msg.Version == P2PVersion.P2PV2)
             {

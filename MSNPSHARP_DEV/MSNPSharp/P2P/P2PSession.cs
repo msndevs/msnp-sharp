@@ -243,10 +243,10 @@ namespace MSNPSharp.P2P
             {
                 if (version == P2PVersion.P2PV1)
                 {
-                    return Local.Mail.ToLowerInvariant();
+                    return Local.Account.ToLowerInvariant();
                 }
 
-                return Local.Mail.ToLowerInvariant() + ";" + LocalContactEndPointID.ToString("B").ToLowerInvariant();
+                return Local.Account.ToLowerInvariant() + ";" + LocalContactEndPointID.ToString("B").ToLowerInvariant();
             }
         }
 
@@ -256,10 +256,10 @@ namespace MSNPSharp.P2P
             {
                 if (version == P2PVersion.P2PV1)
                 {
-                    return Remote.Mail.ToLowerInvariant();
+                    return Remote.Account.ToLowerInvariant();
                 }
 
-                return Remote.Mail.ToLowerInvariant() + ";" + RemoteContactEndPointID.ToString("B").ToLowerInvariant();
+                return Remote.Account.ToLowerInvariant() + ";" + RemoteContactEndPointID.ToString("B").ToLowerInvariant();
             }
         }
 
@@ -379,14 +379,14 @@ namespace MSNPSharp.P2P
 
             if (version == P2PVersion.P2PV1)
             {
-                localContact = (slp.ToEmailAccount == ns.ContactList.Owner.Mail) ?
+                localContact = (slp.ToEmailAccount == ns.ContactList.Owner.Account) ?
                     ns.ContactList.Owner : ns.ContactList.GetContactWithCreate(slp.ToEmailAccount, IMAddressInfoType.WindowsLive);
 
                 remoteContact = ns.ContactList.GetContactWithCreate(slp.FromEmailAccount, IMAddressInfoType.WindowsLive);
             }
             else
             {
-                localContact = (slp.ToEmailAccount == ns.ContactList.Owner.Mail) ?
+                localContact = (slp.ToEmailAccount == ns.ContactList.Owner.Account) ?
                     ns.ContactList.Owner : ns.ContactList.GetContactWithCreate(slp.ToEmailAccount, IMAddressInfoType.WindowsLive);
                 localContactEndPointID = slp.ToEndPoint;
 

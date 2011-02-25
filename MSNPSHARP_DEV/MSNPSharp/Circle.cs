@@ -168,8 +168,8 @@ namespace MSNPSharp
 
         private MultiMimeMessage InitMultiMimeMessage()
         {
-            string to = ((int)ClientType).ToString() + ":" + Mail;
-            string from = ((int)NSMessageHandler.ContactList.Owner.ClientType).ToString() + ":" + NSMessageHandler.ContactList.Owner.Mail;
+            string to = ((int)ClientType).ToString() + ":" + Account;
+            string from = ((int)NSMessageHandler.ContactList.Owner.ClientType).ToString() + ":" + NSMessageHandler.ContactList.Owner.Account;
 
             MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
             mmMessage.RoutingHeaders["To"]["path"] = "IM";
@@ -239,7 +239,7 @@ namespace MSNPSharp
             mmm.ContentHeaders["Content-Type"] = "text/x-msmsgscontrol";
             mmm.ContentHeaders["Message-Type"] = "Control";
             mmm.ContentHeaders["Message-Subtype"] = "Typing";
-            mmm.ContentHeaders["TypingUser"] = NSMessageHandler.ContactList.Owner.Mail;
+            mmm.ContentHeaders["TypingUser"] = NSMessageHandler.ContactList.Owner.Account;
 
             mmm.InnerBody = Encoding.ASCII.GetBytes("\r\n");
 

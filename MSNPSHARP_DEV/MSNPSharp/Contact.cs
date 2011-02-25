@@ -57,7 +57,7 @@ namespace MSNPSharp
         protected Guid guid = Guid.Empty;
         protected Guid addressBookId = Guid.Empty;
         private long cId = 0;
-        private string mail = string.Empty;
+        private string account = string.Empty;
         private string name = string.Empty;
         private string nickName = string.Empty;
 
@@ -143,7 +143,7 @@ namespace MSNPSharp
             Initialized(abId, account, cliType, cid, handler);
         }
 
-        protected virtual void Initialized(Guid abId, string account, IMAddressInfoType cliType, long cid, NSMessageHandler handler)
+        protected virtual void Initialized(Guid abId, string acc, IMAddressInfoType cliType, long cid, NSMessageHandler handler)
         {
             if (hasInitialized)
                 return;
@@ -152,13 +152,13 @@ namespace MSNPSharp
 
             NSMessageHandler = handler;
             addressBookId = abId;
-            mail = account.ToLowerInvariant();
+            account = acc.ToLowerInvariant();
             clientType = cliType;
             cId = cid;
 
             SetName(account);
-            siblingString = ClientType.ToString() + ":" + account.ToLowerInvariant();
-            hash = MakeHash(Mail, ClientType);
+            siblingString = ClientType.ToString() + ":" + account;
+            hash = MakeHash(Account, ClientType);
             EndPointData[Guid.Empty] = new EndPointData(account, Guid.Empty);
 
             if (NSMessageHandler != null)
@@ -166,8 +166,8 @@ namespace MSNPSharp
                 NSMessageHandler.Manager.Add(this);
             }
 
-            displayImage = DisplayImage.CreateDefaultImage(Mail);
-            sceneImage = SceneImage.CreateDefaultImage(Mail);
+            displayImage = DisplayImage.CreateDefaultImage(Account);
+            sceneImage = SceneImage.CreateDefaultImage(Account);
 
             hasInitialized = true;
         }
@@ -360,13 +360,22 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// The email account of contact.
+        /// The account of contact (E-mail address, phone number, Circle guid, FacebookID etc.)
         /// </summary>
+        public string Account
+        {
+            get
+            {
+                return account;
+            }
+        }
+
+        [Obsolete("Please use Account instead.", false)]
         public string Mail
         {
             get
             {
-                return mail;
+                return account;
             }
         }
 
@@ -1133,7 +1142,7 @@ namespace MSNPSharp
                 byte[] rawImageData = NSMessageHandler.ContactService.Deltas.GetRawImageDataBySiblingString(SiblingString, out Sha, true);
 
                 if (rawImageData != null)
-                    displayImage = new DisplayImage(Mail, new MemoryStream(rawImageData));
+                    displayImage = new DisplayImage(Account, new MemoryStream(rawImageData));
 
                 NSMessageHandler.ContactService.Deltas.Save(true);
                 OnDisplayImageChanged(new DisplayImageChangedEventArgs(displayImage, DisplayImageChangedType.TransmissionCompleted, false));
@@ -1165,7 +1174,7 @@ namespace MSNPSharp
                 byte[] rawImageData = NSMessageHandler.ContactService.Deltas.GetRawImageDataBySiblingString(SiblingString, out Sha, false);
 
                 if (rawImageData != null)
-                    sceneImage = new SceneImage(Mail, new MemoryStream(rawImageData));
+                    sceneImage = new SceneImage(Account, new MemoryStream(rawImageData));
 
                 NSMessageHandler.ContactService.Deltas.Save(true);
                 OnSceneImageChanged(new SceneImageChangedEventArgs(sceneImage, DisplayImageChangedType.TransmissionCompleted, false));
@@ -1265,9 +1274,9 @@ namespace MSNPSharp
         protected virtual string GetLocalContactString()
         {
             if (MachineGuid == Guid.Empty)
-                return Mail.ToLowerInvariant();
+                return Account.ToLowerInvariant();
 
-            return Mail.ToLowerInvariant() + ";" + MachineGuid.ToString("B");
+            return Account.ToLowerInvariant() + ";" + MachineGuid.ToString("B");
         }
 
         protected virtual void OnScreenNameChanged(string oldName)
@@ -1358,7 +1367,7 @@ namespace MSNPSharp
             byte[] rawImageData = NSMessageHandler.ContactService.Deltas.GetRawImageDataBySiblingString(SiblingString, out Sha, true);
             if (rawImageData != null)
             {
-                displayImage = new DisplayImage(Mail, new MemoryStream(rawImageData));
+                displayImage = new DisplayImage(Account, new MemoryStream(rawImageData));
 
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "User " + ToString() + "'s displayimage" + "restored.\r\n " +
                     "Old SHA:     " + Sha + "\r\n " +
@@ -1378,7 +1387,7 @@ namespace MSNPSharp
             byte[] rawImageData = NSMessageHandler.ContactService.Deltas.GetRawImageDataBySiblingString(SiblingString, out Sha, false);
             if (rawImageData != null)
             {
-                sceneImage = new SceneImage(Mail, new MemoryStream(rawImageData));
+                sceneImage = new SceneImage(Account, new MemoryStream(rawImageData));
 
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "User " + ToString() + "'s scene image" + "restored.\r\n " +
                     "Old SHA:     " + Sha + "\r\n " +
@@ -1717,7 +1726,7 @@ namespace MSNPSharp
         {
             if (contact == null)
                 return false;
-            if (ClientType == contact.ClientType && Mail.ToLowerInvariant() == contact.Mail.ToLowerInvariant())
+            if (ClientType == contact.ClientType && Account.ToLowerInvariant() == contact.Account.ToLowerInvariant())
                 return true;
 
             return false;
