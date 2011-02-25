@@ -1421,7 +1421,7 @@ namespace MSNPSharp.IO
                 return null;
 
             lock (AddressbookContacts)
-                return SelectSelfContactFromContactList((new List<ContactType>(AddressbookContacts[abId.ToLowerInvariant()].Values)).ToArray(), NSMessageHandler.ContactList.Owner.Mail);
+                return SelectSelfContactFromContactList((new List<ContactType>(AddressbookContacts[abId.ToLowerInvariant()].Values)).ToArray(), NSMessageHandler.ContactList.Owner.Account);
         }
 
         /// <summary>
@@ -1567,7 +1567,7 @@ namespace MSNPSharp.IO
                 if (!newContactList.ContainsKey(contact.CID))
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Member " + contact.ToString() + " has left circle " + circle.ToString());
-                    circle.ContactList.Remove(contact.Mail, contact.ClientType);
+                    circle.ContactList.Remove(contact.Account, contact.ClientType);
                     circle.NSMessageHandler.ContactService.OnCircleMemberLeft(new CircleMemberEventArgs(circle, contact));
                 }
             }
@@ -1765,7 +1765,7 @@ namespace MSNPSharp.IO
     
                                         if (RoleLists.None == contact.Lists)
                                         {
-                                            NSMessageHandler.ContactList.Remove(contact.Mail, contact.ClientType);
+                                            NSMessageHandler.ContactList.Remove(contact.Account, contact.ClientType);
                                             contact.NSMessageHandler = null;
                                         }
                                     }
@@ -2403,7 +2403,7 @@ namespace MSNPSharp.IO
 
                     if (!string.IsNullOrEmpty(displayName))
                     {
-                        if ((contact.Name == contact.Mail && displayName != contact.Mail) ||
+                        if ((contact.Name == contact.Account && displayName != contact.Account) ||
                             string.IsNullOrEmpty(contact.Name))
                         {
                             contact.SetName(displayName);
@@ -2446,7 +2446,7 @@ namespace MSNPSharp.IO
                         needsDelete |= true;
                     }
 
-                    if (account == NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant() &&
+                    if (account == NSMessageHandler.ContactList.Owner.Account.ToLowerInvariant() &&
                         cinfo.NetworkInfoList != null &&
                         type == NSMessageHandler.ContactList.Owner.ClientType &&
                         isDefaultAddressBook == false)
@@ -2497,7 +2497,7 @@ namespace MSNPSharp.IO
                         owner = circle.ContactList.Owner;
                     }
 
-                    if (displayName == owner.Mail && !String.IsNullOrEmpty(owner.Name))
+                    if (displayName == owner.Account && !String.IsNullOrEmpty(owner.Name))
                     {
                         displayName = owner.Name;
                     }

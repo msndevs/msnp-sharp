@@ -605,7 +605,7 @@ namespace MSNPSharp
             MimeMessage mimeMessage = new MimeMessage();
             mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-msmsgscontrol";
 
-            mimeMessage.MimeHeader[MimeHeaderStrings.TypingUser] = NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant();
+            mimeMessage.MimeHeader[MimeHeaderStrings.TypingUser] = NSMessageHandler.ContactList.Owner.Account.ToLowerInvariant();
 
             mimeMessage.InnerMessage = new TextPayloadMessage("\r\n");
 
@@ -832,7 +832,7 @@ namespace MSNPSharp
         /// <param name="contact"></param>
         protected virtual void SendInvitationCommand(Contact contact)
         {
-            MessageProcessor.SendMessage(new SBMessage("CAL", new string[] { contact.Mail }));
+            MessageProcessor.SendMessage(new SBMessage("CAL", new string[] { contact.Account }));
         }
 
         /// <summary>
@@ -843,7 +843,7 @@ namespace MSNPSharp
         /// </remarks>
         protected virtual void SendInitialMessage()
         {
-            string auth = NSMessageHandler.ContactList.Owner.Mail + ";" + NSMessageHandler.MachineGuid.ToString("B");
+            string auth = NSMessageHandler.ContactList.Owner.Account + ";" + NSMessageHandler.MachineGuid.ToString("B");
 
             if (Invited)
                 MessageProcessor.SendMessage(new SBMessage("ANS", new string[] { auth, SessionHash, SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture) }));
@@ -900,7 +900,7 @@ namespace MSNPSharp
                 {
                     if (rosterState[key] != ContactConversationState.Left &&
                         NSMessageHandler.ContactList.Owner != null &&
-                        EndPointData.GetAccountFromUniqueEPIDString(key) != NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant())
+                        EndPointData.GetAccountFromUniqueEPIDString(key) != NSMessageHandler.ContactList.Owner.Account.ToLowerInvariant())
                     {
                         // If: There is only one owner without any endpoint id, the switchboard is ended.
                         // If: There is/are owner(s) with endpoint id(s) and status is/are not left, keep the switch available.
@@ -914,7 +914,7 @@ namespace MSNPSharp
 
         protected virtual bool Invite(Contact contact, Guid endPoint)
         {
-            string fullaccount = contact.Mail.ToLowerInvariant();
+            string fullaccount = contact.Account.ToLowerInvariant();
             object status = null;
 
             if (endPoint != Guid.Empty)
@@ -938,13 +938,13 @@ namespace MSNPSharp
             if (endPoint == Guid.Empty)
             {
                 //Add "all contact"
-                SetRosterProperty(contact.Mail.ToLowerInvariant(), ContactConversationState.Invited.ToString(), RosterProperties.Status);
+                SetRosterProperty(contact.Account.ToLowerInvariant(), ContactConversationState.Invited.ToString(), RosterProperties.Status);
                 if (contact.HasSignedInWithMultipleEndPoints)  //Set every enpoints as Invited.
                 {
                     foreach (Guid epId in contact.EndPointData.Keys)
                     {
                         if (epId == Guid.Empty) continue;
-                        string currentAccount = contact.Mail.ToLowerInvariant() + ";" + epId.ToString("B").ToLowerInvariant();
+                        string currentAccount = contact.Account.ToLowerInvariant() + ";" + epId.ToString("B").ToLowerInvariant();
                         SetRosterProperty(currentAccount, ContactConversationState.Invited.ToString(), RosterProperties.Status);
                     }
                 }
@@ -1042,7 +1042,7 @@ namespace MSNPSharp
                 {
                     if (NSMessageHandler.ContactList.Owner != null)
                     {
-                        if (EndPointData.GetAccountFromUniqueEPIDString(key) != NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant())
+                        if (EndPointData.GetAccountFromUniqueEPIDString(key) != NSMessageHandler.ContactList.Owner.Account.ToLowerInvariant())
                         {
                             count++;
                         }
@@ -1075,10 +1075,10 @@ namespace MSNPSharp
         {
             lock (rosterState)
             {
-                if (HasContact(contact.Mail))
+                if (HasContact(contact.Account))
                     return true;
 
-                if (HasContact(contact.Mail, contact.Guid))
+                if (HasContact(contact.Account, contact.Guid))
                     return true;
 
                 lock (contact.SyncObject)
@@ -1087,7 +1087,7 @@ namespace MSNPSharp
                     {
                         if (epId == Guid.Empty) continue;
 
-                        if (HasContact(contact.Mail, epId))
+                        if (HasContact(contact.Account, epId))
                             return true;
                     }
                 }
@@ -1165,7 +1165,7 @@ namespace MSNPSharp
                 endPointId = new Guid(accountGuid[1]);
             }
 
-            if (NSMessageHandler.ContactList.Owner != null && account == NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant())
+            if (NSMessageHandler.ContactList.Owner != null && account == NSMessageHandler.ContactList.Owner.Account.ToLowerInvariant())
             {
                 if (IsAllContactsInRosterLeft())
                 {
@@ -1257,7 +1257,7 @@ namespace MSNPSharp
                 endpointGuid = new Guid(fullaccount.Split(';')[1]);
             }
 
-            if (NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant() == account)
+            if (NSMessageHandler.ContactList.Owner.Account.ToLowerInvariant() == account)
                 return;
 
             // Get the contact.
@@ -1336,7 +1336,7 @@ namespace MSNPSharp
                 endpointGuid = new Guid(fullaccount.Split(';')[1]);
             }
 
-            if (NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant() != account)
+            if (NSMessageHandler.ContactList.Owner.Account.ToLowerInvariant() != account)
             {
                 // Get the contact.
                 Contact contact = NSMessageHandler.ContactList.GetContactWithCreate(account, IMAddressInfoType.WindowsLive);
@@ -1396,7 +1396,7 @@ namespace MSNPSharp
                     account = account.Split(';')[0];
                 }
 
-                if (NSMessageHandler.ContactList.Owner.Mail.ToLowerInvariant() == account)
+                if (NSMessageHandler.ContactList.Owner.Account.ToLowerInvariant() == account)
                 {
                     // update the owner's name. Just to be sure.
                     // NSMessageHandler.ContactList.Owner.SetName(message.CommandValues[2].ToString());
@@ -1626,7 +1626,7 @@ namespace MSNPSharp
             {
                 if (!contact.EndPointData.ContainsKey(endpointGuid))
                 {
-                    EndPointData epData = new EndPointData(contact.Mail, endpointGuid);
+                    EndPointData epData = new EndPointData(contact.Account, endpointGuid);
                     epData.ClientCapabilities = (ClientCapabilities)Convert.ToInt64(caps.Split(':')[0]);
                     epData.ClientCapabilitiesEx = (ClientCapabilitiesEx)Convert.ToInt64(caps.Split(':')[1]);
                     contact.EndPointData[endpointGuid] = epData;
@@ -1648,7 +1648,7 @@ namespace MSNPSharp
             {
                 if (!contact.EndPointData.ContainsKey(endpointGuid))
                 {
-                    EndPointData epData = new EndPointData(contact.Mail, endpointGuid);
+                    EndPointData epData = new EndPointData(contact.Account, endpointGuid);
                     epData.ClientCapabilities = (ClientCapabilities)Convert.ToInt64(caps);
                     contact.EndPointData[endpointGuid] = epData;
                     dump = true;

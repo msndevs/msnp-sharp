@@ -229,7 +229,7 @@ namespace MSNPSharp
 
         public string GetContactKey(Contact contact)
         {
-            return contact.ClientType.ToString().ToLowerInvariant() + ":" + contact.Mail.ToLowerInvariant();
+            return contact.ClientType.ToString().ToLowerInvariant() + ":" + contact.Account.ToLowerInvariant();
         }
 
         public void Reset()

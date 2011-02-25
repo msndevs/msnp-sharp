@@ -185,7 +185,7 @@ namespace MSNPSharp.Utilities
 
         public override string ToString()
         {
-            string remoteOwnerString = (remoteOwner == null ? "null" : remoteOwner.Mail.ToLowerInvariant());
+            string remoteOwnerString = (remoteOwner == null ? "null" : remoteOwner.Account.ToLowerInvariant());
             string conversationString = string.Empty;
             if (conversation != null)
             {

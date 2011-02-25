@@ -123,9 +123,9 @@ namespace MSNPSharp.P2P
             if (slp != null)
             {
                 string target = (msg.Version == P2PVersion.P2PV1) ?
-                    remote.Mail.ToLowerInvariant()
+                    remote.Account.ToLowerInvariant()
                     :
-                    remote.Mail.ToLowerInvariant() + ";" + remoteGuid.ToString("B");
+                    remote.Account.ToLowerInvariant() + ";" + remoteGuid.ToString("B");
 
                 NSMessageProcessor nsmp = (NSMessageProcessor)nsHandler.MessageProcessor;
                 int transId = nsmp.IncreaseTransactionID();

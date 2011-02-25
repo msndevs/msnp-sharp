@@ -496,8 +496,8 @@ namespace MSNPSharp.P2P
 
         private bool CheckSLPMessage(P2PBridge bridge, Contact source, Guid sourceGuid, P2PMessage msg, SLPMessage slp)
         {
-            string src = source.Mail.ToLowerInvariant();
-            string target = nsMessageHandler.ContactList.Owner.Mail.ToLowerInvariant();
+            string src = source.Account.ToLowerInvariant();
+            string target = nsMessageHandler.ContactList.Owner.Account.ToLowerInvariant();
 
             if (msg.Version == P2PVersion.P2PV2)
             {
@@ -557,7 +557,7 @@ namespace MSNPSharp.P2P
 
         private void SendSLPStatus(P2PBridge bridge, P2PMessage msg, Contact dest, Guid destGuid, int code, string phrase)
         {
-            string target = dest.Mail.ToLowerInvariant();
+            string target = dest.Account.ToLowerInvariant();
 
             if (msg.Version == P2PVersion.P2PV2)
             {

@@ -322,14 +322,14 @@ namespace MSNPSharp.Apps
                     // Data CHECKSUM is ok, update MsnObject
                     if (msnObject.ObjectType == MSNObjectType.UserDisplay)
                     {
-                        DisplayImage newDisplayImage = new DisplayImage(Remote.Mail.ToLowerInvariant(), ms);
+                        DisplayImage newDisplayImage = new DisplayImage(Remote.Account.ToLowerInvariant(), ms);
                         Remote.SetDisplayImageAndFireDisplayImageChangedEvent(newDisplayImage);
 
                         msnObject = newDisplayImage;
                     }
                     else if (msnObject.ObjectType == MSNObjectType.Scene)
                     {
-                        SceneImage newSceneImage = new SceneImage(Remote.Mail.ToLowerInvariant(), ms);
+                        SceneImage newSceneImage = new SceneImage(Remote.Account.ToLowerInvariant(), ms);
                         Remote.SetSceneImageAndFireSceneImageChangedEvent(newSceneImage);
 
                         msnObject = newSceneImage;

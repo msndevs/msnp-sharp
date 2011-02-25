@@ -213,7 +213,7 @@ namespace MSNPSharp
             if (e.Inviter != null)
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                    e.Inviter.Name + "(" + e.Inviter.Mail + ") invite you to join circle: "
+                    e.Inviter.Name + "(" + e.Inviter.Account + ") invite you to join circle: "
                     + e.Circle.ToString() + "\r\nMessage: " + e.Inviter.Message);
             }
 
@@ -367,8 +367,8 @@ namespace MSNPSharp
             }
 
             MclSerialization st = Settings.SerializationType;
-            string addressbookFile = Path.Combine(Settings.SavePath, NSMessageHandler.ContactList.Owner.Mail.GetHashCode() + ".mcl");
-            string deltasResultsFile = Path.Combine(Settings.SavePath, NSMessageHandler.ContactList.Owner.Mail.GetHashCode() + "d" + ".mcl");
+            string addressbookFile = Path.Combine(Settings.SavePath, NSMessageHandler.ContactList.Owner.Account.GetHashCode() + ".mcl");
+            string deltasResultsFile = Path.Combine(Settings.SavePath, NSMessageHandler.ContactList.Owner.Account.GetHashCode() + "d" + ".mcl");
 
             try
             {
@@ -765,7 +765,7 @@ namespace MSNPSharp
                                     };
                                     ABAddRequestType abAddRequest = new ABAddRequestType();
                                     abAddRequest.abInfo = new abInfoType();
-                                    abAddRequest.abInfo.ownerEmail = NSMessageHandler.ContactList.Owner.Mail;
+                                    abAddRequest.abInfo.ownerEmail = NSMessageHandler.ContactList.Owner.Account;
                                     abAddRequest.abInfo.ownerPuid = "0";
                                     abAddRequest.abInfo.fDefault = true;
 
@@ -1116,7 +1116,7 @@ namespace MSNPSharp
 
             // ADD contact to AB with "ContactMsgrAPI"
             AddNewOrPendingContact(
-                contact.Mail,
+                contact.Account,
                 true,
                 String.Empty,
                 contact.ClientType,
@@ -1605,7 +1605,7 @@ namespace MSNPSharp
                         {
                             foreach (contactEmailType em in abContactType.contactInfo.emails)
                             {
-                                if (em.email.ToLowerInvariant() == contact.Mail.ToLowerInvariant() && em.isMessengerEnabled != contact.IsMessengerUser)
+                                if (em.email.ToLowerInvariant() == contact.Account.ToLowerInvariant() && em.isMessengerEnabled != contact.IsMessengerUser)
                                 {
                                     propertiesChanged.Add(PropertyString.ContactEmail);
                                     contactToChange.contactInfo.emails = new contactEmailType[] { new contactEmailType() };
@@ -1625,7 +1625,7 @@ namespace MSNPSharp
                         {
                             foreach (contactPhoneType ph in abContactType.contactInfo.phones)
                             {
-                                if (ph.number == contact.Mail && ph.isMessengerEnabled != contact.IsMessengerUser)
+                                if (ph.number == contact.Account && ph.isMessengerEnabled != contact.IsMessengerUser)
                                 {
                                     propertiesChanged.Add(PropertyString.ContactPhone);
                                     contactToChange.contactInfo.phones = new contactPhoneType[] { new contactPhoneType() };
@@ -2121,7 +2121,7 @@ namespace MSNPSharp
             {
                 member = new PassportMember();
                 PassportMember passportMember = member as PassportMember;
-                passportMember.PassportName = contact.Mail;
+                passportMember.PassportName = contact.Account;
                 passportMember.State = MemberState.Accepted;
                 passportMember.Type = MembershipType.Passport;
             }
@@ -2131,7 +2131,7 @@ namespace MSNPSharp
                 EmailMember emailMember = member as EmailMember;
                 emailMember.State = MemberState.Accepted;
                 emailMember.Type = MembershipType.Email;
-                emailMember.Email = contact.Mail;
+                emailMember.Email = contact.Account;
                 emailMember.Annotations = new Annotation[] { new Annotation() };
                 emailMember.Annotations[0].Name = AnnotationNames.MSN_IM_BuddyType;
                 emailMember.Annotations[0].Value = "32:";
@@ -2142,7 +2142,7 @@ namespace MSNPSharp
                 PhoneMember phoneMember = member as PhoneMember;
                 phoneMember.State = MemberState.Accepted;
                 phoneMember.Type = MembershipType.Phone;
-                phoneMember.PhoneNumber = contact.Mail;
+                phoneMember.PhoneNumber = contact.Account;
             }
 
             memberShip.Members = new BaseMember[] { member };
@@ -2163,7 +2163,7 @@ namespace MSNPSharp
                     }
 
                     contact.AddToList(list);
-                    AddressBook.AddMemberhip(ServiceFilterType.Messenger, contact.Mail, contact.ClientType, GetMemberRole(list), member, Scenario.ContactServeAPI);
+                    AddressBook.AddMemberhip(ServiceFilterType.Messenger, contact.Account, contact.ClientType, GetMemberRole(list), member, Scenario.ContactServeAPI);
                     NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, list));
 
                     if ((list & RoleLists.Allow) == RoleLists.Allow || (list & RoleLists.Block) == RoleLists.Block)
@@ -2241,7 +2241,7 @@ namespace MSNPSharp
                     }
 
                     contact.RemoveFromList(list);
-                    AddressBook.RemoveMemberhip(ServiceFilterType.Messenger, contact.Mail, contact.ClientType, GetMemberRole(list), Scenario.ContactServeAPI);
+                    AddressBook.RemoveMemberhip(ServiceFilterType.Messenger, contact.Account, contact.ClientType, GetMemberRole(list), Scenario.ContactServeAPI);
                     NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, list));
 
                     if ((list & RoleLists.Allow) == RoleLists.Allow || (list & RoleLists.Block) == RoleLists.Block)
@@ -2269,7 +2269,7 @@ namespace MSNPSharp
 
             BaseMember deleteMember = null; // BaseMember is an abstract type, so we cannot create a new instance.
             // If we have a MembershipId different from 0, just use it. Otherwise, use email or phone number. 
-            BaseMember baseMember = AddressBook.SelectBaseMember(ServiceFilterType.Messenger, contact.Mail, contact.ClientType, GetMemberRole(list));
+            BaseMember baseMember = AddressBook.SelectBaseMember(ServiceFilterType.Messenger, contact.Account, contact.ClientType, GetMemberRole(list));
             int membershipId = (baseMember == null || String.IsNullOrEmpty(baseMember.MembershipId)) ? 0 : int.Parse(baseMember.MembershipId);
 
             switch (contact.ClientType)
@@ -2281,7 +2281,7 @@ namespace MSNPSharp
                     deleteMember.State = (baseMember == null) ? MemberState.Accepted : baseMember.State;
                     if (membershipId == 0)
                     {
-                        (deleteMember as PassportMember).PassportName = contact.Mail;
+                        (deleteMember as PassportMember).PassportName = contact.Account;
                     }
                     break;
 
@@ -2292,7 +2292,7 @@ namespace MSNPSharp
                     deleteMember.State = (baseMember == null) ? MemberState.Accepted : baseMember.State;
                     if (membershipId == 0)
                     {
-                        (deleteMember as EmailMember).Email = contact.Mail;
+                        (deleteMember as EmailMember).Email = contact.Account;
                     }
                     break;
 
@@ -2303,7 +2303,7 @@ namespace MSNPSharp
                     deleteMember.State = (baseMember == null) ? MemberState.Accepted : baseMember.State;
                     if (membershipId == 0)
                     {
-                        (deleteMember as PhoneMember).PhoneNumber = contact.Mail;
+                        (deleteMember as PhoneMember).PhoneNumber = contact.Account;
                     }
                     break;
             }
@@ -2387,7 +2387,7 @@ namespace MSNPSharp
             SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, createCircleObject);
             CreateCircleRequestType request = new CreateCircleRequestType();
             request.callerInfo = new callerInfoType();
-            request.callerInfo.PublicDisplayName = NSMessageHandler.ContactList.Owner.Name == string.Empty ? NSMessageHandler.ContactList.Owner.Mail : NSMessageHandler.ContactList.Owner.Name;
+            request.callerInfo.PublicDisplayName = NSMessageHandler.ContactList.Owner.Name == string.Empty ? NSMessageHandler.ContactList.Owner.Account : NSMessageHandler.ContactList.Owner.Name;
 
             //This is M$ style, you will never guess out the meaning of these numbers.
             ContentInfoType properties = new ContentInfoType();
@@ -2614,7 +2614,7 @@ namespace MSNPSharp
             handle.Cid = 0;
 
             contactHandleType contactHandle = new contactHandleType();
-            contactHandle.Email = contact.Mail;
+            contactHandle.Email = contact.Account;
             contactHandle.Cid = 0;
             contactHandle.Puid = 0;
             contactHandle.CircleId = WebServiceConstants.MessengerIndividualAddressBookId;
@@ -2926,16 +2926,16 @@ namespace MSNPSharp
         /// </summary>
         public void DeleteRecordFile()
         {
-            if (NSMessageHandler.ContactList.Owner != null && NSMessageHandler.ContactList.Owner.Mail != null)
+            if (NSMessageHandler.ContactList.Owner != null && NSMessageHandler.ContactList.Owner.Account != null)
             {
-                string addressbookFile = Path.Combine(Settings.SavePath, NSMessageHandler.ContactList.Owner.Mail.GetHashCode() + ".mcl");
+                string addressbookFile = Path.Combine(Settings.SavePath, NSMessageHandler.ContactList.Owner.Account.GetHashCode() + ".mcl");
                 if (File.Exists(addressbookFile))
                 {
                     File.SetAttributes(addressbookFile, FileAttributes.Normal);  //By default, the file is hidden.
                     File.Delete(addressbookFile);
                 }
 
-                string deltasResultFile = Path.Combine(Settings.SavePath, NSMessageHandler.ContactList.Owner.Mail.GetHashCode() + "d" + ".mcl");
+                string deltasResultFile = Path.Combine(Settings.SavePath, NSMessageHandler.ContactList.Owner.Account.GetHashCode() + "d" + ".mcl");
                 if (File.Exists(deltasResultFile))
                 {
                     if (Deltas != null)

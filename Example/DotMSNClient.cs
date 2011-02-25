@@ -717,7 +717,7 @@ namespace MSNPSharpClient
                         {
                             if (form.AddToContactList)
                             {
-                                messenger.ContactService.AddNewContact(contact.Mail);
+                                messenger.ContactService.AddNewContact(contact.Account);
                                 System.Threading.Thread.Sleep(200);
 
                                 if (form.Blocked)
@@ -743,7 +743,7 @@ namespace MSNPSharpClient
                 }
                 else
                 {
-                    MessageBox.Show(contact.Mail + " accepted your invitation and added you their contact list.");
+                    MessageBox.Show(contact.Account + " accepted your invitation and added you their contact list.");
                 }
             }
         }
@@ -1499,7 +1499,7 @@ namespace MSNPSharpClient
 
             if (!contact.OnForwardList)
             {
-                AddContactForm acf = new AddContactForm(contact.Mail);
+                AddContactForm acf = new AddContactForm(contact.Account);
 
                 if (DialogResult.OK == acf.ShowDialog(this) &&
                     acf.Account != String.Empty)
@@ -1651,9 +1651,9 @@ namespace MSNPSharpClient
                         {
                             text += " - " + contact.PersonalMessage.Message;
                         }
-                        if (contact.Name != contact.Mail)
+                        if (contact.Name != contact.Account)
                         {
-                            text += " (" + contact.Mail + ")";
+                            text += " (" + contact.Account + ")";
                         }
 
                         TreeNode newnode = circleNode.Nodes.Add(contact.Hash, text);
@@ -1675,9 +1675,9 @@ namespace MSNPSharpClient
                             {
                                 text += " - " + c.PersonalMessage.Message;
                             }
-                            if (c.Name != c.Mail)
+                            if (c.Name != c.Account)
                             {
-                                text += " (" + c.Mail + ")";
+                                text += " (" + c.Account + ")";
                             }
 
                             TreeNode newnode = favoritesNode.Nodes.ContainsKey(c.Hash) ?
@@ -1715,9 +1715,9 @@ namespace MSNPSharpClient
                         {
                             text2 += " - " + contact.PersonalMessage.Message;
                         }
-                        if (contact.Name != contact.Mail)
+                        if (contact.Name != contact.Account)
                         {
-                            text2 += " (" + contact.Mail + ")";
+                            text2 += " (" + contact.Account + ")";
                         }
 
                         TreeNode newnode = circlenode.Nodes.ContainsKey(contact.Hash) ?
@@ -1743,15 +1743,15 @@ namespace MSNPSharpClient
                 ContactGroup favGroup = messenger.ContactGroups.FavoriteGroup;
                 if (favGroup != null && contactToUpdate.HasGroup(favGroup))
                 {
-                    Contact contact = messenger.ContactList.GetContact(contactToUpdate.Mail, contactToUpdate.ClientType);
+                    Contact contact = messenger.ContactList.GetContact(contactToUpdate.Account, contactToUpdate.ClientType);
                     string text = contact.Name;
                     if (contact.PersonalMessage != null && !String.IsNullOrEmpty(contact.PersonalMessage.Message))
                     {
                         text += " - " + contact.PersonalMessage.Message;
                     }
-                    if (contact.Name != contact.Mail)
+                    if (contact.Name != contact.Account)
                     {
-                        text += " (" + contact.Mail + ")";
+                        text += " (" + contact.Account + ")";
                     }
 
                     TreeNode contactNode = favoritesNode.Nodes.ContainsKey(contactToUpdate.Hash) ?
@@ -1852,9 +1852,9 @@ namespace MSNPSharpClient
                     {
                         text += " - " + contact.PersonalMessage.Message;
                     }
-                    if (contact.Name != contact.Mail)
+                    if (contact.Name != contact.Account)
                     {
-                        text += " (" + contact.Mail + ")";
+                        text += " (" + contact.Account + ")";
                     }
 
                     TreeNode newnode = contact.Online ? onlineNode.Nodes.Add(contact.Hash, text) : offlineNode.Nodes.Add(contact.Hash, text);
@@ -1903,9 +1903,9 @@ namespace MSNPSharpClient
                 {
                     text += " - " + contactToUpdate.PersonalMessage.Message;
                 }
-                if (contactToUpdate.Name != contactToUpdate.Mail)
+                if (contactToUpdate.Name != contactToUpdate.Account)
                 {
-                    text += " (" + contactToUpdate.Mail + ")";
+                    text += " (" + contactToUpdate.Account + ")";
                 }
 
                 if (contactNode == null)
@@ -2021,9 +2021,9 @@ namespace MSNPSharpClient
                 {
                     text += " - " + contact.PersonalMessage.Message;
                 }
-                if (contact.Name != contact.Mail)
+                if (contact.Name != contact.Account)
                 {
-                    text += " (" + contact.Mail + ")";
+                    text += " (" + contact.Account + ")";
                 }
 
                 if (contact.ContactGroups.Count == 0)
@@ -2257,7 +2257,7 @@ namespace MSNPSharpClient
 
                 foreach (Contact contact in messenger.ContactList.All)
                 {
-                    if (contact.Mail.IndexOf(txtSearch.Text, StringComparison.CurrentCultureIgnoreCase) != -1
+                    if (contact.Account.IndexOf(txtSearch.Text, StringComparison.CurrentCultureIgnoreCase) != -1
                         ||
                         contact.Name.IndexOf(txtSearch.Text, StringComparison.CurrentCultureIgnoreCase) != -1)
                     {

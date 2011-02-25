@@ -643,7 +643,7 @@ namespace MSNPSharp
         {
             if (receiver.MobileAccess || receiver.ClientType == IMAddressInfoType.Telephone)
             {
-                string to = (receiver.ClientType == IMAddressInfoType.Telephone) ? "tel:" + receiver.Mail : receiver.Mail;
+                string to = (receiver.ClientType == IMAddressInfoType.Telephone) ? "tel:" + receiver.Account : receiver.Account;
 
                 TextMessage txtMsg = new TextMessage(text);
                 MimeMessage mimeMessage = new MimeMessage();
@@ -726,7 +726,7 @@ namespace MSNPSharp
                     break;
                 case NetworkMessageType.Typing:
                     mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-msmsgscontrol";
-                    mimeMessage.MimeHeader[MimeHeaderStrings.TypingUser] = ContactList.Owner.Mail.ToLowerInvariant();
+                    mimeMessage.MimeHeader[MimeHeaderStrings.TypingUser] = ContactList.Owner.Account.ToLowerInvariant();
                     break;
                 case NetworkMessageType.Text:
                     mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/plain; charset=UTF-8";
@@ -734,7 +734,7 @@ namespace MSNPSharp
                     break;
             }
 
-            NSMessage nsMessage = new NSMessage("UUM", new string[]{yimContact.Mail.ToLowerInvariant(), 
+            NSMessage nsMessage = new NSMessage("UUM", new string[]{yimContact.Account.ToLowerInvariant(), 
                 ((int)IMAddressInfoType.Yahoo).ToString(CultureInfo.InvariantCulture),
                 messageType});
 
@@ -1009,7 +1009,7 @@ namespace MSNPSharp
         {
             //Send PUT
             string to = ((int)IMAddressInfoType.Circle).ToString() + ":" + circleId.ToString().ToLowerInvariant() + "@" + hostDomain;
-            string from = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Mail;
+            string from = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Account;
             MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
             mmMessage.RoutingHeaders["From"]["epid"] = ContactList.Owner.MachineGuid.ToString("B").ToLowerInvariant();
 
@@ -1017,7 +1017,7 @@ namespace MSNPSharp
             mmMessage.ContentHeaders["Uri"] = "/circle";
             mmMessage.ContentHeaders["Content-Type"] = "application/circles+xml";
 
-            string putPayloadXML = "<circle><roster><id>IM</id><user><id>1:" + ContactList.Owner.Mail + "</id></user></roster></circle>";
+            string putPayloadXML = "<circle><roster><id>IM</id><user><id>1:" + ContactList.Owner.Account + "</id></user></roster></circle>";
             mmMessage.InnerBody = System.Text.Encoding.ASCII.GetBytes(putPayloadXML);
 
             NSMessage nsMessage = new NSMessage("PUT");
@@ -1067,7 +1067,7 @@ namespace MSNPSharp
 
             if (ContactList.Owner.MPOPEnable && ContactList.Owner.HasSignedInWithMultipleEndPoints)
             {
-                MessageProcessor.SendMessage(new NSPayLoadMessage("UUN", new string[] { ContactList.Owner.Mail, "5" }, sessionId + ";" + host));
+                MessageProcessor.SendMessage(new NSPayLoadMessage("UUN", new string[] { ContactList.Owner.Account, "5" }, sessionId + ";" + host));
                 RemoveSession(sessionId);
             }
         }
@@ -1422,7 +1422,7 @@ namespace MSNPSharp
             }
             else
             {
-                if (account != ContactList.Owner.Mail.ToLowerInvariant())
+                if (account != ContactList.Owner.Account.ToLowerInvariant())
                 {
                     if (ContactList.HasContact(account, accountAddressType))
                     {
@@ -1445,7 +1445,7 @@ namespace MSNPSharp
 
                     // Get Fridenly Name
                     string friendlyName = GetFriendlyNameFromUBXXmlData(xmlDoc);
-                    contact.SetName(string.IsNullOrEmpty(friendlyName) ? contact.Mail : friendlyName);
+                    contact.SetName(string.IsNullOrEmpty(friendlyName) ? contact.Account : friendlyName);
 
                     //Get UserTileLocation
                     contact.UserTileLocation = GetUserTileLocationFromUBXXmlData(xmlDoc);
@@ -1474,7 +1474,7 @@ namespace MSNPSharp
 
                     if (!isPrivateEndPoint)
                     {
-                        List<EndPointData> endPoints = GetEndPointDataFromUBXXmlData(contact.Mail, xmlDoc, isPrivateEndPoint);
+                        List<EndPointData> endPoints = GetEndPointDataFromUBXXmlData(contact.Account, xmlDoc, isPrivateEndPoint);
                         if (endPoints.Count > 0)
                         {
                             foreach (EndPointData epData in endPoints)
@@ -1497,7 +1497,7 @@ namespace MSNPSharp
                         foreach (XmlNode pepdNode in privateEndPoints)
                         {
                             Guid id = new Guid(pepdNode.Attributes["id"].Value);
-                            PrivateEndPointData privateEndPoint = (contact.EndPointData.ContainsKey(id) ? (contact.EndPointData[id] as PrivateEndPointData) : new PrivateEndPointData(contact.Mail, id));
+                            PrivateEndPointData privateEndPoint = (contact.EndPointData.ContainsKey(id) ? (contact.EndPointData[id] as PrivateEndPointData) : new PrivateEndPointData(contact.Account, id));
                             privateEndPoint.Name = (pepdNode["EpName"] == null) ? String.Empty : pepdNode["EpName"].InnerText;
                             privateEndPoint.Idle = (pepdNode["Idle"] == null) ? false : bool.Parse(pepdNode["Idle"].InnerText);
                             privateEndPoint.ClientType = (pepdNode["ClientType"] == null) ? "1" : pepdNode["ClientType"].InnerText;
@@ -1773,7 +1773,7 @@ namespace MSNPSharp
                 }
                 else
                 {
-                    if (account == ContactList.Owner.Mail.ToLowerInvariant())
+                    if (account == ContactList.Owner.Account.ToLowerInvariant())
                     {
                         if (circle == null)
                             return;
@@ -1801,14 +1801,14 @@ namespace MSNPSharp
             }
             else
             {
-                Contact contact = (account == ContactList.Owner.Mail.ToLowerInvariant() && accountAddressType == IMAddressInfoType.WindowsLive)
+                Contact contact = (account == ContactList.Owner.Account.ToLowerInvariant() && accountAddressType == IMAddressInfoType.WindowsLive)
                     ? ContactList.Owner : ContactList.GetContact(account, accountAddressType);
 
                 #region Contact Status
 
                 if (contact != null)
                 {
-                    if (IsSignedIn && account == ContactList.Owner.Mail.ToLowerInvariant() &&
+                    if (IsSignedIn && account == ContactList.Owner.Account.ToLowerInvariant() &&
                         accountAddressType == IMAddressInfoType.WindowsLive)
                     {
                         SetPresenceStatus(newstatus);
@@ -1901,7 +1901,7 @@ namespace MSNPSharp
                     return;
                 }
 
-                if (account == ContactList.Owner.Mail.ToLowerInvariant())  //Circle status
+                if (account == ContactList.Owner.Account.ToLowerInvariant())  //Circle status
                 {
                     string capabilityString = message.CommandValues[1].ToString();
                     if (capabilityString == "0:0")  //This is a circle's presence status.
@@ -1948,7 +1948,7 @@ namespace MSNPSharp
             }
             else
             {
-                Contact contact = (account == ContactList.Owner.Mail.ToLowerInvariant() && accountAddressType == IMAddressInfoType.WindowsLive)
+                Contact contact = (account == ContactList.Owner.Account.ToLowerInvariant() && accountAddressType == IMAddressInfoType.WindowsLive)
                     ? ContactList.Owner : ContactList.GetContactWithCreate(account, accountAddressType);
 
                 #region Contact Staus
@@ -1958,7 +1958,7 @@ namespace MSNPSharp
                     lock (contact.EndPointData)
                     {
                         contact.EndPointData.Clear();
-                        contact.EndPointData[Guid.Empty] = new EndPointData(contact.Mail.ToLowerInvariant(), Guid.Empty);
+                        contact.EndPointData[Guid.Empty] = new EndPointData(contact.Account.ToLowerInvariant(), Guid.Empty);
                         contact.EndPointData[Guid.Empty].ClientCapabilities = newCaps;
                         contact.EndPointData[Guid.Empty].ClientCapabilitiesEx = newCapsEx;
                     }
@@ -2385,7 +2385,7 @@ namespace MSNPSharp
             NetworkMessageType networkMessageType = (NetworkMessageType)messageType;
 
             if (!(receiverType == (int)ContactList.Owner.ClientType &&
-                receiver.ToLowerInvariant() == ContactList.Owner.Mail.ToLowerInvariant()))
+                receiver.ToLowerInvariant() == ContactList.Owner.Account.ToLowerInvariant()))
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
                     "[OnUBMReceived] The receiver is not owner, receiver account = " + receiver
@@ -2495,7 +2495,7 @@ namespace MSNPSharp
                 notification.SiteId == 45705 &&
                 notification.MessageId == 0 &&
                 notification.SendDevice == "messenger" &&
-                notification.ReceiverAccount.ToLowerInvariant() == ContactList.Owner.Mail.ToLowerInvariant())
+                notification.ReceiverAccount.ToLowerInvariant() == ContactList.Owner.Account.ToLowerInvariant())
             {
                 string xmlString = notification.BodyPayload;
                 XmlDocument xmlDoc = new XmlDocument();
@@ -3073,7 +3073,7 @@ namespace MSNPSharp
                         continue;
                     }
 
-                    if (account == ContactList.Owner.Mail.ToLowerInvariant())
+                    if (account == ContactList.Owner.Account.ToLowerInvariant())
                         continue;
 
                     if (circle.ContactList.HasContact(account, accountAddressType))

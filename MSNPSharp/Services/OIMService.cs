@@ -536,7 +536,7 @@ namespace MSNPSharp
                 MsnServiceState storeObject = new MsnServiceState(PartnerScenario.None, "Store", true);
                 OIMStoreService oimService = (OIMStoreService)CreateService(MsnServiceType.OIMStore, storeObject);
                 oimService.FromValue = new From();
-                oimService.FromValue.memberName = NSMessageHandler.ContactList.Owner.Mail;
+                oimService.FromValue.memberName = NSMessageHandler.ContactList.Owner.Account;
                 oimService.FromValue.friendlyName = "=?utf-8?B?" + Convert.ToBase64String(Encoding.UTF8.GetBytes(name48)) + "?=";
                 oimService.FromValue.buildVer = "8.5.1302";
                 oimService.FromValue.msnpVer = "MSNP15";
@@ -566,7 +566,7 @@ namespace MSNPSharp
                             contact.OIMCount++; // Sent successfully.
                             OnOIMSendCompleted(this,
                                 new OIMSendCompletedEventArgs(
-                                NSMessageHandler.ContactList.Owner.Mail,
+                                NSMessageHandler.ContactList.Owner.Account,
                                 userstate.account,
                                 userstate.oimcount,
                                 msg,
@@ -599,7 +599,7 @@ namespace MSNPSharp
 
                         OnOIMSendCompleted(this,
                                 new OIMSendCompletedEventArgs(
-                                NSMessageHandler.ContactList.Owner.Mail,
+                                NSMessageHandler.ContactList.Owner.Account,
                                 userstate.account,
                                 userstate.oimcount,
                                 msg,
@@ -641,7 +641,7 @@ namespace MSNPSharp
                 mimeMessage.MimeHeader["Dest-Agent"] = "client";
 
                 NSMessage nsMessage = new NSMessage("UUM",
-                    new string[] { receiver.Mail, 
+                    new string[] { receiver.Account, 
                         ((int)receiver.ClientType).ToString(), 
                         ((int)NetworkMessageType.Text).ToString(CultureInfo.InvariantCulture) });
 
@@ -656,8 +656,8 @@ namespace MSNPSharp
 
             OnOIMSendCompleted(this,
                             new OIMSendCompletedEventArgs(
-                            NSMessageHandler.ContactList.Owner.Mail,
-                            receiver.Mail,
+                            NSMessageHandler.ContactList.Owner.Account,
+                            receiver.Account,
                             0,
                             msg.Text,
                             err));
