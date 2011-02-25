@@ -45,6 +45,9 @@
   <message name="DeleteMemberMessage">
     <part name="DeleteMemberRequest" element="msnab:DeleteMember" />
   </message>
+  <message name="AddServiceMessage">
+    <part name="AddServiceRequest" element="msnab:AddService" />
+  </message>
   <message name="ServiceHeader">
     <part name="ServiceHeader" element="msnab:ServiceHeader" />
   </message>
@@ -83,6 +86,9 @@
   </message>
   <message name="DeleteMemberResponseMessage">
     <part name="DeleteMemberResponse" element="msnab:DeleteMemberResponse" />
+  </message>
+  <message name="AddServiceResponseMessage">
+    <part name="AddServiceResponse" element="msnab:AddServiceResponse" />
   </message>
   <message name="InvalidPassportUserMessage">
     <part name="fault" element="msnab:InvalidPassportUser" />
@@ -168,6 +174,10 @@
     <operation name="CreateCircle">
       <input message="msnab:CreateCircleMessage" />
       <output message="msnab:CreateCircleResponseMessage" />
+    </operation>
+    <operation name="AddService">
+      <input message="msnab:AddServiceMessage" />
+      <output message="msnab:AddServiceResponseMessage" />
     </operation>
   </portType>
   <portType name="ABServicePortType">
@@ -289,6 +299,18 @@
     </operation>
     <operation name="CreateCircle">
       <soap:operation soapAction="http://www.msn.com/webservices/AddressBook/CreateCircle" />
+      <input>
+        <soap:body use="literal" />
+        <soap:header message="msnab:ABHeader" part="ApplicationHeader" use="literal" />
+        <soap:header message="msnab:ABHeader" part="AuthHeader" use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+        <soap:header message="msnab:ServiceHeader" part="ServiceHeader" use="literal" />
+      </output>
+    </operation>
+    <operation name="AddService">
+      <soap:operation soapAction="http://www.msn.com/webservices/AddressBook/AddService" />
       <input>
         <soap:body use="literal" />
         <soap:header message="msnab:ABHeader" part="ApplicationHeader" use="literal" />
@@ -542,6 +564,9 @@
       <soap:address location="https://contacts.msn.com/abservice/SharingService.asmx" />
     </port>
     <port name="CreateCirclePort" binding="msnab:SharingServiceBinding">
+      <soap:address location="https://contacts.msn.com/abservice/SharingService.asmx" />
+    </port>
+    <port name="AddServicePort" binding="msnab:SharingServiceBinding">
       <soap:address location="https://contacts.msn.com/abservice/SharingService.asmx" />
     </port>
   </service>
