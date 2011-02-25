@@ -597,4 +597,16 @@
 	</xsd:complexType>
 	<xsd:complexType name="AddDynamicItemResponseType"/>
 	<xsd:element name="AddDynamicItemResponse" type="msnab:AddDynamicItemResponseType"/>
+	<xsd:element name="AddService" type="msnab:AddServiceRequestType"/>
+	<xsd:complexType name="AddServiceRequestType">
+		<xsd:sequence>
+			<xsd:element name="serviceInfo" type="msnab:InfoType"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="AddServiceResponseType">
+		<xsd:sequence>
+			<xsd:element name="AddServiceResult" type="xsd:long"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:element name="AddServiceResponse" type="msnab:AddServiceResponseType"/>
 </xsd:schema>
