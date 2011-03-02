@@ -870,7 +870,9 @@ namespace MSNPSharp
                         {
                             if ((recursiveCall == 0 && ((MsnServiceState)e.UserState).PartnerScenario == PartnerScenario.Initial
                                 && (abHandle == null || abHandle.ABId == WebServiceConstants.MessengerIndividualAddressBookId))
-                                || (e.Error.Message.Contains("Need to do full sync")))
+                                //Need to do full sync
+                                //Full sync required.  Details: Client has too old a copy for us to do a delta sync.
+                                || (e.Error.Message.Contains("Need to do full sync") || e.Error.Message.Contains("Full sync required")))
                             {
                                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
                                     "Need to do full sync of current addressbook list, addressbook list will be request again. Method: ABFindContactsPaged");
