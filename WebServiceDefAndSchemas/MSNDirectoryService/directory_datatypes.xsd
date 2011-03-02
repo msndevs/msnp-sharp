@@ -9,7 +9,7 @@
 	</xs:complexType>
 	<xs:complexType name="ViewType">
 		<xs:sequence>
-			<xs:element name="ViewName" type="xs:string" minOccurs="0"/>
+			<xs:element name="ViewName" type="xs:string"/>
 			<xs:element name="ViewVersion" type="xs:base64Binary" minOccurs="0"/>
 			<xs:element name="Attributes" minOccurs="0">
 				<xs:complexType>
@@ -22,18 +22,18 @@
 	</xs:complexType>
 	<xs:complexType name="AttributeType">
 		<xs:sequence>
-			<xs:element name="N" type="xs:string" minOccurs="0"/>
+			<xs:element name="N" type="xs:string"/>
 			<xs:element name="V" type="xs:string" minOccurs="0"/>
 		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="IdType">
 		<xs:sequence>
-			<xs:element name="Ns1" type="xs:string" minOccurs="0"/>
-			<xs:element name="V1" type="xs:string" minOccurs="0"/>
+			<xs:element name="Ns1" type="xs:string"/>
+			<xs:element name="V1" type="xs:string"/>
 			<xs:element name="Ns2" type="xs:string" minOccurs="0"/>
-			<xs:element name="V2" type="xs:string" minOccurs="0"/>
+			<xs:element name="V2" type="xs:string" nillable="true" minOccurs="0"/>
 			<xs:element name="Ns3" type="xs:string" minOccurs="0"/>
-			<xs:element name="V3" type="xs:string" minOccurs="0"/>
+			<xs:element name="V3" type="xs:string" nillable="true" minOccurs="0"/>
 		</xs:sequence>
 	</xs:complexType>
 </xs:schema>
