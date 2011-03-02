@@ -1,5 +1,5 @@
 <?xml version="1.0" standalone="yes"?>
-<!-- edited with XMLSpy v2009 sp1 (http://www.altova.com) by wp (freezingsoft) -->
+<!-- edited with XMLSpy v2011 rel. 2 (x64) (http://www.altova.com) by a (a) -->
 <xs:schema xmlns="http://profile.live.com/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" targetNamespace="http://profile.live.com/" elementFormDefault="qualified" attributeFormDefault="qualified">
 	<xs:complexType name="CallStatisticsType">
 		<xs:sequence>
@@ -29,11 +29,11 @@
 	<xs:complexType name="IdType">
 		<xs:sequence>
 			<xs:element name="Ns1" type="xs:string"/>
-			<xs:element name="V1" type="xs:string"/>
+			<xs:element name="V1" type="xs:anyType"/>
 			<xs:element name="Ns2" type="xs:string" minOccurs="0"/>
-			<xs:element name="V2" type="xs:string" nillable="true" minOccurs="0"/>
+			<xs:element name="V2" type="xs:anyType" nillable="true" minOccurs="0"/>
 			<xs:element name="Ns3" type="xs:string" minOccurs="0"/>
-			<xs:element name="V3" type="xs:string" nillable="true" minOccurs="0"/>
+			<xs:element name="V3" type="xs:anyType" nillable="true" minOccurs="0"/>
 		</xs:sequence>
 	</xs:complexType>
 </xs:schema>
