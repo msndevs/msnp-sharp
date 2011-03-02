@@ -35,7 +35,7 @@
 	<wsdl:binding name="DirectoryServiceBinding" type="tns:DirectoryServicePortType">
 		<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
 		<wsdl:operation name="Get">
-			<soap:operation soapAction="urn:#Get"/>
+			<soap:operation soapAction="http://profile.live.com/Get"/>
 			<wsdl:input>
 				<soap:body use="literal"/>
 				<soap:header message="tns:SOAPHeaders" part="SOAPApplicationHeader" use="literal"/>
@@ -46,7 +46,7 @@
 			</wsdl:output>
 		</wsdl:operation>
 		<wsdl:operation name="GetMany">
-			<soap:operation soapAction="urn:#GetMany"/>
+			<soap:operation soapAction="http://profile.live.com/GetMany"/>
 			<wsdl:input>
 				<soap:body use="literal"/>
 				<soap:header message="tns:SOAPHeaders" part="SOAPApplicationHeader" use="literal"/>
