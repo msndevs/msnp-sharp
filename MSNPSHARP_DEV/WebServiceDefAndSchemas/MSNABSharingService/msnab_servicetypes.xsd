@@ -543,6 +543,7 @@
 		<xsd:sequence>
 			<xsd:element name="abHandle" type="msnab:abHandleType"/>
 			<xsd:element name="contactHandle" type="msnab:contactHandleType"/>
+			<xsd:element name="contactInfo" type="msnab:contactInfoType" minOccurs="0"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:element name="CreateContactResponse">
