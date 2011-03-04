@@ -130,7 +130,7 @@ namespace MSNPSharpClient
             // These are circle events. They will be fired after corresponding circle operation completed.
             messenger.ContactService.CreateCircleCompleted += new EventHandler<CircleEventArgs>(ContactService_CircleCreated);
             messenger.ContactService.JoinedCircleCompleted += new EventHandler<CircleEventArgs>(ContactService_JoinedCircle);
-            messenger.ContactService.JoinCircleInvitationReceived += new EventHandler<JoinCircleInvitationEventArgs>(ContactService_JoinCircleInvitationReceived);
+            messenger.ContactService.JoinCircleInvitationReceived += new EventHandler<CircleEventArgs>(ContactService_JoinCircleInvitationReceived);
             messenger.ContactService.ExitCircleCompleted += new EventHandler<CircleEventArgs>(ContactService_ExitCircle);
             messenger.ContactService.CircleMemberJoined += new EventHandler<CircleMemberEventArgs>(ContactService_CircleMemberJoined);
             messenger.ContactService.CircleMemberLeft += new EventHandler<CircleMemberEventArgs>(ContactService_CircleMemberLeft);
@@ -344,7 +344,7 @@ namespace MSNPSharpClient
             RefreshCircleList(sender, null);
         }
 
-        void ContactService_JoinCircleInvitationReceived(object sender, JoinCircleInvitationEventArgs e)
+        void ContactService_JoinCircleInvitationReceived(object sender, CircleEventArgs e)
         {
             messenger.ContactService.AcceptCircleInvitation(e.Circle);
         }
