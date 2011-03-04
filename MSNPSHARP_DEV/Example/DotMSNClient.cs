@@ -1304,6 +1304,7 @@ namespace MSNPSharpClient
 
 
         private static Font PARENT_NODE_FONT = new Font("Tahoma", 8f, FontStyle.Bold);
+        private static Font PARENT_NODE_FONT_BANNED = new Font("Tahoma", 8f, FontStyle.Bold | FontStyle.Strikeout);
         private static Font USER_NODE_FONT = new Font("Tahoma", 8f);
         private static Font USER_NODE_FONT_BANNED = new Font("Tahoma", 8f, FontStyle.Strikeout);
         public class StatusSorter : IComparer
@@ -1640,7 +1641,7 @@ namespace MSNPSharpClient
                 {
                     int contactCount = circle.ContactList[IMAddressInfoType.None].Count;
                     TreeNode circleNode = circlesNode.Nodes.Add(circle.Hash, GetCircleDisplayName(circle, contactCount), ImageIndexes.Circle, ImageIndexes.Circle);
-                    circleNode.NodeFont = PARENT_NODE_FONT;
+                    circleNode.NodeFont = circle.Blocked ? PARENT_NODE_FONT_BANNED : PARENT_NODE_FONT;
                     circleNode.Tag = circle;
 
                     foreach (Contact contact in circle.ContactList.All)
@@ -1702,7 +1703,7 @@ namespace MSNPSharpClient
                     TreeNode circlenode = circlesNode.Nodes.ContainsKey(circle.Hash) ?
                         circlesNode.Nodes[circle.Hash] : circlesNode.Nodes.Add(circle.Hash, GetCircleDisplayName(circle, 0), ImageIndexes.Circle, ImageIndexes.Circle);
 
-                    circlenode.NodeFont = PARENT_NODE_FONT;
+                    circlenode.NodeFont = circle.Blocked ? PARENT_NODE_FONT_BANNED : PARENT_NODE_FONT;
                     circlenode.Tag = circle;
 
                     int count = 0;
@@ -1812,7 +1813,7 @@ namespace MSNPSharpClient
             else
             {
                 onlineNode = treeViewFavoriteList.Nodes.Add(ImageIndexes.OnlineNodeKey, "Online", ImageIndexes.Closed, ImageIndexes.Closed);
-                onlineNode.NodeFont = PARENT_NODE_FONT;
+                onlineNode.NodeFont = contactToUpdate == null ? PARENT_NODE_FONT : (contactToUpdate.Blocked ? PARENT_NODE_FONT_BANNED : PARENT_NODE_FONT);
                 onlineNode.Tag = ImageIndexes.OnlineNodeKey;
             }
 
