@@ -146,11 +146,10 @@ namespace MSNPSharp.IO
 
             #region Restore Circles
 
-            RestoreWLConnections();
-            long[] CIDs = FilterWLConnections(new List<long>(WLConnections.Keys), RelationshipState.Accepted);
-            RestoreCircles(CIDs, RelationshipState.Accepted);
-            CIDs = FilterWLConnections(new List<long>(WLConnections.Keys), RelationshipState.WaitingResponse);
-            RestoreCircles(CIDs, RelationshipState.WaitingResponse);
+            string[] abIds = FilterWLConnections(new List<string>(CircleResults.Keys), RelationshipState.Accepted);
+            RestoreCircles(abIds, RelationshipState.Accepted);
+            abIds = FilterWLConnections(new List<string>(CircleResults.Keys), RelationshipState.WaitingResponse);
+            RestoreCircles(abIds, RelationshipState.WaitingResponse);
 
             #endregion
 
@@ -411,18 +410,10 @@ namespace MSNPSharp.IO
                 return contactTable.ContainsKey(CID);
         }
 
-        private bool HasWLConnection(long CID)
-        {
-            lock (WLConnections)
-                return WLConnections.ContainsKey(CID);
-        }
-
         private bool HasWLConnection(string abId)
         {
-            lock (WLInverseConnections)
-            {
-                return WLInverseConnections.ContainsKey(abId);
-            }
+            lock (CircleResults)
+                return CircleResults.ContainsKey(abId);
         }
 
         /// <summary>
@@ -562,83 +553,60 @@ namespace MSNPSharp.IO
         /// </summary>
         /// <param name="abId"></param>
         /// <returns></returns>
-        private long SelectWLConnection(string abId)
+        private CircleInverseInfoType SelectWLConnection(string abId)
         {
             if (string.IsNullOrEmpty(abId))
-                return long.MinValue;
+                return null;
 
             string lowerId = abId.ToLowerInvariant();
             if (!HasWLConnection(lowerId))
-                return long.MinValue;
+                return null;
 
-            lock (WLInverseConnections)
-                return WLInverseConnections[lowerId];
+            lock (CircleResults)
+                return CircleResults[lowerId];
 
         }
 
-        private string SelectWLConnection(long CID)
+        private string[] SelectWLConnection(List<string> abIds, RelationshipState state)
         {
-            if (HasWLConnection(CID))
+            List<string> results = new List<string>(0);
+
+            lock (CircleResults)
             {
-                lock (WLConnections)
-                    return WLConnections[CID];
-            }
-
-            return string.Empty;
-        }
-
-        private string[] SelectWLConnection(List<long> CIDs, RelationshipState state)
-        {
-            List<string> abIds = new List<string>(0);
-
-            lock (WLConnections)
-            {
-                foreach (long CID in CIDs)
+                foreach (string abId in abIds)
                 {
-                    if (HasWLConnection(CID) && HasContact(CID))
+                    if (HasWLConnection(abId))
                     {
-                        string abId = WLConnections[CID];
-                        ContactType contact = SelecteContact(CID);
-
                         if (state == RelationshipState.None)
                         {
-                            abIds.Add(abId);
+                            results.Add(abId);
                         }
                         else
                         {
-                            if (GetCircleMemberRelationshipStateFromNetworkInfo(contact.contactInfo.NetworkInfoList) == state)
-                                abIds.Add(abId);
+                            if (CircleResults[abId.ToLowerInvariant()].PersonalInfo.MembershipInfo.CirclePersonalMembership.State == state.ToString())
+                                results.Add(abId);
                         }
 
                     }
                 }
             }
 
-            return abIds.ToArray();
+            return results.ToArray();
         }
 
-        private long[] FilterWLConnections(List<long> CIDs, RelationshipState state)
+        private string[] FilterWLConnections(List<string> abIds, RelationshipState state)
         {
-            List<long> returnValues = new List<long>(0);
+            List<string> returnValues = new List<string>(0);
 
 
-            foreach (long CID in CIDs)
+            foreach (string abId in abIds)
             {
-                if (HasWLConnection(CID) && HasContact(CID))
+                string lowerId = abId.ToLowerInvariant();
+                if (CircleResults.ContainsKey(lowerId))
                 {
-                    ContactType contact = SelecteContact(CID);
-
-                    if (state == RelationshipState.None)
-                    {
-                        returnValues.Add(CID);
-                    }
-                    else
-                    {
-                        RelationshipState representativeRelationshipState = GetCircleMemberRelationshipStateFromNetworkInfo(contact.contactInfo.NetworkInfoList);
-                        if (representativeRelationshipState == state)
-                            returnValues.Add(CID);
-                    }
-
+                    CircleInverseInfoType inverseInfo = CircleResults[lowerId];
+                    if (inverseInfo.PersonalInfo.MembershipInfo.CirclePersonalMembership.State == state.ToString())
+                        returnValues.Add(abId);
                 }
             }
 
@@ -1362,20 +1330,12 @@ namespace MSNPSharp.IO
         /// <remarks>This function must be called after the ContactTable and WLConnections are created.</remarks>
         private bool FireJoinCircleInvitationReceivedEvents(Circle circle)
         {
-            CircleInviter invitor = GetCircleInviterFromNetworkInfo(SelecteContact(SelectWLConnection(circle.AddressBookId.ToString("D"))));
-            if (invitor == null)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[MergeGroupAddressBook error] Cannot get the circle invitor, abId: " +
-                    circle.AddressBookId.ToString("D") + ", an invitation may miss.");
-                return false;
-            }
-
             lock (PendingAcceptionCircleList)
             {
                 PendingAcceptionCircleList.AddCircle(circle);
             }
 
-            JoinCircleInvitationEventArgs joinArgs = new JoinCircleInvitationEventArgs(circle, invitor);
+            CircleEventArgs joinArgs = new CircleEventArgs(circle);
             NSMessageHandler.ContactService.OnJoinCircleInvitationReceived(joinArgs);
             return true;
         }
@@ -1478,17 +1438,7 @@ namespace MSNPSharp.IO
 
 
                 ContactType meContact = SelectMeContactFromAddressBookContactPage(lowerId);
-                long hiddenCID = SelectWLConnection(lowerId);
-                ContactType hidden = SelecteContact(hiddenCID);
                 CircleInverseInfoType inverseInfo = SelectCircleInverseInfo(lowerId);
-
-                if (hidden == null)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                       "[UpdateCircleFromAddressBook] Cannot create circle since hidden representative not found in addressbook. ABId: "
-                       + abId);
-                    return null;
-                }
 
                 if (meContact == null)
                 {
@@ -1509,7 +1459,7 @@ namespace MSNPSharp.IO
                 Circle circle = NSMessageHandler.CircleList[new Guid(abId), inverseInfo.Content.Info.HostedDomain];
 
                 if (circle == null)
-                    circle = CreateCircle(meContact, hidden, inverseInfo);
+                    circle = CreateCircle(meContact, inverseInfo);
 
                 return circle;
             }
@@ -1644,24 +1594,24 @@ namespace MSNPSharp.IO
                     SortedDictionary<long, long> newCIDList = new SortedDictionary<long, long>();
                     Dictionary<string, CircleInverseInfoType> newInverseInfos = new Dictionary<string, CircleInverseInfoType>();
     
-                    SortedDictionary<long, CircleInverseInfoType> modifiedConnections = new SortedDictionary<long, CircleInverseInfoType>();
+                    Dictionary<string, CircleInverseInfoType> modifiedConnections = new Dictionary<string, CircleInverseInfoType>();
     
                     if (forwardList.CircleResult != null && forwardList.CircleResult.Circles != null)
                     {
                         foreach (CircleInverseInfoType info in forwardList.CircleResult.Circles)
                         {
                             string abId = info.Content.Handle.Id.ToLowerInvariant();
-                            long CID = SelectWLConnection(abId);
+
                             if (HasWLConnection(abId))
                             {
-                                if (!modifiedConnections.ContainsKey(CID))
+                                if (!modifiedConnections.ContainsKey(abId))
                                 {
-                                    modifiedConnections[CID] = info;
+                                    modifiedConnections[abId] = info;
                                 }
                             }
                             else
                             {
-                                newInverseInfos[info.Content.Handle.Id.ToLowerInvariant()] = info;
+                                newInverseInfos[abId] = info;
                             }
                         }
                     }
@@ -1687,9 +1637,9 @@ namespace MSNPSharp.IO
                                  */
                                 long CID = contactType.contactInfo.CID;
     
-                                if (HasWLConnection(CID))
+                                if (HasContact(CID))
                                 {
-                                    modifiedConnections[CID] = SelectCircleInverseInfo(SelectWLConnection(CID));
+                                    //modifiedConnections[CID] = SelectCircleInverseInfo(SelectWLConnection(CID));
     
                                     ContactType savedContact = SelecteContact(contactType.contactInfo.CID);
                                     //A deleted or modified circle; We are NOT in initial scene.
@@ -1733,13 +1683,13 @@ namespace MSNPSharp.IO
                                     {
                                         RelationshipState state = GetCircleMemberRelationshipStateFromNetworkInfo(contactType.contactInfo.NetworkInfoList);
     
-                                        switch (state)
-                                        {
-                                            case RelationshipState.Accepted:
-                                            case RelationshipState.WaitingResponse:
-                                                newCIDList[CID] = CID;
-                                                break;
-                                        }
+                                        //switch (state)
+                                        //{
+                                        //    case RelationshipState.Accepted:
+                                        //    case RelationshipState.WaitingResponse:
+                                        //        newCIDList[CID] = CID;
+                                        //        break;
+                                        //}
     
                                         //We get the hidden representative of a new circle.
                                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "A circle contact found: contactType: " + contactType.contactInfo.contactType + "\r\n " +
@@ -1804,7 +1754,7 @@ namespace MSNPSharp.IO
                         SaveCircleInverseInfo(forwardList.CircleResult.Circles);
     
     
-                    ProcessCircles(modifiedConnections, newCIDList, newInverseInfos, scene);
+                    ProcessCircles(modifiedConnections, newInverseInfos, scene);
                 }
     
                     #endregion
@@ -1813,92 +1763,70 @@ namespace MSNPSharp.IO
             }
         }
 
-        private void ProcessCircles(SortedDictionary<long, CircleInverseInfoType> modifiedConnections, SortedDictionary<long, long> newCIDList, Dictionary<string, CircleInverseInfoType> newInverseInfos, Scenario scene)
+        private void ProcessCircles(Dictionary<string, CircleInverseInfoType> modifiedConnections, Dictionary<string, CircleInverseInfoType> newInverseInfos, Scenario scene)
         {
             int[] result = new int[] { 0, 0 };
             //We must process modified circles first.
             result = ProcessModifiedCircles(modifiedConnections, scene | Scenario.ModifiedCircles);
-            result = ProcessNewConnections(new List<long>(newCIDList.Keys), new List<CircleInverseInfoType>(newInverseInfos.Values), scene | Scenario.NewCircles);
+            result = ProcessNewConnections(newInverseInfos, scene | Scenario.NewCircles);
         }
 
-        private int[] ProcessNewConnections(List<long> sortedCIDs, List<CircleInverseInfoType> sortedInfos, Scenario scene)
+        private int[] ProcessNewConnections(Dictionary<string, CircleInverseInfoType> newInverseInfos, Scenario scene)
         {
             int added = 0;
             int pending = 0;
 
-            SaveWLConnection(sortedCIDs, sortedInfos.ToArray());
+            SaveWLConnection(newInverseInfos);
+            List<string> abIds = new List<string>(newInverseInfos.Keys);
 
-            string[] abIds = SelectWLConnection(sortedCIDs, RelationshipState.Accepted);
-            RequestCircles(abIds, RelationshipState.Accepted, scene);
-            added = abIds.Length;
+            string[] filteredAbIds = SelectWLConnection(abIds, RelationshipState.Accepted);
+            RequestCircles(filteredAbIds, RelationshipState.Accepted, scene);
+            added = filteredAbIds.Length;
 
-            abIds = SelectWLConnection(sortedCIDs, RelationshipState.WaitingResponse);
-            RequestCircles(abIds, RelationshipState.WaitingResponse, scene);
-            pending = abIds.Length;
+            filteredAbIds = SelectWLConnection(abIds, RelationshipState.WaitingResponse);
+            RequestCircles(filteredAbIds, RelationshipState.WaitingResponse, scene);
+            pending = filteredAbIds.Length;
 
             return new int[] { added, pending };
         }
 
-        private int[] ProcessModifiedCircles(SortedDictionary<long, CircleInverseInfoType> modifiedConnections, Scenario scene)
+        private int[] ProcessModifiedCircles(Dictionary<string, CircleInverseInfoType> modifiedConnections, Scenario scene)
         {
             int deleted = 0;
             int reAdded = 0;
 
-            SortedDictionary<long, CircleInverseInfoType> connectionClone = new SortedDictionary<long, CircleInverseInfoType>(modifiedConnections);
-            foreach (long CID in modifiedConnections.Keys)
+            Dictionary<string, CircleInverseInfoType> connectionClone = new Dictionary<string, CircleInverseInfoType>(modifiedConnections);
+            foreach (string abId in modifiedConnections.Keys)
             {
-                ContactType hidden = SelecteContact(CID);
-                if (
-                    modifiedConnections[CID].Deleted ||   //Local owner delete circle.
-                    hidden.contactInfo.contactType != MessengerContactType.Circle ||  //Remote owner delete circle
-                    GetCircleMemberRelationshipStateFromNetworkInfo(hidden.contactInfo.NetworkInfoList) == RelationshipState.Left //Remote owner delete local user from circle.
-                    )
+                CircleInverseInfoType inverseInfo = SelectWLConnection(abId);
+                if (inverseInfo != null && modifiedConnections[abId].Deleted)
                 {
-                    RemoveCircle(CID, modifiedConnections[CID].Content.Handle.Id);
-                    connectionClone.Remove(CID);
+                    RemoveCircle(modifiedConnections[abId].Content.Handle.Id);
+                    connectionClone.Remove(abId);
                     deleted++;
                 }
             }
 
-            List<long> sortedCIDs = new List<long>(connectionClone.Keys);
-            List<CircleInverseInfoType> sortedInfos = new List<CircleInverseInfoType>(connectionClone.Values);
-            SaveWLConnection(sortedCIDs, sortedInfos.ToArray());
+            SaveWLConnection(connectionClone);
 
-            string[] abIds = SelectWLConnection(sortedCIDs, RelationshipState.Accepted);  //Select the re-added circles.
-            RequestCircles(abIds, RelationshipState.Accepted, scene);
-            reAdded = abIds.Length;
+            string[] slectedABIds = SelectWLConnection(new List<string>(connectionClone.Keys), RelationshipState.Accepted);  //Select the re-added circles.
+            RequestCircles(slectedABIds, RelationshipState.Accepted, scene);
+            reAdded = slectedABIds.Length;
 
             return new int[] { deleted, reAdded };
         }
 
-        private bool SaveWLConnection(List<long> sortedCIDList, CircleInverseInfoType[] inverseList)
+        private bool SaveWLConnection(Dictionary<string, CircleInverseInfoType> inverseList)
         {
             if (inverseList == null)
                 return false;
 
-            if (sortedCIDList.Count > inverseList.Length)
-                return false;
-
-            lock (WLConnections)
+            lock (CircleResults)
             {
-                lock (WLInverseConnections)
+                foreach (string abId in inverseList.Keys)
                 {
-                    for (int cnt = 0; cnt < sortedCIDList.Count; cnt++)
-                    {
-                        CircleInverseInfoType inverseInfo = inverseList[cnt];
-                        long CID = sortedCIDList[cnt];
-                        WLConnections[CID] = inverseInfo.Content.Handle.Id.ToLowerInvariant();
-                        WLInverseConnections[inverseInfo.Content.Handle.Id.ToLowerInvariant()] = CID;
-                    }
+                    CircleResults[abId] = inverseList[abId];
                 }
-            }
-
-            if (inverseList.Length > sortedCIDList.Count)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                    (inverseList.Length - sortedCIDList.Count).ToString() +
-                    " contacts don't have hidden representatives", GetType().Name);
-
             }
 
             return true;
@@ -1977,11 +1905,6 @@ namespace MSNPSharp.IO
             //lock (contactTable)
                 contactTable.Clear();
 
-            //lock (WLConnections)
-                WLConnections.Clear();
-
-            //lock (WLInverseConnections)
-                WLInverseConnections.Clear();
             }
 
         }
@@ -1993,14 +1916,13 @@ namespace MSNPSharp.IO
         /// 4. BreakWLConnection
         /// 5. RemoveCircle
         /// </summary>
-        /// <param name="initiatorCID"></param>
         /// <param name="abId"></param>
         /// <returns></returns>
-        internal bool RemoveCircle(long initiatorCID, string abId)
+        internal bool RemoveCircle(string abId)
         {
             lock(SyncObject)
             {
-                if (HasWLConnection(initiatorCID) && !string.IsNullOrEmpty(abId))
+                if (!string.IsNullOrEmpty(abId))
                 {
                     CircleInverseInfoType inversoeInfo = SelectCircleInverseInfo(abId);
                     Circle tempCircle = null;
@@ -2019,7 +1941,7 @@ namespace MSNPSharp.IO
                     RemoveCircleInverseInfo(abId);
     
                     //4. Break the connection between hidden representative and addressbook.
-                    BreakWLConnection(initiatorCID);
+                    BreakWLConnection(abId);
     
                     //5. Remove the presentation data structure for a circle.
                     NSMessageHandler.CircleList.RemoveCircle(new Guid(abId), CircleString.DefaultHostDomain);
@@ -2045,21 +1967,19 @@ namespace MSNPSharp.IO
         /// <summary>
         /// Break the CID-AbID relationship of hidden representative to addressbook.
         /// </summary>
-        /// <param name="CID"></param>
+        /// <param name="abId"></param>
         /// <returns></returns>
-        private bool BreakWLConnection(long CID)
+        private bool BreakWLConnection(string abId)
         {
-            if (!HasWLConnection(CID))
+            if (!HasWLConnection(abId))
                 return false;
 
-            string abId = SelectWLConnection(CID);
+            if (!HasWLConnection(abId))
+                return false;
 
-            lock (WLInverseConnections)
+            lock (CircleResults)
             {
-                lock (WLConnections)
-                {
-                    return (WLConnections.Remove(CID) && WLInverseConnections.Remove(abId));
-                }
+                return CircleResults.Remove(abId);
             }
         }
 
@@ -2106,29 +2026,12 @@ namespace MSNPSharp.IO
         /// <summary>
         /// Create a circle.
         /// </summary>
-        /// <param name="hiddenRepresentative"></param>
         /// <param name="me"></param>
         /// <param name="inverseInfo"></param>
         /// <returns></returns>
-        private Circle CreateCircle(ContactType me, ContactType hiddenRepresentative, CircleInverseInfoType inverseInfo)
+        private Circle CreateCircle(ContactType me, CircleInverseInfoType inverseInfo)
         {
-            if (hiddenRepresentative.contactInfo == null)
-            {
-                return null;
-            }
-
-            if (hiddenRepresentative.contactInfo.NetworkInfoList.Length == 0)
-            {
-                return null;
-            }
-
-            if (hiddenRepresentative.contactInfo.contactType != MessengerContactType.Circle)
-            {
-                return null;
-            }
-
-
-            return new Circle(me, hiddenRepresentative, inverseInfo, NSMessageHandler);
+            return new Circle(me, inverseInfo, NSMessageHandler);
         }
 
         private bool AddCircleToCircleList(Circle circle)
@@ -2148,35 +2051,21 @@ namespace MSNPSharp.IO
             return result;
         }
 
-        /// <summary>
-        /// Restore the inverse list of WLConnections.
-        /// </summary>
-        private void RestoreWLConnections()
-        {
-            if (WLInverseConnections == null)
-                wlInverseConnections = new Dictionary<string, long>();
 
-            //Restore, lock is not needed.
-            foreach (long CID in WLConnections.Keys)
-            {
-                WLInverseConnections[WLConnections[CID]] = CID;
-            }
-        }
-
-        private bool RestoreCircles(long[] CIDs, RelationshipState state)
+        private bool RestoreCircles(string[] abIds, RelationshipState state)
         {
-            if (CIDs == null)
+            if (abIds == null)
                 return false;
 
-            foreach (long CID in CIDs)
+            foreach (string abId in abIds)
             {
-                RestoreCircleFromAddressBook(SelectWLConnection(CID), SelecteContact(CID), state);
+                RestoreCircleFromAddressBook(abId, state);
             }
 
             return true;
         }
 
-        private bool RestoreCircleFromAddressBook(string abId, ContactType hidden, RelationshipState state)
+        private bool RestoreCircleFromAddressBook(string abId, RelationshipState state)
         {
             string lowerId = abId.ToLowerInvariant();
 
@@ -2205,12 +2094,6 @@ namespace MSNPSharp.IO
                 return false;
             }
 
-            if (hidden == null)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "[RestoreCircleFromAddressBook] Hidden Representative not found, restore circle failed:" + lowerId);
-                return false;
-            }
-
             if (inverseInfo == null)
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "[RestoreCircleFromAddressBook] Circle inverse info not found, restore circle failed:" + lowerId);
@@ -2223,7 +2106,7 @@ namespace MSNPSharp.IO
                 return false;
             }
 
-            Circle circle = CreateCircle(me, hidden, inverseInfo);
+            Circle circle = CreateCircle(me, inverseInfo);
             UpdateCircleMembersFromAddressBookContactPage(circle, Scenario.Restore);
 
             switch (circle.CircleRole)
@@ -2761,30 +2644,6 @@ namespace MSNPSharp.IO
             return true;
         }
 
-        private bool AddHiddenRepresentative(string domainTag, ContactType contact)
-        {
-            if (string.IsNullOrEmpty(domainTag) || contact == null)
-            {
-                return false;
-            }
-
-            if (contact.contactInfo == null)
-            {
-                return false;
-            }
-
-            if (contact.fDeleted == true)
-            {
-                lock (HiddenRepresentatives)
-                    HiddenRepresentatives.Remove(domainTag.ToLowerInvariant());
-                return false;
-            }
-
-            lock (HiddenRepresentatives)
-                HiddenRepresentatives[domainTag.ToLowerInvariant()] = contact;
-
-            return true;
-        }
 
         /// <summary>
         /// Set MyProperties to default value.

@@ -645,6 +645,7 @@ namespace MSNPSharp
     /// <summary>
     /// Event argument used for ContactService.JoinCircleInvitationReceived event.
     /// </summary>
+    [Obsolete("Inviter is no more supported by Microsoft.")]
     [Serializable()]
     public class JoinCircleInvitationEventArgs : CircleEventArgs
     {

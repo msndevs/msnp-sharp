@@ -138,7 +138,7 @@ namespace MSNPSharp
         /// <summary>
         /// Fired after a remote user invite us to join a circle.
         /// </summary>
-        public event EventHandler<JoinCircleInvitationEventArgs> JoinCircleInvitationReceived;
+        public event EventHandler<CircleEventArgs> JoinCircleInvitationReceived;
 
         /// <summary>
         /// Fired after the owner join a circle successfully.
@@ -208,14 +208,14 @@ namespace MSNPSharp
         /// Fires the <see cref="JoinCircleInvitationReceived"/> event.
         /// </summary>
         /// <param name="e"></param>
-        internal void OnJoinCircleInvitationReceived(JoinCircleInvitationEventArgs e)
+        internal void OnJoinCircleInvitationReceived(CircleEventArgs e)
         {
-            if (e.Inviter != null)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                    e.Inviter.Name + "(" + e.Inviter.Mail + ") invite you to join circle: "
-                    + e.Circle.ToString() + "\r\nMessage: " + e.Inviter.Message);
-            }
+            //if (e.Inviter != null)
+            //{
+            //    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+            //        e.Inviter.Name + "(" + e.Inviter.Account + ") invite you to join circle: "
+            //        + e.Circle.ToString() + "\r\nMessage: " + e.Inviter.Message);
+            //}
 
             if (JoinCircleInvitationReceived != null)
             {
@@ -2142,6 +2142,14 @@ namespace MSNPSharp
                 phoneMember.Type = MembershipType.Phone;
                 phoneMember.PhoneNumber = contact.Mail;
             }
+            else if (contact.ClientType == ClientType.CircleMember)
+            {
+                member = new CircleMember();
+                CircleMember circleMember = member as CircleMember;
+                circleMember.Type =  MembershipType.Circle;
+                circleMember.State = MemberState.Accepted;
+                circleMember.CircleId = (contact as Circle).AddressBookId.ToString("D").ToLowerInvariant();
+            }
 
             memberShip.Members = new BaseMember[] { member };
             addMemberRequest.memberships = new Membership[] { memberShip };
@@ -2303,6 +2311,13 @@ namespace MSNPSharp
                     {
                         (deleteMember as PhoneMember).PhoneNumber = contact.Mail;
                     }
+                    break;
+
+                case ClientType.CircleMember:
+                    deleteMember = new CircleMember();
+                    deleteMember.Type = (baseMember == null) ? MembershipType.Circle : baseMember.Type;
+                    deleteMember.State = (baseMember == null) ? MemberState.Accepted : baseMember.State;
+                    (deleteMember as CircleMember).CircleId = (contact as Circle).AddressBookId.ToString("D").ToLowerInvariant();
                     break;
             }
 
@@ -2906,7 +2921,7 @@ namespace MSNPSharp
                 }
 
                 NSMessageHandler.SendCircleNotifyRML(circle.AddressBookId, circle.HostDomain, circle.Lists, true);
-                AddressBook.RemoveCircle((long)circle.CID, circle.AddressBookId.ToString("D").ToLowerInvariant());
+                AddressBook.RemoveCircle(circle.AddressBookId.ToString("D").ToLowerInvariant());
                 AddressBook.Save();
             };
 

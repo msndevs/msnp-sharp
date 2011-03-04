@@ -125,7 +125,7 @@ namespace MSNPSharpClient
             // These are circle events. They will be fired after corresponding circle operation completed.
             messenger.ContactService.CreateCircleCompleted += new EventHandler<CircleEventArgs>(ContactService_CircleCreated);
             messenger.ContactService.JoinedCircleCompleted += new EventHandler<CircleEventArgs>(ContactService_JoinedCircle);
-            messenger.ContactService.JoinCircleInvitationReceived += new EventHandler<JoinCircleInvitationEventArgs>(ContactService_JoinCircleInvitationReceived);
+            messenger.ContactService.JoinCircleInvitationReceived += new EventHandler<CircleEventArgs>(ContactService_JoinCircleInvitationReceived);
             messenger.ContactService.ExitCircleCompleted += new EventHandler<CircleEventArgs>(ContactService_ExitCircle);
             messenger.ContactService.CircleMemberJoined += new EventHandler<CircleMemberEventArgs>(ContactService_CircleMemberJoined);
             messenger.ContactService.CircleMemberLeft += new EventHandler<CircleMemberEventArgs>(ContactService_CircleMemberLeft);
@@ -334,7 +334,7 @@ namespace MSNPSharpClient
             RefreshCircleList(sender, null);
         }
 
-        void ContactService_JoinCircleInvitationReceived(object sender, JoinCircleInvitationEventArgs e)
+        void ContactService_JoinCircleInvitationReceived(object sender, CircleEventArgs e)
         {
             messenger.ContactService.AcceptCircleInvitation(e.Circle);
         }
@@ -1265,6 +1265,7 @@ namespace MSNPSharpClient
 
 
         private static Font PARENT_NODE_FONT = new Font("Tahoma", 8f, FontStyle.Bold);
+        private static Font PARENT_NODE_FONT_BANNED = new Font("Tahoma", 8f, FontStyle.Bold | FontStyle.Strikeout);
         private static Font USER_NODE_FONT = new Font("Tahoma", 8f);
         private static Font USER_NODE_FONT_BANNED = new Font("Tahoma", 8f, FontStyle.Strikeout);
         public class StatusSorter : IComparer
@@ -1600,7 +1601,7 @@ namespace MSNPSharpClient
                 foreach (Circle circle in Messenger.CircleList)
                 {
                     TreeNode circleNode = circlesNode.Nodes.Add(circle.Hash, GetCircleDisplayName(circle), ImageIndexes.Circle, ImageIndexes.Circle);
-                    circleNode.NodeFont = PARENT_NODE_FONT;
+                    circleNode.NodeFont = circle.Blocked ? PARENT_NODE_FONT_BANNED : PARENT_NODE_FONT;
                     circleNode.Tag = circle;
 
                     foreach (Contact contact in circle.ContactList.All)
@@ -1661,7 +1662,7 @@ namespace MSNPSharpClient
                     TreeNode circlenode = circlesNode.Nodes.ContainsKey(circle.Hash) ?
                         circlesNode.Nodes[circle.Hash] : circlesNode.Nodes.Add(circle.Hash, GetCircleDisplayName(circle), ImageIndexes.Circle, ImageIndexes.Circle);
 
-                    circlenode.NodeFont = PARENT_NODE_FONT;
+                    circlenode.NodeFont = circle.Blocked ? PARENT_NODE_FONT_BANNED : PARENT_NODE_FONT;
                     circlenode.Tag = circle;
 
                     foreach (Contact contact in circle.ContactList.All)
@@ -1769,7 +1770,7 @@ namespace MSNPSharpClient
             else
             {
                 onlineNode = treeViewFavoriteList.Nodes.Add(ImageIndexes.OnlineNodeKey, "Online", ImageIndexes.Closed, ImageIndexes.Closed);
-                onlineNode.NodeFont = PARENT_NODE_FONT;
+                onlineNode.NodeFont = contactToUpdate == null ? PARENT_NODE_FONT : (contactToUpdate.Blocked ? PARENT_NODE_FONT_BANNED : PARENT_NODE_FONT);
                 onlineNode.Tag = ImageIndexes.OnlineNodeKey;
             }
 
