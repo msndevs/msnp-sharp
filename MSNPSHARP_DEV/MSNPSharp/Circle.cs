@@ -40,45 +40,10 @@ using MSNPSharp.MSNWS.MSNABSharingService;
 namespace MSNPSharp
 {
     /// <summary>
-    /// The <see cref="Contact"/> who send a join contact invitation.
-    /// </summary>
-    [Serializable()]
-    public class CircleInviter : Contact
-    {
-        private string message = string.Empty;
-
-        /// <summary>
-        /// Invitation message send via the email.
-        /// </summary>
-        public string Message
-        {
-            get
-            {
-                return message;
-            }
-        }
-
-
-        internal CircleInviter(ContactType inviter, string inviterMessage)
-            : base(WebServiceConstants.MessengerIndividualAddressBookId, inviter.contactInfo.passportName, IMAddressInfoType.WindowsLive, inviter.contactInfo.CID, null)
-        {
-            if (inviterMessage != null)
-                message = inviterMessage;
-        }
-
-        internal CircleInviter(string inviterEmail, string inviterName, string inviterMessage)
-            : base(WebServiceConstants.MessengerIndividualAddressBookId, inviterEmail, IMAddressInfoType.WindowsLive, 0, null)
-        {
-            if (inviterMessage != null)
-                message = inviterMessage;
-        }
-    }
-
-    /// <summary>
     /// A new type of group introduces with WLM2009.
     /// </summary>
     [Serializable()]
-    public class Circle : Contact
+    public partial class Circle : Contact
     {
         /// <summary>
         /// live.com
@@ -90,7 +55,7 @@ namespace MSNPSharp
         private long segmentCounter = 0;
 
         private ContactType meContact = null;
-        private ContactType hiddenRepresentative = null;
+
         private ABFindContactsPagedResultTypeAB abinfo = null;
 
         public string HostDomain
@@ -127,14 +92,12 @@ namespace MSNPSharp
         /// Circle constructor
         /// </summary>
         /// <param name="me">The "Me Contact" in the addressbook.</param>
-        /// <param name="hidden"></param>
         /// <param name="circleInfo"></param>
         /// <param name="handler"></param>
-        public Circle(ContactType me, ContactType hidden, CircleInverseInfoType circleInfo, NSMessageHandler handler)
+        public Circle(ContactType me, CircleInverseInfoType circleInfo, NSMessageHandler handler)
             : base(circleInfo.Content.Handle.Id.ToLowerInvariant(), circleInfo.Content.Handle.Id.ToLowerInvariant() + "@" + circleInfo.Content.Info.HostedDomain.ToLowerInvariant(), IMAddressInfoType.Circle, me.contactInfo.CID, handler)
         {
             hostDomain = circleInfo.Content.Info.HostedDomain.ToLowerInvariant();
-            hiddenRepresentative = hidden;
 
             CircleRole = (CirclePersonalMembershipRole)Enum.Parse(typeof(CirclePersonalMembershipRole), circleInfo.PersonalInfo.MembershipInfo.CirclePersonalMembership.Role);
 
@@ -143,13 +106,7 @@ namespace MSNPSharp
 
             meContact = me;
 
-            if (hidden != null)
-            {
-                Guid = new Guid(hidden.contactId);
-
-                if (hidden.contactInfo != null && hidden.contactInfo.CIDSpecified)
-                    CID = hidden.contactInfo.CID;
-            }
+            CID = 0;
 
             contactList = new ContactList(AddressBookId, new Owner(AddressBookId, me.contactInfo.passportName, me.contactInfo.CID, NSMessageHandler), NSMessageHandler);
             Initialize();
