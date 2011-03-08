@@ -994,7 +994,7 @@ namespace MSNPSharp
     /// <summary>
     /// Mime header key constants.
     /// </summary>
-    public static class MimeHeaderStrings
+    public static class MIMEHeaderStrings
     {
         public const string From = "From";
         public const string To = "To";
@@ -1043,8 +1043,21 @@ namespace MSNPSharp
         /// </summary>
         public const string Max_Forwards = "Max-Forwards";
         public const string Uri = "Uri";
-
+		/// <summary>
+		/// The key string for charset header 
+		/// </summary>
+		public const string CharSet = " charset";
+		public const string Publication = "Publication";
+		public const string EPID = "epid";
+		public const string Path = "path";
+		public const string ServiceChannel = "Service-Channel";
+		
         internal const string KeyParam = ";";
+		
+		/// <summary>
+		/// The separator of key-value pair in MIME header 
+		/// </summary>
+		public const string KeyValueSeparator = ": ";
 
     }
 
@@ -1159,7 +1172,59 @@ namespace MSNPSharp
 		/// <summary>
 		/// FaceBook Gateway account. 
 		/// </summary>
-		public static const string FaceBookGatewayAccount = "fb";
+		public const string FaceBookGatewayAccount = "fb";
+	}
+	
+	/// <summary>
+	/// The keys for MIME Content Headers. 
+	/// </summary>
+	public class MIMEContentHeaders
+	{
+		/// <summary>
+		/// The key string for Content-Length header 
+		/// </summary>
+		public const string ContentLength = MIMEHeaderStrings.Content_Length;
+		
+		/// <summary>
+		/// The key string for Content-Type header 
+		/// </summary>
+		public const string ContentType = MIMEHeaderStrings.Content_Type;
+		
+		/// <summary>
+		/// The key string for charset header 
+		/// </summary>
+		public const string CharSet = MIMEHeaderStrings.CharSet;
+		
+		public const string Publication = MIMEHeaderStrings.Publication;
+		public const string Messaging = MIMEHeaderStrings.Messaging;
+		public const string URI = MIMEHeaderStrings.Uri;
+		public const string MessageType = MIMEHeaderStrings.Message_Type;
+		
+		public const string MSIMFormat = MIMEHeaderStrings.X_MMS_IM_Format;
+	}
+	
+	/// <summary>
+	/// The keys for MIME Reouting Header of MultiMimeMessage. 
+	/// </summary>
+	public class MIMERoutingHeaders
+	{
+		public const string Routing = MIMEHeaderStrings.Routing;
+		public const string From = MIMEHeaderStrings.From;
+		public const string To = MIMEHeaderStrings.To;
+		public const string EPID = MIMEHeaderStrings.EPID;
+		public const string Path = MIMEHeaderStrings.Path;
+		public const string ServiceChannel = MIMEHeaderStrings.ServiceChannel;
+		
+	}
+	
+	/// <summary>
+	/// Keys for MIME header, reliability parts. 
+	/// </summary>
+	public class MIMEReliabilityHeaders
+	{
+		public const string Reliability = MIMEHeaderStrings.Reliability;
+		public const string Stream = MIMEHeaderStrings.Stream;
+		public const string Segment = MIMEHeaderStrings.Segment;
 	}
 
     #region P2PFlag
