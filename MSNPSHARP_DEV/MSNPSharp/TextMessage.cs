@@ -264,9 +264,9 @@ namespace MSNPSharp
         internal void ParseHeader(StrDictionary mimeHeader)
         {
             // example header: "X-MMS-IM-Format: FN=Microsoft%20Sans%20Serif; EF=I; CO=000000; CS=0; PF=22"
-            if (mimeHeader.ContainsKey(MimeHeaderStrings.X_MMS_IM_Format))
+            if (mimeHeader.ContainsKey(MIMEHeaderStrings.X_MMS_IM_Format))
             {
-                string[] fields = mimeHeader[MimeHeaderStrings.X_MMS_IM_Format].Split(';');
+                string[] fields = mimeHeader[MIMEHeaderStrings.X_MMS_IM_Format].Split(';');
                 string FNValue = string.Empty;
                 string EFValue = string.Empty;
                 string CSValue = string.Empty;
@@ -357,8 +357,8 @@ namespace MSNPSharp
                     }
                 }
 
-                if (mimeHeader.ContainsKey(MimeHeaderStrings.P4_Context))
-                    this.customNickname = mimeHeader[MimeHeaderStrings.P4_Context];
+                if (mimeHeader.ContainsKey(MIMEHeaderStrings.P4_Context))
+                    this.customNickname = mimeHeader[MIMEHeaderStrings.P4_Context];
             }
         }
 

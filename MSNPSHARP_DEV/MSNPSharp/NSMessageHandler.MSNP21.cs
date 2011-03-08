@@ -182,16 +182,16 @@ namespace MSNPSharp
             string from = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Account;
 
             MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
-            mmMessage.RoutingHeaders["From"]["epid"] = ContactList.Owner.MachineGuid.ToString("B").ToLowerInvariant();
+            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = ContactList.Owner.MachineGuid.ToString("B").ToLowerInvariant();
 
             if (remoteContact.ClientType == IMAddressInfoType.Circle)
             {
-                mmMessage.RoutingHeaders["To"]["path"] = "IM";
+                mmMessage.RoutingHeaders[MIMERoutingHeaders.To][MIMERoutingHeaders.Path] = "IM";
             }
 
             mmMessage.ContentKeyVersion = "2.0";
 
-            mmMessage.ContentHeaders["Message-Type"] = "Control/Typing";
+            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "Control/Typing";
             mmMessage.InnerBody = new byte[0];
 
             NSMessage sdgPayload = new NSMessage("SDG");
@@ -209,16 +209,16 @@ namespace MSNPSharp
             string from = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Account;
 
             MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
-            mmMessage.RoutingHeaders["From"]["epid"] = ContactList.Owner.MachineGuid.ToString("B").ToLowerInvariant();
+            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = ContactList.Owner.MachineGuid.ToString("B").ToLowerInvariant();
 
             if (remoteContact.ClientType == IMAddressInfoType.Circle)
             {
-                mmMessage.RoutingHeaders["To"]["path"] = "IM";
+                mmMessage.RoutingHeaders[MIMERoutingHeaders.To][MIMERoutingHeaders.Path] = "IM";
             }
 
             mmMessage.ContentKeyVersion = "2.0";
 
-            mmMessage.ContentHeaders["Message-Type"] = "Nudge";
+            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "Nudge";
             mmMessage.InnerBody = Encoding.ASCII.GetBytes("\r\n");
 
             NSMessage sdgPayload = new NSMessage("SDG");
@@ -238,22 +238,22 @@ namespace MSNPSharp
             string from = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Account;
 
             MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
-            mmMessage.RoutingHeaders["From"]["epid"] = ContactList.Owner.MachineGuid.ToString("B").ToLowerInvariant();
+            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = ContactList.Owner.MachineGuid.ToString("B").ToLowerInvariant();
 
             if (remoteContact.ClientType == IMAddressInfoType.Circle)
             {
-                mmMessage.RoutingHeaders["To"]["path"] = "IM";
+                mmMessage.RoutingHeaders[MIMERoutingHeaders.To][MIMERoutingHeaders.Path] = "IM";
             }
 
             if (!remoteContact.Online)
             {
-                mmMessage.RoutingHeaders["Service-Channel"] = "IM/Offline";
+                mmMessage.RoutingHeaders[MIMERoutingHeaders.ServiceChannel] = "IM/Offline";
             }
 
             mmMessage.ContentKeyVersion = "2.0";
 
-            mmMessage.ContentHeaders["Message-Type"] = "Text";
-            mmMessage.ContentHeaders[MimeHeaderStrings.X_MMS_IM_Format] = textMessage.GetStyleString();
+            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "Text";
+            mmMessage.ContentHeaders[MIMEHeaderStrings.X_MMS_IM_Format] = textMessage.GetStyleString();
             mmMessage.InnerBody = Encoding.UTF8.GetBytes(textMessage.Text);
 
             NSMessage sdgPayload = new NSMessage("SDG");
@@ -286,12 +286,12 @@ namespace MSNPSharp
                 string from = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Account;
 
                 MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
-                mmMessage.RoutingHeaders["From"]["epid"] = ContactList.Owner.MachineGuid.ToString("B").ToLowerInvariant();
-                mmMessage.RoutingHeaders["Service-Channel"] = "IM/Mobile";
+                mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = ContactList.Owner.MachineGuid.ToString("B").ToLowerInvariant();
+                mmMessage.RoutingHeaders[MIMERoutingHeaders.ServiceChannel] = "IM/Mobile";
 
                 mmMessage.ContentKeyVersion = "2.0";
-                mmMessage.ContentHeaders["Message-Type"] = "Text";
-                mmMessage.ContentHeaders[MimeHeaderStrings.X_MMS_IM_Format] = txtMsg.GetStyleString();
+                mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "Text";
+                mmMessage.ContentHeaders[MIMEContentHeaders.MSIMFormat] = txtMsg.GetStyleString();
 
                 mmMessage.InnerBody = Encoding.UTF8.GetBytes(txtMsg.Text);
 
@@ -322,11 +322,11 @@ namespace MSNPSharp
             string to = ((int)IMAddressInfoType.TemporaryGroup).ToString() + ":" + Guid.Empty.ToString("D").ToLowerInvariant() + "@" + Circle.DefaultHostDomain;
             string from = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Account;
             MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
-            mmMessage.RoutingHeaders["From"]["epid"] = MachineGuid.ToString("B").ToLowerInvariant();
+            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = MachineGuid.ToString("B").ToLowerInvariant();
 
-            mmMessage.ContentKey = "Publication";
-            mmMessage.ContentHeaders["Uri"] = "/circle";
-            mmMessage.ContentHeaders["Content-Type"] = "application/multiparty+xml";
+            mmMessage.ContentKey = MIMEContentHeaders.Publication;
+            mmMessage.ContentHeaders[MIMEContentHeaders.URI] = "/circle";
+            mmMessage.ContentHeaders[MIMEContentHeaders.ContentType] = "application/multiparty+xml";
 
             mmMessage.InnerBody = new byte[0];
 
@@ -367,12 +367,12 @@ namespace MSNPSharp
             string to = ((int)group.ClientType).ToString() + ":" + group.Account;
             string from = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Account;
             MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
-            mmMessage.RoutingHeaders["From"]["epid"] = MachineGuid.ToString("B").ToLowerInvariant();
-            mmMessage.RoutingHeaders["To"]["path"] = "IM";
+            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = MachineGuid.ToString("B").ToLowerInvariant();
+            mmMessage.RoutingHeaders[MIMERoutingHeaders.To][MIMERoutingHeaders.Path] = "IM";
 
-            mmMessage.ContentKey = "Publication";
-            mmMessage.ContentHeaders["Uri"] = "/circle";
-            mmMessage.ContentHeaders["Content-Type"] = "application/multiparty+xml";
+            mmMessage.ContentKey = MIMEContentHeaders.Publication;
+            mmMessage.ContentHeaders[MIMEContentHeaders.URI] = "/circle";
+            mmMessage.ContentHeaders[MIMEContentHeaders.ContentType] = "application/multiparty+xml";
 
             string xml = "<circle><roster><id>IM</id><user><id>" + ((int)contact.ClientType).ToString() + ":" + contact.Account + "</id></user></roster></circle>";
             mmMessage.InnerBody = Encoding.UTF8.GetBytes(xml);
@@ -390,11 +390,11 @@ namespace MSNPSharp
             string from = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Account;
 
             MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
-            mmMessage.RoutingHeaders["From"]["epid"] = MachineGuid.ToString("B").ToLowerInvariant();
+            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = MachineGuid.ToString("B").ToLowerInvariant();
 
-            mmMessage.ContentKey = "Publication";
-            mmMessage.ContentHeaders["Uri"] = "/circle/roster(IM)/user(" + from + ")";
-            mmMessage.ContentHeaders["Content-Type"] = "application/circles+xml";
+            mmMessage.ContentKey = MIMEContentHeaders.Publication;
+            mmMessage.ContentHeaders[MIMEContentHeaders.URI] = "/circle/roster(IM)/user(" + from + ")";
+            mmMessage.ContentHeaders[MIMEContentHeaders.ContentType] = "application/circles+xml";
 
             mmMessage.InnerBody = new byte[0];
 
@@ -428,11 +428,11 @@ namespace MSNPSharp
                 string to = ((int)group.ClientType).ToString() + ":" + group.Account;
                 string from = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Account;
                 MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
-                mmMessage.RoutingHeaders["From"]["epid"] = MachineGuid.ToString("B").ToLowerInvariant();
+                mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = MachineGuid.ToString("B").ToLowerInvariant();
 
-                mmMessage.ContentKey = "Publication";
-                mmMessage.ContentHeaders["Uri"] = "/circle";
-                mmMessage.ContentHeaders["Content-Type"] = "application/circles+xml";
+                mmMessage.ContentKey = MIMEContentHeaders.Publication;
+                mmMessage.ContentHeaders[MIMEContentHeaders.URI] = "/circle";
+                mmMessage.ContentHeaders[MIMEContentHeaders.ContentType] = "application/circles+xml";
 
                 string xml = "<circle><roster><id>IM</id><user><id>1:" + ContactList.Owner.Account + "</id></user></roster></circle>";
 
@@ -527,7 +527,7 @@ namespace MSNPSharp
 
             MultiMimeMessage mmm = new MultiMimeMessage(networkMessage.InnerBody);
 
-            if (!(mmm.ContentHeaders.ContainsKey(MimeHeaderStrings.Content_Type)))
+            if (!(mmm.ContentHeaders.ContainsKey(MIMEHeaderStrings.Content_Type)))
                 return;
 
             IMAddressInfoType fromAccountAddressType;
@@ -557,9 +557,9 @@ namespace MSNPSharp
             Contact viaHeaderContact = null;
             Contact fromContact = null;
 
-            if (mmm.RoutingHeaders.ContainsKey(MimeHeaderStrings.Via))
+            if (mmm.RoutingHeaders.ContainsKey(MIMEHeaderStrings.Via))
             {
-                string[] via = mmm.RoutingHeaders[MimeHeaderStrings.Via].Value.Split(':');
+                string[] via = mmm.RoutingHeaders[MIMEHeaderStrings.Via].Value.Split(':');
                 IMAddressInfoType viaHeaderAddressType = (IMAddressInfoType)int.Parse(via[0]);
                 string viaHeaderAccount = via[1].ToLowerInvariant();
 
@@ -588,7 +588,7 @@ namespace MSNPSharp
 
             if (command == "PUT")
             {
-                switch (mmm.ContentHeaders[MimeHeaderStrings.Content_Type].Value)
+                switch (mmm.ContentHeaders[MIMEHeaderStrings.Content_Type].Value)
                 {
                     #region user xml
                     case "application/user+xml":
@@ -597,7 +597,7 @@ namespace MSNPSharp
                             if (mmm.InnerBody == null || mmm.InnerBody.Length == 0)
                                 return;  //No xml content.
 
-                            if (mmm.ContentHeaders[MimeHeaderStrings.NotifType].Value == "Full")
+                            if (mmm.ContentHeaders[MIMEHeaderStrings.NotifType].Value == "Full")
                             {
                                 //This is an initial NFY
                             }
@@ -745,7 +745,7 @@ namespace MSNPSharp
                                 if (mmm.InnerBody == null || mmm.InnerBody.Length == 0)
                                 {
                                     // No xml content and full notify... Circle goes online...
-                                    if (mmm.ContentHeaders[MimeHeaderStrings.NotifType].Value == "Full")
+                                    if (mmm.ContentHeaders[MIMEHeaderStrings.NotifType].Value == "Full")
                                     {
                                         PresenceStatus oldStatus = circle.Status;
                                         PresenceStatus newStatus = PresenceStatus.Online;
@@ -818,7 +818,7 @@ namespace MSNPSharp
                                 if (mmm.InnerBody == null || mmm.InnerBody.Length == 0)
                                 {
                                     // No xml content and full notify... Circle goes online...
-                                    if (mmm.ContentHeaders[MimeHeaderStrings.NotifType].Value == "Full")
+                                    if (mmm.ContentHeaders[MIMEHeaderStrings.NotifType].Value == "Full")
                                     {
                                         PresenceStatus oldStatus = group.Status;
                                         PresenceStatus newStatus = PresenceStatus.Online;
@@ -883,7 +883,7 @@ namespace MSNPSharp
             }
             else if (command == "DEL")
             {
-                switch (mmm.ContentHeaders[MimeHeaderStrings.Content_Type].Value)
+                switch (mmm.ContentHeaders[MIMEHeaderStrings.Content_Type].Value)
                 {
                     #region user xml
                     case "application/user+xml":
@@ -892,7 +892,7 @@ namespace MSNPSharp
                             if (mmm.InnerBody == null || mmm.InnerBody.Length == 0)
                                 return;  //No xml content.
 
-                            if (mmm.ContentHeaders[MimeHeaderStrings.NotifType].Value == "Full")
+                            if (mmm.ContentHeaders[MIMEHeaderStrings.NotifType].Value == "Full")
                             {
                                 //This is an initial NFY
                             }
@@ -1010,9 +1010,9 @@ namespace MSNPSharp
                                 return;
                             }
 
-                            if (mmm.ContentHeaders.ContainsKey(MimeHeaderStrings.Uri))
+                            if (mmm.ContentHeaders.ContainsKey(MIMEHeaderStrings.Uri))
                             {
-                                string xpathUri = mmm.ContentHeaders[MimeHeaderStrings.Uri].ToString();
+                                string xpathUri = mmm.ContentHeaders[MIMEHeaderStrings.Uri].ToString();
                                 if (xpathUri.Contains("/circle/roster(IM)/user"))
                                 {
                                     string typeAccount = xpathUri.Substring("/circle/roster(IM)/user".Length);
@@ -1166,22 +1166,22 @@ namespace MSNPSharp
                 sender = fromContact;
             }
 
-            if (mmMessage.ContentHeaders.ContainsKey(MimeHeaderStrings.Message_Type))
+            if (mmMessage.ContentHeaders.ContainsKey(MIMEHeaderStrings.Message_Type))
             {
-                if ("nudge" == mmMessage.ContentHeaders[MimeHeaderStrings.Message_Type].ToString().ToLowerInvariant())
+                if ("nudge" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
                 {
                     OnNudgeReceived(new NudgeArrivedEventArgs(sender, fromContact));
 
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                         "NUDGE: " + sender.ToString() + (sender == fromContact ? String.Empty : ";via=" + fromContact.ToString()));
                 }
-                else if ("control/typing" == mmMessage.ContentHeaders[MimeHeaderStrings.Message_Type].ToString().ToLowerInvariant())
+                else if ("control/typing" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
                 {
                     OnTypingMessageReceived(new TypingArrivedEventArgs(sender, fromContact));
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                         "TYPING: " + sender.ToString() + (sender == fromContact ? String.Empty : ";via=" + fromContact.ToString()));
                 }
-                else if ("text" == mmMessage.ContentHeaders[MimeHeaderStrings.Message_Type].ToString().ToLowerInvariant())
+                else if ("text" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
                 {
                     TextMessage txtMessage = new TextMessage(Encoding.UTF8.GetString(mmMessage.InnerBody));
                     StrDictionary strDic = new StrDictionary();

@@ -81,7 +81,7 @@ namespace MSNPSharp.P2P
             CallId = Guid.NewGuid();
             MaxForwards = 0;
             ContentType = "text/unknown";
-            mimeHeaders[MimeHeaderStrings.Content_Length] = "0";
+            mimeHeaders[MIMEHeaderStrings.Content_Length] = "0";
         }
 
         protected SLPMessage(byte[] data)
@@ -114,11 +114,11 @@ namespace MSNPSharp.P2P
         {
             get
             {
-                return int.Parse(mimeHeaders[MimeHeaderStrings.Max_Forwards], System.Globalization.CultureInfo.InvariantCulture);
+                return int.Parse(mimeHeaders[MIMEHeaderStrings.Max_Forwards], System.Globalization.CultureInfo.InvariantCulture);
             }
             set
             {
-                mimeHeaders[MimeHeaderStrings.Max_Forwards] = value.ToString();
+                mimeHeaders[MIMEHeaderStrings.Max_Forwards] = value.ToString();
             }
         }
 
@@ -126,7 +126,7 @@ namespace MSNPSharp.P2P
         {
             get
             {
-                return mimeHeaders[MimeHeaderStrings.To];
+                return mimeHeaders[MIMEHeaderStrings.To];
             }
         }
 
@@ -134,7 +134,7 @@ namespace MSNPSharp.P2P
         {
             get
             {
-                return mimeHeaders[MimeHeaderStrings.From];
+                return mimeHeaders[MIMEHeaderStrings.From];
             }
         }
 
@@ -186,7 +186,7 @@ namespace MSNPSharp.P2P
             }
             internal set
             {
-                mimeHeaders[MimeHeaderStrings.From] = String.Format("<msnmsgr:{0}>", value);
+                mimeHeaders[MIMEHeaderStrings.From] = String.Format("<msnmsgr:{0}>", value);
             }
         }
 
@@ -201,7 +201,7 @@ namespace MSNPSharp.P2P
             }
             internal set
             {
-                mimeHeaders[MimeHeaderStrings.To] = String.Format("<msnmsgr:{0}>", value);
+                mimeHeaders[MIMEHeaderStrings.To] = String.Format("<msnmsgr:{0}>", value);
             }
         }
 
@@ -263,11 +263,11 @@ namespace MSNPSharp.P2P
         {
             get
             {
-                return mimeHeaders[MimeHeaderStrings.Content_Type];
+                return mimeHeaders[MIMEHeaderStrings.Content_Type];
             }
             set
             {
-                mimeHeaders[MimeHeaderStrings.Content_Type] = value;
+                mimeHeaders[MIMEHeaderStrings.Content_Type] = value;
             }
         }
 
@@ -298,7 +298,7 @@ namespace MSNPSharp.P2P
 
             // Update the Content-Length header, +1 the additional 0x00
             // mimeBodylength + \r\n\0
-            mimeHeaders[MimeHeaderStrings.Content_Length] = (body.Length + (appendNull ? 3 : 2)).ToString();
+            mimeHeaders[MIMEHeaderStrings.Content_Length] = (body.Length + (appendNull ? 3 : 2)).ToString();
 
             StringBuilder builder = new StringBuilder(512);
             builder.Append(StartLine.Trim());

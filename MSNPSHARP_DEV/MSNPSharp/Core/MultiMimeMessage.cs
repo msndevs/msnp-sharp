@@ -47,7 +47,7 @@ namespace MSNPSharp.Core
         private MimeDictionary reliabilityHeaders = new MimeDictionary();
         private MimeDictionary contentHeaders = new MimeDictionary();
         
-        private string contentKey = "Messaging";
+        private string contentKey = MIMEContentHeaders.Messaging;
         private string contentKeyVersion = "1.0";
 
         public MimeDictionary RoutingHeaders
@@ -106,9 +106,9 @@ namespace MSNPSharp.Core
             Stream = 0;
             Segment = 0;
 
-            contentHeaders["Content-Length"] = "0";
-            contentHeaders["Content-Type"] = "Text/plain";
-            contentHeaders["Content-Type"][" charset"] = "UTF-8"; // Don't delete space
+            contentHeaders[MIMEContentHeaders.ContentLength] = "0";
+            contentHeaders[MIMEContentHeaders.ContentType] = "Text/plain";
+            contentHeaders[MIMEContentHeaders.ContentType][MIMEContentHeaders.CharSet] = "UTF-8"; // Don't delete space
         }
 
         public MultiMimeMessage(byte[] data)
@@ -120,11 +120,11 @@ namespace MSNPSharp.Core
         {
             get
             {
-                return routingHeaders["To"];
+                return routingHeaders[MIMERoutingHeaders.To];
             }
             set
             {
-                routingHeaders["To"] = value;
+                routingHeaders[MIMERoutingHeaders.To] = value;
             }
         }
 
@@ -132,11 +132,11 @@ namespace MSNPSharp.Core
         {
             get
             {
-                return routingHeaders["From"];
+                return routingHeaders[MIMERoutingHeaders.From];
             }
             set
             {
-                routingHeaders["From"] = value;
+                routingHeaders[MIMERoutingHeaders.From] = value;
             }
         }
 
@@ -145,11 +145,11 @@ namespace MSNPSharp.Core
         {
             get
             {
-                return long.Parse(reliabilityHeaders["Stream"], System.Globalization.CultureInfo.InvariantCulture);
+                return long.Parse(reliabilityHeaders[MIMEReliabilityHeaders.Stream], System.Globalization.CultureInfo.InvariantCulture);
             }
             set
             {
-                reliabilityHeaders["Stream"] = value.ToString();
+                reliabilityHeaders[MIMEReliabilityHeaders.Stream] = value.ToString();
             }
         }
 
@@ -157,11 +157,11 @@ namespace MSNPSharp.Core
         {
             get
             {
-                return long.Parse(reliabilityHeaders["Segment"], System.Globalization.CultureInfo.InvariantCulture);
+                return long.Parse(reliabilityHeaders[MIMEReliabilityHeaders.Segment], System.Globalization.CultureInfo.InvariantCulture);
             }
             set
             {
-                reliabilityHeaders["Segment"] = value.ToString();
+                reliabilityHeaders[MIMEReliabilityHeaders.Segment] = value.ToString();
             }
         }
 
@@ -170,11 +170,11 @@ namespace MSNPSharp.Core
         {
             get
             {
-                return contentHeaders["Content-Type"];
+                return contentHeaders[MIMEContentHeaders.ContentType];
             }
             set
             {
-                contentHeaders["Content-Type"] = value;
+                contentHeaders[MIMEContentHeaders.ContentType] = value;
             }
         }
 
@@ -183,35 +183,35 @@ namespace MSNPSharp.Core
             if (InnerBody == null)
                 InnerBody = new byte[0];
 
-            contentHeaders["Content-Length"] = InnerBody.Length.ToString();
+            contentHeaders[MIMEContentHeaders.ContentLength] = InnerBody.Length.ToString();
 
             StringBuilder sb = new StringBuilder(128);
-            sb.AppendLine("Routing: 1.0");
+            sb.AppendLine(MIMERoutingHeaders.Routing + MIMEHeaderStrings.KeyValueSeparator + "1.0");
             foreach (string key in routingHeaders.Keys)
             {
-                if (key != "Routing")
+                if (key != MIMERoutingHeaders.Routing)
                 {
-                    sb.AppendLine(key + ": " + routingHeaders[key].ToString());
+                    sb.AppendLine(key + MIMEHeaderStrings.KeyValueSeparator + routingHeaders[key].ToString());
                 }
             }
             sb.AppendLine();
 
-            sb.AppendLine("Reliability: 1.0");
+            sb.AppendLine(MIMEReliabilityHeaders.Reliability + MIMEHeaderStrings.KeyValueSeparator + "1.0");
             foreach (string key in reliabilityHeaders.Keys)
             {
-                if (key != "Reliability")
+                if (key != MIMEReliabilityHeaders.Reliability)
                 {
-                    sb.AppendLine(key + ": " + reliabilityHeaders[key].ToString());
+                    sb.AppendLine(key + MIMEHeaderStrings.KeyValueSeparator + reliabilityHeaders[key].ToString());
                 }
             }
             sb.AppendLine();
 
-            sb.AppendLine(ContentKey + ": " + ContentKeyVersion);
+            sb.AppendLine(ContentKey + MIMEHeaderStrings.KeyValueSeparator + ContentKeyVersion);
             foreach (string key in contentHeaders.Keys)
             {
                 if (key != ContentKey)
                 {
-                    sb.AppendLine(key + ": " + contentHeaders[key].ToString());
+                    sb.AppendLine(key + MIMEHeaderStrings.KeyValueSeparator + contentHeaders[key].ToString());
                 }
             }
 
@@ -237,15 +237,15 @@ namespace MSNPSharp.Core
             Array.Copy(reliabilityData, reliabilityHeaderEnd, messagingData, 0, messagingData.Length);
             contentHeaders.Clear();
             int messagingHeaderEnd = contentHeaders.Parse(messagingData);
-            contentKey = contentHeaders.ContainsKey("Publication") ? "Publication" : "Messaging";
+            contentKey = contentHeaders.ContainsKey(MIMEContentHeaders.Publication) ? MIMEContentHeaders.Publication : MIMEContentHeaders.Messaging;
 
             int bodyLen = data.Length - routerHeaderEnd - reliabilityHeaderEnd - messagingHeaderEnd;
             int contentLen = bodyLen;
 
             if ((bodyLen > 0)
                 ||
-                (contentHeaders.ContainsKey("Content-Length") &&
-                 int.TryParse(contentHeaders["Content-Length"], out contentLen) && contentLen > 0 &&
+                (contentHeaders.ContainsKey(MIMEContentHeaders.ContentLength) &&
+                 int.TryParse(contentHeaders[MIMEContentHeaders.ContentLength], out contentLen) && contentLen > 0 &&
                  contentLen <= bodyLen /*don't allow buffer overflow*/))
             {
                 InnerBody = new byte[contentLen];

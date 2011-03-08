@@ -406,7 +406,7 @@ namespace MSNPSharp
                             Encoding encoding = Encoding.UTF8;
                             try
                             {
-                                encoding = headers[MimeHeaderStrings.Content_Type].HasAttribute("charset") ? Encoding.GetEncoding(headers[MimeHeaderStrings.Content_Type]["charset"]) : Encoding.UTF8;
+                                encoding = headers[MIMEHeaderStrings.Content_Type].HasAttribute("charset") ? Encoding.GetEncoding(headers[MIMEHeaderStrings.Content_Type]["charset"]) : Encoding.UTF8;
                             }
                             catch (Exception)
                             {
