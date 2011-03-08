@@ -231,31 +231,15 @@ namespace MSNPSharp.P2P
             foreach (P2PBridge existing in bridges)
                 if (existing.SuitableFor(session))
                     return existing;
-
+            /*MSNP21TODO
             P2PBridge bridge = new SBBridge(session);
             bridge.BridgeClosed += BridgeClosed;
 
             bridges.Add(bridge);
 
             return bridge;
-        }
-
-        internal P2PBridge GetBridge(Conversation sb)
-        {
-            foreach (P2PBridge existing in bridges)
-            {
-                SBBridge sbBridge = existing as SBBridge;
-
-                if ((sbBridge != null) && (sbBridge.Switchboard == sb))
-                {
-                    return sbBridge;
-                }
-            }
-
-            P2PBridge bridge = new SBBridge(sb);
-            bridge.BridgeClosed += BridgeClosed;
-            bridges.Add(bridge);
-            return bridge;
+             * */
+            return null;
         }
 
         private void BridgeClosed(object sender, EventArgs args)

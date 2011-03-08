@@ -11,14 +11,6 @@ namespace MSNPSharpClient
     public partial class RemoveContactForm : Form
     {
 
-        public bool RemoveFromAddressBook
-        {
-            get
-            {
-                return cbRemove.Checked;
-            }
-        }
-
         public bool Block
         {
             get

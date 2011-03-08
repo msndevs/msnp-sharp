@@ -30,36 +30,56 @@ THE POSSIBILITY OF SUCH DAMAGE.
 */
 #endregion
 
-
 using System;
+using System.Net;
+using System.Reflection;
+using System.Collections;
 using System.Collections.Generic;
-using System.Text;
+using System.Drawing;
+using System.IO;
+using System.Diagnostics;
 
 namespace MSNPSharp
 {
-    /// <summary>
-    /// A comparer which treat siblings as the same contact.
-    /// </summary>
-    /// <typeparam name="TKey"></typeparam>
-    public class SiblingComparer<TKey> : IEqualityComparer<TKey>
+    using MSNPSharp.P2P;
+    using MSNPSharp.Core;
+    using MSNPSharp.MSNWS.MSNABSharingService;
+
+    partial class Contact
     {
-        #region IEqualityComparer<TKey> Members
-
-        public bool Equals(TKey x, TKey y)
+        [Obsolete("Block role is no more supported. Please use AppearOffline instead.")]
+        public bool Blocked
         {
-            return GetHashCode(x) == GetHashCode(y);
-        }
-
-        public int GetHashCode(TKey obj)
-        {
-            if (obj is Contact)
+            get
             {
-                return (obj as Contact).SiblingString.GetHashCode();
+                return AppearOffline;
             }
-
-            return obj.GetHashCode();
+            set
+            {
+                AppearOffline = value;
+            }
         }
 
-        #endregion
+        [Obsolete("Block role is no more supported. Please use AppearOffline instead.")]
+        public bool OnBlockedList
+        {
+            get
+            {
+                return AppearOffline;
+            }
+            set
+            {
+                AppearOffline = value;
+            }
+        }
+
+        [Obsolete("Reverse role is no more supported.")]
+        public bool OnReverseList
+        {
+            get
+            {
+                return ((lists & RoleLists.Reverse) == RoleLists.Reverse);
+            }
+        }
     }
-}
+};

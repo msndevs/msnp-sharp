@@ -43,59 +43,6 @@ namespace MSNPSharp
     using MSNPSharp.Core;
     using MSNPSharp.Utilities;
 
-    #region ConversationCreatedEvent
-
-    /// <summary>
-    /// Used when a new switchboard session is created.
-    /// </summary>
-    public class ConversationCreatedEventArgs : EventArgs
-    {
-        private object _initiator;
-        private Conversation _conversation;
-
-        /// <summary>
-        /// The affected conversation
-        /// </summary>
-        public Conversation Conversation
-        {
-            get
-            {
-                return _conversation;
-            }
-            set
-            {
-                _conversation = value;
-            }
-        }
-
-        /// <summary>
-        /// The object that requested the switchboard. Null if the conversation was initiated by a
-        /// remote client.
-        /// </summary>
-        public object Initiator
-        {
-            get
-            {
-                return _initiator;
-            }
-            set
-            {
-                _initiator = value;
-            }
-        }
-
-        /// <summary>
-        /// Constructor.
-        /// </summary>
-        public ConversationCreatedEventArgs(Conversation conversation, object initiator)
-        {
-            _conversation = conversation;
-            _initiator = initiator;
-        }
-    }
-
-    #endregion
-
     /// <summary>
     /// Provides an easy interface for the client programmer.
     /// </summary>
@@ -112,7 +59,7 @@ namespace MSNPSharp
         private NSMessageProcessor nsMessageProcessor = null;
         private NSMessageHandler nsMessageHandler = null;
         private ConnectivitySettings connectivitySettings = null;
-        private Credentials credentials = new Credentials(MsnProtocol.MSNP18);
+        private Credentials credentials = new Credentials();
         private MessageManager messageManager = null;
 
         #endregion
@@ -128,20 +75,6 @@ namespace MSNPSharp
             nsMessageProcessor = new NSMessageProcessor(connectivitySettings);
             nsMessageHandler = new NSMessageHandler();
             messageManager = new MessageManager(nsMessageHandler);
-
-            Nameserver.SBCreated += delegate(object sender, SBCreatedEventArgs ce)
-            {
-                // check if the request is remote or on our initiative
-                if (ce.Initiator != null)
-                {
-                    return;
-                }
-
-                // create a conversation object to handle with the switchboard
-                Conversation c = new Conversation(Nameserver, ce.Switchboard);
-                Nameserver.OnConversationCreated(c, ce.Initiator);
-                return;
-            };
         }
 
         #endregion
@@ -303,6 +236,17 @@ namespace MSNPSharp
         }
 
         /// <summary>
+        /// Directory Service
+        /// </summary>
+        public MSNDirectoryService DirectoryService
+        {
+            get
+            {
+                return Nameserver.DirectoryService;
+            }
+        }
+
+        /// <summary>
         /// Contact service.
         /// </summary>
         public ContactService ContactService
@@ -389,14 +333,6 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Creates a conversation and fires the <see cref="NSMessageHandler.ConversationCreated"/> event.
-        /// </summary>
-        public Conversation CreateConversation()
-        {
-            return Nameserver.CreateConversation();
-        }
-
-        /// <summary>
         /// Requests <paramref name="msnObject"/> from <paramref name="remoteContact"/>.
         /// </summary>
         /// <param name="remoteContact"></param>
@@ -434,6 +370,21 @@ namespace MSNPSharp
             P2PHandler.AddTransfer(p2pActivity);
 
             return p2pActivity;
+        }
+
+        public void SendTextMessage(Contact contact, string msg)
+        {
+            Nameserver.SendTextMessage(contact, new TextMessage(msg));
+        }
+
+        public void SendNudge(Contact contact)
+        {
+            Nameserver.SendNudge(contact);
+        }
+
+        public void SendTypingMessage(Contact contact)
+        {
+            Nameserver.SendTypingMessage(contact);
         }
 
         #endregion

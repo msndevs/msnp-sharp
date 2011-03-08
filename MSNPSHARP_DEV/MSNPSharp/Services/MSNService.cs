@@ -46,6 +46,7 @@ namespace MSNPSharp
     using MSNPSharp.MSNWS.MSNABSharingService;
     using MSNPSharp.MSNWS.MSNRSIService;
     using MSNPSharp.MSNWS.MSNOIMStoreService;
+    using MSNPSharp.MSNWS.MSNDirectoryService;
     using MSNPSharp.Services;
 
     #region MsnServiceState
@@ -419,13 +420,27 @@ namespace MSNPSharp
                     wuService.Proxy = WebProxy;
                     wuService.Timeout = 60000;
                     wuService.UserAgent = Properties.Resources.WebServiceUserAgent;
-                    wuService.Url = "http://sup.live.com/whatsnew/whatsnewservice.asmx";
                     wuService.WNApplicationHeaderValue = new WNApplicationHeader();
                     wuService.WNApplicationHeaderValue.ApplicationId = Properties.Resources.WhatsupServiceAppID;
                     wuService.WNAuthHeaderValue = new WNAuthHeader();
                     wuService.WNAuthHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.WhatsUp].Ticket;
 
                     service = wuService;
+                    break;
+
+                case MsnServiceType.Directory:
+
+                    SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Directory);
+
+                    DirectoryService dirService = new DirectoryServiceWrapper(localEndPoint);
+                    dirService.Proxy = WebProxy;
+                    dirService.Timeout = Int32.MaxValue;
+                    dirService.SOAPApplicationHeaderValue = new SOAPApplicationHeader();
+                    dirService.SOAPApplicationHeaderValue.ApplicationId = Properties.Resources.DirectoryServiceAppID;
+                    dirService.SOAPApplicationHeaderValue.Scenario = Convert.ToString(asyncObject.PartnerScenario);
+                    dirService.SOAPUserHeaderValue = new SOAPUserHeader();
+                    dirService.SOAPUserHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Directory].Ticket;
+                    service = dirService;
                     break;
             }
 

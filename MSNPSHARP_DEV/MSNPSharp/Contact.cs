@@ -49,8 +49,8 @@ namespace MSNPSharp
     /// <summary>
     /// User in roster list.
     /// </summary>
-    [Serializable()]
-    public class Contact
+    [Serializable]
+    public partial class Contact
     {
         #region Fields
 
@@ -62,6 +62,7 @@ namespace MSNPSharp
         private string nickName = string.Empty;
 
         private Dictionary<string, string> phoneNumbers = new Dictionary<string, string>();
+        private Dictionary<string, object> coreProfile = new Dictionary<string, object>();
         private string contactType = string.Empty;
         private string comment = string.Empty;
         private string siblingString = string.Empty;
@@ -430,6 +431,14 @@ namespace MSNPSharp
             }
         }
 
+        public Dictionary<string, object> CoreProfile
+        {
+            get
+            {
+                return coreProfile;
+            }
+        }
+
         public bool MobileDevice
         {
             get
@@ -753,7 +762,7 @@ namespace MSNPSharp
                 if (NSMessageHandler != null && Guid != Guid.Empty && IsMessengerUser != value)
                 {
                     isMessengerUser = value;
-                    NSMessageHandler.ContactService.UpdateContact(this, AddressBookId, 
+                    NSMessageHandler.ContactService.UpdateContact(this, AddressBookId,
                         delegate  //If you don't add this, you can't see the contact online until your next login
                         {
                             Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(2);
@@ -828,7 +837,10 @@ namespace MSNPSharp
         /// </summary>
         internal int ADLCount
         {
-            get { return adlCount; }
+            get
+            {
+                return adlCount;
+            }
             set
             {
                 if (value < 0)
@@ -869,6 +881,39 @@ namespace MSNPSharp
 
         #region List Properties
 
+        public bool AppearOnline
+        {
+            get
+            {
+                return ((lists & RoleLists.Hide) == RoleLists.None);
+            }
+            set
+            {
+                if (value != AppearOnline)
+                {
+                    AppearOffline = !value;
+                }
+            }
+        }
+
+        public bool AppearOffline
+        {
+            get
+            {
+                return !AppearOnline;
+            }
+            set
+            {
+                if (value != AppearOffline)
+                {
+                    if (value)
+                        NSMessageHandler.ContactService.AppearOffline(this, null);
+                    else
+                        NSMessageHandler.ContactService.AppearOnline(this, null);
+                }
+            }
+        }
+
         public bool OnForwardList
         {
             get
@@ -892,30 +937,6 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Blocks/unblocks this contact. If blocked, will be placed in your BL and removed
-        /// from your AL; otherwise, will be removed from your BL and placed in your AL.
-        /// If this contact is not in ReverseList and you want to delete forever,
-        /// set the <see cref="OnAllowedList"/> or <see cref="OnBlockedList"/> to false.
-        /// </summary>
-        public bool Blocked
-        {
-            get
-            {
-                return OnBlockedList;
-            }
-            set
-            {
-                if (NSMessageHandler != null)
-                {
-                    if (value)
-                        NSMessageHandler.ContactService.BlockContact(this);
-                    else
-                        NSMessageHandler.ContactService.UnBlockContact(this);
-                }
-            }
-        }
-
-        /// <summary>
         /// Adds or removes this contact into/from your AL.
         /// If this contact is not in ReverseList and you want to delete forever,
         /// set this property to false.
@@ -932,51 +953,13 @@ namespace MSNPSharp
                 {
                     if (value)
                     {
-                        Blocked = false;
+                        NSMessageHandler.ContactService.AddContactToList(this, RoleLists.Allow, null);
                     }
-                    else if (!OnReverseList)
+                    else
                     {
                         NSMessageHandler.ContactService.RemoveContactFromList(this, RoleLists.Allow, null);
                     }
                 }
-            }
-        }
-
-        /// <summary>
-        /// Adds or removes this contact into/from your BL.
-        /// If this contact is not in ReverseList and you want to delete forever,
-        /// set this property to false.
-        /// </summary>
-        public bool OnBlockedList
-        {
-            get
-            {
-                return ((lists & RoleLists.Block) == RoleLists.Block);
-            }
-            set
-            {
-                if (value != OnBlockedList)
-                {
-                    if (value)
-                    {
-                        Blocked = true;
-                    }
-                    else if (!OnReverseList)
-                    {
-                        NSMessageHandler.ContactService.RemoveContactFromList(this, RoleLists.Block, null);
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Indicates whether the contact have you on their contact list. 
-        /// </summary>
-        public bool OnReverseList
-        {
-            get
-            {
-                return ((lists & RoleLists.Reverse) == RoleLists.Reverse);
             }
         }
 
@@ -1109,17 +1092,16 @@ namespace MSNPSharp
                     status = newStatus;
                 }
 
-                // raise an event									
-                OnStatusChanged(oldStatus);
+                // raise an event
+                OnStatusChanged(new StatusChangedEventArgs(oldStatus, newStatus));
 
                 // raise the online/offline events
                 if (oldStatus == PresenceStatus.Offline)
-                    OnContactOnline(oldStatus);
+                    OnContactOnline(new StatusChangedEventArgs(oldStatus, newStatus));
 
                 if (newStatus == PresenceStatus.Offline)
-                    OnContactOffline(oldStatus);
+                    OnContactOffline(new StatusChangedEventArgs(oldStatus, newStatus));
             }
-
         }
 
         /// <summary>
@@ -1196,7 +1178,8 @@ namespace MSNPSharp
         /// </returns>
         internal bool SetDisplayImageAndFireDisplayImageChangedEvent(DisplayImage image)
         {
-            if (image == null) return false;
+            if (image == null)
+                return false;
 
 
             DisplayImageChangedEventArgs displayImageChangedArg = null;
@@ -1221,7 +1204,8 @@ namespace MSNPSharp
 
         internal bool SetSceneImageAndFireSceneImageChangedEvent(SceneImage image)
         {
-            if (image == null) return false;
+            if (image == null)
+                return false;
 
             SceneImageChangedEventArgs sceneImageChangedArg = null;
             {
@@ -1295,23 +1279,23 @@ namespace MSNPSharp
             }
         }
 
-        protected virtual void OnStatusChanged(PresenceStatus oldStatus)
+        protected virtual void OnStatusChanged(StatusChangedEventArgs e)
         {
             if (StatusChanged != null)
-                StatusChanged(this, new StatusChangedEventArgs(oldStatus));
+                StatusChanged(this, e);
         }
 
-        protected virtual void OnContactOnline(PresenceStatus oldStatus)
+        protected virtual void OnContactOnline(StatusChangedEventArgs e)
         {
             if (ContactOnline != null)
-                ContactOnline(this, new StatusChangedEventArgs(oldStatus));
+                ContactOnline(this, e);
         }
 
-        protected virtual void OnContactOffline(PresenceStatus oldStatus)
+        protected virtual void OnContactOffline(StatusChangedEventArgs e)
         {
             if (ContactOffline != null)
             {
-                ContactOffline(this, new StatusChangedEventArgs(oldStatus));
+                ContactOffline(this, e);
             }
         }
 
@@ -1616,11 +1600,14 @@ namespace MSNPSharp
                 {
                     // via=;
                     string via = memberAndNetwork[1].Replace("via=", String.Empty);
-                    string[] viaNetwork = via.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+                    string[] viaNetwork = via.Split(new char[] { ':' }, 2, StringSplitOptions.RemoveEmptyEntries);
                     if (viaNetwork.Length > 1)
                     {
                         viaAccountAddressType = (IMAddressInfoType)Enum.Parse(typeof(IMAddressInfoType), viaNetwork[0].ToString());
                         viaAccount = viaNetwork[1].ToLowerInvariant();
+
+                        if (viaAccountAddressType == IMAddressInfoType.Telephone)
+                            viaAccount = viaAccount.Replace("tel:", String.Empty);
                     }
                     else
                     {
@@ -1630,12 +1617,15 @@ namespace MSNPSharp
                     }
                 }
 
-                string[] member = memberAndNetwork[0].Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+                string[] member = memberAndNetwork[0].Split(new char[] { ':' }, 2, StringSplitOptions.RemoveEmptyEntries);
 
                 if (member.Length > 1)
                 {
                     accountAddressType = (IMAddressInfoType)Enum.Parse(typeof(IMAddressInfoType), member[0].ToString());
                     account = member[1].ToLowerInvariant();
+
+                    if (accountAddressType == IMAddressInfoType.Telephone)
+                        account = viaAccount.Replace("tel:", String.Empty);
                 }
                 else
                 {
@@ -1658,10 +1648,10 @@ namespace MSNPSharp
 
         internal static RoleLists GetListForADL(RoleLists currentContactList)
         {
-            if ((currentContactList & RoleLists.Reverse) == RoleLists.Reverse)
-            {
-                return currentContactList ^ RoleLists.Reverse;
-            }
+            // Delete Reverse and Block roles, no more supported.
+
+            currentContactList &= ~RoleLists.Reverse;
+            currentContactList &= ~RoleLists.Block;
 
             return currentContactList;
         }
@@ -1726,11 +1716,74 @@ namespace MSNPSharp
         {
             if (contact == null)
                 return false;
+
             if (ClientType == contact.ClientType && Account.ToLowerInvariant() == contact.Account.ToLowerInvariant())
                 return true;
 
             return false;
         }
 
+        protected virtual bool CanReceiveMessage
+        {
+            get
+            {
+                if (NSMessageHandler == null || !NSMessageHandler.IsSignedIn)
+                    return false;
+
+                return true;
+            }
+        }
+
+        public virtual bool SupportsMultiparty
+        {
+            get
+            {
+                lock (SyncObject)
+                {
+                    foreach (EndPointData ep in EndPointData.Values)
+                    {
+                        if (ClientCapabilitiesEx.SupportsMultipartyConversations == (ep.ClientCapabilitiesEx & ClientCapabilitiesEx.SupportsMultipartyConversations))
+                            return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+
+
+        /// <summary>
+        /// Send a typing message indicates that you are typing.
+        /// </summary>
+        /// <exception cref="MSNPSharpException">NSMessageHandler is null</exception>
+        /// <exception cref="InvalidOperationException">Not sign in to the server, or you send a message to a circle in <see cref="PresenceStatus.Hidden"/> status.</exception>
+        public void SendTypingMessage()
+        {
+            if (CanReceiveMessage)
+                NSMessageHandler.SendTypingMessage(this);
+        }
+
+        /// <summary>
+        /// Send nudge.
+        /// </summary>
+        /// <exception cref="MSNPSharpException">NSMessageHandler is null</exception>
+        /// <exception cref="InvalidOperationException">Not sign in to the server, or you send a message to a circle in <see cref="PresenceStatus.Hidden"/> status.</exception>
+        public void SendNudge()
+        {
+            if (CanReceiveMessage)
+                NSMessageHandler.SendNudge(this);
+        }
+
+        /// <summary>
+        /// Send a text message to the contact.
+        /// </summary>
+        /// <param name="textMessage"></param>
+        /// <exception cref="MSNPSharpException">NSMessageHandler is null</exception>
+        /// <exception cref="InvalidOperationException">Not sign in to the server, or you send a message to a circle in <see cref="PresenceStatus.Hidden"/> status.</exception>
+        public void SendMessage(TextMessage textMessage)
+        {
+            if (CanReceiveMessage)
+                NSMessageHandler.SendTextMessage(this, textMessage);
+        }
     }
 };

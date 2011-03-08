@@ -172,7 +172,7 @@ namespace MSNPSharp.P2P
             P2PSession p2pSession)
         {
             // Only send the direct invite if we're currently using an SBBridge or UUNBridge
-            if (!(p2pBridge is SBBridge) && !(p2pBridge is UUNBridge))
+            if (/*MSNP21TODO !(p2pBridge is SBBridge) &&*/ !(p2pBridge is UUNBridge))
                 return;
 
             int netId;

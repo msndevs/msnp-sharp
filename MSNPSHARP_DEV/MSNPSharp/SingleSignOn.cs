@@ -60,7 +60,8 @@ namespace MSNPSharp
         OIM = 0x04,
         Storage = 0x10,
         Web = 0x20,
-        WhatsUp = 0x40
+        WhatsUp = 0x40,
+        Directory = 0x80
     }
 
     public enum ExpiryState
@@ -573,7 +574,7 @@ namespace MSNPSharp
 
         public void AddDefaultAuths()
         {
-            AddAuths(SSOTicketType.Clear | SSOTicketType.Contact | SSOTicketType.OIM | SSOTicketType.Storage | SSOTicketType.Web | SSOTicketType.WhatsUp);
+            AddAuths(SSOTicketType.Clear | SSOTicketType.Contact | SSOTicketType.OIM | SSOTicketType.Storage | SSOTicketType.Web | SSOTicketType.WhatsUp | SSOTicketType.Directory);
         }
 
         public void AddAuths(SSOTicketType ssott)
@@ -608,6 +609,10 @@ namespace MSNPSharp
 
                     case SSOTicketType.WhatsUp:
                         AuthenticationAdd("sup.live.com", "MBI");
+                        break;
+
+                    case SSOTicketType.Directory:
+                        AuthenticationAdd("directory.services.live.com", "MBI");
                         break;
                 }
             }
@@ -931,6 +936,9 @@ namespace MSNPSharp
                         break;
                     case "sup.live.com":
                         ticketype = SSOTicketType.WhatsUp;
+                        break;
+                    case "directory.services.live.com":
+                        ticketype = SSOTicketType.Directory;
                         break;
                 }
 

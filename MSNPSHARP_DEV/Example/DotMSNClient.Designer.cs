@@ -41,8 +41,8 @@ namespace MSNPSharpClient
             this.importContactsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.createCircleMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
-            this.blockMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.unblockMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.appearOfflineMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.appearOnlineMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.deleteMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.openImageDialog = new System.Windows.Forms.OpenFileDialog();
@@ -131,11 +131,11 @@ namespace MSNPSharpClient
             this.importContactsMenuItem,
             this.createCircleMenuItem,
             this.toolStripMenuItem2,
-            this.blockMenuItem,
-            this.unblockMenuItem,
+            this.appearOfflineMenuItem,
+            this.appearOnlineMenuItem,
             this.deleteMenuItem});
             this.userMenuStrip.Name = "contextMenuStrip1";
-            this.userMenuStrip.Size = new System.Drawing.Size(201, 192);
+            this.userMenuStrip.Size = new System.Drawing.Size(201, 214);
             // 
             // sendIMMenuItem
             // 
@@ -185,25 +185,25 @@ namespace MSNPSharpClient
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
             this.toolStripMenuItem2.Size = new System.Drawing.Size(197, 6);
             // 
-            // blockMenuItem
+            // appearOfflineMenuItem
             // 
-            this.blockMenuItem.Name = "blockMenuItem";
-            this.blockMenuItem.Size = new System.Drawing.Size(200, 22);
-            this.blockMenuItem.Text = "Block";
-            this.blockMenuItem.Click += new System.EventHandler(this.blockToolStripMenuItem_Click);
+            this.appearOfflineMenuItem.Name = "appearOfflineMenuItem";
+            this.appearOfflineMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.appearOfflineMenuItem.Text = "Appear offline";
+            this.appearOfflineMenuItem.Click += new System.EventHandler(this.blockToolStripMenuItem_Click);
             // 
-            // unblockMenuItem
+            // appearOnlineMenuItem
             // 
-            this.unblockMenuItem.Name = "unblockMenuItem";
-            this.unblockMenuItem.Size = new System.Drawing.Size(200, 22);
-            this.unblockMenuItem.Text = "Unblock";
-            this.unblockMenuItem.Click += new System.EventHandler(this.unblockMenuItem_Click);
+            this.appearOnlineMenuItem.Name = "appearOnlineMenuItem";
+            this.appearOnlineMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.appearOnlineMenuItem.Text = "Appear online";
+            this.appearOnlineMenuItem.Click += new System.EventHandler(this.unblockMenuItem_Click);
             // 
             // deleteMenuItem
             // 
             this.deleteMenuItem.Name = "deleteMenuItem";
             this.deleteMenuItem.Size = new System.Drawing.Size(200, 22);
-            this.deleteMenuItem.Text = "Delete";
+            this.deleteMenuItem.Text = "Delete contact";
             this.deleteMenuItem.Click += new System.EventHandler(this.deleteMenuItem_Click);
             // 
             // openFileDialog
@@ -797,7 +797,7 @@ namespace MSNPSharpClient
             this.MinimumSize = new System.Drawing.Size(640, 480);
             this.Name = "ClientForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "MSNPSharp Example Client for MSNP18";
+            this.Text = "MSNPSharp Example Client for MSNP21";
             this.Load += new System.EventHandler(this.ClientForm_Load);
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ClientForm_FormClosing);
             this.userMenuStrip.ResumeLayout(false);
@@ -839,9 +839,9 @@ namespace MSNPSharpClient
         private ImageList ImageList1;
         private ContextMenuStrip userMenuStrip;
         private ToolStripMenuItem sendIMMenuItem;
-        private ToolStripMenuItem blockMenuItem;
+        private ToolStripMenuItem appearOfflineMenuItem;
         private ToolStripSeparator toolStripMenuItem2;
-        private ToolStripMenuItem unblockMenuItem;
+        private ToolStripMenuItem appearOnlineMenuItem;
         private ToolStripMenuItem sendOIMMenuItem;
         private ToolStripSeparator toolStripMenuItem3;
         private ToolStripMenuItem sendMIMMenuItem;

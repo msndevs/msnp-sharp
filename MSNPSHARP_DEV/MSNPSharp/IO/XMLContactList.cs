@@ -109,17 +109,89 @@ namespace MSNPSharp.IO
                             type = IMAddressInfoType.Telephone;
                             account = ((PhoneMember)bm).PhoneNumber;
                         }
+                        else if (bm is CircleMember)
+                        {
+                            //type = IMAddressInfoType.Circle;
+                            //account = ((CircleMember)bm).CircleId;
+                        }
+                        else if (bm is ExternalIDMember)
+                        {
+                            type = IMAddressInfoType.RemoteNetwork;
+                            account = ((ExternalIDMember)bm).SourceID;
+                        }
 
                         if (account != null && type != IMAddressInfoType.None)
                         {
                             string displayname = bm.DisplayName == null ? account : bm.DisplayName;
                             Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
-                            contact.CID = cid;
                             contact.Lists |= msnlist;
+
+                            if (cid != 0)
+                                contact.CID = cid;
                         }
                     }
                 }
             }
+
+            #endregion
+
+            #region IMAvailability
+
+            SerializableDictionary<string, SerializableDictionary<string, BaseMember>> hd =
+              SelectTargetMemberships(ServiceFilterType.IMAvailability);
+
+            if (hd != null && hd.ContainsKey(MemberRole.Hide))
+            {
+                foreach (BaseMember bm in hd[MemberRole.Hide].Values)
+                {
+                    long cid = 0;
+                    string account = null;
+                    IMAddressInfoType type = IMAddressInfoType.None;
+
+                    if (bm is PassportMember)
+                    {
+                        type = IMAddressInfoType.WindowsLive;
+                        PassportMember pm = (PassportMember)bm;
+                        if (!pm.IsPassportNameHidden)
+                        {
+                            account = pm.PassportName;
+                        }
+                        cid = Convert.ToInt64(pm.CID);
+                    }
+                    else if (bm is EmailMember)
+                    {
+                        type = IMAddressInfoType.Yahoo;
+                        account = ((EmailMember)bm).Email;
+                    }
+                    else if (bm is PhoneMember)
+                    {
+                        type = IMAddressInfoType.Telephone;
+                        account = ((PhoneMember)bm).PhoneNumber;
+                    }
+                    else if (bm is CircleMember)
+                    {
+                        //type = IMAddressInfoType.Circle;
+                        //account = ((CircleMember)bm).CircleId;
+                    }
+                    else if (bm is ExternalIDMember)
+                    {
+                        type = IMAddressInfoType.RemoteNetwork;
+                        account = ((ExternalIDMember)bm).SourceID;
+                    }
+
+                    if (account != null && type != IMAddressInfoType.None)
+                    {
+                        string displayname = bm.DisplayName == null ? account : bm.DisplayName;
+                        Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
+                        contact.Lists |= RoleLists.Hide;
+
+                        if (cid != 0)
+                            contact.CID = cid;
+                    }
+                }
+
+            }
+
 
             #endregion
 
@@ -683,16 +755,15 @@ namespace MSNPSharp.IO
     
                                 if (null != serviceType.Memberships)
                                 {
-                                    if (ServiceFilterType.Messenger == serviceType.Info.Handle.Type)
+                                    if (ServiceFilterType.Messenger == serviceType.Info.Handle.Type ||
+                                        ServiceFilterType.IMAvailability == serviceType.Info.Handle.Type)
                                     {
-    
-                                        ProcessMessengerServiceMemberships(serviceType, ref updatedService);
+                                        ProcessMessengerAndIMAvailabilityMemberships(serviceType, ref updatedService);
                                     }
                                     else
                                     {
                                         ProcessOtherMemberships(serviceType, ref updatedService);
-                                    }
-    
+                                    }    
                                 }
     
                                 // Update service.LastChange
@@ -706,7 +777,7 @@ namespace MSNPSharp.IO
             }
         }
 
-        private void ProcessMessengerServiceMemberships(ServiceType messengerService, ref Service messengerServiceClone)
+        private void ProcessMessengerAndIMAvailabilityMemberships(ServiceType messengerService, ref Service messengerServiceClone)
         {
             #region Messenger Service memberhips
 
@@ -746,14 +817,13 @@ namespace MSNPSharp.IO
                         }
                         else if (bm is CircleMember)
                         {
-                            type = IMAddressInfoType.Circle;
-                            account = ((CircleMember)bm).CircleId;
-                            if (!circlesMembership.ContainsKey(memberrole))
-                            {
-                                circlesMembership.Add(memberrole, new List<CircleMember>(0));
-                            }
-                            circlesMembership[memberrole].Add(bm as CircleMember);
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, messengerService.Info.Handle.Type + " Membership " + bm.GetType().ToString() + ": " + memberrole + ":" + account);
+                            //type = IMAddressInfoType.Circle;
+                            //account = ((CircleMember)bm).CircleId;
+                        }
+                        else if (bm is ExternalIDMember)
+                        {
+                            type = IMAddressInfoType.RemoteNetwork;
+                            account = ((ExternalIDMember)bm).SourceID;
                         }
 
                         if (account != null && type != IMAddressInfoType.None)
@@ -765,75 +835,68 @@ namespace MSNPSharp.IO
                             {
                                 #region Members deleted in other clients.
 
-                                if (type != IMAddressInfoType.Circle)
+                                if (HasMemberhip(messengerServiceClone.ServiceType, account, type, memberrole) &&
+                                    WebServiceDateTimeConverter.ConvertToDateTime(MembershipList[messengerServiceClone.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type)].LastChanged)
+                                    < WebServiceDateTimeConverter.ConvertToDateTime(bm.LastChanged))
                                 {
-                                    if (HasMemberhip(messengerServiceClone.ServiceType, account, type, memberrole) &&
-                                        WebServiceDateTimeConverter.ConvertToDateTime(MembershipList[messengerServiceClone.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type)].LastChanged)
-                                        < WebServiceDateTimeConverter.ConvertToDateTime(bm.LastChanged))
-                                    {
-                                        RemoveMemberhip(messengerServiceClone.ServiceType, account, type, memberrole, Scenario.DeltaRequest);
-                                    }
+                                    RemoveMemberhip(messengerServiceClone.ServiceType, account, type, memberrole, Scenario.DeltaRequest);
+                                }
 
-                                    if (NSMessageHandler.ContactList.HasContact(account, type))
-                                    {
-                                        Contact contact = NSMessageHandler.ContactList.GetContact(account, type);
+                                if (NSMessageHandler.ContactList.HasContact(account, type))
+                                {
+                                    Contact contact = NSMessageHandler.ContactList.GetContact(account, type);
+                                    if (cid != 0)
                                         contact.CID = cid;
-                                        if (contact.HasLists(msnlist))
+
+                                    if (contact.HasLists(msnlist))
+                                    {
+                                        contact.RemoveFromList(msnlist);
+
+                                        // Fire ReverseRemoved
+                                        if (msnlist == RoleLists.Reverse)
                                         {
-                                            contact.RemoveFromList(msnlist);
-
-                                            // Fire ReverseRemoved
-                                            if (msnlist == RoleLists.Reverse)
-                                            {
-                                                NSMessageHandler.ContactService.OnReverseRemoved(new ContactEventArgs(contact));
-                                            }
-
-                                            // Send a list remove event
-                                            NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, msnlist));
+                                            NSMessageHandler.ContactService.OnReverseRemoved(new ContactEventArgs(contact));
                                         }
+
+                                        // Send a list remove event
+                                        NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, msnlist));
                                     }
                                 }
 
                                 #endregion
-
                             }
                             else
                             {
                                 #region Newly added memberships.
 
-                                if (type != IMAddressInfoType.Circle)
+                                if (false == MembershipList[messengerServiceClone.ServiceType].Memberships.ContainsKey(memberrole) ||
+                                    /*new*/ false == MembershipList[messengerServiceClone.ServiceType].Memberships[memberrole].ContainsKey(Contact.MakeHash(account, type)) ||
+                                    /*probably membershipid=0*/ WebServiceDateTimeConverter.ConvertToDateTime(bm.LastChanged)
+                                    > WebServiceDateTimeConverter.ConvertToDateTime(MembershipList[messengerServiceClone.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type)].LastChanged))
                                 {
+                                    AddMemberhip(messengerServiceClone.ServiceType, account, type, memberrole, bm, Scenario.DeltaRequest);
+                                }
 
-                                    if (false == MembershipList[messengerServiceClone.ServiceType].Memberships.ContainsKey(memberrole) ||
-                                        /*new*/ false == MembershipList[messengerServiceClone.ServiceType].Memberships[memberrole].ContainsKey(Contact.MakeHash(account, type)) ||
-                                        /*probably membershipid=0*/ WebServiceDateTimeConverter.ConvertToDateTime(bm.LastChanged)
-                                        > WebServiceDateTimeConverter.ConvertToDateTime(MembershipList[messengerServiceClone.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type)].LastChanged))
-                                    {
-                                        AddMemberhip(messengerServiceClone.ServiceType, account, type, memberrole, bm, Scenario.DeltaRequest);
-                                    }
-
-                                    string displayname = bm.DisplayName == null ? account : bm.DisplayName;
-                                    Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
+                                string displayname = bm.DisplayName == null ? account : bm.DisplayName;
+                                Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
+                                if (cid != 0)
                                     contact.CID = cid;
 
-                                    if (!contact.HasLists(msnlist))
-                                    {
-                                        contact.AddToList(msnlist);
-                                        contact.Lists ^= Contact.GetConflictLists(contact.Lists, msnlist);
-                                        NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, msnlist));
+                                if (!contact.HasLists(msnlist))
+                                {
+                                    contact.AddToList(msnlist);
+                                    contact.Lists ^= Contact.GetConflictLists(contact.Lists, msnlist);
+                                    NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, msnlist));
 
-                                        // Added by other place, this place hasn't synchronized this contact yet.
-                                        if (contact.OnForwardList && contact.OnPendingList)
-                                        {
-                                            contact.OnPendingList = false;
-                                        }
-                                        // At this phase, we requested all memberships including pending.
-                                        else if (contact.OnPendingList ||
-                                            (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList))
-                                        {
-                                            NSMessageHandler.ContactService.OnReverseAdded(new ContactEventArgs(contact));
-                                            
-                                        }
+                                    // Added by other place, this place hasn't synchronized this contact yet.
+                                    if (contact.OnForwardList && contact.OnPendingList)
+                                    {
+                                        contact.OnPendingList = false;
+                                    }
+                                    // At this phase, we requested all memberships including pending.
+                                    else if (contact.OnPendingList)
+                                    {
+                                        NSMessageHandler.ContactService.OnReverseAdded(new ContactEventArgs(contact));
                                     }
                                 }
 
@@ -882,12 +945,9 @@ namespace MSNPSharp.IO
                                 account = ((PhoneMember)bm).PhoneNumber;
                                 break;
 
-                            case MembershipType.Role:
-                            case MembershipType.Service:
-                            case MembershipType.Everyone:
-                            case MembershipType.Partner:
                             case MembershipType.ExternalID:
-                                account = bm.Type + "/" + bm.MembershipId;
+                                type = IMAddressInfoType.RemoteNetwork;
+                                account = ((ExternalIDMember)bm).SourceID;
                                 break;
 
                             case MembershipType.Domain:
@@ -898,6 +958,13 @@ namespace MSNPSharp.IO
                                 type = IMAddressInfoType.Circle;
                                 account = ((CircleMember)bm).CircleId;
                                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, service.Info.Handle.Type + " Membership " + bm.GetType().ToString() + ": " + memberrole + ":" + account);
+                                break;
+
+                            case MembershipType.Role:
+                            case MembershipType.Service:
+                            case MembershipType.Everyone:
+                            case MembershipType.Partner:
+                                account = bm.Type + "/" + bm.MembershipId;
                                 break;
                         }
 
@@ -936,7 +1003,6 @@ namespace MSNPSharp.IO
         SerializableDictionary<long, string> wlConnections = new SerializableDictionary<long, string>(0);
 
         SerializableDictionary<string, ContactType> hiddenRepresentatives = new SerializableDictionary<string, ContactType>(0);
-        SerializableDictionary<string, List<CircleMember>> circlesMembership = new SerializableDictionary<string, List<CircleMember>>(0);
 
         [NonSerialized]
         Dictionary<long, ContactType> contactTable = new Dictionary<long, ContactType>();
@@ -1260,8 +1326,7 @@ namespace MSNPSharp.IO
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Getting non-default addressbook: \r\nId: " +
                                     forwardList.Ab.abId + "\r\nName: " + forwardList.Ab.abInfo.name +
                                     "\r\nType: " + forwardList.Ab.abInfo.AddressBookType + "\r\nMembers:");
-    
-                        string id = forwardList.Ab.abId + "@" + Circle.DefaultHostDomain;
+
                         foreach (ContactType contact in forwardList.Contacts)
                         {
                             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "PassportName: " + contact.contactInfo.passportName + ", DisplayName: " + contact.contactInfo.displayName + ", Type: " + contact.contactInfo.contactType);
@@ -1420,7 +1485,6 @@ namespace MSNPSharp.IO
             if (abId != WebServiceConstants.MessengerIndividualAddressBookId)
             {
                 string lowerId = abId.ToLowerInvariant();
-
 
                 ContactType meContact = SelectMeContactFromAddressBookContactPage(lowerId);
                 CircleInverseInfoType inverseInfo = SelectCircleInverseInfo(lowerId);
@@ -1708,10 +1772,10 @@ namespace MSNPSharp.IO
                                         contact.SetIsMessengerUser(false);
     
                                         PresenceStatus oldStatus = contact.Status;
-                                        contact.SetStatus(PresenceStatus.Offline);  //Force the contact offline.
-                                        NSMessageHandler.OnContactStatusChanged(new ContactStatusChangedEventArgs(contact, oldStatus));
-                                        NSMessageHandler.OnContactOffline(new ContactEventArgs(contact));
-    
+                                        PresenceStatus newStatus = PresenceStatus.Offline;
+                                        contact.SetStatus(newStatus);  //Force the contact offline.
+                                        NSMessageHandler.OnContactStatusChanged(new ContactStatusChangedEventArgs(contact, oldStatus, newStatus));
+                                        NSMessageHandler.OnContactOffline(new ContactStatusChangedEventArgs(contact, oldStatus, newStatus));
     
                                         if (RoleLists.None == contact.Lists)
                                         {
@@ -2648,21 +2712,6 @@ namespace MSNPSharp.IO
         {
             lock(SyncObject)
             {
-                if (!MyProperties.ContainsKey(AnnotationNames.MSN_IM_MBEA))
-                    MyProperties[AnnotationNames.MSN_IM_MBEA] = "0";
-    
-                if (!MyProperties.ContainsKey(AnnotationNames.MSN_IM_GTC))
-                    MyProperties[AnnotationNames.MSN_IM_GTC] = "1";
-    
-                if (!MyProperties.ContainsKey(AnnotationNames.MSN_IM_BLP))
-                    MyProperties[AnnotationNames.MSN_IM_BLP] = "0";
-    
-                if (!MyProperties.ContainsKey(AnnotationNames.MSN_IM_MPOP))
-                    MyProperties[AnnotationNames.MSN_IM_MPOP] = "1";
-    
-                if (!MyProperties.ContainsKey(AnnotationNames.MSN_IM_RoamLiveProperties))
-                    MyProperties[AnnotationNames.MSN_IM_RoamLiveProperties] = "1";
-    
                 if (!MyProperties.ContainsKey(AnnotationNames.Live_Profile_Expression_LastChanged))
                     MyProperties[AnnotationNames.Live_Profile_Expression_LastChanged] = XmlConvert.ToString(DateTime.MinValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
             }

@@ -39,12 +39,45 @@ namespace MSNPSharp
     using MSNPSharp.P2P;
 
     /// <summary>
+    /// Used when a contact changed its status.
+    /// </summary>
+    [Serializable]
+    public class StatusChangedEventArgs : EventArgs
+    {
+        private PresenceStatus oldStatus;
+        private PresenceStatus newStatus;
+
+        public PresenceStatus OldStatus
+        {
+            get
+            {
+                return oldStatus;
+            }
+        }
+
+        public PresenceStatus NewStatus
+        {
+            get
+            {
+                return newStatus;
+            }
+        }
+
+        public StatusChangedEventArgs(PresenceStatus oldStatus, PresenceStatus newStatus)
+        {
+            this.oldStatus = oldStatus;
+            this.newStatus = newStatus;
+        }
+    }
+
+    /// <summary>
     /// Used when contact changed its status.
     /// </summary>
-    [Serializable()]
+    [Serializable]
     public class ContactStatusChangedEventArgs : StatusChangedEventArgs
     {
-        Contact contact;
+        private Contact contact;
+        private Contact via;
 
         /// <summary>
         /// The contact who changed its status.
@@ -55,24 +88,39 @@ namespace MSNPSharp
             {
                 return contact;
             }
-            set
+        }
+
+        /// <summary>
+        /// Circle, temporary group or external network if it isn't null.
+        /// </summary>
+        public Contact Via
+        {
+            get
             {
-                contact = value;
+                return via;
             }
         }
 
-        public ContactStatusChangedEventArgs(Contact contact,
-                                            PresenceStatus oldStatus)
-            : base(oldStatus)
+        public ContactStatusChangedEventArgs(Contact contact, Contact via,
+                                            PresenceStatus oldStatus, PresenceStatus newStatus)
+            : base(oldStatus, newStatus)
         {
-            Contact = contact;
+            this.contact = contact;
+            this.via = via;
+        }
+
+        public ContactStatusChangedEventArgs(Contact contact, PresenceStatus oldStatus, PresenceStatus newStatus)
+            : base(oldStatus, newStatus)
+        {
+            this.contact = contact;
+            this.via = null;
         }
     }
 
     /// <summary>
     /// Used when any contect event occured.
     /// </summary>
-    [Serializable()]
+    [Serializable]
     public class BaseContactEventArgs : EventArgs
     {
         protected Contact contact = null;
@@ -107,23 +155,38 @@ namespace MSNPSharp
         }
     }
 
-    [Serializable()]
-    public class ContactConversationEventArgs : ContactEventArgs
+    [Serializable]
+    public class GroupChatParticipationEventArgs : EventArgs
     {
-        private Guid epoint = Guid.Empty;
+        private Contact contact;
+        private Contact via;
 
-        public Guid EndPoint
+        /// <summary>
+        /// The contact joined/left. Use this contact to chat 1 on 1.
+        /// </summary>
+        public Contact Contact
         {
             get
             {
-                return epoint;
+                return contact;
             }
         }
 
-        public ContactConversationEventArgs(Contact contact, Guid endPoint)
-            : base(contact)
+        /// <summary>
+        /// Circle or temporary group. Use this contact for multiparty chat.
+        /// </summary>
+        public Contact Via
         {
-            epoint = endPoint;
+            get
+            {
+                return via;
+            }
+        }
+
+        public GroupChatParticipationEventArgs(Contact contact, Contact via)
+        {
+            this.contact = contact;
+            this.via = via;
         }
     }
 
@@ -176,31 +239,7 @@ namespace MSNPSharp
 
     }
 
-    /// <summary>
-    /// Used when a contact changed its status.
-    /// </summary>
-    [Serializable()]
-    public class StatusChangedEventArgs : EventArgs
-    {
-        private PresenceStatus oldStatus;
 
-        public PresenceStatus OldStatus
-        {
-            get
-            {
-                return oldStatus;
-            }
-            set
-            {
-                oldStatus = value;
-            }
-        }
-
-        public StatusChangedEventArgs(PresenceStatus oldStatus)
-        {
-            OldStatus = oldStatus;
-        }
-    }
 
     /// <summary>
     /// Used in events where a exception is raised. Via these events the client programmer
@@ -509,7 +548,7 @@ namespace MSNPSharp
 
     /// <summary>
     /// Used as event argument when msn sends us an error.
-    /// </summary>	
+    /// </summary>
     [Serializable()]
     public class MSNErrorEventArgs : EventArgs
     {
@@ -539,6 +578,124 @@ namespace MSNPSharp
         public MSNErrorEventArgs(MSNError msnError)
         {
             this.msnError = msnError;
+        }
+    }
+
+    [Serializable]
+    public class MultipartyCreatedEventArgs : EventArgs
+    {
+        private TemporaryGroup group;
+
+        public TemporaryGroup Group
+        {
+            get
+            {
+                return group;
+            }
+        }
+
+        public MultipartyCreatedEventArgs(TemporaryGroup group)
+        {
+            this.group = group;
+        }
+    }
+
+    [Serializable]
+    public abstract class MessageArrivedEventArgs : EventArgs
+    {
+        private Contact sender;
+        private Contact originalSender;
+
+        /// <summary>
+        /// The sender of message (type can be contact, circle or temporary group)
+        /// </summary>
+        public Contact Sender
+        {
+            get
+            {
+                return sender;
+            }
+        }
+
+        /// <summary>
+        /// The original sender of message (client type is contact and can chat invidually)
+        /// </summary>
+        public Contact OriginalSender
+        {
+            get
+            {
+                return originalSender;
+            }
+        }
+
+        protected MessageArrivedEventArgs(Contact contact, Contact originalSender)
+        {
+            this.sender = contact;
+            this.originalSender = originalSender;
+        }
+    }
+
+    [Serializable]
+    public class NudgeArrivedEventArgs : MessageArrivedEventArgs
+    {
+        public NudgeArrivedEventArgs(Contact contact, Contact originalSender)
+            : base(contact, originalSender)
+        {
+        }
+    }
+
+    [Serializable]
+    public class TypingArrivedEventArgs : MessageArrivedEventArgs
+    {
+        public TypingArrivedEventArgs(Contact contact, Contact originalSender)
+            : base(contact, originalSender)
+        {
+        }
+    }
+
+    [Serializable]
+    public class TextMessageArrivedEventArgs : MessageArrivedEventArgs
+    {
+        private TextMessage textMessage = null;
+
+        /// <summary>
+        /// The text message received.
+        /// </summary>
+        public TextMessage TextMessage
+        {
+            get
+            {
+                return textMessage;
+            }
+        }
+
+        public TextMessageArrivedEventArgs(Contact sender, TextMessage textMessage, Contact originalSender)
+            : base(sender, originalSender)
+        {
+            this.textMessage = textMessage;
+        }
+    }
+
+    [Serializable]
+    public class EmoticonArrivedEventArgs : MessageArrivedEventArgs
+    {
+        private Emoticon emoticon;
+
+        /// <summary>
+        /// The emoticon data received.
+        /// </summary>
+        public Emoticon Emoticon
+        {
+            get
+            {
+                return emoticon;
+            }
+        }
+
+        public EmoticonArrivedEventArgs(Contact sender, Emoticon emoticon, Circle circle)
+            : base(sender, circle)
+        {
+            this.emoticon = emoticon;
         }
     }
 
@@ -617,50 +774,6 @@ namespace MSNPSharp
         }
     }
 
-    [Serializable()]
-    public class CircleStatusChangedEventArgs : StatusChangedEventArgs
-    {
-        protected Circle circle = null;
-
-        /// <summary>
-        /// The circle which changed its status.
-        /// </summary>
-        public Circle Circle
-        {
-            get
-            {
-                return circle;
-            }
-        }
-
-        internal CircleStatusChangedEventArgs(Circle circle, PresenceStatus oldStatus)
-            : base(oldStatus)
-        {
-            this.circle = circle;
-        }
-    }
-
-    [Serializable()]
-    public class CircleMemberStatusChanged : CircleStatusChangedEventArgs
-    {
-        private Contact circleMember = null;
-
-        protected Contact CircleMember
-        {
-            get
-            {
-                return circleMember;
-            }
-        }
-
-        internal CircleMemberStatusChanged(Circle circle, Contact member, PresenceStatus oldStatus)
-            : base(circle, oldStatus)
-        {
-            circleMember = member;
-        }
-
-    }
-
     /// <summary>
     /// Event argument used for ContactService.JoinCircleInvitationReceived event.
     /// </summary>
@@ -683,43 +796,6 @@ namespace MSNPSharp
         internal JoinCircleInvitationEventArgs(Circle circle, CircleInviter invitor)
             : base(circle)
         {
-        }
-    }
-
-    /// <summary>
-    /// Event argument used for receiving text messages from a circle.
-    /// </summary>
-    [Serializable()]
-    public class CircleTextMessageEventArgs : TextMessageEventArgs
-    {
-        protected Contact triggerMember = null;
-
-        public CircleTextMessageEventArgs(TextMessage textMessage, Circle sender, Contact triggerMember)
-            : base(textMessage, sender)
-        {
-            this.triggerMember = triggerMember;
-        }
-
-        /// <summary>
-        /// The circle message send from.
-        /// </summary>
-        public new Circle Sender
-        {
-            get
-            {
-                return base.Sender as Circle;
-            }
-        }
-
-        /// <summary>
-        /// The circle member who send this message.
-        /// </summary>
-        public Contact TriggerMember
-        {
-            get
-            {
-                return triggerMember;
-            }
         }
     }
 
@@ -861,99 +937,6 @@ namespace MSNPSharp
     }
 
     /// <summary>
-    /// Use when receiving messages from IM network other than MSN.
-    /// </summary>
-    public class CrossNetworkMessageEventArgs : EventArgs
-    {
-        private Contact from = null;
-
-        /// <summary>
-        /// The sender of message.
-        /// </summary>
-        public Contact From
-        {
-            get
-            {
-                return from;
-            }
-        }
-
-        private Contact to = null;
-
-        /// <summary>
-        /// The receiver of the message.
-        /// </summary>
-        public Contact To
-        {
-            get
-            {
-                return to;
-            }
-        }
-
-        private int messageType = 0;
-
-        /// <summary>
-        /// The type of message received. Please refer to <see cref="NetworkMessageType"/>
-        /// </summary>
-        public NetworkMessageType MessageType
-        {
-            get
-            {
-                return (NetworkMessageType)messageType;
-            }
-        }
-
-
-        private NetworkMessage message = null;
-
-        /// <summary>
-        /// The message received.
-        /// </summary>
-        public NetworkMessage Message
-        {
-            get
-            {
-                return message;
-            }
-        }
-
-        /// <summary>
-        /// The IM network we get the message.
-        /// </summary>
-        public IMAddressInfoType Network
-        {
-            get
-            {
-                if (From != null)
-                {
-                    if (From.ClientType == IMAddressInfoType.None)
-                        return IMAddressInfoType.WindowsLive;
-
-                    return From.ClientType;
-                }
-
-                return IMAddressInfoType.None;
-            }
-        }
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="sender">The message sender</param>
-        /// <param name="receiver">The message receiver</param>
-        /// <param name="type">Message type, cast from <see cref="NetworkMessageType"/></param>
-        /// <param name="msg">The message body</param>
-        public CrossNetworkMessageEventArgs(Contact sender, Contact receiver, int type, NetworkMessage msg)
-        {
-            from = sender;
-            to = receiver;
-            messageType = type;
-            message = msg;
-        }
-    }
-
-    /// <summary>
     /// Used to notify client programmer after the MSN data object transfer completed.
     /// </summary>
     public class MSNObjectDataTransferCompletedEventArgs : EventArgs
@@ -1021,93 +1004,6 @@ namespace MSNPSharp
             aborted = abort;
             remote = remoteContact;
             remoteEndPointID = remoteEPID;
-        }
-    }
-
-    public class ConversationMSNObjectDataTransferCompletedEventArgs : MSNObjectDataTransferCompletedEventArgs
-    {
-        private Conversation conversation = null;
-
-        public Conversation Conversation
-        {
-            get
-            {
-                return conversation;
-            }
-        }
-
-        public ConversationMSNObjectDataTransferCompletedEventArgs(Conversation conv, MSNObjectDataTransferCompletedEventArgs e)
-            : base(e.ClientData, e.Aborted, e.RemoteContact, e.RemoteContactEndPointID)
-        {
-            conversation = conv;
-        }
-    }
-
-    /// <summary>
-    /// Use to notify a <see cref="Conversation"/> has ended.
-    /// </summary>
-    public class ConversationEndEventArgs : EventArgs
-    {
-        private Conversation conversation = null;
-
-        public Conversation Conversation
-        {
-            get
-            {
-                return conversation;
-            }
-        }
-
-        protected ConversationEndEventArgs()
-            : base()
-        {
-        }
-
-        public ConversationEndEventArgs(Conversation convers)
-        {
-            conversation = convers;
-        }
-    }
-
-    /// <summary>
-    /// Used to notify client programmer that the remote owner of a conversation has been changed.
-    /// </summary>
-    public class ConversationRemoteOwnerChangedEventArgs : EventArgs
-    {
-        private Contact oldRemoteOwner = null;
-
-        /// <summary>
-        /// The remote owner of the conversation before change.
-        /// </summary>
-        public Contact OldRemoteOwner
-        {
-            get
-            {
-                return oldRemoteOwner;
-            }
-        }
-
-        private Contact newRemoteOwner = null;
-
-        /// <summary>
-        /// The new remote owner after the old one has left the conversation.
-        /// </summary>
-        public Contact NewRemoteOwner
-        {
-            get
-            {
-                return newRemoteOwner;
-            }
-        }
-
-        private ConversationRemoteOwnerChangedEventArgs()
-        {
-        }
-
-        public ConversationRemoteOwnerChangedEventArgs(Contact oldOwner, Contact newOwner)
-        {
-            oldRemoteOwner = oldOwner;
-            newRemoteOwner = newOwner;
         }
     }
 };

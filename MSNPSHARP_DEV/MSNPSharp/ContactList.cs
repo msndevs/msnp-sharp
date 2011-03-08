@@ -183,10 +183,8 @@ namespace MSNPSharp
 
         #region Lists
 
-        #region windows live
-
         /// <summary>
-        /// All Windows Live contacts including Forward, Allow, Block, Reverse, Pending, Email, Hide.
+        /// All contacts including all roles.
         /// </summary>
         public ContactList.ListEnumerator All
         {
@@ -197,7 +195,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// All Windows Live contacts on your address book.
+        /// All contacts on your address book.
         /// </summary>
         public ContactList.ListEnumerator Forward
         {
@@ -208,7 +206,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// All Windows Live contacts on your allowed list who can send instant messages.
+        /// All contacts on your allowed list who can send instant messages.
         /// </summary>
         public ContactList.ListEnumerator Allowed
         {
@@ -219,9 +217,9 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// All Windows Live contacts on your allowed list who CANNOT send instant messages.
+        /// All contacts on your blocked list who CANNOT send instant messages.
         /// </summary>
-        public ContactList.ListEnumerator BlockedList
+        public ContactList.ListEnumerator Blocked
         {
             get
             {
@@ -230,9 +228,9 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// All Windows Live contacts on your hidden list who CANNOT see your status but CAN send offline messages.
+        /// All contacts on your hidden list who CANNOT see your status but CAN send offline messages.
         /// </summary>
-        public ContactList.ListEnumerator HiddenList
+        public ContactList.ListEnumerator Hidden
         {
             get
             {
@@ -241,7 +239,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// All Windows Live contacts who have you on their contactlist.
+        /// All contacts who have you on their contactlist.
         /// </summary>
         public ContactList.ListEnumerator Reverse
         {
@@ -252,7 +250,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        ///  All pending Windows Live contacts.
+        ///  All pending contacts.
         /// </summary>
         public ContactList.ListEnumerator Pending
         {
@@ -263,7 +261,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// All Windows Live contacts on your email list. IsMessengerUser property is false.
+        /// All contacts on your email list. IsMessengerUser property is false.
         /// </summary>
         public ContactList.ListEnumerator Email
         {
@@ -273,10 +271,9 @@ namespace MSNPSharp
             }
         }
 
-        #endregion
-
-        #region circle
-
+        /// <summary>
+        /// All msn groups (not categories) on your contact list introduces with WLM2009.
+        /// </summary>
         public ContactList.ListEnumerator Circles
         {
             get
@@ -284,8 +281,6 @@ namespace MSNPSharp
                 return new ContactList.CircleListEnumerator(base[IMAddressInfoType.Circle].GetEnumerator(), RoleLists.None);
             }
         }
-
-        #endregion
 
         #endregion
 
@@ -415,13 +410,10 @@ namespace MSNPSharp
             {
                 lock (SyncRoot)
                 {
-                    foreach (IMAddressInfoType addressType in addressTypes)
+                    foreach (Contact contact in base[IMAddressInfoType.None].Values)
                     {
-                        foreach (Contact contact in base[addressType].Values)
-                        {
-                            if (contact.Guid == guid)
-                                return contact;
-                        }
+                        if (contact.Guid == guid)
+                            return contact;
                     }
                 }
             }
@@ -434,13 +426,10 @@ namespace MSNPSharp
             {
                 lock (SyncRoot)
                 {
-                    foreach (IMAddressInfoType addressType in addressTypes)
+                    foreach (Contact contact in base[IMAddressInfoType.None].Values)
                     {
-                        foreach (Contact contact in base[addressType].Values)
-                        {
-                            if (contact.CID == cid)
-                                return contact;
-                        }
+                        if (contact.CID == cid)
+                            return contact;
                     }
                 }
             }
@@ -575,27 +564,6 @@ namespace MSNPSharp
         #region Internal
 
         /// <summary>
-        /// Get the specified contact.
-        /// <para>This overload will set the contact name to a specified value (if the contact exists.).</para>
-        /// <remarks>If the contact does not exist, return null</remarks>
-        /// </summary>
-        /// <param name="account"></param>
-        /// <param name="name"></param>
-        /// <returns>
-        /// If the contact does not exist, returns null.
-        /// </returns>
-        internal Contact GetContact(string account, string name)
-        {
-            Contact contact = GetContact(account);
-
-            if (contact != null)
-                lock (SyncRoot)
-                    contact.SetName(name);
-
-            return contact;
-        }
-
-        /// <summary>
         /// Get a contact with specified account and client type, if the contact does not exist, create it.
         /// <para>This overload will set the contact name to a specified value.</para>
         /// </summary>
@@ -646,19 +614,6 @@ namespace MSNPSharp
             }
 
             return GetContact(account, type);
-        }
-
-        /// <summary>
-        /// Remove all the contacts with the specified account.
-        /// </summary>
-        /// <param name="account"></param>
-        internal void Remove(string account)
-        {
-            foreach (IMAddressInfoType ct in addressTypes)
-            {
-                if (HasContact(account, ct))
-                    Remove(account, ct);
-            }
         }
 
         /// <summary>

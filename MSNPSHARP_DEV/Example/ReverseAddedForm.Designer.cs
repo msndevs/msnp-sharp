@@ -30,9 +30,9 @@ namespace MSNPSharpClient
         {
             this.lblAdded = new System.Windows.Forms.Label();
             this.gbMembership = new System.Windows.Forms.GroupBox();
-            this.rbBlock = new System.Windows.Forms.RadioButton();
+            this.rbBlock2 = new System.Windows.Forms.RadioButton();
+            this.rbDeleteRequest = new System.Windows.Forms.RadioButton();
             this.rbAllow = new System.Windows.Forms.RadioButton();
-            this.cbContactList = new System.Windows.Forms.CheckBox();
             this.btnOK = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.gbMembership.SuspendLayout();
@@ -41,35 +41,44 @@ namespace MSNPSharpClient
             // lblAdded
             // 
             this.lblAdded.AutoSize = true;
-            this.lblAdded.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.lblAdded.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
             this.lblAdded.Location = new System.Drawing.Point(12, 9);
             this.lblAdded.Name = "lblAdded";
-            this.lblAdded.Size = new System.Drawing.Size(226, 13);
+            this.lblAdded.Size = new System.Drawing.Size(189, 20);
             this.lblAdded.TabIndex = 0;
-            this.lblAdded.Text = "{0} has added you to their contact list.";
+            this.lblAdded.Text = "{0} wants to be friends";
             // 
             // gbMembership
             // 
-            this.gbMembership.Controls.Add(this.rbBlock);
+            this.gbMembership.Controls.Add(this.rbBlock2);
+            this.gbMembership.Controls.Add(this.rbDeleteRequest);
             this.gbMembership.Controls.Add(this.rbAllow);
-            this.gbMembership.Location = new System.Drawing.Point(15, 36);
+            this.gbMembership.Location = new System.Drawing.Point(16, 44);
             this.gbMembership.Name = "gbMembership";
-            this.gbMembership.Size = new System.Drawing.Size(441, 74);
+            this.gbMembership.Size = new System.Drawing.Size(441, 97);
             this.gbMembership.TabIndex = 1;
             this.gbMembership.TabStop = false;
-            this.gbMembership.Text = "Add contact to:";
+            this.gbMembership.Text = "Choise an action";
             // 
-            // rbBlock
+            // rbBlock2
             // 
-            this.rbBlock.AutoSize = true;
-            this.rbBlock.Location = new System.Drawing.Point(15, 42);
-            this.rbBlock.Name = "rbBlock";
-            this.rbBlock.Size = new System.Drawing.Size(421, 17);
-            this.rbBlock.TabIndex = 1;
-            this.rbBlock.Text = "Blocked List (User can not see my online status and can not send instant messages" +
-                ")";
-            this.rbBlock.UseVisualStyleBackColor = true;
-            this.rbBlock.CheckedChanged += new System.EventHandler(this.rbBlock_CheckedChanged);
+            this.rbBlock2.AutoSize = true;
+            this.rbBlock2.Location = new System.Drawing.Point(15, 65);
+            this.rbBlock2.Name = "rbBlock2";
+            this.rbBlock2.Size = new System.Drawing.Size(250, 17);
+            this.rbBlock2.TabIndex = 2;
+            this.rbBlock2.Text = "No, thanks. Block all invitations from this person";
+            this.rbBlock2.UseVisualStyleBackColor = true;
+            // 
+            // rbDeleteRequest
+            // 
+            this.rbDeleteRequest.AutoSize = true;
+            this.rbDeleteRequest.Location = new System.Drawing.Point(15, 42);
+            this.rbDeleteRequest.Name = "rbDeleteRequest";
+            this.rbDeleteRequest.Size = new System.Drawing.Size(309, 17);
+            this.rbDeleteRequest.TabIndex = 1;
+            this.rbDeleteRequest.Text = "No, thanks. Delete this request (may send another invitation)";
+            this.rbDeleteRequest.UseVisualStyleBackColor = true;
             // 
             // rbAllow
             // 
@@ -77,30 +86,18 @@ namespace MSNPSharpClient
             this.rbAllow.Checked = true;
             this.rbAllow.Location = new System.Drawing.Point(15, 19);
             this.rbAllow.Name = "rbAllow";
-            this.rbAllow.Size = new System.Drawing.Size(352, 17);
+            this.rbAllow.Size = new System.Drawing.Size(119, 17);
             this.rbAllow.TabIndex = 0;
             this.rbAllow.TabStop = true;
-            this.rbAllow.Text = "Allowed List (User can see my status and can send instant messages)";
+            this.rbAllow.Text = "Yes, add as a friend";
             this.rbAllow.UseVisualStyleBackColor = true;
-            // 
-            // cbContactList
-            // 
-            this.cbContactList.AutoSize = true;
-            this.cbContactList.Checked = true;
-            this.cbContactList.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.cbContactList.Location = new System.Drawing.Point(30, 125);
-            this.cbContactList.Name = "cbContactList";
-            this.cbContactList.Size = new System.Drawing.Size(169, 17);
-            this.cbContactList.TabIndex = 2;
-            this.cbContactList.Text = "Add this user to my contact list";
-            this.cbContactList.UseVisualStyleBackColor = true;
             // 
             // btnOK
             // 
             this.btnOK.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.btnOK.Location = new System.Drawing.Point(302, 125);
+            this.btnOK.Location = new System.Drawing.Point(266, 147);
             this.btnOK.Name = "btnOK";
-            this.btnOK.Size = new System.Drawing.Size(75, 23);
+            this.btnOK.Size = new System.Drawing.Size(104, 39);
             this.btnOK.TabIndex = 3;
             this.btnOK.Text = "OK";
             this.btnOK.UseVisualStyleBackColor = true;
@@ -109,11 +106,11 @@ namespace MSNPSharpClient
             // btnCancel
             // 
             this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btnCancel.Location = new System.Drawing.Point(381, 125);
+            this.btnCancel.Location = new System.Drawing.Point(382, 147);
             this.btnCancel.Name = "btnCancel";
-            this.btnCancel.Size = new System.Drawing.Size(75, 23);
+            this.btnCancel.Size = new System.Drawing.Size(75, 39);
             this.btnCancel.TabIndex = 4;
-            this.btnCancel.Text = "Cancel";
+            this.btnCancel.Text = "Decide later";
             this.btnCancel.UseVisualStyleBackColor = true;
             this.btnCancel.Click += new System.EventHandler(this.btn_Click);
             // 
@@ -121,10 +118,9 @@ namespace MSNPSharpClient
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(470, 156);
+            this.ClientSize = new System.Drawing.Size(470, 202);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnOK);
-            this.Controls.Add(this.cbContactList);
             this.Controls.Add(this.gbMembership);
             this.Controls.Add(this.lblAdded);
             this.MaximizeBox = false;
@@ -143,9 +139,9 @@ namespace MSNPSharpClient
         private System.Windows.Forms.Label lblAdded;
         private System.Windows.Forms.GroupBox gbMembership;
         private System.Windows.Forms.RadioButton rbAllow;
-        private System.Windows.Forms.RadioButton rbBlock;
-        private System.Windows.Forms.CheckBox cbContactList;
+        private System.Windows.Forms.RadioButton rbDeleteRequest;
         private System.Windows.Forms.Button btnOK;
         private System.Windows.Forms.Button btnCancel;
+        private System.Windows.Forms.RadioButton rbBlock2;
     }
 }

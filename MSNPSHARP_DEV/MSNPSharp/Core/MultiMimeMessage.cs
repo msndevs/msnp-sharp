@@ -46,7 +46,9 @@ namespace MSNPSharp.Core
         private MimeDictionary routingHeaders = new MimeDictionary();
         private MimeDictionary reliabilityHeaders = new MimeDictionary();
         private MimeDictionary contentHeaders = new MimeDictionary();
+        
         private string contentKey = "Messaging";
+        private string contentKeyVersion = "1.0";
 
         public MimeDictionary RoutingHeaders
         {
@@ -84,6 +86,18 @@ namespace MSNPSharp.Core
             }
         }
 
+        public string ContentKeyVersion
+        {
+            get
+            {
+                return contentKeyVersion;
+            }
+            set
+            {
+                contentKeyVersion = value;
+            }
+        }
+
         public MultiMimeMessage(string to, string from)
         {
             To = to;
@@ -93,7 +107,8 @@ namespace MSNPSharp.Core
             Segment = 0;
 
             contentHeaders["Content-Length"] = "0";
-            contentHeaders["Content-Type"] = "Text/plain; charset=UTF-8";
+            contentHeaders["Content-Type"] = "Text/plain";
+            contentHeaders["Content-Type"][" charset"] = "UTF-8"; // Don't delete space
         }
 
         public MultiMimeMessage(byte[] data)
@@ -191,7 +206,7 @@ namespace MSNPSharp.Core
             }
             sb.AppendLine();
 
-            sb.AppendLine(ContentKey + ": 1.0");
+            sb.AppendLine(ContentKey + ": " + ContentKeyVersion);
             foreach (string key in contentHeaders.Keys)
             {
                 if (key != ContentKey)
