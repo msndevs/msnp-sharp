@@ -869,7 +869,7 @@ namespace MSNPSharp
                     case "application/network+xml":
                         {
                             if (fromAccountAddressType == IMAddressInfoType.RemoteNetwork &&
-                                fromAccount == "fb")
+                                fromAccount == RemoteNetworkGateways.FaceBookGatewayAccount)
                             {
                                 // SigningIn,SignedIn, MSNP21TODO
                                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
