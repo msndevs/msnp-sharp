@@ -1150,6 +1150,17 @@ namespace MSNPSharp
         SignedIn,
         SignedOut
     }
+	
+	/// <summary>
+	/// The special account of remote network's gateways, i.e. FaceBook and LinkedIn 
+	/// </summary>
+	public class RemoteNetworkGateways
+	{
+		/// <summary>
+		/// FaceBook Gateway account. 
+		/// </summary>
+		public static const string FaceBookGatewayAccount = "fb";
+	}
 
     #region P2PFlag
 
