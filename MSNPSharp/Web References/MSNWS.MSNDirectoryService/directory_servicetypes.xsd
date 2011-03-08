@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" xmlns="http://profile.live.com/" attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://profile.live.com/" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:include schemaLocation="directory_datatypes.xsd" />
+  <xs:element name="Get" type="GetRequestType" />
+  <xs:complexType name="GetManyRequestType">
+    <xs:sequence>
+      <xs:element name="request">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" name="ViewName" type="xs:string" />
+            <xs:element name="Ids">
+              <xs:complexType>
+                <xs:sequence>
+                  <xs:element minOccurs="0" maxOccurs="unbounded" name="ProfileId" type="IdType" />
+                </xs:sequence>
+              </xs:complexType>
+            </xs:element>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="GetResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="GetResult" type="GetResultType" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="GetResultType">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="CallStatistics" type="CallStatisticsType" />
+      <xs:element minOccurs="0" name="Id" type="IdType" />
+      <xs:element minOccurs="0" name="View" type="ViewType" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="GetMany" type="GetManyRequestType" />
+  <xs:complexType name="GetRequestType">
+    <xs:sequence>
+      <xs:element name="request">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" name="ViewName" type="xs:string" />
+            <xs:element minOccurs="0" name="Id" type="IdType" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="GetManyResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="GetManyResult" type="GetManyResultType" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="GetManyResultType">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="CallStatistics" type="CallStatisticsType" />
+      <xs:element name="Ids">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" name="ProfileId" type="IdType" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="Views">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" name="View" type="ViewType" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="SOAPApplicationHeader">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="ApplicationId" type="xs:string" />
+        <xs:element minOccurs="0" name="Scenario" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SOAPUserHeader">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="TicketToken" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

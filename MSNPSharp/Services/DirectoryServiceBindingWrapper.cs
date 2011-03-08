@@ -30,36 +30,42 @@ THE POSSIBILITY OF SUCH DAMAGE.
 */
 #endregion
 
-
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Net;
+using System.Net.Sockets;
 
-namespace MSNPSharp
+namespace MSNPSharp.Services
 {
-    /// <summary>
-    /// A comparer which treat siblings as the same contact.
-    /// </summary>
-    /// <typeparam name="TKey"></typeparam>
-    public class SiblingComparer<TKey> : IEqualityComparer<TKey>
-    {
-        #region IEqualityComparer<TKey> Members
+    using MSNPSharp.MSNWS.MSNDirectoryService;
 
-        public bool Equals(TKey x, TKey y)
+    [System.Web.Services.WebServiceBindingAttribute(Name = "DirectoryServiceBinding", Namespace = "http://profile.live.com/")]
+    internal sealed class DirectoryServiceWrapper : DirectoryService
+    {
+        private IPEndPoint localEndPoint = null;
+
+        public DirectoryServiceWrapper()
+            : base()
         {
-            return GetHashCode(x) == GetHashCode(y);
         }
 
-        public int GetHashCode(TKey obj)
+        public DirectoryServiceWrapper(IPEndPoint localEndPoint)
+            : base()
         {
-            if (obj is Contact)
+            this.localEndPoint = localEndPoint;
+        }
+
+        protected override WebRequest GetWebRequest(Uri uri)
+        {
+            WebRequest request = base.GetWebRequest(uri);
+            if (request is HttpWebRequest)
             {
-                return (obj as Contact).SiblingString.GetHashCode();
+                (request as HttpWebRequest).ServicePoint.BindIPEndPointDelegate = new BindIPEndPoint((new IPEndPointCallback(localEndPoint)).BindIPEndPointCallback);
             }
 
-            return obj.GetHashCode();
+            return request;
         }
-
-        #endregion
     }
-}
+};
+

@@ -48,10 +48,11 @@ namespace MSNPSharp
 {
     using MSNPSharp.Core;
     using MSNPSharp.P2P;
+    using MSNPSharp.MSNWS.MSNDirectoryService;
 
     /// <summary>
     /// Handles the protocol messages from the notification server
-    /// and implements protocol version MSNP18.
+    /// and implements protocol version MSNP21.
     /// </summary>
     public partial class NSMessageHandler : IMessageHandler
     {
@@ -59,10 +60,11 @@ namespace MSNPSharp
 
         #region Members
 
-        private Credentials credentials = new Credentials(MsnProtocol.MSNP18);
+        private Credentials credentials = new Credentials(MsnProtocol.MSNP21);
         private IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, 0);
         private IPEndPoint externalEndPoint = null;
         private SocketMessageProcessor messageProcessor = null;
+        private long hopCount = 0;
 
         private UUNBridge uunBridge = null;
         private P2PHandler p2pHandler = null;
@@ -76,18 +78,15 @@ namespace MSNPSharp
 
         private bool isSignedIn = false;
         private MSNTicket msnticket = MSNTicket.Empty;
-        private Queue pendingSwitchboards = new Queue();
-        private ArrayList conversations = ArrayList.Synchronized(new ArrayList());
 
         private ContactService contactService = null;
         private OIMService oimService = null;
         private MSNStorageService storageService = null;
         private WhatsUpService whatsUpService = null;
+        private MSNDirectoryService dirService = null;
 
         private List<Regex> censorWords = new List<Regex>(0);
-        private Dictionary<string, string> sessions = new Dictionary<string, string>(0);
-        private Guid p2pInviteSchedulerId = Guid.Empty;
-        private Guid sbRequestSchedulerId = Guid.Empty;
+        private Dictionary<int, TemporaryGroup> multiparties = new Dictionary<int, TemporaryGroup>();
 
         protected internal NSMessageHandler()
         {
@@ -99,6 +98,7 @@ namespace MSNPSharp
             oimService = new OIMService(this);
             storageService = new MSNStorageService(this);
             whatsUpService = new WhatsUpService(this);
+            dirService = new MSNDirectoryService(this);
 
             uunBridge = new UUNBridge(this);
             p2pHandler = new P2PHandler(this);
@@ -304,6 +304,14 @@ namespace MSNPSharp
             }
         }
 
+        internal MSNDirectoryService DirectoryService
+        {
+            get
+            {
+                return dirService;
+            }
+        }
+
         /// <summary>
         /// The processor to handle the messages
         /// </summary>
@@ -365,14 +373,6 @@ namespace MSNPSharp
             }
         }
 
-        public ArrayList Conversations
-        {
-            get
-            {
-                return conversations;
-            }
-        }
-
         public UUNBridge UUNBridge
         {
             get
@@ -390,25 +390,6 @@ namespace MSNPSharp
             set
             {
                 msnticket = value;
-            }
-        }
-
-        /// <summary>
-        /// The scheduler identifier for <see cref="Schedulers.P2PInvitationScheduler"/>
-        /// </summary>
-        internal Guid P2PInvitationSchedulerId
-        {
-            get
-            {
-                return p2pInviteSchedulerId;
-            }
-        }
-
-        internal Guid SwitchBoardRequestSchedulerId
-        {
-            get
-            {
-                return sbRequestSchedulerId;
             }
         }
 
@@ -436,60 +417,6 @@ namespace MSNPSharp
         /// </summary>
         public event EventHandler<PingAnswerEventArgs> PingAnswer;
 
-        /// <summary>
-        /// Occurs when any contact changes status.
-        /// </summary>
-        public event EventHandler<ContactStatusChangedEventArgs> ContactStatusChanged;
-
-        /// <summary>
-        /// Occurs when any contact goes from offline status to another status.
-        /// </summary>
-        public event EventHandler<ContactEventArgs> ContactOnline;
-
-        /// <summary>
-        /// Occurs when any contact goed from any status to offline status.
-        /// </summary>
-        public event EventHandler<ContactEventArgs> ContactOffline;
-
-        /// <summary>
-        /// Occurs when any circle changes status.
-        /// </summary>
-        public event EventHandler<CircleStatusChangedEventArgs> CircleStatusChanged;
-
-        /// <summary>
-        /// Occurs when any circle goes from offline status to another status.
-        /// </summary>
-        public event EventHandler<CircleEventArgs> CircleOnline;
-
-        /// <summary>
-        /// Occurs when any circle goes from any status to offline status.
-        /// </summary>
-        public event EventHandler<CircleEventArgs> CircleOffline;
-
-        /// <summary>
-        /// Occurs when any circle member goes from offline status to another status.
-        /// </summary>
-        public event EventHandler<CircleMemberEventArgs> CircleMemberOnline;
-
-        /// <summary>
-        ///  Occurs when any circle member goes from any status to offline status.
-        /// </summary>
-        public event EventHandler<CircleMemberEventArgs> CircleMemberOffline;
-
-        /// <summary>
-        /// Occurs when any circle member changes status.
-        /// </summary>
-        public event EventHandler<CircleMemberStatusChanged> CircleMemberStatusChanged;
-
-        /// <summary>
-        /// Occurs when a member left the circle conversation.
-        /// </summary>
-        public event EventHandler<CircleMemberEventArgs> LeftCircleConversation;
-
-        /// <summary>
-        /// Occurs when a member joined the circle conversation.
-        /// </summary>
-        public event EventHandler<CircleMemberEventArgs> JoinedCircleConversation;
 
         /// <summary>
         /// Occurs when the authentication and authorzation with the server has finished. The client is now connected to the messenger network.
@@ -501,20 +428,6 @@ namespace MSNPSharp
         /// </summary>
         public event EventHandler<SignedOffEventArgs> SignedOff;
 
-        /// <summary>
-        /// Occurs when a switchboard session has been created
-        /// </summary>
-        public event EventHandler<SBCreatedEventArgs> SBCreated;
-
-        /// <summary>
-        /// Occurs when a new conversation is created. Either by a local or remote invitation.
-        /// </summary>
-        /// <remarks>
-        /// You can check the initiator object in the event arguments to see which party initiated the
-        /// conversation. This event is called after the messenger server has created a switchboard handler,
-        /// so there is always a valid messageprocessor.
-        /// </remarks>
-        public event EventHandler<ConversationCreatedEventArgs> ConversationCreated;
 
         /// <summary>
         /// Occurs when the server notifies the client with the status of the owner's mailbox.
@@ -536,32 +449,7 @@ namespace MSNPSharp
         /// </summary>
         public event EventHandler<MSNErrorEventArgs> ServerErrorReceived;
 
-        /// <summary>
-        /// Occurs when we receive a mobile message.
-        /// </summary>
-        public event EventHandler<CrossNetworkMessageEventArgs> MobileMessageReceived;
 
-        /// <summary>
-        /// Occurs when a circle member is typing.
-        /// </summary>
-        public event EventHandler<CircleMemberEventArgs> CircleTypingMessageReceived;
-
-        /// <summary>
-        /// Occurs when we receive a nudge message sent by a circle member.
-        /// </summary>
-        public event EventHandler<CircleMemberEventArgs> CircleNudgeReceived;
-
-        /// <summary>
-        /// Occurs when we receive a text message sent from a circle.
-        /// </summary>
-        public event EventHandler<CircleTextMessageEventArgs> CircleTextMessageReceived;
-
-        /// <summary>
-        /// Fire after received a message from other IM network (i.e. Yahoo! Messenger network) <br/>
-        /// This event is another source of incoming messages, since some IM can communicate
-        /// with MSN. MSN will deliver messages from these network to MSN client by NS server.
-        /// </summary>
-        public event EventHandler<CrossNetworkMessageEventArgs> CrossNetworkMessageReceived;
 
         #endregion
 
@@ -622,159 +510,9 @@ namespace MSNPSharp
             MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MOB", enabled ? "Y" : "N" }));
         }
 
-        /// <summary>
-        /// Sends a mobile message to the specified remote contact. This only works when the remote contact has it's mobile device enabled and has MSN-direct enabled.
-        /// </summary>
-        /// <param name="receiver"></param>
-        /// <param name="text"></param>
-        public virtual void SendMobileMessage(Contact receiver, string text)
-        {
-            SendMobileMessage(receiver, text, String.Empty, String.Empty);
-        }
-
-        /// <summary>
-        /// Sends a mobile message to the specified remote contact. This only works when the remote contact has it's mobile device enabled and has MSN-direct enabled.
-        /// </summary>
-        /// <param name="receiver"></param>
-        /// <param name="text"></param>
-        /// <param name="callbackNumber"></param>
-        /// <param name="callbackDevice"></param>
-        public virtual void SendMobileMessage(Contact receiver, string text, string callbackNumber, string callbackDevice)
-        {
-            if (receiver.MobileAccess || receiver.ClientType == IMAddressInfoType.Telephone)
-            {
-                string to = (receiver.ClientType == IMAddressInfoType.Telephone) ? "tel:" + receiver.Account : receiver.Account;
-
-                TextMessage txtMsg = new TextMessage(text);
-                MimeMessage mimeMessage = new MimeMessage();
-                mimeMessage.InnerMessage = txtMsg;
-                mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/plain; charset=UTF-8";
-                mimeMessage.MimeHeader["Dest-Agent"] = "mobile";
-
-                NSMessage nsMessage = new NSMessage("UUM", new string[] { to, ((int)receiver.ClientType).ToString(), ((int)NetworkMessageType.Text).ToString() });
-
-                nsMessage.InnerMessage = mimeMessage;
-                MessageProcessor.SendMessage(nsMessage);
-
-            }
-            else
-            {
-                throw new MSNPSharpException("The specified contact has no mobile device enabled nor phone member.");
-            }
-        }
-
-
         #endregion
 
-        #region Send Message to other networks.
-
-        /// <summary>
-        /// Send message to contacts in other IM networks.
-        /// </summary>
-        /// <param name="targetContact"></param>
-        /// <param name="message"></param>
-        public void SendCrossNetworkMessage(Contact targetContact, TextMessage message)
-        {
-            if (targetContact.ClientType == IMAddressInfoType.Yahoo)
-            {
-                SendMessageToYahooNetwork(targetContact, message, NetworkMessageType.Text);
-            }
-            else
-            {
-                throw new MSNPSharpException("Contact Network not supported.");
-            }
-        }
-
-        /// <summary>
-        /// Send message to contacts in other IM networks.
-        /// </summary>
-        /// <param name="targetContact"></param>
-        /// <param name="type"></param>
-        public void SendCrossNetworkMessage(Contact targetContact, NetworkMessageType type)
-        {
-            if (targetContact.ClientType == IMAddressInfoType.Yahoo)
-            {
-                switch (type)
-                {
-                    case NetworkMessageType.Nudge:
-                        MimeMessage mimeMessage = new MimeMessage(false);
-                        mimeMessage.MimeHeader["ID"] = "1";
-                        SendMessageToYahooNetwork(targetContact, mimeMessage, type);
-                        break;
-                    case NetworkMessageType.Typing:
-                        //YIM typing message is different from MSN typing message.
-                        //For MSN typing message, you need to pass a "\r\n" as content.
-                        SendMessageToYahooNetwork(targetContact, null, type);
-                        break;
-                }
-            }
-            else
-            {
-                throw new MSNPSharpException("Contact Network not supported.");
-            }
-        }
-
-        private void SendMessageToYahooNetwork(Contact yimContact, NetworkMessage message, NetworkMessageType type)
-        {
-            string messageType = ((int)type).ToString(CultureInfo.InvariantCulture);
-
-            MimeMessage mimeMessage = new MimeMessage();
-            switch (type)
-            {
-                case NetworkMessageType.Nudge:
-                    mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-msnmsgr-datacast";
-                    break;
-                case NetworkMessageType.Typing:
-                    mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/x-msmsgscontrol";
-                    mimeMessage.MimeHeader[MimeHeaderStrings.TypingUser] = ContactList.Owner.Account.ToLowerInvariant();
-                    break;
-                case NetworkMessageType.Text:
-                    mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/plain; charset=UTF-8";
-                    mimeMessage.MimeHeader[MimeHeaderStrings.X_MMS_IM_Format] = (message as TextMessage).GetStyleString();
-                    break;
-            }
-
-            NSMessage nsMessage = new NSMessage("UUM", new string[]{yimContact.Account.ToLowerInvariant(), 
-                ((int)IMAddressInfoType.Yahoo).ToString(CultureInfo.InvariantCulture),
-                messageType});
-
-            mimeMessage.InnerMessage = message;
-            nsMessage.InnerMessage = mimeMessage;
-
-            MessageProcessor.SendMessage(nsMessage);
-
-        }
-        #endregion
-
-        #region CreateConversation & RequestSwitchboard & SendPing
-
-
-
-        public Conversation CreateConversation()
-        {
-            Conversation conversation = new Conversation(this);
-            OnConversationCreated(conversation, this);
-            return conversation;
-        }
-
-        protected internal virtual void OnConversationCreated(Conversation conversation, object initiator)
-        {
-            if (ConversationCreated != null)
-                ConversationCreated(this, new ConversationCreatedEventArgs(conversation, initiator));
-        }
-
-        /// <summary>
-        /// Sends a request to the server to start a new switchboard session. The specified switchboard handler will be associated with the new switchboard session.
-        /// </summary>
-        /// <param name="switchboardHandler">The switchboard handler to use. A switchboard processor will be created and connected to this handler.</param>
-        /// <param name="initiator">The object that initiated the request for the switchboard.</param>
-        /// <returns></returns>
-        public virtual void RequestSwitchboard(SBMessageHandler switchboardHandler, object initiator)
-        {
-            pendingSwitchboards.Enqueue(new SwitchboardQueueItem(switchboardHandler, initiator));
-
-            Schedulers.SwitchBoardRequestScheduler.Enqueue(MessageProcessor, new NSMessage("XFR", new string[] { "SB" }), SwitchBoardRequestSchedulerId);
-        }
+        #region SendPing
 
         /// <summary>
         /// Sends PNG (ping) command.
@@ -871,33 +609,6 @@ namespace MSNPSharp
         #region SetPrivacyMode & SetNotifyPrivacyMode & SetPresenceStatus
 
         /// <summary>
-        /// Set the contactlist owner's privacy mode.
-        /// </summary>
-        /// <param name="privacy">New privacy setting</param>
-        internal void SetPrivacyMode(PrivacyMode privacy)
-        {
-            if (privacy == PrivacyMode.AllExceptBlocked)
-                MessageProcessor.SendMessage(new NSMessage("BLP", new string[] { "AL" }));
-
-            if (privacy == PrivacyMode.NoneButAllowed)
-                MessageProcessor.SendMessage(new NSMessage("BLP", new string[] { "BL" }));
-
-        }
-
-        /// <summary>
-        /// Set the contactlist owner's notification mode on contact service.
-        /// </summary>
-        /// <param name="privacy">New notify privacy setting</param>
-        internal void SetNotifyPrivacyMode(NotifyPrivacy privacy)
-        {
-            ContactList.Owner.SetNotifyPrivacy(privacy);
-            if (AutoSynchronize)
-            {
-                ContactService.UpdateMe();
-            }
-        }
-
-        /// <summary>
         /// Set the status of the contact list owner (the client).
         /// </summary>
         /// <remarks>You can only set the status _after_ SignedIn event. Otherwise you won't receive online notifications from other clients or the connection is closed by the server.</remarks>
@@ -926,24 +637,85 @@ namespace MSNPSharp
                 {
                     isSetDefault = true;
 
-                    //don't set the same status or it will result in disconnection
-                    ContactList.Owner.LocalEndPointClientCapabilities = ClientCapabilities.Default;
-
+                    ClientCapabilitiesEx localCapsEx = ClientCapabilitiesEx.Default;
+                    ClientCapabilities localCaps = ClientCapabilities.Default;
                     if (BotMode)
                     {
-                        ContactList.Owner.LocalEndPointClientCapabilities |= ClientCapabilities.IsBot;
+                        localCaps |= ClientCapabilities.IsBot;
                     }
 
-                    ContactList.Owner.LocalEndPointClientCapabilitiesEx = ClientCapabilitiesEx.Default;
+                    XmlDocument xmlDoc = new XmlDocument();
+                    XmlElement userElement = xmlDoc.CreateElement("user");
+                    XmlElement service = xmlDoc.CreateElement("s");
+                    service.SetAttribute("n", ServiceShortNames.IM.ToString());
+                    service.InnerXml = "<Status>" + ParseStatus(status) + "</Status>";
+                    userElement.AppendChild(service);
+
+                    XmlElement sep = xmlDoc.CreateElement("sep");
+                    sep.SetAttribute("n", ServiceShortNames.PE.ToString());
+                    XmlElement VER = xmlDoc.CreateElement("VER");
+                    VER.InnerText = Credentials.ClientInfo.MessengerClientName + ":" + Credentials.ClientInfo.MessengerClientBuildVer;
+                    sep.AppendChild(VER);
+                    XmlElement TYP = xmlDoc.CreateElement("TYP");
+                    TYP.InnerText = "1";
+                    sep.AppendChild(TYP);
+                    XmlElement Capabilities = xmlDoc.CreateElement("Capabilities");
+                    Capabilities.InnerText = ((long)localCaps).ToString() + ":" + ((long)localCapsEx).ToString();
+                    sep.AppendChild(Capabilities);
+                    userElement.AppendChild(sep);
+
+                    sep = xmlDoc.CreateElement("sep");
+                    sep.SetAttribute("n", ServiceShortNames.PD.ToString());
+                    XmlElement ClientType = xmlDoc.CreateElement("ClientType");
+                    ClientType.InnerText = "1";
+                    sep.AppendChild(ClientType);
+                    XmlElement EpName = xmlDoc.CreateElement("EpName");
+                    EpName.InnerText = MSNHttpUtility.XmlEncode(ContactList.Owner.EpName);
+                    sep.AppendChild(EpName);
+                    XmlElement Idle = xmlDoc.CreateElement("Idle");
+                    Idle.InnerText = ((status == PresenceStatus.Idle) ? "true" : "false");
+                    sep.AppendChild(Idle);
+                    XmlElement State = xmlDoc.CreateElement("State");
+                    State.InnerText = ParseStatus(status);
+                    sep.AppendChild(State);
+
+                    sep = xmlDoc.CreateElement("sep");
+                    sep.SetAttribute("n", ServiceShortNames.IM.ToString());
+                    Capabilities = xmlDoc.CreateElement("Capabilities");
+                    Capabilities.InnerText = ((long)localCaps).ToString() + ":" + ((long)localCapsEx).ToString();
+                    sep.AppendChild(Capabilities);
+
+                    userElement.AppendChild(sep);
+
+                    string xml = userElement.OuterXml;
+                    string me = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Account;
+
+                    MultiMimeMessage mmMessage = new MultiMimeMessage(me, me);
+                    mmMessage.RoutingHeaders["From"]["epid"] = ContactList.Owner.MachineGuid.ToString("B").ToLowerInvariant();
+
+                    mmMessage.Stream = 1;
+                    mmMessage.ReliabilityHeaders["Flags"] = "ACK";
+
+                    mmMessage.ContentKey = "Publication";
+                    mmMessage.ContentHeaders["Uri"] = "/user";
+                    mmMessage.ContentHeaders["Content-Type"] = "application/user+xml";
+
+                    mmMessage.InnerBody = System.Text.Encoding.ASCII.GetBytes(xml);
+
+                    NSMessage nsMessage = new NSMessage("PUT");
+                    nsMessage.InnerMessage = mmMessage;
+                    MessageProcessor.SendMessage(nsMessage);
+
+
+                    return;
+
+
+                    //don't set the same status or it will result in disconnection
+                    // ContactList.Owner.LocalEndPointClientCapabilities = ClientCapabilities.Default;
+                    // ContactList.Owner.LocalEndPointClientCapabilitiesEx = ClientCapabilitiesEx.Default;
 
                     SetEndPointCapabilities();
                     SetPresenceStatusUUX(status);
-
-                    if (AutoSynchronize)
-                    {
-                        // Send BLP
-                        SetPrivacyMode(ContactList.Owner.Privacy);
-                    }
 
                     SetPersonalMessage(ContactList.Owner.PersonalMessage);
 
@@ -991,38 +763,13 @@ namespace MSNPSharp
         internal void SendBlockCircleNSCommands(Guid circleId, string hostDomain)
         {
             SendCircleNotifyRML(circleId, hostDomain, RoleLists.Allow, true);
-            SendCircleNotifyADL(circleId, hostDomain, RoleLists.Block, true);
+            SendCircleNotifyADL(circleId, hostDomain, RoleLists.Hide, true);
         }
 
         internal void SendUnBlockCircleNSCommands(Guid circleId, string hostDomain)
         {
-            SendCircleNotifyRML(circleId, hostDomain, RoleLists.Block, true);
+            SendCircleNotifyRML(circleId, hostDomain, RoleLists.Hide, true);
             SendCircleNotifyADL(circleId, hostDomain, RoleLists.Allow, true);
-        }
-
-        /// <summary>
-        /// Send a PUT command notifying the server we join to a circle(gruop) conversation.
-        /// </summary>
-        /// <param name="circleId"></param>
-        /// <param name="hostDomain"></param>
-        internal void JoinCircleConversation(Guid circleId, string hostDomain)
-        {
-            //Send PUT
-            string to = ((int)IMAddressInfoType.Circle).ToString() + ":" + circleId.ToString().ToLowerInvariant() + "@" + hostDomain;
-            string from = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Account;
-            MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
-            mmMessage.RoutingHeaders["From"]["epid"] = ContactList.Owner.MachineGuid.ToString("B").ToLowerInvariant();
-
-            mmMessage.ContentKey = "Publication";
-            mmMessage.ContentHeaders["Uri"] = "/circle";
-            mmMessage.ContentHeaders["Content-Type"] = "application/circles+xml";
-
-            string putPayloadXML = "<circle><roster><id>IM</id><user><id>1:" + ContactList.Owner.Account + "</id></user></roster></circle>";
-            mmMessage.InnerBody = System.Text.Encoding.ASCII.GetBytes(putPayloadXML);
-
-            NSMessage nsMessage = new NSMessage("PUT");
-            nsMessage.InnerMessage = mmMessage;
-            MessageProcessor.SendMessage(nsMessage);
         }
 
         internal int SendCircleNotifyADL(Guid circleId, string hostDomain, RoleLists lists, bool blockUnBlock)
@@ -1055,23 +802,6 @@ namespace MSNPSharp
             string nonce = Convert.ToBase64String(utf8ByteArray);
             MessageProcessor.SendMessage(new NSMessage("USR", new string[] { "SHA", "A", nonce }));
         }
-
-        internal void SendSwitchBoardClosedNotify(string sessionId)
-        {
-            string host = GetSessionHost(sessionId);
-            if (string.IsNullOrEmpty(host))
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Session " + sessionId + " not found.");
-                return;
-            }
-
-            if (ContactList.Owner.MPOPEnable && ContactList.Owner.HasSignedInWithMultipleEndPoints)
-            {
-                MessageProcessor.SendMessage(new NSPayLoadMessage("UUN", new string[] { ContactList.Owner.Account, "5" }, sessionId + ";" + host));
-                RemoveSession(sessionId);
-            }
-        }
-
 
         #endregion
 
@@ -1118,23 +848,25 @@ namespace MSNPSharp
             (MessageProcessor as NSMessageProcessor).ResetTransactionID();
 
             // 1) VER: MSN Protocol used
-            MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP18", "CVR0" }));
+            MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP21", "CVR0" }));
 
             // 2) CVR: Send client information
-            MsnProtocol msnProtocol = MsnProtocol.MSNP18;
+            MsnProtocol msnProtocol = MsnProtocol.MSNP21;
             Credentials oldcred = Credentials;
             Credentials = new Credentials(oldcred.Account, oldcred.Password, msnProtocol);
+            string base64Hop = (hopCount == 0) ? "0" : Convert.ToBase64String(Encoding.ASCII.GetBytes("Version: 1\r\nXfrCount: " + hopCount.ToString(CultureInfo.InvariantCulture)));
 
             MessageProcessor.SendMessage(new NSMessage("CVR",
                 new string[] { 
                     "0x040c", //The LCIDs in .net framework are different from Windows API: "0x" + CultureInfo.CurrentCulture.LCID.ToString("x4")
                     "winnt",
-                    "5.1",
+                    "6.1.1",
                     "i386",
                     Credentials.ClientInfo.MessengerClientName, 
                     Credentials.ClientInfo.MessengerClientBuildVer,
                     Credentials.ClientInfo.MessengerClientBrand,
-                    Credentials.Account
+                    Credentials.Account,
+                    base64Hop
                 })
             );
 
@@ -1225,7 +957,24 @@ namespace MSNPSharp
                     // set the owner's name and CID
                     ContactList.SetOwner(new Owner(WebServiceConstants.MessengerIndividualAddressBookId, message.CommandValues[1].ToString(), msnticket.OwnerCID, this));
                     OnOwnerVerified();
+
+                    DirectoryService.Get(ContactList.Owner.CID,
+                            delegate(object sender, GetCompletedEventArgs ge)
+                            {
+                                if (ge.Error == null &&
+                                    messageProcessor != null && messageProcessor.Connected)
+                                {
+                                    foreach (AttributeType at in ge.Result.GetResult.View.Attributes)
+                                    {
+                                        if (!String.IsNullOrEmpty(at.N))
+                                        {
+                                            ContactList.Owner.CoreProfile[at.N] = at.V;
+                                        }
+                                    }
+                                }
+                            });
                 }
+
                 ContactList.Owner.PassportVerified = message.CommandValues[2].Equals("1");
             }
         }
@@ -1237,8 +986,6 @@ namespace MSNPSharp
         protected internal virtual void OnSignedIn(EventArgs e)
         {
             isSignedIn = true;
-            p2pInviteSchedulerId = Schedulers.P2PInvitationScheduler.Register(this);
-            sbRequestSchedulerId = Schedulers.SwitchBoardRequestScheduler.Register(this);
 
             if (SignedIn != null)
                 SignedIn(this, e);
@@ -1260,36 +1007,6 @@ namespace MSNPSharp
 
             if (messageProcessor != null)
                 messageProcessor.Disconnect();
-        }
-
-        /// <summary>
-        /// Fires the <see cref="ContactStatusChanged"/> event.
-        /// </summary>
-        /// <param name="e"></param>
-        protected internal virtual void OnContactStatusChanged(ContactStatusChangedEventArgs e)
-        {
-            if (ContactStatusChanged != null)
-                ContactStatusChanged(this, e);
-        }
-
-        /// <summary>
-        /// Fires the <see cref="ContactOffline"/> event.
-        /// </summary>
-        /// <param name="e"></param>
-        protected internal virtual void OnContactOffline(ContactEventArgs e)
-        {
-            if (ContactOffline != null)
-                ContactOffline(this, e);
-        }
-
-        /// <summary>
-        /// Fires the <see cref="ContactOnline"/> event.
-        /// </summary>
-        /// <param name="e"></param>
-        protected virtual void OnContactOnline(ContactEventArgs e)
-        {
-            if (ContactOnline != null)
-                ContactOnline(this, e);
         }
 
         #endregion
@@ -1369,177 +1086,6 @@ namespace MSNPSharp
             }
 
             return PresenceStatus.Unknown;
-        }
-
-
-        /// <summary>
-        /// Called when a UBX command has been received.
-        /// UBX [type:account;via] [payload length]
-        /// </summary>
-        /// <param name="message"></param>
-        protected virtual void OnUBXReceived(NSMessage message)
-        {
-            //check the payload length
-            if (message.InnerMessage == null || message.InnerBody == null || message.InnerBody.Length == 0)
-                return;
-
-            string fullAccount = message.CommandValues[0].ToString(); // 1:username@hotmail.com;via=9:guid@live.com
-
-            IMAddressInfoType accountAddressType;
-            string account;
-            IMAddressInfoType viaAccountAddressType;
-            string viaAccount;
-
-            if (false == Contact.ParseFullAccount(fullAccount,
-                out accountAddressType, out account,
-                out viaAccountAddressType, out viaAccount))
-            {
-                return;
-            }
-
-            Contact contact = null;
-            if (viaAccountAddressType == IMAddressInfoType.Circle)
-            {
-                Circle circle = ContactList.GetCircle(viaAccount);
-
-                if (circle == null)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                        "[OnUBXReceived] Cannot retrieve circle for user: " + fullAccount);
-                    return;
-                }
-                else
-                {
-                    if (!circle.ContactList.HasContact(account, accountAddressType))
-                    {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                            "[OnUBXReceived] Cannot retrieve user for from circle: " + fullAccount);
-                        return;
-                    }
-
-                    contact = circle.ContactList.GetContact(account, accountAddressType);
-                }
-            }
-            else
-            {
-                if (account != ContactList.Owner.Account.ToLowerInvariant())
-                {
-                    if (ContactList.HasContact(account, accountAddressType))
-                    {
-                        contact = ContactList.GetContact(account, accountAddressType);
-                    }
-                }
-                else
-                {
-                    contact = ContactList.Owner;
-                }
-            }
-
-            if (contact != null)
-            {
-                contact.SetPersonalMessage(new PersonalMessage(message));
-                XmlDocument xmlDoc = new XmlDocument();
-                try
-                {
-                    xmlDoc.Load(new MemoryStream(message.InnerBody));
-
-                    // Get Fridenly Name
-                    string friendlyName = GetFriendlyNameFromUBXXmlData(xmlDoc);
-                    contact.SetName(string.IsNullOrEmpty(friendlyName) ? contact.Account : friendlyName);
-
-                    //Get UserTileLocation
-                    contact.UserTileLocation = GetUserTileLocationFromUBXXmlData(xmlDoc);
-
-                    // Get the scenes context
-                    string newSceneContext = GetSceneContextFromUBXXmlData(xmlDoc);
-
-                    if (contact.SceneContext != newSceneContext)
-                    {
-                        contact.SceneContext = newSceneContext;
-                        contact.FireSceneImageContextChangedEvent(newSceneContext);
-                    }
-
-                    // Get the color scheme
-                    Color color = GetColorSchemeFromUBXXmlData(xmlDoc);
-                    if (contact.ColorScheme != color)
-                    {
-                        contact.ColorScheme = color;
-                        contact.OnColorSchemeChanged();
-                    }
-
-                    //Get endpoint data.
-                    bool isPrivateEndPoint = (contact is Owner);
-
-                    #region Regular contacts
-
-                    if (!isPrivateEndPoint)
-                    {
-                        List<EndPointData> endPoints = GetEndPointDataFromUBXXmlData(contact.Account, xmlDoc, isPrivateEndPoint);
-                        if (endPoints.Count > 0)
-                        {
-                            foreach (EndPointData epData in endPoints)
-                            {
-                                contact.EndPointData[epData.Id] = epData;
-                            }
-                        }
-                    }
-
-                    #endregion
-
-                    #region Only for Owner, set private endpoint info.
-
-                    XmlNodeList privateEndPoints = xmlDoc.GetElementsByTagName("PrivateEndpointData"); //Only the owner will have this field.
-
-                    if (privateEndPoints.Count > 0)
-                    {
-                        PlaceChangedReason placechangeReason = (privateEndPoints.Count >= contact.EndPointData.Count ? PlaceChangedReason.SignedIn : PlaceChangedReason.SignedOut);
-                        Dictionary<Guid, PrivateEndPointData> epList = new Dictionary<Guid, PrivateEndPointData>(0);
-                        foreach (XmlNode pepdNode in privateEndPoints)
-                        {
-                            Guid id = new Guid(pepdNode.Attributes["id"].Value);
-                            PrivateEndPointData privateEndPoint = (contact.EndPointData.ContainsKey(id) ? (contact.EndPointData[id] as PrivateEndPointData) : new PrivateEndPointData(contact.Account, id));
-                            privateEndPoint.Name = (pepdNode["EpName"] == null) ? String.Empty : pepdNode["EpName"].InnerText;
-                            privateEndPoint.Idle = (pepdNode["Idle"] == null) ? false : bool.Parse(pepdNode["Idle"].InnerText);
-                            privateEndPoint.ClientType = (pepdNode["ClientType"] == null) ? "1" : pepdNode["ClientType"].InnerText;
-                            privateEndPoint.State = (pepdNode["State"] == null) ? PresenceStatus.Unknown : ParseStatus(pepdNode["State"].InnerText);
-                            epList[id] = privateEndPoint;
-                        }
-
-
-                        if (contact is Owner)
-                        {
-                            TriggerPlaceChangeEvent(epList);
-
-                            if (placechangeReason == PlaceChangedReason.SignedIn &&
-                                ContactList.Owner.MPOPMode == MPOP.AutoLogoff)
-                            {
-                                OwnersSignOut();
-                            }
-                        }
-                    }
-
-                    #endregion
-                }
-                catch (Exception xmlex)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                        "[OnUBXReceived] Xml parse error: " + xmlex.Message);
-                }
-            }
-        }
-
-        private void OwnersSignOut()
-        {
-            if (ContactList.Owner == null)
-                return;
-            Dictionary<Guid, EndPointData> epDataClone = new Dictionary<Guid, EndPointData>(ContactList.Owner.EndPointData);
-            if (ContactList.Owner.HasSignedInWithMultipleEndPoints)  //The minimal count of EndPointData is 1.
-            {
-                if (ContactList.Owner.MPOPMode == MPOP.AutoLogoff)
-                {
-                    ContactList.Owner.SignoutFrom(NSMessageHandler.MachineGuid);
-                }
-            }
         }
 
         private void TriggerPlaceChangeEvent(Dictionary<Guid, PrivateEndPointData> epList)
@@ -1672,316 +1218,6 @@ namespace MSNPSharp
             }
 
             return endPoints;
-        }
-
-        /// <summary>
-        /// Called when a NLN command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that a contact on the forward list went online.
-        /// <code>NLN [status] [clienttype:account] [name] [ClientCapabilities:48] [displayimage] (MSNP18)</code>
-        /// <code>NLN [status] [account] [clienttype] [name] [ClientCapabilities:0] [displayimage] (MSNP16)</code>
-        /// <code>NLN [status] [account] [clienttype] [name] [ClientCapabilities] [displayimage] (MSNP15)</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnNLNReceived(NSMessage message)
-        {
-            PresenceStatus newstatus = ParseStatus(message.CommandValues[0].ToString());
-
-            IMAddressInfoType accountAddressType;
-            string account;
-            IMAddressInfoType viaAccountAddressType;
-            string viaAccount;
-            string fullAccount = message.CommandValues[1].ToString();
-
-            if (false == Contact.ParseFullAccount(fullAccount,
-                out accountAddressType, out account,
-                out viaAccountAddressType, out viaAccount))
-            {
-                return;
-            }
-
-            ClientCapabilities newcaps = ClientCapabilities.None;
-            ClientCapabilitiesEx newcapsex = ClientCapabilitiesEx.None;
-
-            string newName = (message.CommandValues.Count >= 3) ? message.CommandValues[2].ToString() : String.Empty;
-            string newDisplayImageContext = message.CommandValues.Count >= 5 ? message.CommandValues[4].ToString() : String.Empty;
-
-            if (message.CommandValues.Count >= 4)
-            {
-                if (message.CommandValues[3].ToString().Contains(":"))
-                {
-                    newcaps = (ClientCapabilities)Convert.ToInt64(message.CommandValues[3].ToString().Split(':')[0]);
-                    newcapsex = (ClientCapabilitiesEx)Convert.ToInt64(message.CommandValues[3].ToString().Split(':')[1]);
-                }
-                else
-                {
-                    newcaps = (ClientCapabilities)Convert.ToInt64(message.CommandValues[3].ToString());
-                }
-            }
-
-            if (viaAccountAddressType == IMAddressInfoType.Circle)
-            {
-                #region Circle Status, or Circle Member status
-
-                Circle circle = ContactList.GetCircle(viaAccount);
-
-                if (newcaps != ClientCapabilities.None &&
-                    newcapsex != ClientCapabilitiesEx.None)  //This is NOT a circle's presence status.
-                {
-                    if (circle == null)
-                    {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                            "[OnNLNReceived] Cannot update status for user, circle not found: " + fullAccount);
-
-                        return;
-                    }
-
-                    if (!circle.ContactList.HasContact(account, accountAddressType))
-                    {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                            "[OnNLNReceived] User not found in the specific circle: " + fullAccount + ", a contact was created by NSCommand.");
-                    }
-
-                    Contact contact = circle.ContactList.GetContact(account, accountAddressType);
-
-                    contact.SetName(MSNHttpUtility.NSDecode(message.CommandValues[2].ToString()));
-                    contact.EndPointData[Guid.Empty].ClientCapabilities = newcaps;
-                    contact.EndPointData[Guid.Empty].ClientCapabilitiesEx = newcapsex;
-
-                    if (contact != ContactList.Owner && newDisplayImageContext.Length > 10)
-                    {
-                        if (contact.DisplayImage != newDisplayImageContext)
-                        {
-                            contact.UserTileLocation = newDisplayImageContext;
-                            contact.FireDisplayImageContextChangedEvent(newDisplayImageContext);
-                        }
-                    }
-
-                    PresenceStatus oldStatus = contact.Status;
-
-                    if (oldStatus != newstatus)
-                    {
-                        contact.SetStatus(newstatus);
-
-                        // The contact changed status
-                        OnCircleMemberStatusChanged(new CircleMemberStatusChanged(circle, contact, oldStatus));
-
-                        // The contact goes online
-                        OnCircleMemberOnline(new CircleMemberEventArgs(circle, contact));
-                    }
-                }
-                else
-                {
-                    if (account == ContactList.Owner.Account.ToLowerInvariant())
-                    {
-                        if (circle == null)
-                            return;
-
-                        PresenceStatus oldCircleStatus = circle.Status;
-                        string[] guidDomain = viaAccount.Split('@');
-
-                        if (guidDomain.Length != 0 &&
-                            (oldCircleStatus == PresenceStatus.Offline || oldCircleStatus == PresenceStatus.Hidden))
-                        {
-                            //This is a PUT command send from server when we login.
-                            JoinCircleConversation(new Guid(guidDomain[0]), guidDomain[1]);
-                        }
-
-                        circle.SetStatus(newstatus);
-
-                        OnCircleStatusChanged(new CircleStatusChangedEventArgs(circle, oldCircleStatus));
-
-                        OnCircleOnline(new CircleEventArgs(circle));
-                        return;
-                    }
-                }
-
-                #endregion
-            }
-            else
-            {
-                Contact contact = (account == ContactList.Owner.Account.ToLowerInvariant() && accountAddressType == IMAddressInfoType.WindowsLive)
-                    ? ContactList.Owner : ContactList.GetContact(account, accountAddressType);
-
-                #region Contact Status
-
-                if (contact != null)
-                {
-                    if (IsSignedIn && account == ContactList.Owner.Account.ToLowerInvariant() &&
-                        accountAddressType == IMAddressInfoType.WindowsLive)
-                    {
-                        SetPresenceStatus(newstatus);
-                        return;
-                    }
-
-                    contact.SetName(MSNHttpUtility.NSDecode(newName));
-                    contact.EndPointData[Guid.Empty].ClientCapabilities = newcaps;
-                    contact.EndPointData[Guid.Empty].ClientCapabilitiesEx = newcapsex;
-
-                    if (contact != ContactList.Owner)
-                    {
-                        if (newDisplayImageContext.Length > 10 && contact.DisplayImage != newDisplayImageContext)
-                        {
-                            contact.UserTileLocation = newDisplayImageContext;
-                            contact.FireDisplayImageContextChangedEvent(newDisplayImageContext);
-                        }
-
-                        if (message.CommandValues.Count >= 6)
-                        {
-                            newDisplayImageContext = message.CommandValues[5].ToString();
-                            contact.UserTileURL = new Uri(HttpUtility.UrlDecode(newDisplayImageContext));
-                        }
-
-                        PresenceStatus oldStatus = contact.Status;
-                        contact.SetStatus(newstatus);
-
-                        // The contact changed status
-                        OnContactStatusChanged(new ContactStatusChangedEventArgs(contact, oldStatus));
-
-                        // The contact goes online
-                        OnContactOnline(new ContactEventArgs(contact));
-                    }
-                }
-                #endregion
-            }
-        }
-
-        /// <summary>
-        /// Called when a FLN command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that a user went offline.
-        /// <code>FLN [clienttype:account] [caps:0] [networkpng] (MSNP18)</code>
-        /// <code>FLN [account] [clienttype] [caps:0] [networkpng] (MSNP16)</code>
-        /// <code>FLN [account] [clienttype] [caps] [networkpng] (MSNP15)</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnFLNReceived(NSMessage message)
-        {
-            IMAddressInfoType accountAddressType;
-            string account;
-            IMAddressInfoType viaAccountAddressType;
-            string viaAccount;
-            string fullAccount = message.CommandValues[0].ToString();
-
-            if (false == Contact.ParseFullAccount(fullAccount,
-                out accountAddressType, out account,
-                out viaAccountAddressType, out viaAccount))
-            {
-                return;
-            }
-
-            ClientCapabilities newCaps = ClientCapabilities.None;
-            ClientCapabilitiesEx newCapsEx = ClientCapabilitiesEx.None;
-
-            if (message.CommandValues.Count >= 2)
-            {
-                if (message.CommandValues[1].ToString().Contains(":"))
-                {
-                    newCaps = (ClientCapabilities)Convert.ToInt64(message.CommandValues[1].ToString().Split(':')[0]);
-                    newCapsEx = (ClientCapabilitiesEx)Convert.ToInt64(message.CommandValues[1].ToString().Split(':')[1]);
-                }
-                else
-                {
-                    newCaps = (ClientCapabilities)Convert.ToInt64(message.CommandValues[1].ToString());
-                }
-            }
-
-            if (viaAccountAddressType == IMAddressInfoType.Circle)
-            {
-                #region Circle and CircleMemberStatus
-
-                Circle circle = ContactList.GetCircle(viaAccount);
-
-                if (circle == null)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                        "[OnFLNReceived] Cannot update status for user since circle not found: " + fullAccount);
-                    return;
-                }
-
-                if (account == ContactList.Owner.Account.ToLowerInvariant())  //Circle status
-                {
-                    string capabilityString = message.CommandValues[1].ToString();
-                    if (capabilityString == "0:0")  //This is a circle's presence status.
-                    {
-                        PresenceStatus oldCircleStatus = circle.Status;
-                        circle.SetStatus(PresenceStatus.Offline);
-
-                        if (CircleStatusChanged != null)
-                            CircleStatusChanged(this, new CircleStatusChangedEventArgs(circle, oldCircleStatus));
-
-                        if (CircleOffline != null)
-                            CircleOffline(this, new CircleEventArgs(circle));
-                    }
-
-                    return;
-                }
-                else
-                {
-                    if (!circle.ContactList.HasContact(account, accountAddressType))
-                    {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                            "[OnFLNReceived] Cannot update status for user since user not found in the specific circle: " + fullAccount);
-                        return;
-                    }
-
-                    Contact contact = circle.ContactList.GetContact(account, accountAddressType);
-                    PresenceStatus oldStatus = contact.Status;
-
-                    if (oldStatus != PresenceStatus.Offline)
-                    {
-                        contact.SetStatus(PresenceStatus.Offline);
-
-                        // The contact changed status
-                        OnCircleMemberStatusChanged(new CircleMemberStatusChanged(circle, contact, oldStatus));
-
-                        // The contact goes online
-                        OnCircleMemberOffline(new CircleMemberEventArgs(circle, contact));
-                    }
-
-                    return;
-                }
-
-                #endregion
-            }
-            else
-            {
-                Contact contact = (account == ContactList.Owner.Account.ToLowerInvariant() && accountAddressType == IMAddressInfoType.WindowsLive)
-                    ? ContactList.Owner : ContactList.GetContactWithCreate(account, accountAddressType);
-
-                #region Contact Staus
-
-                if (contact != null)
-                {
-                    lock (contact.EndPointData)
-                    {
-                        contact.EndPointData.Clear();
-                        contact.EndPointData[Guid.Empty] = new EndPointData(contact.Account.ToLowerInvariant(), Guid.Empty);
-                        contact.EndPointData[Guid.Empty].ClientCapabilities = newCaps;
-                        contact.EndPointData[Guid.Empty].ClientCapabilitiesEx = newCapsEx;
-                    }
-
-                    if (contact != ContactList.Owner && message.CommandValues.Count >= 3 &&
-                        accountAddressType == IMAddressInfoType.Yahoo)
-                    {
-                        string newdp = message.CommandValues[2].ToString();
-                        contact.UserTileURL = new Uri(HttpUtility.UrlDecode(newdp));
-                    }
-
-                    PresenceStatus oldStatus = contact.Status;
-                    contact.SetStatus(PresenceStatus.Offline);
-
-                    // the contact changed status
-                    OnContactStatusChanged(new ContactStatusChangedEventArgs(contact, oldStatus));
-
-                    // the contact goes offline
-                    OnContactOffline(new ContactEventArgs(contact));
-                }
-
-                #endregion
-            }
         }
 
         /// <summary>
@@ -2141,147 +1377,12 @@ namespace MSNPSharp
             uunBridge.ProcessUUN(message.TransactionID, ok);
         }
 
-        /// <summary>
-        /// Called when a UUX command has been received.
-        /// </summary>
-        /// <param name="message"></param>
-        protected virtual void OnUUXReceived(NSMessage message)
-        {
-        }
 
-        /// <summary>
-        /// Called when a CHG command has been received.
-        /// </summary>
-        /// <remarks>
-        /// The notification server has confirmed our request for a status change. 
-        /// This function sets the status of the contactlist owner.
-        /// <code>CHG [Transaction] [Status]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnCHGReceived(NSMessage message)
-        {
-            ContactList.Owner.SetStatus(ParseStatus((string)message.CommandValues[0]));
-        }
+
 
         #endregion
 
-        #region Switchboard
-
-        /// <summary>
-        /// Class used for items stored in the switchboard queue.
-        /// </summary>
-        protected class SwitchboardQueueItem
-        {
-            /// <summary>
-            /// The object that initiated the request.
-            /// </summary>
-            public object Initiator;
-            /// <summary>
-            /// The switchboard handler that will be handling the new switchboard session.
-            /// </summary>
-            public SBMessageHandler SwitchboardHandler;
-
-            /// <summary>
-            /// Constructs a queue item.
-            /// </summary>
-            /// <param name="switchboardHandler"></param>
-            /// <param name="initiator"></param>
-            public SwitchboardQueueItem(SBMessageHandler switchboardHandler, object initiator)
-            {
-                Initiator = initiator;
-                SwitchboardHandler = switchboardHandler;
-            }
-        }
-
-        internal void SetSession(string sessionId, string ip)
-        {
-            lock (sessions)
-            {
-                sessions[sessionId] = ip;
-            }
-        }
-
-        private string GetSessionHost(string sessionId)
-        {
-            lock (sessions)
-            {
-                if (sessions.ContainsKey(sessionId))
-                    return sessions[sessionId];
-            }
-
-            return string.Empty;
-        }
-
-        private bool RemoveSession(string sessionId)
-        {
-            lock (sessions)
-                return sessions.Remove(sessionId);
-        }
-
-        /// <summary>
-        /// Fires the <see cref="SBCreated"/> event.
-        /// </summary>
-        /// <param name="switchboard">The switchboard created</param>
-        /// <param name="initiator">The object that initiated the switchboard request.</param>
-        /// <param name="account"></param>
-        /// <param name="name"></param>
-        /// <param name="anonymous">Indecates that whether it is an anonymous request.</param>
-        internal virtual void OnSBCreated(SBMessageHandler switchboard, object initiator, string account, string name, bool anonymous)
-        {
-            if (SBCreated != null)
-                SBCreated(this, new SBCreatedEventArgs(switchboard, initiator, account, name, anonymous));
-        }
-
-        /// <summary>
-        /// Called when a RNG command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that the user receives a switchboard session (chatsession) request. A connection to the switchboard will be established
-        /// and the corresponding events and objects are created.
-        /// <code>RNG [Session] [IP:Port] 'CKI' [Hash] [Account] [Name] U messenger.msn.com 1</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnRNGReceived(NSMessage message)
-        {
-            string account = string.Empty;
-            string name = string.Empty;
-            bool anonymous = false;
-
-            if (message.CommandValues.Count >= 5)
-            {
-                account = message.CommandValues[4].ToString();
-            }
-
-            if (message.CommandValues.Count >= 6)
-            {
-                name = message.CommandValues[5].ToString();
-            }
-
-            Contact callingContact = ContactList.GetContactWithCreate(account, IMAddressInfoType.WindowsLive);
-            if (callingContact.Lists == RoleLists.None)
-            {
-                anonymous = true;
-            }
-
-
-            // create a switchboard object
-            SBMessageHandler handler = new SBMessageHandler(this, callingContact, message.CommandValues[3].ToString(), message.CommandValues[0].ToString());
-            SBMessageProcessor processor = handler.MessageProcessor as SBMessageProcessor;
-
-            // set new connectivity settings
-            ConnectivitySettings newSettings = new ConnectivitySettings(processor.ConnectivitySettings);
-            string[] values = ((string)message.CommandValues[1]).Split(new char[] { ':' });
-
-            newSettings.Host = values[0];
-            newSettings.Port = int.Parse(values[1], System.Globalization.CultureInfo.InvariantCulture);
-            processor.ConnectivitySettings = newSettings;
-
-            // start connecting
-            processor.Connect();
-
-            // notify the client
-            OnSBCreated(handler, null, account, name, anonymous);
-        }
+        #region Nameserver
 
         /// <summary>
         /// Called when a XFR command has been received.
@@ -2302,6 +1403,17 @@ namespace MSNPSharp
                 // disconnect first
                 processor.Disconnect();
 
+                // Get hop count. Version: 1\r\nXfrCount: 2\r\n
+                if (message.CommandValues.Count >= 5)
+                {
+                    string hopString = Encoding.ASCII.GetString(Convert.FromBase64String((string)message.CommandValues[4]));
+                    Match m = Regex.Match(hopString, @"(\d+)").NextMatch();
+                    if (m.Success)
+                    {
+                        hopCount = Convert.ToInt64(m.Value);
+                    }
+                }
+
                 // set new connectivity settings
                 ConnectivitySettings newSettings = new ConnectivitySettings(processor.ConnectivitySettings);
                 string[] values = ((string)message.CommandValues[1]).Split(new char[] { ':' });
@@ -2314,161 +1426,10 @@ namespace MSNPSharp
                 // and reconnect. The login procedure will now start over again
                 processor.Connect();
             }
-            if ((string)message.CommandValues[0] == "SB")
-            {
-                if (pendingSwitchboards.Count > 0)
-                {
-                    if (ContactList.Owner.Status == PresenceStatus.Offline)
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Owner not yet online!", GetType().ToString());
-
-                    SwitchboardQueueItem queueItem = (SwitchboardQueueItem)pendingSwitchboards.Dequeue();
-                    SBMessageProcessor processor = queueItem.SwitchboardHandler.MessageProcessor as SBMessageProcessor;
-
-                    // set new connectivity settings
-                    ConnectivitySettings newSettings = new ConnectivitySettings(processor.ConnectivitySettings);
-                    string[] values = ((string)message.CommandValues[1]).Split(new char[] { ':' });
-
-                    newSettings.Host = values[0];
-                    newSettings.Port = int.Parse(values[1], System.Globalization.CultureInfo.InvariantCulture);
-
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Switchboard connectivity settings: " + newSettings.ToString(), GetType().Name);
-
-                    processor.ConnectivitySettings = newSettings;
-
-                    // set the switchboard objects with the processor values
-                    string sessionHash = message.CommandValues[3].ToString();
-
-                    queueItem.SwitchboardHandler.SetInvitation(sessionHash);
-
-
-                    // notify the client
-                    OnSBCreated(queueItem.SwitchboardHandler, queueItem.Initiator, string.Empty, string.Empty, false);
-
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "SB created event handler called", GetType().Name);
-
-                    // start connecting
-                    processor.Connect();
-
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Opening switchboard connection...", GetType().Name);
-                }
-                else
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Switchboard request received, but no pending switchboards available.", GetType().Name);
-                }
-            }
         }
 
         protected virtual void OnSBSReceived(NSMessage message)
         {
-        }
-
-        /// <summary>
-        /// Called when a UBM command has been received, this message was sent by a Yahoo Messenger client.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that the notification server has send us a UBM. This is usually a message from Yahoo Messenger.
-        /// <code>UBM [Remote user account] [Remote user client type] [Destination user account] [Destination user client type] [3(nudge) or 2(typing) or 1(text message)] [Length]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnUBMReceived(NSMessage message)
-        {
-            string sender = message.CommandValues[0].ToString();
-            int senderType = 0;
-            int.TryParse(message.CommandValues[1].ToString(), out senderType);
-
-            string receiver = message.CommandValues[2].ToString();
-            int receiverType = 0;
-            int.TryParse(message.CommandValues[3].ToString(), out receiverType);
-
-            int messageType = 0;
-            int.TryParse(message.CommandValues[4].ToString(), out messageType);
-            NetworkMessageType networkMessageType = (NetworkMessageType)messageType;
-
-            if (!(receiverType == (int)ContactList.Owner.ClientType &&
-                receiver.ToLowerInvariant() == ContactList.Owner.Account.ToLowerInvariant()))
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                    "[OnUBMReceived] The receiver is not owner, receiver account = " + receiver
-                    + ", receiver type = " + (IMAddressInfoType)receiverType);
-
-                return;
-            }
-
-            if (!ContactList.HasContact(sender, (IMAddressInfoType)senderType))
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                    "[OnUBMReceived] The sender is not in contact list, sender account = " + sender
-                    + ", sender type = " + (IMAddressInfoType)senderType);
-
-                return;
-            }
-
-            Contact from = ContactList.GetContact(sender, (IMAddressInfoType)senderType);
-            Contact to = ContactList.Owner;
-
-            MimeMessage mimeMessage = message.InnerMessage as MimeMessage;
-
-
-            #region Mobile Message
-
-            if (senderType == (int)IMAddressInfoType.Telephone)
-            {
-                switch (networkMessageType)
-                {
-                    case NetworkMessageType.Text:
-                        OnMobileMessageReceived(new CrossNetworkMessageEventArgs(from, to, messageType, mimeMessage.InnerMessage as TextMessage));
-                        break;
-                }
-                return;
-            }
-
-            #endregion
-
-            if (mimeMessage.MimeHeader.ContainsKey(MimeHeaderStrings.Content_Type))
-            {
-
-                switch (mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type])
-                {
-                    case "text/x-msmsgscontrol":
-                        {
-                            OnCrossNetworkMessageReceived(
-                                new CrossNetworkMessageEventArgs(from, to, (int)NetworkMessageType.Typing, mimeMessage.InnerMessage as TextPayloadMessage));
-                            break;
-                        }
-                    case "text/x-msnmsgr-datacast":
-                        {
-
-                            if (mimeMessage.InnerMessage is MimeMessage)
-                            {
-                                MimeMessage innerMime = mimeMessage.InnerMessage as MimeMessage;
-
-                                if (innerMime.MimeHeader.ContainsKey("ID"))
-                                {
-                                    if (innerMime.MimeHeader["ID"] == "1")
-                                    {
-                                        OnCrossNetworkMessageReceived(
-                                            new CrossNetworkMessageEventArgs(from, to, (int)NetworkMessageType.Nudge, innerMime));
-                                    }
-                                }
-                            }
-                            break;
-                        }
-
-                }
-
-                if (mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("text/plain") >= 0)
-                {
-                    OnCrossNetworkMessageReceived(new CrossNetworkMessageEventArgs(from, to, (int)NetworkMessageType.Text, mimeMessage.InnerMessage as TextMessage));
-                }
-            }
-
-
-        }
-
-        protected virtual void OnCrossNetworkMessageReceived(CrossNetworkMessageEventArgs e)
-        {
-            if (CrossNetworkMessageReceived != null)
-                CrossNetworkMessageReceived(this, e);
         }
 
         #endregion
@@ -2495,7 +1456,7 @@ namespace MSNPSharp
                 notification.SiteId == 45705 &&
                 notification.MessageId == 0 &&
                 notification.SendDevice == "messenger" &&
-                notification.ReceiverAccount.ToLowerInvariant() == ContactList.Owner.Account.ToLowerInvariant())
+                notification.ReceiverAccount.ToLowerInvariant() == ContactList.Owner.Account)
             {
                 string xmlString = notification.BodyPayload;
                 XmlDocument xmlDoc = new XmlDocument();
@@ -2569,29 +1530,6 @@ namespace MSNPSharp
                 }
 
                 IPAddress ip = hdr.ContainsKey("ClientIP") ? IPAddress.Parse(hdr["ClientIP"]) : IPAddress.None;
-                ContactList.Owner.UpdateProfile(
-                    hdr["LoginTime"],
-                    (hdr.ContainsKey("EmailEnabled")) ? (Convert.ToInt32(hdr["EmailEnabled"]) == 1) : false,
-                    hdr["MemberIdHigh"],
-                    hdr["MemberIdLow"],
-                    hdr["lang_preference"],
-                    hdr["preferredEmail"],
-                    hdr["country"],
-                    hdr["PostalCode"],
-                    hdr["Gender"],
-                    hdr["Kid"],
-                    hdr["Age"],
-                    hdr["Birthday"],
-                    hdr["Wallet"],
-                    hdr["sid"],
-                    hdr["kv"],
-                    hdr["MSPAuth"],
-                    ip,
-                    clientPort,
-                    hdr.ContainsKey("Nickname") ? hdr["Nickname"] : String.Empty,
-                    hdr.ContainsKey("MPOPEnabled") && hdr["MPOPEnabled"] != "0",
-                    hdr.ContainsKey("RouteInfo") ? hdr["RouteInfo"] : String.Empty
-                );
 
                 if (IPAddress.None != ip)
                 {
@@ -2599,6 +1537,7 @@ namespace MSNPSharp
                     externalEndPoint = new IPEndPoint(ip, clientPort);
                 }
 
+                ContactList.Owner.UpdateProfile(hdr);
                 ContactService.SynchronizeContactList();
             }
             else if (mime.IndexOf("x-msmsgsemailnotification") >= 0)
@@ -2757,45 +1696,9 @@ namespace MSNPSharp
             }
         }
 
-        /// <summary>
-        /// Fires the <see cref="MobileMessageReceived"/> event.
-        /// </summary>
-        /// <remarks>Called when the owner has received a mobile message.</remarks>
-        /// <param name="e"></param>
-        protected virtual void OnMobileMessageReceived(CrossNetworkMessageEventArgs e)
-        {
-            if (MobileMessageReceived != null)
-            {
-                MobileMessageReceived(this, e);
-            }
-        }
-
         #endregion
 
         #region Contact, Circle and Group
-
-        /// <summary>
-        /// Translates the codes used by the MSN server to a MSNList object.
-        /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        protected virtual RoleLists GetMSNList(string name)
-        {
-            switch (name)
-            {
-                case "AL":
-                    return RoleLists.Allow;
-                case "FL":
-                    return RoleLists.Forward;
-                case "BL":
-                    return RoleLists.Block;
-                case "RL":
-                    return RoleLists.Reverse;
-                case "PL":
-                    return RoleLists.Pending;
-            }
-            throw new MSNPSharpException("Unknown MSNList type");
-        }
 
         /// <summary>
         /// Called when a ADL command has been received.
@@ -2805,9 +1708,11 @@ namespace MSNPSharp
         protected virtual void OnADLReceived(NSMessage message)
         {
             if (message.TransactionID != 0 &&
-                message.CommandValues[0].ToString() == "OK" &&
-                ContactService.ProcessADL(message.TransactionID))
+                message.CommandValues[0].ToString() == "OK")
             {
+                if (ContactService.ProcessADL(message.TransactionID))
+                {
+                }
             }
             else
             {
@@ -2905,400 +1810,6 @@ namespace MSNPSharp
             }
         }
 
-        /// <summary>
-        /// Called when an ADG command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that a contact group has been added to the contact group list.
-        /// Raises the ContactService.ContactGroupAdded event.
-        /// <code>ADG [Transaction] [ListVersion] [Name] [GroupID] </code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnADGReceived(NSMessage message)
-        {
-            if (AutoSynchronize)
-            {
-                ContactService.abRequest(PartnerScenario.ContactSave, null);
-            }
-        }
-
-        /// <summary>
-        /// Called when a RMG command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that a contact group has been removed.
-        /// Raises the ContactService.ContactGroupRemoved event.
-        /// <code>RMG [Transaction] [ListVersion] [GroupID]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnRMGReceived(NSMessage message)
-        {
-            if (AutoSynchronize)
-            {
-                ContactService.abRequest(PartnerScenario.ContactSave, null);
-            }
-        }
-
-        /// <summary>Called when a FQY (Federated Query) command has been received.
-        /// <remarks>Indicates a client has different network types except PassportMember.</remarks>
-        /// <code>FQY [TransactionID] [PayloadLength]
-        /// <ml><d n="domain"><c n="username" t="clienttype" actual="emailaddresswithoutcountrysuffix" /></d></ml>
-        /// </code>
-        /// </summary>
-        /// <param name="message"></param>
-        protected virtual void OnFQYReceived(NSMessage message)
-        {
-            int pendingTransactionId = message.TransactionID;
-            if (ContactService.pendingFQYs.Contains(pendingTransactionId))
-            {
-                lock (ContactService.pendingFQYs)
-                    ContactService.pendingFQYs.Remove(pendingTransactionId);
-
-                NetworkMessage networkMessage = message as NetworkMessage;
-                if (networkMessage.InnerBody != null)
-                {
-                    XmlDocument xmlDoc = new XmlDocument();
-                    xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
-                    XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
-                    string domain = String.Empty;
-                    foreach (XmlNode domainNode in domains)
-                    {
-                        domain = domainNode.Attributes["n"].Value;
-                        XmlNode contactNode = domainNode.FirstChild;
-                        do
-                        {
-                            if (contactNode.Attributes["t"] != null &&
-                                contactNode.Attributes["t"].Value != null &&
-                                contactNode.Attributes["t"].Value != "0")
-                            {
-                                IMAddressInfoType type = (IMAddressInfoType)Enum.Parse(typeof(IMAddressInfoType), contactNode.Attributes["t"].Value);
-                                string account = (contactNode.Attributes["n"].Value + "@" + domain).ToLowerInvariant();
-                                String otherEmail = String.Empty;
-                                if (contactNode.Attributes["actual"] != null)
-                                {
-                                    // Save original (ex: yahoo.com.tr) as other email
-                                    otherEmail = String.Copy(account);
-                                    // Then use actual address, this is stript address (ex: yahoo.com)
-                                    account = contactNode.Attributes["actual"].Value.ToLowerInvariant();
-                                }
-                                ContactService.AddNewContact(account, type, String.Empty, otherEmail);
-                            }
-                            else
-                            {
-                                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, String.Format("FQY: {0} has passport network only.", contactNode.Attributes["n"].Value + "@" + domain), GetType().Name);
-                            }
-
-                        } while (contactNode.NextSibling != null);
-                    }
-                }
-            }
-        }
-
-
-        /// <summary>
-        /// Called when a NFY command has been received.
-        /// <remarks>Indicates that a circle operation occured.</remarks>
-        /// <code>
-        /// NFY [TransactionID] [Operation: PUT|DEL] [Payload Length]\r\n[Payload Data]
-        /// </code>
-        /// </summary>
-        /// <param name="message"></param>
-        protected virtual void OnNFYReceived(NSMessage message)
-        {
-            #region NFY PUT
-
-            if (message.CommandValues[0].ToString() == "PUT")
-            {
-                NetworkMessage networkMessage = message as NetworkMessage;
-                if (networkMessage.InnerBody == null || networkMessage.InnerBody.Length == 0)
-                    return;
-
-                MultiMimeMessage mmm = new MultiMimeMessage(networkMessage.InnerBody);
-
-                if (!(mmm.ContentHeaders.ContainsKey(MimeHeaderStrings.Content_Type) && mmm.ContentHeaders.ContainsKey(MimeHeaderStrings.NotifType)))
-                    return;
-
-                if (mmm.ContentHeaders[MimeHeaderStrings.Content_Type].Value != "application/circles+xml")
-                    return;
-
-                string[] typeMail = mmm.From.ToString().Split(':');
-
-                if (typeMail.Length == 0)
-                    return;
-
-                string[] guidDomain = typeMail[1].Split('@');
-                if (guidDomain.Length == 0)
-                    return;
-
-                string hash = Contact.MakeHash(typeMail[1], (IMAddressInfoType)int.Parse(typeMail[0]));
-
-                if (!CircleList.ContainsKey(hash))
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                        "[OnNFYReceived] Cannot complete the operation since circle not found: " + mmm.From.ToString());
-                    return;
-                }
-
-                Circle circle = (Circle)CircleList[hash];
-
-                if (mmm.InnerBody == null || mmm.InnerBody.Length == 0)
-                    return;  //No xml content.
-
-                XmlDocument xmlDoc = new XmlDocument();
-                xmlDoc.LoadXml(Encoding.UTF8.GetString(mmm.InnerBody));
-
-                if (mmm.ContentHeaders[MimeHeaderStrings.NotifType].Value == "Full")
-                {
-                    //This is an initial NFY
-                }
-
-                XmlNodeList ids = xmlDoc.SelectNodes("//circle/roster/user/id");
-                if (ids.Count == 0)
-                {
-                    return;  //I hate indent.
-                }
-
-                foreach (XmlNode node in ids)
-                {
-                    IMAddressInfoType accountAddressType;
-                    string account;
-                    IMAddressInfoType viaAccountAddressType;
-                    string viaAccount;
-                    string fullAccount = node.InnerText;
-
-                    if (false == Contact.ParseFullAccount(fullAccount,
-                        out accountAddressType, out account,
-                        out viaAccountAddressType, out viaAccount))
-                    {
-                        continue;
-                    }
-
-                    if (account == ContactList.Owner.Account.ToLowerInvariant())
-                        continue;
-
-                    if (circle.ContactList.HasContact(account, accountAddressType))
-                    {
-                        Contact contact = circle.ContactList.GetContact(account, accountAddressType);
-                        OnJoinedCircleConversation(new CircleMemberEventArgs(circle, contact));
-                    }
-                }
-            }
-
-            #endregion
-
-            #region NFY DEL
-            if (message.CommandValues[0].ToString() == "DEL")
-            {
-                NetworkMessage networkMessage = message as NetworkMessage;
-                if (networkMessage.InnerBody == null || networkMessage.InnerBody.Length == 0)
-                    return;
-
-                MultiMimeMessage mmm = new MultiMimeMessage(networkMessage.InnerBody);
-
-                if (!mmm.ContentHeaders.ContainsKey(MimeHeaderStrings.Uri))
-                    return;
-
-                string xpathUri = mmm.ContentHeaders[MimeHeaderStrings.Uri].ToString();
-                if (xpathUri.IndexOf("/circle/roster(IM)/user") == -1)
-                    return;
-
-                string typeAccount = xpathUri.Substring("/circle/roster(IM)/user".Length);
-                typeAccount = typeAccount.Substring(typeAccount.IndexOf("(") + 1);
-                typeAccount = typeAccount.Substring(0, typeAccount.IndexOf(")"));
-
-                if (!mmm.RoutingHeaders.ContainsKey(MimeHeaderStrings.From))
-                    return;
-
-                string circleID = mmm.From.ToString();
-                string[] typeCircleID = circleID.Split(':');
-                if (typeCircleID.Length < 2)
-                    return;
-
-                if (IMAddressInfoType.Circle != (IMAddressInfoType)int.Parse(typeCircleID[0]))
-                    return;
-
-                Circle circle = ContactList.GetCircle(typeCircleID[1]);
-
-                if (circle == null)
-                    return;
-
-                string[] member = typeAccount.Split(':');
-                string memberAccount = member[1];
-                IMAddressInfoType memberNetwork = (IMAddressInfoType)int.Parse(member[0]);
-
-                if (!circle.ContactList.HasContact(memberAccount, memberNetwork))
-                    return;
-
-                Contact c = circle.ContactList.GetContact(memberAccount, memberNetwork);
-                OnLeftCircleConversation(new CircleMemberEventArgs(circle, c));
-            }
-
-            #endregion
-        }
-
-        /// <summary>
-        /// Called when a SDG command has been received.
-        /// <remarks>Indicates that someone send us a message from a circle group.</remarks>
-        /// <code>
-        /// SDG 0 [Payload Length]\r\n[Payload Data]
-        /// </code>
-        /// </summary>
-        /// <param name="message"></param>
-        protected virtual void OnSDGReceived(NSMessage message)
-        {
-            NetworkMessage networkMessage = message as NetworkMessage;
-            if (networkMessage.InnerBody != null && networkMessage.InnerBody.Length > 0)
-            {
-                MultiMimeMessage mmMessage = new MultiMimeMessage(networkMessage.InnerBody);
-
-                string[] typeMail = mmMessage.RoutingHeaders[MimeHeaderStrings.To].Value.Split(':');
-                if (typeMail.Length == 0)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnSDGReceived] Error: Cannot find circle type in id: " + mmMessage.To);
-                    return;
-                }
-
-                string[] guidDomain = typeMail[1].Split('@');
-                if (guidDomain.Length == 0)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnSDGReceived] Error: Cannot find circle guid and host domain in id: " + typeMail[1]);
-                    return;
-                }
-
-                if (IMAddressInfoType.Circle != (IMAddressInfoType)int.Parse(typeMail[0]))
-                    return;
-
-                Circle circle = ContactList.GetCircle(typeMail[1]);
-
-                if (circle == null)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                        "[OnSDGReceived] Error: Cannot find circle " + typeMail[1] + " in your circle list.");
-                    return;
-                }
-
-                string fullAccount = mmMessage.RoutingHeaders[MimeHeaderStrings.From].Value.ToLowerInvariant();
-                string[] member = fullAccount.Split(':');
-                string memberAccount = member[1];
-                IMAddressInfoType memberNetwork = (IMAddressInfoType)int.Parse(member[0]);
-
-                if (!circle.ContactList.HasContact(memberAccount, memberNetwork))
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                        "[OnSDGReceived] Error: Cannot find contact: " + memberAccount);
-                    return;
-                }
-
-                Contact c = circle.ContactList.GetContact(memberAccount, memberNetwork);
-                CircleMemberEventArgs arg = new CircleMemberEventArgs(circle, c);
-
-                if (mmMessage.ContentHeaders.ContainsKey(MimeHeaderStrings.Content_Type) &&
-                    mmMessage.ContentHeaders.ContainsKey(MimeHeaderStrings.Message_Subtype))
-                {
-                    if (mmMessage.ContentHeaders[MimeHeaderStrings.Content_Type].ToString().ToLowerInvariant() == "text/x-msmsgscontrol" &&
-                        mmMessage.ContentHeaders[MimeHeaderStrings.Message_Subtype].ToString().ToLowerInvariant() == "typing")
-                    {
-                        //Typing
-                        OnCircleTypingMessageReceived(arg);
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                            "Circle: " + circle.ToString() + "\r\nMember: " + c.ToString() + "\r\nIs typing....");
-                    }
-                }
-
-                if (mmMessage.ContentHeaders.ContainsKey(MimeHeaderStrings.Content_Type) &&
-                    mmMessage.ContentHeaders.ContainsKey(MimeHeaderStrings.Message_Type))
-                {
-                    if (mmMessage.ContentHeaders[MimeHeaderStrings.Content_Type].ToString().ToLowerInvariant().IndexOf("text/plain;") > -1 &&
-                        mmMessage.ContentHeaders[MimeHeaderStrings.Message_Type].ToString().ToLowerInvariant() == "text")
-                    {
-                        //Text message.
-                        TextMessage txtMessage = new TextMessage(Encoding.UTF8.GetString(mmMessage.InnerBody));
-                        StrDictionary strDic = new StrDictionary();
-                        foreach (string key in mmMessage.ContentHeaders.Keys)
-                        {
-                            strDic.Add(key, mmMessage.ContentHeaders[key].ToString());
-                        }
-
-                        txtMessage.ParseHeader(strDic);
-                        CircleTextMessageEventArgs textMessageArg = new CircleTextMessageEventArgs(txtMessage, circle, c);
-                        OnCircleTextMessageReceived(textMessageArg);
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                            "Circle: " + circle.ToString() + "\r\nMember: " + c.ToString() + "\r\nSend you a text message:\r\n" + txtMessage.ToDebugString());
-
-                    }
-
-                    if (mmMessage.ContentHeaders[MimeHeaderStrings.Content_Type].ToString().ToLowerInvariant().IndexOf("text/plain;") > -1 &&
-                        mmMessage.ContentHeaders[MimeHeaderStrings.Message_Type].ToString().ToLowerInvariant() == "nudge")
-                    {
-                        //Nudge
-                        OnCircleNudgeReceived(arg);
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                            "Circle: " + circle.ToString() + "\r\nMember: " + c.ToString() + "\r\nSend you a nudge.");
-                    }
-                }
-            }
-        }
-
-        protected virtual void OnCircleTypingMessageReceived(CircleMemberEventArgs e)
-        {
-            if (CircleTypingMessageReceived != null)
-                CircleTypingMessageReceived(this, e);
-        }
-
-        protected virtual void OnCircleNudgeReceived(CircleMemberEventArgs e)
-        {
-            if (CircleNudgeReceived != null)
-                CircleNudgeReceived(this, e);
-        }
-
-        protected virtual void OnCircleTextMessageReceived(CircleTextMessageEventArgs e)
-        {
-            if (CircleTextMessageReceived != null)
-                CircleTextMessageReceived(this, e);
-        }
-
-        protected virtual void OnLeftCircleConversation(CircleMemberEventArgs e)
-        {
-            if (LeftCircleConversation != null)
-                LeftCircleConversation(this, e);
-        }
-
-        protected virtual void OnJoinedCircleConversation(CircleMemberEventArgs e)
-        {
-            if (JoinedCircleConversation != null)
-                JoinedCircleConversation(this, e);
-        }
-
-        protected virtual void OnCircleStatusChanged(CircleStatusChangedEventArgs e)
-        {
-            if (CircleStatusChanged != null)
-                CircleStatusChanged(this, e);
-        }
-
-        protected virtual void OnCircleMemberOnline(CircleMemberEventArgs e)
-        {
-            if (CircleMemberOnline != null)
-                CircleMemberOnline(this, e);
-        }
-
-        protected virtual void OnCircleMemberOffline(CircleMemberEventArgs e)
-        {
-            if (CircleMemberOffline != null)
-                CircleMemberOffline(this, e);
-        }
-
-        protected virtual void OnCircleMemberStatusChanged(CircleMemberStatusChanged e)
-        {
-            if (CircleMemberStatusChanged != null)
-                CircleMemberStatusChanged(this, e);
-        }
-
-        protected virtual void OnCircleOnline(CircleEventArgs e)
-        {
-            if (CircleOnline != null)
-                CircleOnline(this, e);
-        }
-
         #endregion
 
         #region Challenge and Ping
@@ -3316,61 +1827,6 @@ namespace MSNPSharp
             MSNTicket.OIMLockKey = payload;
             MessageProcessor.SendMessage(new NSPayLoadMessage("QRY", new string[] { Credentials.ClientID }, payload));
         }
-
-        /// <summary>
-        /// Called when an PRP command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Informs about the phone numbers of the contact list owner.
-        /// <code>PRP [TransactionID] [ListVersion] PhoneType Number</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnPRPReceived(NSMessage message)
-        {
-            string number = String.Empty;
-            string type = String.Empty;
-            if (message.CommandValues.Count >= 3)
-            {
-                number = MSNHttpUtility.NSDecode((string)message.CommandValues[2]);
-                type = message.CommandValues[1].ToString();
-            }
-            else
-            {
-                number = MSNHttpUtility.NSDecode((string)message.CommandValues[1]);
-                type = message.CommandValues[0].ToString();
-            }
-
-            switch (type)
-            {
-                case "PHH":
-                    ContactList.Owner.PhoneNumbers[ContactPhoneTypes.ContactPhonePersonal] = number;
-                    break;
-                case "PHW":
-                    ContactList.Owner.PhoneNumbers[ContactPhoneTypes.ContactPhoneBusiness] = number;
-                    break;
-                case "PHM":
-                    ContactList.Owner.PhoneNumbers[ContactPhoneTypes.ContactPhoneMobile] = number;
-                    break;
-                case "MBE":
-                    ContactList.Owner.SetMobileDevice((number == "Y") ? true : false);
-                    break;
-                case "MOB":
-                    ContactList.Owner.SetMobileAccess((number == "Y") ? true : false);
-                    break;
-                case "MFN":
-                    ContactList.Owner.SetName(MSNHttpUtility.NSDecode((string)message.CommandValues[1]));
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Called when a PUT command message has been received.
-        /// </summary>
-        /// <param name="message"></param>
-        protected virtual void OnPUTReceived(NSMessage message)
-        {
-        }
-
 
         /// <summary>
         /// Called when a QRY (challenge) command message has been received.
@@ -3407,41 +1863,6 @@ namespace MSNPSharp
         #endregion
 
         #region Privacy
-
-        /// <summary>
-        /// Called when a BLP command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Indicates that the server has send the privacy mode for the contact list owner.
-        /// <code>BLP [Transaction] [SynchronizationID] [PrivacyMode]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnBLPReceived(NSMessage message)
-        {
-            if (ContactList.Owner == null)
-                return;
-
-            string type = message.CommandValues[0].ToString();
-
-
-            switch (type)
-            {
-                case "AL":
-                    ContactList.Owner.SetPrivacy(PrivacyMode.AllExceptBlocked);
-                    if (AutoSynchronize)
-                    {
-                        ContactService.UpdateMe();
-                    }
-                    break;
-                case "BL":
-                    ContactList.Owner.SetPrivacy(PrivacyMode.NoneButAllowed);
-                    if (AutoSynchronize)
-                    {
-                        ContactService.UpdateMe();
-                    }
-                    break;
-            }
-        }
 
         /// <summary>
         /// Called when a GCF command has been received. 
@@ -3489,6 +1910,7 @@ namespace MSNPSharp
             StorageService.Clear();
             OIMService.Clear();
             WhatsUpService.Clear();
+            DirectoryService.Clear();
 
             // 3. isSignedIn must be here... 
             // a) ContactService.Clear() merges and saves addressbook if isSignedIn=true.
@@ -3507,11 +1929,10 @@ namespace MSNPSharp
 
             //6. Reset censor words
             CensorWords.Clear();
-            sessions.Clear();
 
-            //7. Unregister schedulers
-            Schedulers.P2PInvitationScheduler.UnRegister(P2PInvitationSchedulerId);
-            Schedulers.SwitchBoardRequestScheduler.UnRegister(SwitchBoardRequestSchedulerId);
+            //7. Clear multiparties
+            lock (multiparties)
+                multiparties.Clear();
         }
 
         protected virtual NetworkMessage ParseTextPayloadMessage(NSMessage message)
@@ -3541,51 +1962,7 @@ namespace MSNPSharp
             return message;
         }
 
-        protected virtual NetworkMessage ParseUBMMessage(NSMessage message)
-        {
-            MimeMessage mimeMessage = new MimeMessage();
-            mimeMessage.CreateFromParentMessage(message);
 
-            if (mimeMessage.MimeHeader.ContainsKey(MimeHeaderStrings.Content_Type))
-            {
-                switch (mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type])
-                {
-                    case "text/x-msmsgscontrol":
-                        {
-                            TextPayloadMessage txtPayload = new TextPayloadMessage(string.Empty);
-                            txtPayload.CreateFromParentMessage(mimeMessage);
-                            break;
-                        }
-                    case "text/x-msnmsgr-datacast":
-                        {
-                            TextPayloadMessage txtPayload = new TextPayloadMessage(string.Empty);
-                            txtPayload.CreateFromParentMessage(mimeMessage);
-
-                            if (txtPayload.Text.IndexOf("ID:") != -1)
-                            {
-                                MimeMessage innerMime = new MimeMessage();
-                                innerMime.CreateFromParentMessage(mimeMessage);
-                            }
-                            break;
-                        }
-
-                }
-
-                if (mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type].ToLower(System.Globalization.CultureInfo.InvariantCulture).IndexOf("text/plain") >= 0)
-                {
-                    TextMessage txtMessage = new TextMessage();
-                    txtMessage.CreateFromParentMessage(mimeMessage);
-                }
-            }
-            else
-            {
-
-                TextPayloadMessage txtPayLoad = new TextPayloadMessage(string.Empty);
-                txtPayLoad.CreateFromParentMessage(message);
-            }
-
-            return message;
-        }
 
         protected virtual NetworkMessage ParseNetworkMessage(NetworkMessage message)
         {
@@ -3597,9 +1974,6 @@ namespace MSNPSharp
                 {
                     case "MSG":
                         ParseMSGMessage(nsMessage);
-                        break;
-                    case "UBM":
-                        ParseUBMMessage(nsMessage);
                         break;
                     default:
                         ParseTextPayloadMessage(nsMessage);
@@ -3618,49 +1992,28 @@ namespace MSNPSharp
             switch (nsMessage.Command)
             {
                 // Most used CMDs
-                case "MSG":
-                    OnMSGReceived(nsMessage);
-                    break;
-                case "FLN":
-                    OnFLNReceived(nsMessage);
-                    break;
-                case "NLN":
-                    OnNLNReceived(nsMessage);
-                    break;
-                case "QNG":
-                    OnQNGReceived(nsMessage);
-                    break;
-                case "UBX":
-                    OnUBXReceived(nsMessage);
+                case "NFY":
+                    OnNFYReceived(nsMessage);
                     break;
                 case "SDG":
                     OnSDGReceived(nsMessage);
                     break;
-
-                // Other CMDs
-                case "ADG":
-                    OnADGReceived(nsMessage);
+                case "MSG":
+                    OnMSGReceived(nsMessage);
+                    break;
+                case "QNG":
+                    OnQNGReceived(nsMessage);
                     break;
                 case "ADL":
                     OnADLReceived(nsMessage);
                     break;
-                case "BLP":
-                    OnBLPReceived(nsMessage);
+                case "RML":
+                    OnRMLReceived(nsMessage);
                     break;
-                case "CHG":
-                    OnCHGReceived(nsMessage);
-                    break;
+
+                // Other CMDs               
                 case "CHL":
                     OnCHLReceived(nsMessage);
-                    break;
-                case "CVR":
-                    OnCVRReceived(nsMessage);
-                    break;
-                case "FQY":
-                    OnFQYReceived(nsMessage);
-                    break;
-                case "GCF":
-                    OnGCFReceived(nsMessage);
                     break;
                 case "NOT":
                     OnNOTReceived(nsMessage);
@@ -3668,51 +2021,44 @@ namespace MSNPSharp
                 case "OUT":
                     OnOUTReceived(nsMessage);
                     break;
-                case "PRP":
-                    OnPRPReceived(nsMessage);
-                    break;
                 case "QRY":
                     OnQRYReceived(nsMessage);
                     break;
-                case "RMG":
-                    OnRMGReceived(nsMessage);
-                    break;
-                case "RML":
-                    OnRMLReceived(nsMessage);
-                    break;
-                case "RNG":
-                    OnRNGReceived(nsMessage);
-                    break;
-                case "UBM":
-                    OnUBMReceived(nsMessage);
-                    break;
-                case "UBN":
-                    OnUBNReceived(nsMessage);
-                    break;
-                case "USR":
-                    OnUSRReceived(nsMessage);
-                    break;
-                case "UUN":
-                    OnUUNReceived(nsMessage);
-                    break;
-                case "UUX":
-                    OnUUXReceived(nsMessage);
-                    break;
-                case "VER":
-                    OnVERReceived(nsMessage);
-                    break;
-                case "XFR":
-                    OnXFRReceived(nsMessage);
-                    break;
+
                 case "SBS":
                     OnSBSReceived(nsMessage);
-                    break;
-                case "NFY":
-                    OnNFYReceived(nsMessage);
                     break;
                 case "PUT":
                     OnPUTReceived(nsMessage);
                     break;
+                case "DEL":
+                    OnDELReceived(nsMessage);
+                    break;
+                case "VER":
+                    OnVERReceived(nsMessage);
+                    break;
+                case "CVR":
+                    OnCVRReceived(nsMessage);
+                    break;
+                case "USR":
+                    OnUSRReceived(nsMessage);
+                    break;
+                case "XFR":
+                    OnXFRReceived(nsMessage);
+                    break;
+                case "GCF":
+                    OnGCFReceived(nsMessage);
+                    break;
+
+                // Deprecated CMDs, MSNP21TODO
+
+                case "UBN":
+                    OnUBNReceived(nsMessage);
+                    break;
+                case "UUN":
+                    OnUUNReceived(nsMessage);
+                    break;
+
                 default:
                     isUnknownMessage = true;
                     break;

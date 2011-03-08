@@ -48,7 +48,7 @@
     <Compile Include="Apps\P2PApplication.cs" />
     <Compile Include="Circle.cs" />
     <Compile Include="Circle.Obsolete.cs">
-        <DependentUpon>Circle.cs</DependentUpon>
+      <DependentUpon>Circle.cs</DependentUpon>
     </Compile>
     <Compile Include="CircleInviter.cs" />
     <Compile Include="Comparers.cs" />
@@ -56,12 +56,13 @@
     <Compile Include="ConnectivityException.cs" />
     <Compile Include="ConnectivitySettings.cs" />
     <Compile Include="Contact.cs" />
+    <Compile Include="Contact.Obsolete.cs">
+      <DependentUpon>Contact.cs</DependentUpon>
+    </Compile>
     <Compile Include="ContactGroup.cs" />
     <Compile Include="ContactGroupList.cs" />
     <Compile Include="ContactList.cs" />
     <Compile Include="ContactManager.cs" />
-    <Compile Include="Conversation.cs" />
-    <Compile Include="ConversationID.cs" />
     <Compile Include="Core\BitUtility.cs" />
     <Compile Include="Core\Converter.cs" />
     <Compile Include="Core\MultiMimeMessage.cs" />
@@ -71,11 +72,22 @@
     <Compile Include="Credentials.cs" />
     <Compile Include="Core\MimeDictionary.cs" />
     <Compile Include="DisplayImage.cs" />
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
     <Compile Include="SceneImage.cs" />
     <Compile Include="Emoticon.cs" />
     <Compile Include="EmoticonMessage.cs" />
     <Compile Include="EndPointData.cs" />
     <Compile Include="enums.cs" />
+    <Compile Include="enums.Obsolete.cs">
+      <DependentUpon>enums.cs</DependentUpon>
+    </Compile>
+    <Compile Include="enums.WS.cs">
+      <DependentUpon>enums.cs</DependentUpon>
+    </Compile>
     <Compile Include="EventArgs.cs" />
     <Compile Include="Core\IMessageHandler.cs" />
     <Compile Include="Framework.cs" />
@@ -89,7 +101,6 @@
     <Compile Include="Core\MessagePool.cs" />
     <Compile Include="Core\MessageProcessor.cs" />
     <Compile Include="MessageManager.cs" />
-    <Compile Include="MessageManagerEventArgs.cs" />
     <Compile Include="Messenger.cs" />
     <Compile Include="MobileMessage.cs" />
     <Compile Include="Core\MSNMessage.cs" />
@@ -108,15 +119,19 @@
     <Compile Include="P2P\P2PSession.DC.cs">
       <DependentUpon>P2PSession.cs</DependentUpon>
     </Compile>
-    <Compile Include="P2P\SBBridge.cs" />
     <Compile Include="P2P\TCPv1Bridge.cs" />
     <Compile Include="P2P\UUNBridge.cs" />
     <Compile Include="Services\ABServiceBindingWrapper.cs" />
+    <Compile Include="Services\DirectoryService.cs" />
+    <Compile Include="Services\DirectoryServiceBindingWrapper.cs" />
     <Compile Include="Services\IPEndPointCallback.cs" />
     <Compile Include="Services\MSNService.cs" />
     <Compile Include="Core\NetworkMessage.cs" />
     <Compile Include="Core\NotificationMessage.cs" />
     <Compile Include="NSMessageHandler.cs" />
+    <Compile Include="NSMessageHandler.MSNP21.cs">
+      <DependentUpon>NSMessageHandler.cs</DependentUpon>
+    </Compile>
     <Compile Include="NSMessageHandler.Obsolete.cs">
       <DependentUpon>NSMessageHandler.cs</DependentUpon>
     </Compile>
@@ -125,7 +140,6 @@
     <Compile Include="NSMessageProcessor.cs" />
     <Compile Include="Services\OIMService.cs" />
     <Compile Include="Owner.cs" />
-    <Compile Include="Schedulers.cs" />
     <Compile Include="PersonalMessage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -143,15 +157,10 @@
     <Compile Include="ProxySocket\Socks5Handler.cs" />
     <Compile Include="ProxySocket\SocksHandler.cs" />
     <Compile Include="QRYFactory.cs" />
-    <Compile Include="SBMessageHandler.cs" />
-    <Compile Include="Core\SBMessage.cs" />
-    <Compile Include="Core\SBMessagePool.cs" />
-    <Compile Include="SBMessageProcessor.cs" />
     <Compile Include="Core\MimeMessage.cs" />
     <Compile Include="Services\OIMStoreServiceWrapper.cs" />
     <Compile Include="Services\RSIServiceWrapper.cs" />
-    <Compile Include="Services\SecurityTokenServiceWrapper.cs">
-    </Compile>
+    <Compile Include="Services\SecurityTokenServiceWrapper.cs" />
     <Compile Include="Services\SharingServiceBindingWrapper.cs" />
     <Compile Include="Services\SoapLogExtension.cs" />
     <Compile Include="Services\StorageServiceWrapper.cs" />
@@ -160,9 +169,18 @@
     <Compile Include="Core\SocketMessageProcessor.cs" />
     <Compile Include="Services\StorageService.cs" />
     <Compile Include="StrDictionary.cs" />
+    <Compile Include="TemporaryGroup.cs" />
     <Compile Include="TextMessage.cs" />
     <Compile Include="UnauthorizedException.cs" />
     <Compile Include="Services\ContactService.cs" />
+    <Compile Include="Services\ContactService.Obsolete.cs">
+      <DependentUpon>ContactService.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Web References\MSNWS.MSNDirectoryService\Reference.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Reference.map</DependentUpon>
+    </Compile>
     <Compile Include="Web References\MSNWS.MSNABSharingService\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -326,6 +344,17 @@
     <WebReferences Include="Web References\" />
   </ItemGroup>
   <ItemGroup>
+    <WebReferenceUrl Include="http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNDirectoryService/directory_ws.wsdl">
+      <UrlBehavior>Static</UrlBehavior>
+      <RelPath>Web References\MSNWS.MSNDirectoryService\</RelPath>
+      <UpdateFromURL>http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNDirectoryService/directory_ws.wsdl</UpdateFromURL>
+      <ServiceLocationURL>
+      </ServiceLocationURL>
+      <CachedDynamicPropName>
+      </CachedDynamicPropName>
+      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+      <CachedSettingsPropName>MSNPSharp_MSNDirectoryService_DirectoryService</CachedSettingsPropName>
+    </WebReferenceUrl>
     <WebReferenceUrl Include="http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNABSharingService/msnab_sharingservice.wsdl">
       <UrlBehavior>Static</UrlBehavior>
       <RelPath>Web References\MSNWS.MSNABSharingService\</RelPath>
@@ -424,7 +453,29 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
     <None Include="Resources\MSNPSharp_logo_128.png" />
+    <None Include="Web References\MSNWS.MSNDirectoryService\directory_datatypes.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNDirectoryService\directory_servicetypes.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Web References\MSNWS.MSNDirectoryService\directory_ws.wsdl" />
+    <None Include="Web References\MSNWS.MSNDirectoryService\GetManyResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNDirectoryService\GetResponse1.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNDirectoryService\Reference.map">
+      <Generator>MSDiscoCodeGenerator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
     <None Include="Web References\MSNWS.MSNABSharingService\ABFindByContactsResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>

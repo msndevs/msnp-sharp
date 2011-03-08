@@ -193,23 +193,24 @@ namespace MSNPSharp.Core
 
                         switch (cmd3)
                         {
+                            case "SDG": // SDG
+                            case "NFY": // NFY
+                            case "PUT": // PUT
+                            case "DEL": // DEL
+
+                            case "ADL": // ADL Add List command
+                            case "RML": // RML Remove List command
                             case "MSG": // MSG payload command
+
                             case "NOT": // NOT notification command
                             case "GCF": // GCF privacy settings
                             case "UBN": // UBN Unified Budy Notification (for SIP requests)
-                            case "FQY": // FQY Federated QuerY command
-                            case "DEL": // DEL
-                            case "GET": // GET
-                            case "PUT": // PUT
-                            case "NFY": // NFY
-                            case "SDG": // SDG circle messaging
+
+                            case "GET": // GET                            
                             case "IPG": // IPG pager command 
-                            case "UBX": // UBX personal message
-                            case "UBM": // UBM Yahoo messenger message
-                            case "UUN": // UUN Unified User Notification
-                            case "ADL": // ADL Add List command
-                            case "RML": // RML Remove List command
+                            case "UUN": // UUN Unified User Notification                            
                             case "FSL": // FSL
+                            case "201": // 201
                             case "203": // 203
                             case "204": // 204 Invalid contact network in ADL/RML
                             case "205": // 205
@@ -219,6 +220,7 @@ namespace MSNPSharp.Core
                             case "508": // 508
                             case "509": // 509 UpsFailure, when sending mobile message
                             case "511": // 511
+                            case "591": // 591
                             case "933": // 933
                                 {
                                     bufferStream.Seek(-3, SeekOrigin.End);

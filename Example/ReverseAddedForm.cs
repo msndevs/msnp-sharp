@@ -19,27 +19,27 @@ namespace MSNPSharpClient
             lblAdded.Text = String.Format(lblAdded.Text, contact.Name + " (" + contact.Account + ")");
         }
 
-        public bool Blocked
+        public bool AddAsFriend
         {
             get
             {
-                return rbBlock.Checked;
+                return rbAllow.Checked;
             }
         }
 
-        public bool AddToContactList
+        public bool Delete
         {
             get
             {
-                return cbContactList.Checked;
+                return rbDeleteRequest.Checked;
             }
         }
 
-        private void rbBlock_CheckedChanged(object sender, EventArgs e)
+        public bool Block
         {
-            if (rbBlock.Checked)
+            get
             {
-                cbContactList.Checked = false;
+                return rbBlock2.Checked;
             }
         }
 

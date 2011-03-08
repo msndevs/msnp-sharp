@@ -686,46 +686,6 @@ namespace MSNPSharp
             return false;
         }
 
-        private bool UpdateContactSync(PartnerScenario scenario)
-        {
-            if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
-            {
-                MsnServiceState serviceState = new MsnServiceState(scenario, "ABContactUpdate", false);
-                ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, serviceState);
-
-                ABContactUpdateRequestType abcontactUpdateRequest = new ABContactUpdateRequestType();
-                abcontactUpdateRequest.abId = Guid.Empty.ToString();
-
-                ContactType meContact = new ContactType();
-                meContact.propertiesChanged = PropertyString.Annotation; //"Annotation";
-
-                contactInfoType meinfo = new contactInfoType();
-                meinfo.contactType = MessengerContactType.Me;
-
-                Annotation anno = new Annotation();
-                anno.Name = AnnotationNames.MSN_IM_RoamLiveProperties;
-                anno.Value = "1";
-
-                meinfo.annotations = new Annotation[] { anno };
-                meContact.contactInfo = meinfo;
-                abcontactUpdateRequest.contacts = new ContactType[] { meContact };
-                try
-                {
-
-                    ChangeCacheKeyAndPreferredHostForSpecifiedMethod(abService, MsnServiceType.AB, serviceState, abcontactUpdateRequest);
-                    abService.ABContactUpdate(abcontactUpdateRequest);
-                }
-                catch (Exception ex)
-                {
-                    OnServiceOperationFailed(abService, new ServiceOperationFailedEventArgs("ABContactUpdate", ex));
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "ABContactUpdate error: " + ex.Message, GetType().Name);
-                    return false;
-                }
-                return true;
-            }
-            return false;
-        }
-
         /// <summary>
         /// Initialize the user profile if the contact connect to live network the firt time.
         /// 
@@ -812,11 +772,6 @@ namespace MSNPSharp
                     //9. UpdateDynamicItem
                     nextStep = UpdateDynamicItemSync(PartnerScenario.RoamingSeed);
                 }
-
-                //10. ABContactUpdate
-                nextStep = UpdateContactSync(PartnerScenario.RoamingSeed);
-
-                //11. OK, there's no 11, that's all....
             }
             catch (Exception ex)
             {
@@ -894,10 +849,7 @@ namespace MSNPSharp
 
         private void UpdateProfileImpl(string displayName, string personalStatus, string freeText, int flags)
         {
-
-
-            if (NSMessageHandler.ContactList.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
-                NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile &&
+            if (NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile &&
                 NSMessageHandler.BotMode == false)
             {
                 UpdateProfileLiteSync(PartnerScenario.RoamingIdentityChanged,
@@ -939,7 +891,7 @@ namespace MSNPSharp
                     return null;
                 }
 
-                if (NSMessageHandler.ContactList.Owner.RoamLiveProperty == RoamLiveProperty.Enabled && NSMessageHandler.MSNTicket != MSNTicket.Empty)
+                if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
                 {
                     DateTime deltasProfileDateModified = WebServiceDateTimeConverter.ConvertToDateTime(NSMessageHandler.ContactService.Deltas.Profile.DateModified);
                     DateTime annotationLiveProfileExpressionLastChanged = WebServiceDateTimeConverter.ConvertToDateTime(NSMessageHandler.ContactService.AddressBook.MyProperties[AnnotationNames.Live_Profile_Expression_LastChanged]);
@@ -1021,8 +973,7 @@ namespace MSNPSharp
                 return true;
             }
 
-            if (NSMessageHandler.ContactList.Owner.RoamLiveProperty == RoamLiveProperty.Enabled &&
-                NSMessageHandler.MSNTicket != MSNTicket.Empty)
+            if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
                 SerializableMemoryStream mem = SerializableMemoryStream.FromImage(photo);
 

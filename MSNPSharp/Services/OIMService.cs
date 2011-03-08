@@ -622,7 +622,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Send an offline message to a contact(only for MSNP18).
+        /// Send an offline message to a contact.
         /// </summary>
         /// <param name="receiver">Target user</param>
         /// <param name="msg"><see cref="TextMessage"/> to send</param>
@@ -630,24 +630,8 @@ namespace MSNPSharp
         {
             Exception err = null;
             try
-            {
-                TextMessage txtmsgClone = msg.Clone() as TextMessage;
-                MimeMessage mimeMessage = new MimeMessage();
-
-                mimeMessage.MimeHeader[MimeHeaderStrings.Content_Type] = "text/plain; charset=UTF-8";
-                mimeMessage.MimeHeader[MimeHeaderStrings.X_MMS_IM_Format] = msg.GetStyleString();
-
-                mimeMessage.InnerMessage = txtmsgClone;
-                mimeMessage.MimeHeader["Dest-Agent"] = "client";
-
-                NSMessage nsMessage = new NSMessage("UUM",
-                    new string[] { receiver.Account, 
-                        ((int)receiver.ClientType).ToString(), 
-                        ((int)NetworkMessageType.Text).ToString(CultureInfo.InvariantCulture) });
-
-                nsMessage.InnerMessage = mimeMessage;
-
-                NSMessageHandler.MessageProcessor.SendMessage(nsMessage);
+            {                
+                NSMessageHandler.SendOIMMessage(receiver, msg);
             }
             catch (Exception exp)
             {

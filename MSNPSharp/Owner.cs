@@ -53,13 +53,8 @@ namespace MSNPSharp
         /// </summary>
         public event EventHandler<PlaceChangedEventArgs> PlacesChanged;
 
-
         private string epName = Environment.MachineName;
-
         private bool passportVerified;
-        private PrivacyMode privacy = PrivacyMode.Unknown;
-        private NotifyPrivacy notifyPrivacy = NotifyPrivacy.Unknown;
-        private RoamLiveProperty roamLiveProperty = RoamLiveProperty.Unspecified;
 
         public Owner(string abId, string account, long cid, NSMessageHandler handler)
             : base(abId, account, IMAddressInfoType.WindowsLive, cid, handler)
@@ -108,21 +103,6 @@ namespace MSNPSharp
             DisplayImage displayImage = new DisplayImage(Account.ToLowerInvariant(), sms);
 
             this.DisplayImage = displayImage;
-        }
-
-        internal void SetPrivacy(PrivacyMode mode)
-        {
-            privacy = mode;
-        }
-
-        internal void SetNotifyPrivacy(NotifyPrivacy mode)
-        {
-            notifyPrivacy = mode;
-        }
-
-        internal void SetRoamLiveProperty(RoamLiveProperty mode)
-        {
-            roamLiveProperty = mode;
         }
 
         internal void SetChangedPlace(Guid epId, string placeName, PlaceChangedReason action)
@@ -250,7 +230,7 @@ namespace MSNPSharp
             if (EndPointData.ContainsKey(endPointID))
             {
                 NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUN",
-                    new string[] { Account + ";" + endPointID.ToString("B").ToLowerInvariant(), "4" }, "goawyplzthxbye" + (MPOPMode == MPOP.AutoLogoff ? "-nomorempop" : String.Empty)));
+                    new string[] { Account + ";" + endPointID.ToString("B").ToLowerInvariant(), "4" }, "goawyplzthxbye"));
             }
             else
             {
@@ -291,7 +271,7 @@ namespace MSNPSharp
                 }
             }
         }
-        
+
         public override SceneImage SceneImage
         {
             get
@@ -502,120 +482,15 @@ namespace MSNPSharp
             }
         }
 
-        public PrivacyMode Privacy
-        {
-            get
-            {
-                return privacy;
-            }
-            set
-            {
-                if (NSMessageHandler != null)
-                {
-                    NSMessageHandler.SetPrivacyMode(value);
-                }
-            }
-        }
-
-        public NotifyPrivacy NotifyPrivacy
-        {
-            get
-            {
-                return notifyPrivacy;
-            }
-            set
-            {
-                if (NSMessageHandler != null)
-                {
-                    NSMessageHandler.SetNotifyPrivacyMode(value);
-                }
-            }
-        }
-
-        public RoamLiveProperty RoamLiveProperty
-        {
-            get
-            {
-                return roamLiveProperty;
-            }
-            set
-            {
-                roamLiveProperty = value;
-                if (NSMessageHandler != null)
-                {
-                    NSMessageHandler.ContactService.UpdateMe();
-                }
-            }
-        }
-
-        bool mpopEnabled;
-        MPOP mpopMode = MPOP.Unspecified;
-        string _routeInfo = string.Empty;
-
-        /// <summary>
-        /// Route address, used for PNRP??
-        /// </summary>
-        public string RouteInfo
-        {
-            get
-            {
-                return _routeInfo;
-            }
-            internal set
-            {
-                _routeInfo = value;
-            }
-        }
-
-        /// <summary>
-        /// Whether the contact list owner has Multiple Points of Presence Support (MPOP) that is owner connect from multiple places.
-        /// </summary>
-        public bool MPOPEnable
-        {
-            get
-            {
-                return mpopEnabled;
-            }
-            internal set
-            {
-                mpopEnabled = value;
-            }
-        }
-
-
-        internal void SetMPOP(MPOP mpop)
-        {
-            MPOPMode = mpop;
-        }
-
         /// <summary>
         /// Reaction when sign in at another place.
         /// </summary>
-        public MPOP MPOPMode
+        [Obsolete(@"Obsoleted in MSNP21, default is enabled and cannot be disabled.", true)]
+        public object MPOPMode
         {
             get
             {
-                if (mpopMode == MPOP.Unspecified && mpopEnabled)  //If unspecified, we get it from profile.
-                {
-                    if (NSMessageHandler != null)
-                    {
-                        if (NSMessageHandler.ContactService.AddressBook != null)
-                        {
-                            if (NSMessageHandler.ContactService.AddressBook.MyProperties.ContainsKey(AnnotationNames.MSN_IM_MPOP))
-                                mpopMode = NSMessageHandler.ContactService.AddressBook.MyProperties[AnnotationNames.MSN_IM_MPOP] == "1" ? MPOP.KeepOnline : MPOP.AutoLogoff;
-
-                        }
-                    }
-                }
-                return mpopMode;
-            }
-            set
-            {
-                if (NSMessageHandler != null && MPOPEnable)
-                {
-                    mpopMode = value;
-                    NSMessageHandler.ContactService.UpdateMe();
-                }
+                return MPOP.KeepOnline;
             }
         }
 
@@ -653,7 +528,8 @@ namespace MSNPSharp
 
             set
             {
-                if (Name == value) return;
+                if (Name == value)
+                    return;
                 if (NSMessageHandler != null)
                 {
                     NSMessageHandler.SetScreenName(value);
@@ -663,25 +539,9 @@ namespace MSNPSharp
 
 
         #region Profile datafields
+
+        private Dictionary<string, string> msgProfile = new Dictionary<string, string>();
         bool validProfile;
-        string loginTime;
-        bool emailEnabled;
-        string memberIdHigh;
-        string memberIdLowd;
-        string preferredLanguage;
-        string preferredMail;
-        string country;
-        string postalCode;
-        string gender;
-        string kid;
-        string age;
-        string birthday;
-        string wallet;
-        string sid;
-        string kV;
-        string mSPAuth;
-        IPAddress clientIP;
-        int clientPort;
 
         public bool ValidProfile
         {
@@ -695,51 +555,39 @@ namespace MSNPSharp
             }
         }
 
-        public string LoginTime
-        {
-            get
-            {
-                return loginTime;
-            }
-            set
-            {
-                loginTime = value;
-            }
-        }
-
         public bool EmailEnabled
         {
             get
             {
-                return emailEnabled;
+                return msgProfile.ContainsKey("EmailEnabled") && msgProfile["EmailEnabled"] == "1";
             }
             set
             {
-                emailEnabled = value;
+                msgProfile["EmailEnabled"] = value ? "1" : "0";
             }
         }
 
-        public string MemberIdHigh
+        public long MemberIdHigh
         {
             get
             {
-                return memberIdHigh;
+                return msgProfile.ContainsKey("MemberIdHigh") ? long.Parse(msgProfile["MemberIdHigh"]) : 0;
             }
             set
             {
-                memberIdHigh = value;
+                msgProfile["MemberIdHigh"] = value.ToString(System.Globalization.CultureInfo.InvariantCulture);
             }
         }
 
-        public string MemberIdLowd
+        public long MemberIdLowd
         {
             get
             {
-                return memberIdLowd;
+                return msgProfile.ContainsKey("MemberIdLow") ? long.Parse(msgProfile["MemberIdLow"]) : 0;
             }
             set
             {
-                memberIdLowd = value;
+                msgProfile["MemberIdLow"] = value.ToString(System.Globalization.CultureInfo.InvariantCulture);
             }
         }
 
@@ -747,23 +595,11 @@ namespace MSNPSharp
         {
             get
             {
-                return preferredLanguage;
+                return msgProfile.ContainsKey("lang_preference") ? msgProfile["lang_preference"] : String.Empty;
             }
             set
             {
-                preferredLanguage = value;
-            }
-        }
-
-        public string PreferredMail
-        {
-            get
-            {
-                return preferredMail;
-            }
-            set
-            {
-                preferredMail = value;
+                msgProfile["lang_preference"] = value;
             }
         }
 
@@ -771,35 +607,11 @@ namespace MSNPSharp
         {
             get
             {
-                return country;
+                return msgProfile.ContainsKey("country") ? msgProfile["country"] : String.Empty;
             }
             set
             {
-                country = value;
-            }
-        }
-
-        public string PostalCode
-        {
-            get
-            {
-                return postalCode;
-            }
-            set
-            {
-                postalCode = value;
-            }
-        }
-
-        public string Gender
-        {
-            get
-            {
-                return gender;
-            }
-            set
-            {
-                gender = value;
+                msgProfile["country"] = value;
             }
         }
 
@@ -807,48 +619,23 @@ namespace MSNPSharp
         {
             get
             {
-                return kid;
+                return msgProfile.ContainsKey("Kid") ? msgProfile["Kid"] : String.Empty;
             }
             set
             {
-                kid = value;
+                msgProfile["Kid"] = value;
             }
         }
 
-        public string Age
+        public long Flags
         {
             get
             {
-                return age;
+                return msgProfile.ContainsKey("Flags") ? long.Parse(msgProfile["Flags"]) : 0;
             }
             set
             {
-                age = value;
-            }
-        }
-
-        public string Birthday
-        {
-            get
-            {
-                return birthday;
-            }
-            set
-            {
-                birthday = value;
-            }
-        }
-
-
-        public string Wallet
-        {
-            get
-            {
-                return wallet;
-            }
-            set
-            {
-                wallet = value;
+                msgProfile["Flags"] = value.ToString(System.Globalization.CultureInfo.InvariantCulture);
             }
         }
 
@@ -856,35 +643,11 @@ namespace MSNPSharp
         {
             get
             {
-                return sid;
+                return msgProfile.ContainsKey("Sid") ? msgProfile["Sid"] : String.Empty;
             }
             set
             {
-                sid = value;
-            }
-        }
-
-        public string KV
-        {
-            get
-            {
-                return kV;
-            }
-            set
-            {
-                kV = value;
-            }
-        }
-
-        public string MSPAuth
-        {
-            get
-            {
-                return mSPAuth;
-            }
-            set
-            {
-                mSPAuth = value;
+                msgProfile["Sid"] = value;
             }
         }
 
@@ -892,11 +655,26 @@ namespace MSNPSharp
         {
             get
             {
-                return clientIP;
+                return msgProfile.ContainsKey("ClientIP") ? IPAddress.Parse(msgProfile["ClientIP"]) : IPAddress.None;
             }
             set
             {
-                clientIP = value;
+                msgProfile["ClientIP"] = value.ToString();
+            }
+        }
+
+        /// <summary>
+        /// Route address, used for PNRP??
+        /// </summary>
+        public string RouteInfo
+        {
+            get
+            {
+                return msgProfile.ContainsKey("RouteInfo") ? msgProfile["RouteInfo"] : String.Empty;
+            }
+            internal set
+            {
+                msgProfile["RouteInfo"] = value;
             }
         }
 
@@ -904,74 +682,40 @@ namespace MSNPSharp
         {
             get
             {
-                return clientPort;
+                return msgProfile.ContainsKey("ClientPort") ? int.Parse(msgProfile["ClientPort"]) : 0;
             }
             set
             {
-                clientPort = value;
+                msgProfile["ClientPort"] = value.ToString(System.Globalization.CultureInfo.InvariantCulture);
             }
         }
 
         #endregion
 
-        /// <summary>
-        /// This will update the profile of the Owner object. 
-        /// </summary>
-        /// <remarks>This method fires the <see cref="ProfileReceived"/> event.</remarks>
-        /// <param name="loginTime"></param>
-        /// <param name="emailEnabled"></param>
-        /// <param name="memberIdHigh"></param>
-        /// <param name="memberIdLowd"></param>
-        /// <param name="preferredLanguage"></param>
-        /// <param name="preferredMail"></param>
-        /// <param name="country"></param>
-        /// <param name="postalCode"></param>
-        /// <param name="gender"></param>
-        /// <param name="kid"></param>
-        /// <param name="age"></param>
-        /// <param name="birthday"></param>
-        /// <param name="wallet"></param>
-        /// <param name="sid"></param>
-        /// <param name="kv"></param>
-        /// <param name="mspAuth"></param>
-        /// <param name="clientIP"></param>
-        /// <param name="clientPort"></param>
-        /// <param name="nick"></param>
-        /// <param name="mpop"></param>
-        /// <param name="routeInfo"></param>
-        internal void UpdateProfile(
-            string loginTime, bool emailEnabled, string memberIdHigh,
-            string memberIdLowd, string preferredLanguage, string preferredMail,
-            string country, string postalCode, string gender,
-            string kid, string age, string birthday,
-            string wallet, string sid, string kv,
-            string mspAuth, IPAddress clientIP, int clientPort,
-            string nick,
-            bool mpop,
-            string routeInfo)
+        /*
+EmailEnabled: 1
+MemberIdHigh: 123456
+MemberIdLow: -1234567890
+lang_preference: 2052
+country: US
+Kid: 0
+Flags: 1073742915
+sid: 72652
+ClientIP: XXX.XXX.XXX.XXX
+Nickname: New
+RouteInfo: msnp://XXX.XXX.XXX.XXX/013557A5
+*/
+        internal void UpdateProfile(StrDictionary hdr)
         {
-            LoginTime = loginTime;
-            EmailEnabled = emailEnabled;
-            MemberIdHigh = memberIdHigh;
-            MemberIdLowd = memberIdLowd;
-            PreferredLanguage = preferredLanguage;
-            PreferredMail = preferredMail;
-            Country = country;
-            PostalCode = postalCode;
-            Gender = gender;
-            Kid = kid;
-            Age = age;
-            Birthday = birthday;
-            Wallet = wallet;
-            Sid = sid;
-            KV = kv;
-            MSPAuth = mspAuth;
-            ClientIP = clientIP;
-            ClientPort = clientPort;
-            MPOPEnable = mpop;
-            RouteInfo = routeInfo;
-            SetNickName(nick);
+            foreach (StrKeyValuePair pair in hdr)
+            {
+                msgProfile[String.Copy(pair.Key)] = String.Copy(pair.Value);
+            }
+
             ValidProfile = true;
+
+            if (msgProfile.ContainsKey("Nickname"))
+                SetNickName(msgProfile["Nickname"]);
 
             OnProfileReceived(EventArgs.Empty);
         }

@@ -52,11 +52,8 @@ namespace MSNPSharp
 
         private ContactList contactList = null;
         private string hostDomain = DefaultHostDomain;
-        private long segmentCounter = 0;
 
         private ContactType meContact = null;
-
-        private ABFindContactsPagedResultTypeAB abinfo = null;
 
         public string HostDomain
         {
@@ -71,20 +68,6 @@ namespace MSNPSharp
             get
             {
                 return contactList;
-            }
-        }
-
-        /// <summary>
-        /// The last change time of circle's addressbook.
-        /// </summary>
-        public string LastChanged
-        {
-            get
-            {
-                if (abinfo == null)
-                    return WebServiceConstants.ZeroTime;
-
-                return abinfo.lastChange;
             }
         }
 
@@ -112,116 +95,28 @@ namespace MSNPSharp
             Initialize();
         }
 
-        private void CheckValidation()
-        {
-            if (NSMessageHandler == null)
-                throw new MSNPSharpException("NSMessagehandler is null");
-            if (!NSMessageHandler.IsSignedIn)
-                throw new InvalidOperationException("Cannot send a message without signning in to the server. Please sign in first.");
+       
 
-            if (NSMessageHandler.ContactList.Owner.Status == PresenceStatus.Hidden)
-                throw new InvalidOperationException("Cannot send a message when you are in 'Hidden' status.");
-        }
-
-        private MultiMimeMessage InitMultiMimeMessage()
-        {
-            string to = ((int)ClientType).ToString() + ":" + Account;
-            string from = ((int)NSMessageHandler.ContactList.Owner.ClientType).ToString() + ":" + NSMessageHandler.ContactList.Owner.Account;
-
-            MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
-            mmMessage.RoutingHeaders["To"]["path"] = "IM";
-            mmMessage.RoutingHeaders["From"]["epid"] = NSMessageHandler.ContactList.Owner.MachineGuid.ToString("B").ToLowerInvariant();
-            mmMessage.Segment = IncreaseSegmentCounter();
-
-            return mmMessage;
-        }
-
-        /// <summary>
-        /// Send nudge to all members in this circle.
-        /// </summary>
-        /// <exception cref="MSNPSharpException">NSMessageHandler is null</exception>
-        /// <exception cref="InvalidOperationException">Not sign in to the server, or in <see cref="PresenceStatus.Hidden"/> status.</exception>
-        public void SendNudge()
-        {
-            CheckValidation();
-
-            MultiMimeMessage mmm = InitMultiMimeMessage();
-            mmm.ContentHeaders["MIME-Version"] = "1.0";
-            mmm.ContentHeaders["Content-Transfer-Encoding"] = "7bit";
-            mmm.ContentHeaders["Message-Type"] = "Nudge";
-            mmm.InnerBody = Encoding.ASCII.GetBytes("ID: 1\r\n\r\n");
-
-            NSMessage nspayload = new NSMessage("SDG");
-            nspayload.InnerMessage = mmm;
-            NSMessageHandler.MessageProcessor.SendMessage(nspayload);
-        }
-
-        /// <summary>
-        /// Send a text message to all members in this circle.
-        /// </summary>
-        /// <param name="textMessage"></param>
-        /// <exception cref="MSNPSharpException">NSMessageHandler is null</exception>
-        /// <exception cref="InvalidOperationException">Not sign in to the server, or in <see cref="PresenceStatus.Hidden"/> status.</exception>
-        public void SendMessage(TextMessage textMessage)
-        {
-            CheckValidation();
-            textMessage.PrepareMessage();
-
-            MultiMimeMessage mmm = InitMultiMimeMessage();
-            mmm.ContentHeaders["MIME-Version"] = "1.0";
-            mmm.ContentHeaders["Content-Transfer-Encoding"] = "7bit";
-            mmm.ContentHeaders["Message-Type"] = "Text";
-            mmm.ContentHeaders["Content-Type"] = "Text/plain";
-            mmm.ContentHeaders[MimeHeaderStrings.X_MMS_IM_Format] = textMessage.GetStyleString();
-
-            mmm.InnerBody = Encoding.UTF8.GetBytes(textMessage.Text);
-
-            NSMessage nspayload = new NSMessage("SDG");
-            nspayload.InnerMessage = mmm;
-            NSMessageHandler.MessageProcessor.SendMessage(nspayload);
-        }
-
-        /// <summary>
-        /// Send a typing message indicates that you are typing to all members in this circle.
-        /// </summary>
-        /// <exception cref="MSNPSharpException">NSMessageHandler is null</exception>
-        /// <exception cref="InvalidOperationException">Not sign in to the server, or in <see cref="PresenceStatus.Hidden"/> status.</exception>
-        public void SendTypingMessage()
-        {
-            CheckValidation();
-
-            MultiMimeMessage mmm = InitMultiMimeMessage();
-            mmm.ContentHeaders["MIME-Version"] = "1.0";
-            mmm.ContentHeaders["Content-Transfer-Encoding"] = "7bit";
-            mmm.ContentHeaders["Content-Type"] = "text/x-msmsgscontrol";
-            mmm.ContentHeaders["Message-Type"] = "Control";
-            mmm.ContentHeaders["Message-Subtype"] = "Typing";
-            mmm.ContentHeaders["TypingUser"] = NSMessageHandler.ContactList.Owner.Account;
-
-            mmm.InnerBody = Encoding.ASCII.GetBytes("\r\n");
-
-            NSMessage nspayload = new NSMessage("SDG");
-            nspayload.InnerMessage = mmm;
-            NSMessageHandler.MessageProcessor.SendMessage(nspayload);
-        }
-
-        internal long IncreaseSegmentCounter()
-        {
-            return segmentCounter++;
-        }
-
-        internal void SetAddressBookInfo(ABFindContactsPagedResultTypeAB abInfo)
-        {
-            abinfo = abInfo;
-        }
-
-        #region Protected
         protected virtual void Initialize()
         {
             ContactType = MessengerContactType.Circle;
             Lists = RoleLists.Allow | RoleLists.Forward;
         }
 
-        #endregion
+        protected override bool CanReceiveMessage
+        {
+            get
+            {
+                bool ok = base.CanReceiveMessage;
+
+                if (!ok)
+                    throw new InvalidOperationException("Cannot send a message without signning in to the server. Please sign in first.");
+
+                if (NSMessageHandler.ContactList.Owner.Status == PresenceStatus.Hidden)
+                    throw new InvalidOperationException("Cannot send a message to the group when you are in 'Hidden' status.");
+
+                return true;
+            }
+        }
     }
 };

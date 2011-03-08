@@ -24,6 +24,7 @@ namespace MSNPSharpClient
     public class ConversationForm : System.Windows.Forms.Form
     {
         private IContainer components;
+
         #region Windows Form Designer generated code
 
         private Panel panel1;
@@ -45,7 +46,6 @@ namespace MSNPSharpClient
         private ToolStripButton bMessageSend;
         private ToolStripButton bMessageSendNudge;
         private Button btnSendFiles;
-        private Button btnInviteUsers;
         private Button btnCustomEmoticon;
         private Button btnActivityTest;
         private ToolStripDropDownButton bMessageInsertEmoticon;
@@ -54,10 +54,12 @@ namespace MSNPSharpClient
         private ToolStripMenuItem sadToolStripMenuItem;
         private ToolStripMenuItem winkToolStripMenuItem;
         private ToolStripMenuItem tongueOutToolStripMenuItem;
-        private ContextMenuStrip onlineUsersDropDown;
         private ToolStripButton bMessageFontColor;
         private OpenFileDialog openCustomEmoticonDialog;
         private ContextMenuStrip activitiesMenuStrip1;
+        private Label systemLabel;
+        private Button btnMultiparty;
+        private ContextMenuStrip multipartyMenu;
         private ColorDialog dlgColor;
 
 
@@ -89,17 +91,18 @@ namespace MSNPSharpClient
             this.displayOwner = new System.Windows.Forms.PictureBox();
             this.inputTextBox = new System.Windows.Forms.TextBox();
             this.panel2 = new System.Windows.Forms.Panel();
+            this.systemLabel = new System.Windows.Forms.Label();
             this.btnActivityTest = new System.Windows.Forms.Button();
             this.btnCustomEmoticon = new System.Windows.Forms.Button();
-            this.btnInviteUsers = new System.Windows.Forms.Button();
-            this.onlineUsersDropDown = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.btnSendFiles = new System.Windows.Forms.Button();
             this.displayUser = new System.Windows.Forms.PictureBox();
+            this.richTextHistory = new MSNPSharpClient.RtfRichTextBox();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.dlgColor = new System.Windows.Forms.ColorDialog();
             this.openCustomEmoticonDialog = new System.Windows.Forms.OpenFileDialog();
             this.activitiesMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.richTextHistory = new MSNPSharpClient.RtfRichTextBox();
+            this.btnMultiparty = new System.Windows.Forms.Button();
+            this.multipartyMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.panel1.SuspendLayout();
             this.tsMessage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.displayOwner)).BeginInit();
@@ -350,9 +353,10 @@ namespace MSNPSharpClient
             // 
             // panel2
             // 
+            this.panel2.Controls.Add(this.btnMultiparty);
+            this.panel2.Controls.Add(this.systemLabel);
             this.panel2.Controls.Add(this.btnActivityTest);
             this.panel2.Controls.Add(this.btnCustomEmoticon);
-            this.panel2.Controls.Add(this.btnInviteUsers);
             this.panel2.Controls.Add(this.btnSendFiles);
             this.panel2.Controls.Add(this.displayUser);
             this.panel2.Controls.Add(this.richTextHistory);
@@ -361,6 +365,17 @@ namespace MSNPSharpClient
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(663, 272);
             this.panel2.TabIndex = 0;
+            // 
+            // systemLabel
+            // 
+            this.systemLabel.AutoSize = true;
+            this.systemLabel.BackColor = System.Drawing.Color.Transparent;
+            this.systemLabel.Location = new System.Drawing.Point(109, 253);
+            this.systemLabel.Name = "systemLabel";
+            this.systemLabel.Size = new System.Drawing.Size(22, 13);
+            this.systemLabel.TabIndex = 5;
+            this.systemLabel.Text = "-----";
+            this.systemLabel.Visible = false;
             // 
             // btnActivityTest
             // 
@@ -381,22 +396,6 @@ namespace MSNPSharpClient
             this.btnCustomEmoticon.Text = "Custom Emoticon";
             this.btnCustomEmoticon.UseVisualStyleBackColor = true;
             this.btnCustomEmoticon.Click += new System.EventHandler(this.bMessageSendCustomEmoticon_Click);
-            // 
-            // btnInviteUsers
-            // 
-            this.btnInviteUsers.ContextMenuStrip = this.onlineUsersDropDown;
-            this.btnInviteUsers.Location = new System.Drawing.Point(3, 83);
-            this.btnInviteUsers.Name = "btnInviteUsers";
-            this.btnInviteUsers.Size = new System.Drawing.Size(100, 23);
-            this.btnInviteUsers.TabIndex = 2;
-            this.btnInviteUsers.Text = "Invite Users";
-            this.btnInviteUsers.UseVisualStyleBackColor = true;
-            this.btnInviteUsers.Click += new System.EventHandler(this.btnInviteUsers_Click);
-            // 
-            // onlineUsersDropDown
-            // 
-            this.onlineUsersDropDown.Name = "onlineUsersDropDown";
-            this.onlineUsersDropDown.Size = new System.Drawing.Size(61, 4);
             // 
             // btnSendFiles
             // 
@@ -420,20 +419,6 @@ namespace MSNPSharpClient
             this.displayUser.TabIndex = 0;
             this.displayUser.TabStop = false;
             // 
-            // openFileDialog
-            // 
-            this.openFileDialog.Multiselect = true;
-            // 
-            // openCustomEmoticonDialog
-            // 
-            this.openCustomEmoticonDialog.Filter = "Image File (*.png, *.jpg, *.bmp, *.gif|*.png;*.jpg;*.bmp;*.gif";
-            this.openCustomEmoticonDialog.Title = "Open Image to transfer as an custom emoticon";
-            // 
-            // activitiesMenuStrip1
-            // 
-            this.activitiesMenuStrip1.Name = "activitiesMenuStrip1";
-            this.activitiesMenuStrip1.Size = new System.Drawing.Size(153, 26);
-            // 
             // richTextHistory
             // 
             this.richTextHistory.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
@@ -452,6 +437,35 @@ namespace MSNPSharpClient
             this.richTextHistory.Text = "";
             this.richTextHistory.TextColor = MSNPSharpClient.RtfRichTextBox.RtfColor.Black;
             // 
+            // openFileDialog
+            // 
+            this.openFileDialog.Multiselect = true;
+            // 
+            // openCustomEmoticonDialog
+            // 
+            this.openCustomEmoticonDialog.Filter = "Image File (*.png, *.jpg, *.bmp, *.gif|*.png;*.jpg;*.bmp;*.gif";
+            this.openCustomEmoticonDialog.Title = "Open Image to transfer as an custom emoticon";
+            // 
+            // activitiesMenuStrip1
+            // 
+            this.activitiesMenuStrip1.Name = "activitiesMenuStrip1";
+            this.activitiesMenuStrip1.Size = new System.Drawing.Size(61, 4);
+            // 
+            // btnMultiparty
+            // 
+            this.btnMultiparty.Location = new System.Drawing.Point(3, 82);
+            this.btnMultiparty.Name = "btnMultiparty";
+            this.btnMultiparty.Size = new System.Drawing.Size(100, 23);
+            this.btnMultiparty.TabIndex = 6;
+            this.btnMultiparty.Text = "Multiparty chat";
+            this.btnMultiparty.UseVisualStyleBackColor = true;
+            this.btnMultiparty.Click += new System.EventHandler(this.btnMultiparty_Click);
+            // 
+            // multipartyMenu
+            // 
+            this.multipartyMenu.Name = "multipartyMenu";
+            this.multipartyMenu.Size = new System.Drawing.Size(61, 4);
+            // 
             // ConversationForm
             // 
             this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
@@ -469,6 +483,7 @@ namespace MSNPSharpClient
             this.tsMessage.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.displayOwner)).EndInit();
             this.panel2.ResumeLayout(false);
+            this.panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.displayUser)).EndInit();
             this.ResumeLayout(false);
 
@@ -476,22 +491,13 @@ namespace MSNPSharpClient
         #endregion
 
         private Messenger _messenger = null;
-        private ConversationID activeconversationID = null;
-        private Contact firstInvitedContact;
+        private Contact remoteContact;
 
-        bool isYIM = false;
-
-
-        public ConversationID ConversationID
+        public Contact RemoteContact
         {
             get
             {
-                return activeconversationID;
-            }
-
-            private set
-            {
-                activeconversationID = value;
+                return remoteContact;
             }
         }
 
@@ -504,22 +510,19 @@ namespace MSNPSharpClient
         /// </summary>
         /// <param name="messenger"></param>
         /// <param name="contact"></param>
-        public ConversationForm(Messenger messenger, Contact contact, ConversationID convId)
+        public ConversationForm(Messenger messenger, Contact contact)
         {
             InitializeComponent();
 
             _messenger = messenger;
-            activeconversationID = convId;
-            firstInvitedContact = contact;
+            remoteContact = contact;
 
-            isYIM = (ConversationID.NetworkType == IMAddressInfoType.Yahoo);
-
-            if (isYIM)
+            if (contact.ClientType != IMAddressInfoType.WindowsLive)
             {
                 btnActivityTest.Enabled = false;
                 btnCustomEmoticon.Enabled = false;
-                btnInviteUsers.Enabled = false;
                 btnSendFiles.Enabled = false;
+                btnMultiparty.Enabled = false;
             }
         }
 
@@ -531,41 +534,47 @@ namespace MSNPSharpClient
             }
             else
             {
-                switch (e.MessageType)
+                if (e is NudgeArrivedEventArgs)
                 {
-                    case NetworkMessageType.Nudge:
-                        MakeVisible(sender, e);
-                        PrintNudge(e.Sender);
-                        break;
-                    case NetworkMessageType.Text:
-                        MakeVisible(sender, e);
-                        PrintText(e.Sender, (e as TextMessageArrivedEventArgs).TextMessage);
-                        break;
-                    case NetworkMessageType.Emoticon:
-                        {
-                            Emoticon emo = (e as EmoticonArrivedEventArgs).Emoticon;
-                            if (emo != null)
-                            {
-                                MemoryStream ms = new MemoryStream();
-                                byte[] byt = new byte[emo.OpenStream().Length];
-                                emo.OpenStream().Seek(0, SeekOrigin.Begin);
-                                emo.OpenStream().Read(byt, 0, byt.Length);
-                                ms.Write(byt, 0, byt.Length);
+                    MakeVisible(sender, e);
+                    PrintNudge(e as NudgeArrivedEventArgs);
+                }
+                else if (e is TypingArrivedEventArgs)
+                {
+                    MakeVisible(sender, e);
+                    PrintTyping(e as TypingArrivedEventArgs);
+                }
+                else if (e is TextMessageArrivedEventArgs)
+                {
+                    MakeVisible(sender, e);
+                    PrintText(e.Sender, (e as TextMessageArrivedEventArgs).TextMessage);
+                }
+                else if (e is EmoticonArrivedEventArgs)
+                {
+                    MakeVisible(sender, e);
 
-                                richTextHistory.Emotions[emo.Shortcut] = new Bitmap(Image.FromStream(ms));
+                    Emoticon emo = (e as EmoticonArrivedEventArgs).Emoticon;
+                    if (emo != null)
+                    {
+                        MemoryStream ms = new MemoryStream();
+                        byte[] byt = new byte[emo.OpenStream().Length];
+                        emo.OpenStream().Seek(0, SeekOrigin.Begin);
+                        emo.OpenStream().Read(byt, 0, byt.Length);
+                        ms.Write(byt, 0, byt.Length);
 
-                                ms.Close();
-                            }
+                        richTextHistory.Emotions[emo.Shortcut] = new Bitmap(Image.FromStream(ms));
 
-                            while (richTextHistory.HasEmotion)
-                            {
-                                richTextHistory.InsertEmotion();
-                            }
-                        }
-                        break;
+                        ms.Close();
+                    }
+
+                    while (richTextHistory.HasEmotion)
+                    {
+                        richTextHistory.InsertEmotion();
+                    }
                 }
             }
         }
+    
 
         /// <summary>
         /// Clean up any resources being used.
@@ -597,7 +606,7 @@ namespace MSNPSharpClient
 
             try
             {
-                _messenger.MessageManager.SendTyping(ConversationID);
+                remoteContact.SendTypingMessage();
 
             }
             catch (Exception)
@@ -633,32 +642,46 @@ namespace MSNPSharpClient
             Show();
         }
 
-        private void PrintNudge(Contact sender)
+        private void PrintNudge(NudgeArrivedEventArgs e)
         {
-            DisplaySystemMessage(sender.Name + " has sent a nudge!");
             PerformNudge();
+            DisplaySystemMessage(e.Sender.Account + " has sent a nudge! invidual sender=" + e.OriginalSender);
+        }
+
+        private void PrintTyping(TypingArrivedEventArgs e)
+        {
+            DisplaySystemMessage(e.Sender.Account + " is typing... invidual sender=" + e.OriginalSender);
         }
 
 
         public void DisplaySystemMessage(string systemMessage)
         {
-            richTextHistory.SelectionColor = Color.Red;
-            richTextHistory.SelectionFont = new Font("Verdana", 8f, FontStyle.Bold);
-            richTextHistory.SelectionIndent = 30;
-            richTextHistory.AppendText("* " + systemMessage + " *");
-            richTextHistory.SelectionColor = Color.Black;
-            richTextHistory.SelectionIndent = 0;
-            richTextHistory.SelectionFont = new Font("Verdana", 8f);
-            richTextHistory.AppendText(Environment.NewLine);
-            richTextHistory.ScrollToCaret();
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            systemLabel.Text = systemMessage;
+            systemLabel.Visible = true;
+            while (stopwatch.ElapsedMilliseconds < 2000)
+            {
+                System.Threading.Thread.Sleep(10);
+                Application.DoEvents();
+            }
+            systemLabel.Visible = false;
+            systemLabel.Text = String.Empty;
+            stopwatch.Stop();
         }
 
 
         private void ConversationForm_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            ConversationID.RemoteOwner.DisplayImageChanged -= Contact_DisplayImageChanged;
-            ConversationID.RemoteOwner.DisplayImageContextChanged -= Contact_DisplayImageConextChanged;
-            _messenger.MessageManager.EndConversation(activeconversationID);
+            remoteContact.DisplayImageChanged -= Contact_DisplayImageChanged;
+            remoteContact.DisplayImageContextChanged -= Contact_DisplayImageConextChanged;
+
+            _messenger.Nameserver.MultipartyCreated -= Nameserver_MultipartyCreated;
+
+            if (remoteContact is TemporaryGroup)
+            {
+                _messenger.Nameserver.LeaveMultiparty(remoteContact as TemporaryGroup);
+            }
         }
 
         private void PrintText(Contact c, TextMessage message)
@@ -729,8 +752,8 @@ namespace MSNPSharpClient
 
         private void ConversationForm_Load(object sender, EventArgs e)
         {
-            Text = "Conversation with " + ConversationID.RemoteOwner.Account + " - MSNPSharp";
-            Icon = (Icon)((ConversationID.RemoteOwner.ClientType == IMAddressInfoType.WindowsLive) ? Properties.Resources.msn_ico : Properties.Resources.yahoo_ico);
+            Text = "Conversation with " + remoteContact.Account + " - MSNPSharp";
+            Icon = (Icon)((remoteContact.ClientType == IMAddressInfoType.WindowsLive) ? Properties.Resources.msn_ico : Properties.Resources.yahoo_ico);
 
             if (_messenger.ContactList.Owner.DisplayImage.Image != null)
                 displayOwner.Image = _messenger.ContactList.Owner.DisplayImage.Image;
@@ -801,38 +824,37 @@ namespace MSNPSharpClient
 
         private void ConversationForm_Shown(object sender, EventArgs e)
         {
-            if (!isYIM)
+            if (remoteContact.ClientType == IMAddressInfoType.WindowsLive)
             {
-                if (ConversationID.RemoteOwner.DisplayImage.Image != null)
-                    displayUser.Image = ConversationID.RemoteOwner.DisplayImage.Image;
+                if (remoteContact.DisplayImage.Image != null)
+                    displayUser.Image = remoteContact.DisplayImage.Image;
                 else
                     displayUser.Image = DisplayImage.DefaultImage;
             }
             else
                 displayUser.Image = Properties.Resources.YahooMessenger_logo.Clone() as Image;
 
-            ConversationID.RemoteOwner.DisplayImageChanged += new EventHandler<DisplayImageChangedEventArgs>(Contact_DisplayImageChanged);
-            ConversationID.RemoteOwner.DisplayImageContextChanged += new EventHandler<DisplayImageChangedEventArgs>(Contact_DisplayImageConextChanged);
+            remoteContact.DisplayImageChanged += new EventHandler<DisplayImageChangedEventArgs>(Contact_DisplayImageChanged);
+            remoteContact.DisplayImageContextChanged += new EventHandler<DisplayImageChangedEventArgs>(Contact_DisplayImageConextChanged);
+
+            _messenger.Nameserver.MultipartyCreated += Nameserver_MultipartyCreated;
+
 
             // request the image, if not already available
-            if (ConversationID.RemoteOwner.Status != PresenceStatus.Offline)
+            if (remoteContact.Status != PresenceStatus.Offline)
             {
-                if (ConversationID.RemoteOwner.DisplayImage != ConversationID.RemoteOwner.UserTileLocation)
+                if (remoteContact.DisplayImage != remoteContact.UserTileLocation)
                 {
                     try
                     {
-                        RequestDisplayImage(ConversationID.RemoteOwner, null);
+                        RequestDisplayImage(remoteContact, null);
                     }
                     catch (Exception ex)
                     {
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message + "\r\n StackTrace: " + ex.StackTrace);
                     }
                 }
-
-
             }
-
-
         }
 
         private void RequestDisplayImage(Contact remoteContact, DisplayImage updateImage)
@@ -856,7 +878,7 @@ namespace MSNPSharpClient
         {
             try
             {
-                RequestDisplayImage(ConversationID.RemoteOwner, null);
+                RequestDisplayImage(remoteContact, null);
             }
             catch (Exception ex)
             {
@@ -925,49 +947,15 @@ namespace MSNPSharpClient
             inputTextBox.Clear();
             inputTextBox.Focus();
 
-
-            ConversationID = _messenger.MessageManager.SendTextMessage(ConversationID, message);
+            remoteContact.SendMessage(message);
             PrintText(_messenger.ContactList.Owner, message);
-
-
-        }
-
-        private void btnInviteUsers_Click(object sender, EventArgs e)
-        {
-            int x = Location.X + 10 + btnInviteUsers.Width;
-            int y = Location.Y + 10 + btnInviteUsers.Height + 20;
-
-            onlineUsersDropDown.Items.Clear();
-            foreach (Contact c in _messenger.ContactList.Forward)
-            {
-                if (c.Online && c.ClientType == IMAddressInfoType.WindowsLive)
-                {
-                    onlineUsersDropDown.Items.Add(c.Account, null, onlineUsersDropDown_Click).ToolTipText = c.Account;
-                }
-            }
-
-            onlineUsersDropDown.Show(x, y);
-            onlineUsersDropDown.Focus();
-        }
-
-        private void onlineUsersDropDown_Click(object sender, EventArgs args)
-        {
-            ToolStripItem item = (ToolStripItem)sender;
-            if (_messenger.ContactList.HasContact(item.ToolTipText, IMAddressInfoType.WindowsLive))
-            {
-                activeconversationID = _messenger.MessageManager.InviteContactToConversation(activeconversationID, _messenger.ContactList.GetContact(item.ToolTipText));
-            }
-            else
-            {
-                DisplaySystemMessage("Cannot find PassportMember: " + item.ToolTipText);
-            }
         }
 
         private void bMessageSendNudge_Click(object sender, EventArgs e)
         {
             try
             {
-                ConversationID = _messenger.MessageManager.SendNudge(ConversationID);
+                remoteContact.SendNudge();
                 DisplaySystemMessage("You send a nudge.");
                 PerformNudge();
             }
@@ -980,20 +968,9 @@ namespace MSNPSharpClient
 
         private void bMessageSendFiles_Click(object sender, EventArgs e)
         {
-            goto SKIPACTIVECONV;
-
-            Conversation activeConversation = _messenger.MessageManager.GetConversation(activeconversationID);
-            if (activeConversation == null)
-            {
-                DisplaySystemMessage("All contacts are offline or this contact doesn't support receiving files.");
-                return;
-            }
-
-        SKIPACTIVECONV:
-
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
-                if (!firstInvitedContact.Online)
+                if (!remoteContact.Online)
                 {
                     DisplaySystemMessage("All contacts are offline or this contact doesn't support receiving files.");
                     return;
@@ -1006,7 +983,7 @@ namespace MSNPSharpClient
                     {
 
                         FileStream fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
-                        FileTransfer fileTransferApp = _messenger.SendFile(firstInvitedContact, filename, fileStream);
+                        FileTransfer fileTransferApp = _messenger.SendFile(remoteContact, filename, fileStream);
 
                         //FileTransferForm ftForm = new FileTransferForm(fileTransferApp.P2PSession);
                         //ftForm.Show(this);
@@ -1041,14 +1018,14 @@ namespace MSNPSharpClient
 
             try
             {
-                ConversationID = _messenger.MessageManager.SendEmoticonDefinitions(ConversationID, emolist, EmoticonType.StaticEmoticon);
+                _messenger.MessageManager.SendEmoticonDefinitions(remoteContact, emolist, EmoticonType.StaticEmoticon);
                 TextMessage emotxt = new TextMessage("Hey, this is a custom emoticon: " + emotest.Shortcut);
-                ConversationID = _messenger.MessageManager.SendTextMessage(ConversationID, emotxt);
+                remoteContact.SendMessage(emotxt);
+
                 DisplaySystemMessage("You send a custom emoticon with text message: Hey, this is a custom emoticon: [" + emotest.Shortcut + "].");
             }
             catch (Exception)
             {
-                if (!isYIM)
                     DisplaySystemMessage("Remote contact not online, emoticon will not be sent.");
             }
         }
@@ -1135,7 +1112,7 @@ namespace MSNPSharpClient
             ActivityInfo ai = ((ToolStripItem)sender).Tag as ActivityInfo;
 
             P2PActivity p2pActivity =
-                _messenger.StartActivity(ConversationID.RemoteOwner, ai.AppID, ai.ActivityName, ai.ActivityData);
+                _messenger.StartActivity(remoteContact, ai.AppID, ai.ActivityName, ai.ActivityData);
 
             p2pActivity.P2PSession.Closed += new EventHandler<ContactEventArgs>(p2pActivity_Closed);
         }
@@ -1151,6 +1128,81 @@ namespace MSNPSharpClient
                 richTextHistory.Invoke(new EventHandler<ContactEventArgs>(p2pActivity_Closed), new object[] { sender, e });
             }
         }
+
+        private void btnMultiparty_Click(object sender, EventArgs e)
+        {
+            int x = Location.X + 10 + btnMultiparty.Width;
+            int y = Location.Y + 10 + btnMultiparty.Height + 20;
+
+            multipartyMenu.Items.Clear();
+            foreach (Contact c in _messenger.ContactList.Forward)
+            {
+                if (c.Online && c.AppearOnline && c.SupportsMultiparty)
+                {
+                    multipartyMenu.Items.Add(c.Account, null, multipartyMenu_Click).ToolTipText = c.Account;
+                }
+            }
+
+            multipartyMenu.Show(x, y);
+            multipartyMenu.Focus();
+        }
+
+        int myTempGroupID = 0;
+        private List<Contact> multipartyContacts = new List<Contact>();
+        private void multipartyMenu_Click(object sender, EventArgs args)
+        {
+            if (myTempGroupID == 0)
+            {
+                myTempGroupID = _messenger.Nameserver.CreateMultiparty();
+            }
+
+            ToolStripItem item = (ToolStripItem)sender;
+            if (_messenger.ContactList.HasContact(item.ToolTipText, IMAddressInfoType.WindowsLive))
+            {
+                Contact c = _messenger.ContactList.GetContact(item.ToolTipText, IMAddressInfoType.WindowsLive);
+
+                // Multipart already created, direct invite...
+                if (remoteContact is TemporaryGroup)
+                {
+                    _messenger.Nameserver.InviteContactToMultiparty(c, remoteContact as TemporaryGroup);
+                }
+                else
+                {
+                    // Not created yet
+                    if (!multipartyContacts.Contains(c))
+                        multipartyContacts.Add(c);
+                }
+            }
+            else
+            {
+                DisplaySystemMessage("Cannot find PassportMember: " + item.ToolTipText);
+            }
+        }
+        
+        private void Nameserver_MultipartyCreated(object sender, MultipartyCreatedEventArgs e)
+        {
+            if (myTempGroupID == e.Group.TransactionID)
+            {
+                // Invite original contact
+                _messenger.Nameserver.InviteContactToMultiparty(remoteContact, e.Group);
+
+                // Invite pending
+                foreach (Contact c in multipartyContacts)
+                {
+                    if (!e.Group.ContactList.HasContact(c.Account, c.ClientType))
+                    {
+                        _messenger.Nameserver.InviteContactToMultiparty(c, e.Group);
+                    }
+                }
+
+                // This is Multiparty now
+                remoteContact = e.Group;
+
+                // Done...
+                multipartyContacts.Clear();
+            }
+        }
+
 
     }
 };

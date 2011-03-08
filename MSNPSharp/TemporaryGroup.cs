@@ -30,36 +30,48 @@ THE POSSIBILITY OF SUCH DAMAGE.
 */
 #endregion
 
-
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Diagnostics;
+using MSNPSharp.Core;
+using MSNPSharp.MSNWS.MSNABSharingService;
 
 namespace MSNPSharp
 {
-    /// <summary>
-    /// A comparer which treat siblings as the same contact.
-    /// </summary>
-    /// <typeparam name="TKey"></typeparam>
-    public class SiblingComparer<TKey> : IEqualityComparer<TKey>
+    [Serializable]
+    public partial class TemporaryGroup : Contact
     {
-        #region IEqualityComparer<TKey> Members
+        private int transactionID = 0;
+        private ContactList contactList;
 
-        public bool Equals(TKey x, TKey y)
+        public ContactList ContactList
         {
-            return GetHashCode(x) == GetHashCode(y);
-        }
-
-        public int GetHashCode(TKey obj)
-        {
-            if (obj is Contact)
+            get
             {
-                return (obj as Contact).SiblingString.GetHashCode();
+                return contactList;
             }
-
-            return obj.GetHashCode();
         }
 
-        #endregion
+        public int TransactionID
+        {
+            get
+            {
+                return transactionID;
+            }
+        }
+
+        public TemporaryGroup(string groupAddress, NSMessageHandler handler, int transId)
+            : base(Guid.Empty, groupAddress, IMAddressInfoType.TemporaryGroup, 0, handler)
+        {
+            SetName(groupAddress);
+            SetNickName(Name);
+
+            this.transactionID = transId;
+            SetStatus(PresenceStatus.Online);
+
+            contactList = new ContactList(AddressBookId, new Owner(AddressBookId, groupAddress, 0, NSMessageHandler), NSMessageHandler);
+            Lists = RoleLists.Allow;
+        }
     }
-}
+};

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" xmlns="http://profile.live.com/" attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://profile.live.com/" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:complexType name="CallStatisticsType">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="ServerName" type="xs:string" />
+      <xs:element minOccurs="0" name="ElapsedMilliseconds" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ViewType">
+    <xs:sequence>
+      <xs:element name="ViewName" type="xs:string" />
+      <xs:element minOccurs="0" name="ViewVersion" type="xs:base64Binary" />
+      <xs:element minOccurs="0" name="Attributes">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" name="A" type="AttributeType" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="AttributeType">
+    <xs:sequence>
+      <xs:element name="N" type="xs:string" />
+      <xs:element minOccurs="0" name="V" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="IdType">
+    <xs:sequence>
+      <xs:element name="Ns1" type="xs:string" />
+      <xs:element name="V1" type="xs:anyType" />
+      <xs:element minOccurs="0" name="Ns2" type="xs:string" />
+      <xs:element minOccurs="0" name="V2" nillable="true" type="xs:anyType" />
+      <xs:element minOccurs="0" name="Ns3" type="xs:string" />
+      <xs:element minOccurs="0" name="V3" nillable="true" type="xs:anyType" />
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

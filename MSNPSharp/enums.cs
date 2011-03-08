@@ -41,7 +41,7 @@ namespace MSNPSharp
     /// </summary>
     public enum MsnProtocol
     {
-        MSNP18 = 18
+        MSNP21 = 21
     }
 
     /// <summary>
@@ -166,10 +166,12 @@ namespace MSNPSharp
         /// <summary>
         /// All contacts who you have blocked.
         /// </summary>
+        //[Obsolete("", true)]
         Block = 4,
         /// <summary>
         /// All contacts who have you on their contactlist.
         /// </summary>
+        //[Obsolete("",true)]
         Reverse = 8,
         /// <summary>
         /// All pending (for approval) contacts.
@@ -187,93 +189,6 @@ namespace MSNPSharp
         /// Show me offline but you can receive/send offline messages.
         /// </summary>
         Hide = 64
-    }
-
-    /// <summary>
-    /// Defines the privacy mode of the owner of the contactlist
-    /// <list type="bullet">
-    /// <item>AllExceptBlocked - Allow all contacts to send you messages except those on your blocked list</item>
-    /// <item>NoneButAllowed - Reject all messages except those from people on your allow list</item></list>
-    /// </summary>
-    public enum PrivacyMode
-    {
-        /// <summary>
-        /// Unknown privacy mode.
-        /// </summary>
-        Unknown = 0,
-        /// <summary>
-        /// Allow all contacts to send you messages except those on your blocked list.
-        /// </summary>
-        AllExceptBlocked = 1,
-        /// <summary>
-        /// Reject all messages except those from people on your allow list.
-        /// </summary>
-        NoneButAllowed = 2
-    }
-
-    /// <summary>
-    /// Defines the way MSN handles with new contacts
-    /// <list type="bullet">
-    /// <item>PromptOnAdd - Notify the clientprogram when a contact adds you and let the program handle the response itself</item>
-    /// <item>AutomaticAdd - When someone adds you MSN will automatically add them on your list</item>
-    /// </list>
-    /// </summary>
-    public enum NotifyPrivacy
-    {
-        /// <summary>
-        /// Unknown notify privacy.
-        /// </summary>
-        Unknown = 0,
-        /// <summary>
-        /// Notify the clientprogram when a contact adds you and let the program handle the response itself.
-        /// </summary>
-        PromptOnAdd = 1,
-        /// <summary>
-        /// When someone adds you MSN will automatically add them on your list.
-        /// </summary>
-        AutomaticAdd = 2
-    }
-
-    /// <summary>
-    /// Use the same display picture and personal message wherever I sign in.
-    /// </summary>
-    public enum RoamLiveProperty
-    {
-        /// <summary>
-        /// Unspecified
-        /// </summary>
-        Unspecified = 0,
-
-        /// <summary>
-        /// Enabled
-        /// </summary>
-        Enabled = 1,
-
-        /// <summary>
-        /// Disabled
-        /// </summary>
-        Disabled = 2
-    }
-
-    /// <summary>
-    /// Whether the contact list owner has Multiple Points of Presence Support (MPOP) that is owner connect from multiple places.
-    /// </summary>
-    public enum MPOP
-    {
-        /// <summary>
-        /// Unspecified
-        /// </summary>
-        Unspecified,
-
-        /// <summary>
-        /// When the same user sign in at another place, sign the owner out.
-        /// </summary>
-        AutoLogoff,
-
-        /// <summary>
-        /// When the same user sign in at another place, keep the owner sign in.
-        /// </summary>
-        KeepOnline
     }
 
     /// <summary>
@@ -366,7 +281,7 @@ namespace MSNPSharp
         /// </summary>
         AppVersionMask = 0xF0000000,
 
-        Default = SupportsChunking | SupportsActivities | SupportsWinks | SupportsSipInvite | SupportsDirectBootstrapping | AppVersion2009
+        Default = SupportsChunking | SupportsActivities | SupportsWinks | SupportsSipInvite | SupportsDirectBootstrapping | AppVersion2011
     }
 
     [Flags]
@@ -1076,240 +991,6 @@ namespace MSNPSharp
         P2PV2 = 2
     }
 
-
-    public static class MemberRole
-    {
-        public const string Allow = "Allow";
-        public const string Block = "Block";
-        public const string Reverse = "Reverse";
-        public const string Pending = "Pending";
-        public const string Admin = "Admin";
-        public const string Contributor = "Contributor";
-        public const string ProfileGeneral = "ProfileGeneral";
-        public const string ProfilePersonalContact = "ProfilePersonalContact";
-        public const string ProfileProfessionalContact = "ProfileProfessionalContact";
-        public const string ProfileSocial = "ProfileSocial";
-        public const string ProfileExpression = "ProfileExpression";
-        public const string ProfileEducation = "ProfileEducation";
-        public const string ProfilePicture = "ProfilePicture";
-        public const string ProfileStatus = "ProfileStatus";
-        public const string ProfilePage = "ProfilePage";
-        public const string OneWayRelationship = "OneWayRelationship";
-        public const string TwoWayRelationship = "TwoWayRelationship";
-        public const string WebProfileList = "WebProfileList";
-        public const string ApplicationRead = "ApplicationRead";
-        public const string ApplicationWrite = "ApplicationWrite";
-    }
-
-    /// <summary>
-    /// Membership type. The values of fields in this class is just as the same as their names.
-    /// </summary>
-    public static class MembershipType
-    {
-        public const string Passport = "Passport";
-        public const string Email = "Email";
-        public const string Phone = "Phone";
-        public const string Role = "Role";
-        public const string Service = "Service";
-        public const string Everyone = "Everyone";
-        public const string Partner = "Partner";
-        public const string Domain = "Domain";
-        public const string Circle = "Circle";
-        public const string ExternalID = "ExternalID";
-
-    }
-
-    public static class MessengerContactType
-    {
-        public const string Me = "Me";
-        public const string Regular = "Regular";
-        public const string Messenger = "Messenger";
-        public const string Live = "Live";
-        public const string LivePending = "LivePending";
-        public const string LiveRejected = "LiveRejected";
-        public const string LiveDropped = "LiveDropped";
-        public const string Circle = "Circle";
-    }
-
-    public static class ServiceFilterType
-    {
-        public const string Messenger = "Messenger";
-        public const string IMAvailability = "IMAvailability";
-        public const string Invitation = "Invitation";
-        public const string SocialNetwork = "SocialNetwork";
-        public const string Profile = "Profile";
-        public const string Folder = "Folder";
-        public const string Event = "Event";
-        public const string OfficeLiveWebNotification = "OfficeLiveWebNotification";
-        public const string CommunityQuestionAnswer = "CommunityQuestionAnswer";
-    }
-
-    public static class ContactPhoneTypes
-    {
-        public const string ContactPhonePersonal = "ContactPhonePersonal";
-        public const string ContactPhoneBusiness = "ContactPhoneBusiness";
-        public const string ContactPhoneMobile = "ContactPhoneMobile";
-        public const string ContactPhonePager = "ContactPhonePager";
-        public const string ContactPhoneOther = "ContactPhoneOther";
-        public const string ContactPhoneFax = "ContactPhoneFax";
-        public const string Personal2 = "Personal2";
-        public const string Business2 = "Business2";
-        public const string BusinessFax = "BusinessFax";
-        public const string BusinessMobile = "BusinessMobile";
-        public const string Company = "Company";
-    }
-
-    /// <summary>
-    /// Property string for <see cref="MSNPSharp.MSNWS.MSNABSharingService.ContactType"/>
-    /// </summary>
-    public static class PropertyString
-    {
-        public const string propertySeparator = " ";
-        public const string Email = "Email";
-        public const string IsMessengerEnabled = "IsMessengerEnabled";
-        public const string Capability = "Capability";
-        public const string Number = "Number";
-        public const string Comment = "Comment";
-        public const string DisplayName = "DisplayName";
-        public const string Annotation = "Annotation";
-        public const string IsMessengerUser = "IsMessengerUser";
-        public const string MessengerMemberInfo = "MessengerMemberInfo";
-        public const string ContactType = "ContactType";
-        public const string ContactEmail = "ContactEmail";
-        public const string ContactPhone = "ContactPhone";
-        public const string GroupName = "GroupName";
-        public const string HasSpace = "HasSpace";
-    }
-
-    /// <summary>
-    /// Constants for webservice parameter.
-    /// </summary>
-    public static class WebServiceConstants
-    {
-        /// <summary>
-        /// The messenger's default addressbook Id: 00000000-0000-0000-0000-000000000000.
-        /// </summary>
-        public const string MessengerIndividualAddressBookId = "00000000-0000-0000-0000-000000000000";
-
-        /// <summary>
-        /// The guid for messenger group(not circle): C8529CE2-6EAD-434d-881F-341E17DB3FF8.
-        /// </summary>
-        public const string MessengerGroupType = "C8529CE2-6EAD-434d-881F-341E17DB3FF8";
-
-        /// <summary>
-        /// The default time for requesting the full membership and addressbook list: 0001-01-01T00:00:00.0000000.
-        /// </summary>
-        public const string ZeroTime = "0001-01-01T00:00:00.0000000";
-
-        public static string[] XmlDateTimeFormats = new string[]{
-            "yyyy-MM-ddTHH:mm:ss.FFFFFFF",
-            "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzz",
-            "yyyy-MM-ddTHH:mm:ss.FFFFFFFK",
-            "yyyy-MM-ddTHH:mm:ss",
-            "yyyy-MM-ddTHH:mm:ssK",
-            "yyyy-MM-ddTHH:mm:sszzz"
-        };
-    }
-
-    /// <summary>
-    /// Different string for Name property of <see cref="MSNPSharp.MSNWS.MSNABSharingService.Annotation"/>
-    /// </summary>
-    public static class AnnotationNames
-    {
-        /// <summary>
-        /// The value is: MSN.IM.InviteMessage
-        /// </summary>
-        public const string MSN_IM_InviteMessage = "MSN.IM.InviteMessage";
-
-        /// <summary>
-        /// The value is: MSN.IM.MPOP
-        /// </summary>
-        public const string MSN_IM_MPOP = "MSN.IM.MPOP";
-
-        /// <summary>
-        /// The value is: MSN.IM.BLP
-        /// </summary>
-        public const string MSN_IM_BLP = "MSN.IM.BLP";
-
-        /// <summary>
-        /// The value is: MSN.IM.GTC
-        /// </summary>
-        public const string MSN_IM_GTC = "MSN.IM.GTC";
-
-        /// <summary>
-        /// The value is: MSN.IM.RoamLiveProperties
-        /// </summary>
-        public const string MSN_IM_RoamLiveProperties = "MSN.IM.RoamLiveProperties";
-
-        /// <summary>
-        /// The value is: MSN.IM.MBEA
-        /// </summary>
-        public const string MSN_IM_MBEA = "MSN.IM.MBEA";
-
-        /// <summary>
-        /// The value is: MSN.IM.Display
-        /// </summary>
-        public const string MSN_IM_Display = "MSN.IM.Display";
-
-        /// <summary>
-        /// The value is: MSN.IM.BuddyType
-        /// </summary>
-        public const string MSN_IM_BuddyType = "MSN.IM.BuddyType";
-
-        /// <summary>
-        /// The value is: AB.NickName
-        /// </summary>
-        public const string AB_NickName = "AB.NickName";
-
-        /// <summary>
-        /// The value is: AB.Profession
-        /// </summary>
-        public const string AB_Profession = "AB.Profession";
-
-        /// <summary>
-        /// The value is: Live.Locale
-        /// </summary>
-        public const string Live_Locale = "Live.Locale";
-
-        /// <summary>
-        /// The value is: Live.Profile.Expression.LastChanged
-        /// </summary>
-        public const string Live_Profile_Expression_LastChanged = "Live.Profile.Expression.LastChanged";
-
-        /// <summary>
-        /// The value is: Live.Passport.Birthdate
-        /// </summary>
-        public const string Live_Passport_Birthdate = "Live.Passport.Birthdate";
-    }
-
-    /// <summary>
-    /// The relationship between a contact and circle.
-    /// </summary>
-    public enum CirclePersonalMembershipRole : int
-    {
-        None = 0,
-
-        /// <summary>
-        /// The contact is the circle admin, the value of RelationshipRole field in NetworkInfoType is 1.
-        /// </summary>
-        Admin = 1,
-
-        /// <summary>
-        /// The contact is a circle co-admin, the value of RelationshipRole field in NetworkInfoType is 2.
-        /// </summary>
-        AssistantAdmin = 2,
-
-        /// <summary>
-        /// The contact is a circle member, the value of RelationshipRole field in NetworkInfoType is 3.
-        /// </summary>
-        Member = 3,
-
-        /// <summary>
-        /// The contact is pending to the circle, the value of RelationshipRole field in NetworkInfoType is 4.
-        /// </summary>
-        StatePendingOutbound = 4
-    }
-
     /// <summary>
     /// Mime header key constants.
     /// </summary>
@@ -1317,6 +998,7 @@ namespace MSNPSharp
     {
         public const string From = "From";
         public const string To = "To";
+        public const string Via = "Via";
         public const string Routing = "Routing";
         public const string Reliability = "Reliability";
         public const string Stream = "Stream";
@@ -1366,40 +1048,6 @@ namespace MSNPSharp
 
     }
 
-    /// <summary>
-    /// The type of addressbook.
-    /// </summary>
-    public static class AddressBookType
-    {
-        /// <summary>
-        /// Circle.
-        /// </summary>
-        public const string Group = "Group";
-
-        /// <summary>
-        /// Default addressbook.
-        /// </summary>
-        public const string Individual = "Individual";
-    }
-
-    /// <summary>
-    /// The parse option for full account identifier.
-    /// </summary>
-    internal enum AccountParseOption
-    {
-        None = 0,
-
-        /// <summary>
-        /// Tell the parser this is a full circle account. For example: 1:user@hotmail.com;via=9:guid@live.com
-        /// </summary>
-        ParseAsFullCircleAccount = 1,
-
-        /// <summary>
-        /// Tell the parser this is a client type and account combination. For example: 1:user@hotmail.com
-        /// </summary>
-        ParseAsClientTypeAndAccount = 2
-    }
-
     internal enum ReturnState : uint
     {
         None = 0,
@@ -1447,68 +1095,9 @@ namespace MSNPSharp
 
         ContactServeAPI = 128,
 
-        InternalCall = 256
-    }
+        InternalCall = 256,
 
-    /// <summary>
-    /// This is the value of different domain type of Network info list.
-    /// </summary>
-    internal static class DomainIds
-    {
-        /// <summary>
-        /// Domain id for Windows Live addressbook in NetworkInfo.
-        /// </summary>
-        public const int WLDomain = 1;
-
-        /// <summary>
-        /// Domain ID for facebook in NetworkInfo.
-        /// </summary>
-        public const int FBDomain = 7;
-        public const int ZUNEDomain = 3;
-    }
-
-    /// <summary>
-    /// The addressbook relationship types.
-    /// </summary>
-    internal static class RelationshipTypes
-    {
-        /// <summary>
-        /// The network info relationship is for individual addressbook (default addressbook).
-        /// </summary>
-        public const int IndividualAddressBook = 3;
-
-        /// <summary>
-        /// The network info relationship is for group addressbook (circle addressbook).
-        /// </summary>
-        public const int CircleGroup = 5;
-    }
-
-    /// <summary>
-    /// Indicates the status of  contact in an addressbook.
-    /// </summary>
-    internal enum RelationshipState : uint
-    {
-        None = 0,
-
-        /// <summary>
-        /// The remote circle owner invite you to join,, pending your response.
-        /// </summary>
-        WaitingResponse = 1,
-
-        /// <summary>
-        /// The contact is deleted by one of the domain owners.
-        /// </summary>
-        Left = 2,
-
-        /// <summary>
-        /// The contact is in the circle's addressbook list.
-        /// </summary>
-        Accepted = 3,
-
-        /// <summary>
-        /// The contact already left the circle.
-        /// </summary>
-        Rejected = 4
+        SendServiceADL = 512
     }
 
     internal enum InternalOperationReturnValues
@@ -1561,44 +1150,6 @@ namespace MSNPSharp
         SignedIn,
         SignedOut
     }
-
-    #region Enums: MsnServiceType and PartnerScenario
-
-    public enum MsnServiceType
-    {
-        AB,
-        Sharing,
-        Storage,
-        RSI,
-        OIMStore,
-        WhatsUp
-    }
-
-    public enum PartnerScenario
-    {
-        None,
-        Initial,
-        Timer,
-        BlockUnblock,
-        GroupSave,
-        GeneralDialogApply,
-        ContactSave,
-        ContactMsgrAPI,
-        MessengerPendingList,
-        PrivacyApply,
-        NewCircleDuringPull,
-        CircleInvite,
-        CircleIdAlert,
-        CircleStatus,
-        CircleSave,
-        CircleLeave,
-        JoinedCircleDuringPush,
-        ABChangeNotifyAlert,
-        RoamingSeed,
-        RoamingIdentityChanged
-    }
-
-    #endregion
 
     #region P2PFlag
 

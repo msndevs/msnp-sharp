@@ -993,7 +993,7 @@ namespace MSNPSharp.P2P
                 localBaseIdentifier = p2pBridge.localTrackerId;
                 localIdentifier = localBaseIdentifier;
 
-                if ((directNegotiationTimer != null) && !(p2pBridge is SBBridge))
+                if ((directNegotiationTimer != null) /*&&MSNP21TODO !(p2pBridge is SBBridge)*/)
                     DirectNegotiationSuccessful();
             }
         }

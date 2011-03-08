@@ -144,17 +144,18 @@ namespace MSNPSharp
         /// <summary>
         /// Constructor to instantiate a Credentials object.
         /// </summary>
-        protected Credentials()
+        public Credentials()
+            : this(MsnProtocol.MSNP21)
         {
         }
 
         public Credentials(MsnProtocol msnp)
-            : this(string.Empty, string.Empty)
+            : this(string.Empty, string.Empty, msnp)
         {
         }
 
         public Credentials(string account, string password)
-            : this(account, password, MsnProtocol.MSNP18)
+            : this(account, password, MsnProtocol.MSNP21)
         {
         }
 
@@ -169,7 +170,7 @@ namespace MSNPSharp
         /// Constructor to instantiate a Credentials object with the specified values.
         /// </summary>
         public Credentials(string account, string password, string clientID, string clientCode)
-            : this(account, password, clientID, clientCode, MsnProtocol.MSNP18)
+            : this(account, password, clientID, clientCode, MsnProtocol.MSNP21)
         {
         }
 
@@ -186,17 +187,16 @@ namespace MSNPSharp
         static readonly Dictionary<MsnProtocol, ClientInfo> DefaultCredentials = new Dictionary<MsnProtocol, ClientInfo>();
         static Credentials()
         {
-            // MSNP18
-            ClientInfo msnp18 = new ClientInfo();
-            msnp18.MsnProtocol = MsnProtocol.MSNP18;
-            msnp18.ProductID = "PROD0120PW!CCV9@";
-            msnp18.ProductKey = "C1BX{V4W}Q3*10SM";
-            msnp18.MessengerClientName = "MSNMSGR";
-            msnp18.MessengerClientBuildVer = "14.0.8064.0206";
-            msnp18.ApplicationId = "AAD9B99B-58E6-4F23-B975-D9EC1F9EC24A";
-            msnp18.MessengerClientBrand = "msmsgs";
-            DefaultCredentials[msnp18.MsnProtocol] = msnp18;
-
+            // MSNP21
+            ClientInfo msnp21 = new ClientInfo();
+            msnp21.MsnProtocol = MsnProtocol.MSNP21;
+            msnp21.ProductID = "PROD0120PW!CCV9@";
+            msnp21.ProductKey = "C1BX{V4W}Q3*10SM";
+            msnp21.MessengerClientName = "MSNMSGR";
+            msnp21.MessengerClientBuildVer = "15.4.3508.1109";
+            msnp21.ApplicationId = "3794391A-4816-4BAC-B34B-6EC7FB5046C6";
+            msnp21.MessengerClientBrand = "MSNMSGR";
+            DefaultCredentials[msnp21.MsnProtocol] = msnp21;
         }
     }
 
@@ -220,10 +220,9 @@ namespace MSNPSharp
             ci.MessengerClientName = String.Copy(MessengerClientName);
             ci.ProductID = String.Copy(ProductID);
             ci.ProductKey = String.Copy(ProductKey);
-            ci.MessengerClientBrand = MessengerClientBrand;
+            ci.MessengerClientBrand = String.Copy(MessengerClientBrand);
 
             return ci;
         }
-
     }
 };
