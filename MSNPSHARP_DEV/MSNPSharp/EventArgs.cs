@@ -775,31 +775,6 @@ namespace MSNPSharp
     }
 
     /// <summary>
-    /// Event argument used for ContactService.JoinCircleInvitationReceived event.
-    /// </summary>
-    [Obsolete("Inviter is no more supported by Microsoft.")]
-    [Serializable()]
-    public class JoinCircleInvitationEventArgs : CircleEventArgs
-    {
-
-        /// <summary>
-        /// <see cref="Contact"/> who send this invitation.
-        /// </summary>
-        public CircleInviter Inviter
-        {
-            get
-            {
-                return remoteMember as CircleInviter;
-            }
-        }
-
-        internal JoinCircleInvitationEventArgs(Contact circle, CircleInviter invitor)
-            : base(circle)
-        {
-        }
-    }
-
-    /// <summary>
     /// Event argument used when a user's <see cref="DisplayImage"/> property has been changed.
     /// </summary>
     public class DisplayImageChangedEventArgs : EventArgs

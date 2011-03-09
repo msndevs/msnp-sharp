@@ -188,6 +188,9 @@ namespace MSNPSharp
         [NonSerialized]
         private int transactionID = 0;
 
+        [NonSerialized]
+        internal Contact ViaContact = null;
+
         /// <summary>
         /// For temporary groups
         /// </summary>
@@ -1681,7 +1684,7 @@ namespace MSNPSharp
             return type.ToString() + ":" + account.ToLowerInvariant();
         }
 
-        internal static bool ParseFullAccount(
+        public static bool ParseFullAccount(
             string fullAccount,
             out IMAddressInfoType accountAddressType, out string account,
             out IMAddressInfoType viaAccountAddressType, out string viaAccount)
@@ -1696,21 +1699,25 @@ namespace MSNPSharp
                 if (memberAndNetwork.Length > 1)
                 {
                     // via=;
-                    string via = memberAndNetwork[1].Replace("via=", String.Empty);
-                    string[] viaNetwork = via.Split(new char[] { ':' }, 2, StringSplitOptions.RemoveEmptyEntries);
-                    if (viaNetwork.Length > 1)
+                    if (memberAndNetwork[1].Contains("via="))
                     {
-                        viaAccountAddressType = (IMAddressInfoType)Enum.Parse(typeof(IMAddressInfoType), viaNetwork[0].ToString());
-                        viaAccount = viaNetwork[1].ToLowerInvariant();
+                        string via = memberAndNetwork[1].Replace("via=", String.Empty);
 
-                        if (viaAccountAddressType == IMAddressInfoType.Telephone)
-                            viaAccount = viaAccount.Replace("tel:", String.Empty);
-                    }
-                    else
-                    {
-                        // Assume windows live account
-                        viaAccountAddressType = IMAddressInfoType.WindowsLive;
-                        viaAccount = viaNetwork[0].ToLowerInvariant();
+                        string[] viaNetwork = via.Split(new char[] { ':' }, 2, StringSplitOptions.RemoveEmptyEntries);
+                        if (viaNetwork.Length > 1)
+                        {
+                            viaAccountAddressType = (IMAddressInfoType)Enum.Parse(typeof(IMAddressInfoType), viaNetwork[0].ToString());
+                            viaAccount = viaNetwork[1].ToLowerInvariant();
+
+                            if (viaAccountAddressType == IMAddressInfoType.Telephone)
+                                viaAccount = viaAccount.Replace("tel:", String.Empty);
+                        }
+                        else
+                        {
+                            // Assume windows live account
+                            viaAccountAddressType = IMAddressInfoType.WindowsLive;
+                            viaAccount = viaNetwork[0].ToLowerInvariant();
+                        }
                     }
                 }
 

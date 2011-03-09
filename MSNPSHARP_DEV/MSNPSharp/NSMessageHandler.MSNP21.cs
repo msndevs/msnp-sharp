@@ -57,7 +57,7 @@ namespace MSNPSharp
         /// </summary>
         public event EventHandler<ContactStatusChangedEventArgs> ContactOnline;
         /// <summary>
-        /// Occurs when any contact goed from any status to offline status.
+        /// Occurs when any contact goes from any status to offline status.
         /// </summary>
         public event EventHandler<ContactStatusChangedEventArgs> ContactOffline;
 
@@ -112,6 +112,10 @@ namespace MSNPSharp
         {
             if (ContactOffline != null)
                 ContactOffline(this, e);
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                e.Contact.ToString() + " goes to " + e.NewStatus + " from " + e.OldStatus + (e.Via == null ? String.Empty : " via=" + e.Via.ToString()) + "\r\n", GetType().Name);
+
         }
 
         /// <summary>
@@ -122,6 +126,9 @@ namespace MSNPSharp
         {
             if (ContactOnline != null)
                 ContactOnline(this, e);
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                e.Contact.ToString() + " goes to " + e.NewStatus + " from " + e.OldStatus + (e.Via == null ? String.Empty : " via=" + e.Via.ToString()) + "\r\n", GetType().Name);
         }
 
         protected virtual void OnTypingMessageReceived(TypingArrivedEventArgs e)
@@ -189,6 +196,12 @@ namespace MSNPSharp
                 mmMessage.RoutingHeaders[MIMERoutingHeaders.To][MIMERoutingHeaders.Path] = "IM";
             }
 
+            if (remoteContact.ViaContact != null)
+            {
+                mmMessage.RoutingHeaders[MIMERoutingHeaders.To]["via"] =
+                    ((int)remoteContact.ViaContact.ClientType).ToString() + ":" + remoteContact.ViaContact.Account;
+            }
+
             mmMessage.ContentKeyVersion = "2.0";
 
             mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "Control/Typing";
@@ -214,6 +227,12 @@ namespace MSNPSharp
             if (remoteContact.ClientType == IMAddressInfoType.Circle)
             {
                 mmMessage.RoutingHeaders[MIMERoutingHeaders.To][MIMERoutingHeaders.Path] = "IM";
+            }
+
+            if (remoteContact.ViaContact != null)
+            {
+                mmMessage.RoutingHeaders[MIMERoutingHeaders.To]["via"] =
+                    ((int)remoteContact.ViaContact.ClientType).ToString() + ":" + remoteContact.ViaContact.Account;
             }
 
             mmMessage.ContentKeyVersion = "2.0";
@@ -249,6 +268,13 @@ namespace MSNPSharp
             {
                 mmMessage.RoutingHeaders[MIMERoutingHeaders.ServiceChannel] = "IM/Offline";
             }
+
+            if (remoteContact.ViaContact != null)
+            {
+                mmMessage.RoutingHeaders[MIMERoutingHeaders.To]["via"] =
+                    ((int)remoteContact.ViaContact.ClientType).ToString() + ":" + remoteContact.ViaContact.Account;
+            }
+
 
             mmMessage.ContentKeyVersion = "2.0";
 
@@ -588,11 +614,26 @@ namespace MSNPSharp
             Contact viaHeaderContact = null;
             Contact fromContact = null;
 
-            if (mmm.RoutingHeaders.ContainsKey(MIMEHeaderStrings.Via))
+            if (mmm.RoutingHeaders.ContainsKey(MIMEHeaderStrings.Via) ||
+                fromViaAccountAddressType != IMAddressInfoType.None ||
+                toViaAccountAddressType != IMAddressInfoType.None)
             {
-                string[] via = mmm.RoutingHeaders[MIMEHeaderStrings.Via].Value.Split(':');
-                IMAddressInfoType viaHeaderAddressType = (IMAddressInfoType)int.Parse(via[0]);
-                string viaHeaderAccount = via[1].ToLowerInvariant();
+                string viaFull = mmm.RoutingHeaders.ContainsKey(MIMEHeaderStrings.Via)
+                    ? mmm.RoutingHeaders[MIMEHeaderStrings.Via].Value
+                    :
+                    (fromViaAccountAddressType != IMAddressInfoType.None ?
+                    (((int)fromViaAccountAddressType).ToString() + ":" + fromViaAccount)
+                    :
+                    (((int)toViaAccountAddressType).ToString() + ":" + toViaAccount));
+
+                IMAddressInfoType viaHeaderAddressType;
+                string viaHeaderAccount;
+                IMAddressInfoType ignoreAddressType;
+                string ignoreAccount;
+
+                Contact.ParseFullAccount(viaFull,
+                    out viaHeaderAddressType, out viaHeaderAccount,
+                    out ignoreAddressType, out ignoreAccount);
 
                 if (viaHeaderAddressType == IMAddressInfoType.Circle)
                 {
@@ -610,12 +651,22 @@ namespace MSNPSharp
                         fromContact = viaHeaderContact.ContactList.GetContact(fromAccount, fromAccountAddressType);
                     }
                 }
+                else
+                {
+                    viaHeaderContact = ContactList.GetContact(viaHeaderAccount, viaHeaderAddressType);
+                    if (viaHeaderContact != null)
+                    {
+                        fromContact = viaHeaderContact.ContactList.GetContactWithCreate(fromAccount, fromAccountAddressType);
+                    }
+                }
             }
 
             if (fromContact == null)
             {
                 fromContact = ContactList.GetContactWithCreate(fromAccount, fromAccountAddressType);
             }
+
+            fromContact.ViaContact = viaHeaderContact;
 
             if (command == "PUT")
             {
@@ -738,9 +789,6 @@ namespace MSNPSharp
                                                             // The contact goes online
                                                             OnContactOnline(new ContactStatusChangedEventArgs(fromContact, viaHeaderContact, oldStatus, newStatus));
 
-                                                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                                                                fromContact.ToString() + " goes to " + newStatus + " from " + oldStatus + (viaHeaderContact == null ? String.Empty : " via=" + viaHeaderContact.ToString()) + "\r\n", GetType().Name);
-
                                                             break;
 
                                                         case "CurrentMedia":
@@ -787,9 +835,6 @@ namespace MSNPSharp
 
                                         // The contact goes online
                                         OnContactOnline(new ContactStatusChangedEventArgs(circle, oldStatus, newStatus));
-
-                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                                            circle.ToString() + " goes to " + newStatus + " from " + oldStatus, GetType().Name);
 
                                     }
                                     return;
@@ -863,8 +908,6 @@ namespace MSNPSharp
                                         // The contact goes online
                                         OnContactOnline(new ContactStatusChangedEventArgs(group, oldStatus, newStatus));
 
-                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                                            group.ToString() + " goes to " + newStatus + " from " + oldStatus, GetType().Name);
                                     }
                                     return;
                                 }
@@ -904,11 +947,29 @@ namespace MSNPSharp
                             if (fromAccountAddressType == IMAddressInfoType.RemoteNetwork &&
                                 fromAccount == RemoteNetworkGateways.FaceBookGatewayAccount)
                             {
-                                // SigningIn,SignedIn, MSNP21TODO
-                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                                       Encoding.UTF8.GetString(mmm.InnerBody));
-                            }
+                                string status = Encoding.UTF8.GetString(mmm.InnerBody);
 
+                                PresenceStatus oldStatus = fromContact.Status;
+                                PresenceStatus newStatus = PresenceStatus.Unknown;
+
+                                if (status.Contains("SignedIn"))
+                                    newStatus = PresenceStatus.Online;
+                                else if (status.Contains("SignedOut"))
+                                    newStatus = PresenceStatus.Offline;
+
+                                if (newStatus != PresenceStatus.Unknown)
+                                {
+                                    fromContact.SetStatus(newStatus);
+
+                                    // The contact changed status
+                                    OnContactStatusChanged(new ContactStatusChangedEventArgs(fromContact, oldStatus, newStatus));
+
+                                    if (newStatus == PresenceStatus.Online)
+                                        OnContactOnline(new ContactStatusChangedEventArgs(fromContact, oldStatus, newStatus));
+                                    else
+                                        OnContactOffline(new ContactStatusChangedEventArgs(fromContact, oldStatus, newStatus));
+                                }
+                            }
                         }
                         break;
                     #endregion
@@ -960,10 +1021,6 @@ namespace MSNPSharp
 
                                                 // the contact goes offline
                                                 OnContactOffline(new ContactStatusChangedEventArgs(fromContact, viaHeaderContact, oldStatus, newStatus));
-
-                                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                                                    fromContact.ToString() + " goes to " + newStatus + " from " + oldStatus + (viaHeaderContact == null ? String.Empty : " via=" + viaHeaderContact.ToString()) + "\r\n", GetType().Name);
-
 
                                                 break;
                                             }
@@ -1099,8 +1156,6 @@ namespace MSNPSharp
                                         // the contact goes offline
                                         OnContactOffline(new ContactStatusChangedEventArgs(goesOfflineGroup, oldStatus, newStatus));
 
-                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                                            goesOfflineGroup.ToString() + " goes to " + newStatus + " from " + oldStatus, GetType().Name);
                                     }
                                 }
                             }
