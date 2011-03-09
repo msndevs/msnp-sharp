@@ -86,7 +86,7 @@ namespace MSNPSharp
         private MSNDirectoryService dirService = null;
 
         private List<Regex> censorWords = new List<Regex>(0);
-        private Dictionary<int, TemporaryGroup> multiparties = new Dictionary<int, TemporaryGroup>();
+        private Dictionary<int, Contact> multiparties = new Dictionary<int, Contact>(); //cliType=TemporaryGroup
 
         protected internal NSMessageHandler()
         {

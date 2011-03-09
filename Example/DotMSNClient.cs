@@ -167,14 +167,15 @@ namespace MSNPSharpClient
         {
             public const int Closed = 0;
             public const int Open = 1;
-            public const int Circle = 2;
+            public const int CircleOnline = 2;
+            public const int CircleOffline = 3;
 
-            public const int Online = 3;
-            public const int Busy = 4;
-            public const int Away = 5;
-            public const int Idle = 6;
-            public const int Hidden = 7;
-            public const int Offline = 8;
+            public const int Online = 4;
+            public const int Busy = 5;
+            public const int Away = 6;
+            public const int Idle = 7;
+            public const int Hidden = 8;
+            public const int Offline = 9;
 
             // Show always (0/0)
             public const string FavoritesNodeKey = "__10F";
@@ -225,6 +226,7 @@ namespace MSNPSharpClient
             ImageList1.Images.Add(MSNPSharpClient.Properties.Resources.closed);
             ImageList1.Images.Add(MSNPSharpClient.Properties.Resources.open);
             ImageList1.Images.Add(MSNPSharpClient.Properties.Resources.circle);
+            ImageList1.Images.Add(MSNPSharpClient.Properties.Resources.circleoffline);
 
             ImageList1.Images.Add(MSNPSharpClient.Properties.Resources.online);
             ImageList1.Images.Add(MSNPSharpClient.Properties.Resources.busy);
@@ -262,7 +264,7 @@ namespace MSNPSharpClient
             traceform.Close();
         }
 
-        private void AutoGroupMessageReply(Circle circle)
+        private void AutoGroupMessageReply(Contact circle)
         {
             if (Messenger.ContactList.Owner.Status != PresenceStatus.Hidden || Messenger.ContactList.Owner.Status != PresenceStatus.Offline)
                 circle.SendMessage(new TextMessage("MSNPSharp example client auto reply."));
@@ -282,12 +284,12 @@ namespace MSNPSharpClient
 
         void ContactService_CircleMemberLeft(object sender, CircleMemberEventArgs e)
         {
-            RefreshCircleList(sender, null);
+            //RefreshCircleList(sender, e);
         }
 
         void ContactService_CircleMemberJoined(object sender, CircleMemberEventArgs e)
         {
-            RefreshCircleList(sender, null);
+            //RefreshCircleList(sender, e);
         }
 
         void ContactService_JoinCircleInvitationReceived(object sender, CircleEventArgs e)
@@ -1271,10 +1273,11 @@ namespace MSNPSharpClient
                     // Online (0), Offline (1)
                     return node.Tag.ToString().CompareTo(node2.Tag.ToString());
                 }
-                else if (node.Tag is Circle && node2.Tag is Circle)
+                else if (node.Tag is Contact && (node.Tag as Contact).ClientType == IMAddressInfoType.Circle &&
+                    node2.Tag is Contact && (node2.Tag as Contact).ClientType == IMAddressInfoType.Circle)
                 {
 
-                    return ((Circle)node.Tag).AddressBookId.CompareTo(((Circle)node2.Tag).AddressBookId);
+                    return ((Contact)node.Tag).AddressBookId.CompareTo(((Contact)node2.Tag).AddressBookId);
 
                 }
                 else if (node.Tag is Contact && node2.Tag is Contact)
@@ -1306,7 +1309,7 @@ namespace MSNPSharpClient
                 {
                     propertyGrid.SelectedObject = selectedContact;
 
-                    if (selectedContact.Online && (!(selectedContact is Circle)))
+                    if (selectedContact.Online && (!(selectedContact.ClientType == IMAddressInfoType.Circle)))
                     {
                         sendIMMenuItem.PerformClick();
                     }
@@ -1323,14 +1326,14 @@ namespace MSNPSharpClient
                     if (e.Node.IsExpanded || (e.Node.ImageIndex == ImageIndexes.Open))
                     {
                         e.Node.Collapse();
-                        e.Node.ImageIndex = e.Node.SelectedImageIndex = (e.Node.Tag is Circle) ? ImageIndexes.Circle : ImageIndexes.Closed;
+                        e.Node.ImageIndex = e.Node.SelectedImageIndex = ((e.Node.Tag is Contact) && (e.Node.Tag as Contact).ClientType == IMAddressInfoType.Circle) ? ((e.Node.Tag as Contact).Online ? ImageIndexes.CircleOnline : ImageIndexes.CircleOffline) : ImageIndexes.Closed;
                     }
                     else if (e.Node.Nodes.Count > 0)
                     {
                         e.Node.Expand();
-                        e.Node.ImageIndex = e.Node.SelectedImageIndex = (e.Node.Tag is Circle) ? ImageIndexes.Circle : ImageIndexes.Open;
+                        e.Node.ImageIndex = e.Node.SelectedImageIndex = ((e.Node.Tag is Contact) && (e.Node.Tag as Contact).ClientType == IMAddressInfoType.Circle) ? ((e.Node.Tag as Contact).Online ? ImageIndexes.CircleOnline : ImageIndexes.CircleOffline) : ImageIndexes.Open;
                     }
-                    if (e.Node.Tag is ContactGroup || e.Node.Tag is Circle)
+                    if (e.Node.Tag is ContactGroup || ((e.Node.Tag is Contact) && (e.Node.Tag as Contact).ClientType == IMAddressInfoType.Circle))
                     {
                         propertyGrid.SelectedObject = e.Node.Tag;
                     }
@@ -1339,7 +1342,7 @@ namespace MSNPSharpClient
                 {
                     Contact selectedContact = (Contact)e.Node.Tag;
 
-                    if (selectedContact is Circle)
+                    if (selectedContact.ClientType == IMAddressInfoType.Circle)
                     {
                         if (e.Node.IsExpanded)
                         {
@@ -1513,7 +1516,7 @@ namespace MSNPSharpClient
 
         private bool initialExpand = true;
 
-        private string GetCircleDisplayName(Circle circle, int count)
+        private string GetCircleDisplayName(Contact circle, int count)
         {
             if (circle == null)
                 return string.Empty;
@@ -1555,30 +1558,33 @@ namespace MSNPSharpClient
                 favoritesNode.Nodes.Clear();
                 circlesNode.Nodes.Clear();
 
-                foreach (Circle circle in Messenger.CircleList.Values)
+                foreach (Contact circle in Messenger.CircleList.Values)
                 {
-                    int contactCount = circle.ContactList[IMAddressInfoType.None].Count;
-                    TreeNode circleNode = circlesNode.Nodes.Add(circle.Hash, GetCircleDisplayName(circle, contactCount), ImageIndexes.Circle, ImageIndexes.Circle);
-                    circleNode.NodeFont = circle.Blocked ? PARENT_NODE_FONT_BANNED : PARENT_NODE_FONT;
-                    circleNode.Tag = circle;
-
-                    foreach (Contact contact in circle.ContactList.All)
+                    if (circle.ContactList != null)
                     {
-                        // Get real passport contact to chat with... If this contact isn't on our forward list, show add contact form...
-                        string text = contact.Name;
-                        if (contact.PersonalMessage != null && !String.IsNullOrEmpty(contact.PersonalMessage.Message))
-                        {
-                            text += " - " + contact.PersonalMessage.Message;
-                        }
-                        if (contact.Name != contact.Account)
-                        {
-                            text += " (" + contact.Account + ")";
-                        }
+                        int contactCount = circle.ContactList[IMAddressInfoType.None].Count;
+                        TreeNode circleNode = circlesNode.Nodes.Add(circle.Hash, GetCircleDisplayName(circle, contactCount), circle.Online ? ImageIndexes.CircleOnline : ImageIndexes.CircleOffline, circle.Online ? ImageIndexes.CircleOnline : ImageIndexes.CircleOffline);
+                        circleNode.NodeFont = circle.AppearOffline ? PARENT_NODE_FONT_BANNED : PARENT_NODE_FONT;
+                        circleNode.Tag = circle;
 
-                        TreeNode newnode = circleNode.Nodes.Add(contact.Hash, text);
-                        newnode.NodeFont = contact.AppearOffline ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
-                        newnode.ImageIndex = newnode.SelectedImageIndex = ImageIndexes.GetStatusIndex(contact.Status);
-                        newnode.Tag = contact;
+                        foreach (Contact contact in circle.ContactList.All)
+                        {
+                            // Get real passport contact to chat with... If this contact isn't on our forward list, show add contact form...
+                            string text = contact.Name;
+                            if (contact.PersonalMessage != null && !String.IsNullOrEmpty(contact.PersonalMessage.Message))
+                            {
+                                text += " - " + contact.PersonalMessage.Message;
+                            }
+                            if (contact.Name != contact.Account)
+                            {
+                                text += " (" + contact.Account + ")";
+                            }
+
+                            TreeNode newnode = circleNode.Nodes.Add(contact.Hash, text);
+                            newnode.NodeFont = contact.AppearOffline ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
+                            newnode.ImageIndex = newnode.SelectedImageIndex = ImageIndexes.GetStatusIndex(contact.Status);
+                            newnode.Tag = contact;
+                        }
                     }
                 }
 
@@ -1609,19 +1615,19 @@ namespace MSNPSharpClient
                     }
                 }
             }
-            else if (contactToUpdate is Circle)
+            else if (contactToUpdate.ClientType == IMAddressInfoType.Circle)
             {
                 // Circle event
-                Circle circle = contactToUpdate as Circle;
+                Contact circle = contactToUpdate;
 
                 bool isDeleted = (!Messenger.CircleList.ContainsKey(circle.Hash));
 
                 if (!isDeleted)
                 {
                     TreeNode circlenode = circlesNode.Nodes.ContainsKey(circle.Hash) ?
-                        circlesNode.Nodes[circle.Hash] : circlesNode.Nodes.Add(circle.Hash, GetCircleDisplayName(circle, 0), ImageIndexes.Circle, ImageIndexes.Circle);
+                        circlesNode.Nodes[circle.Hash] : circlesNode.Nodes.Add(circle.Hash, GetCircleDisplayName(circle, 0), circle.Online ? ImageIndexes.CircleOnline : ImageIndexes.CircleOffline, circle.Online ? ImageIndexes.CircleOnline : ImageIndexes.CircleOffline);
 
-                    circlenode.NodeFont = circle.Blocked ? PARENT_NODE_FONT_BANNED : PARENT_NODE_FONT;
+                    circlenode.NodeFont = circle.AppearOffline ? PARENT_NODE_FONT_BANNED : PARENT_NODE_FONT;
                     circlenode.Tag = circle;
 
                     int count = 0;
@@ -1697,7 +1703,7 @@ namespace MSNPSharpClient
             onlineCount = 0;
             foreach (TreeNode nodeCircle in circlesNode.Nodes)
             {
-                if (nodeCircle.Tag is Circle && (((Circle)nodeCircle.Tag).Online))
+                if (nodeCircle.Tag is Contact && (((Contact)nodeCircle.Tag).Online))
                 {
                     onlineCount++;
                 }
@@ -1731,7 +1737,7 @@ namespace MSNPSharpClient
             else
             {
                 onlineNode = treeViewFavoriteList.Nodes.Add(ImageIndexes.OnlineNodeKey, "Online", ImageIndexes.Closed, ImageIndexes.Closed);
-                onlineNode.NodeFont = contactToUpdate == null ? PARENT_NODE_FONT : (contactToUpdate.Blocked ? PARENT_NODE_FONT_BANNED : PARENT_NODE_FONT);
+                onlineNode.NodeFont = contactToUpdate == null ? PARENT_NODE_FONT : (contactToUpdate.AppearOffline ? PARENT_NODE_FONT_BANNED : PARENT_NODE_FONT);
                 onlineNode.Tag = ImageIndexes.OnlineNodeKey;
             }
 
@@ -1790,7 +1796,7 @@ namespace MSNPSharpClient
                     }
                 }
             }
-            else if ((contactToUpdate is Circle) == false)
+            else if ((contactToUpdate.ClientType == IMAddressInfoType.Circle) == false)
             {
                 TreeNode contactNode = null;
 
@@ -2122,7 +2128,7 @@ namespace MSNPSharpClient
         void Circle_ContactBlocked(object sender, EventArgs e)
         {
             //Circle blocked, show you how to unblock.
-            Circle circle = sender as Circle;
+            Contact circle = sender as Contact;
             if (circle != null)
             {
                 circle.AppearOnline = true;
@@ -2136,7 +2142,7 @@ namespace MSNPSharpClient
             //This demo shows you how to invite a contact to your circle.
             if (messenger.ContactList.HasContact("freezingsoft@hotmail.com", IMAddressInfoType.WindowsLive))
             {
-                messenger.ContactService.InviteCircleMember(sender as Circle, messenger.ContactList.GetContact("freezingsoft@hotmail.com", IMAddressInfoType.WindowsLive), "hello");
+                messenger.ContactService.InviteCircleMember(sender as Contact, messenger.ContactList.GetContact("freezingsoft@hotmail.com", IMAddressInfoType.WindowsLive), "hello");
                 messenger.ContactService.InviteCircleMemberCompleted += new EventHandler<CircleMemberEventArgs>(ContactService_CircleMemberInvited);
             }
         }

@@ -396,10 +396,10 @@ namespace MSNPSharp
             return null;
         }
 
-        public Circle GetCircle(string account)
+        public Contact GetCircle(string account)
         {
             if (HasContact(account, IMAddressInfoType.Circle))
-                return (Circle)GetContact(account, IMAddressInfoType.Circle);
+                return GetContact(account, IMAddressInfoType.Circle);
 
             return null;
         }
@@ -606,6 +606,9 @@ namespace MSNPSharp
             }
 
             Contact tmpContact = new Contact(AddressBookId, account, type, 0, nsMessageHandler);
+
+            if (type == IMAddressInfoType.Circle)
+                tmpContact.ContactType = MessengerContactType.Circle;
 
             lock (SyncRoot)
             {

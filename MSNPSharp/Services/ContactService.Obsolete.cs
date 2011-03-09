@@ -108,11 +108,11 @@ namespace MSNPSharp
         #region Block/UnBlock Circle
 
         /// <summary>
-        /// Block a specific <see cref="Circle"/>. The ContactBlocked event of corresponding <see cref="Circle"/> will be fired after block operation succeeded.
+        /// Block a specific <see cref="Contact"/>. The ContactBlocked event of corresponding <see cref="Contact"/> will be fired after block operation succeeded.
         /// </summary>
         /// <param name="circle">The circle to block.</param>
         [Obsolete(@"Obsoleted in 4.0", true)]
-        public void BlockCircle(Circle circle)
+        public void BlockCircle(Contact circle)
         {
             if (circle.OnBlockedList)
                 return;
@@ -174,11 +174,11 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Unblock a specific <see cref="Circle"/>. The ContactUnBlocked event of corresponding <see cref="Circle"/> will be fired after unblock operation succeeded.
+        /// Unblock a specific <see cref="Contact"/>. The ContactUnBlocked event of corresponding <see cref="Contact"/> will be fired after unblock operation succeeded.
         /// </summary> 
         /// <param name="circle">The affected circle</param>
         [Obsolete(@"Obsoleted in 4.0", true)]
-        public void UnBlockCircle(Circle circle)
+        public void UnBlockCircle(Contact circle)
         {
             if (!circle.OnBlockedList)
                 return;

@@ -678,9 +678,9 @@ namespace MSNPSharpClient
 
             _messenger.Nameserver.MultipartyCreated -= Nameserver_MultipartyCreated;
 
-            if (remoteContact is TemporaryGroup)
+            if (remoteContact.ClientType == IMAddressInfoType.TemporaryGroup)
             {
-                _messenger.Nameserver.LeaveMultiparty(remoteContact as TemporaryGroup);
+                _messenger.Nameserver.LeaveMultiparty(remoteContact);
             }
         }
 
@@ -1162,9 +1162,9 @@ namespace MSNPSharpClient
                 Contact c = _messenger.ContactList.GetContact(item.ToolTipText, IMAddressInfoType.WindowsLive);
 
                 // Multipart already created, direct invite...
-                if (remoteContact is TemporaryGroup)
+                if (remoteContact.ClientType == IMAddressInfoType.TemporaryGroup)
                 {
-                    _messenger.Nameserver.InviteContactToMultiparty(c, remoteContact as TemporaryGroup);
+                    _messenger.Nameserver.InviteContactToMultiparty(c, remoteContact);
                 }
                 else
                 {
