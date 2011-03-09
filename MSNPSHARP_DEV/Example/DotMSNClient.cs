@@ -1547,32 +1547,31 @@ namespace MSNPSharpClient
 
                 foreach (Contact circle in Messenger.CircleList.Values)
                 {
-                    if (circle.ContactList != null)
+
+                    int contactCount = circle.ContactList[IMAddressInfoType.None].Count;
+                    TreeNode circleNode = circlesNode.Nodes.Add(circle.Hash, GetCircleDisplayName(circle, contactCount), circle.Online ? ImageIndexes.CircleOnline : ImageIndexes.CircleOffline, circle.Online ? ImageIndexes.CircleOnline : ImageIndexes.CircleOffline);
+                    circleNode.NodeFont = circle.AppearOffline ? PARENT_NODE_FONT_BANNED : PARENT_NODE_FONT;
+                    circleNode.Tag = circle;
+
+                    foreach (Contact contact in circle.ContactList.All)
                     {
-                        int contactCount = circle.ContactList[IMAddressInfoType.None].Count;
-                        TreeNode circleNode = circlesNode.Nodes.Add(circle.Hash, GetCircleDisplayName(circle, contactCount), circle.Online ? ImageIndexes.CircleOnline : ImageIndexes.CircleOffline, circle.Online ? ImageIndexes.CircleOnline : ImageIndexes.CircleOffline);
-                        circleNode.NodeFont = circle.AppearOffline ? PARENT_NODE_FONT_BANNED : PARENT_NODE_FONT;
-                        circleNode.Tag = circle;
-
-                        foreach (Contact contact in circle.ContactList.All)
+                        // Get real passport contact to chat with... If this contact isn't on our forward list, show add contact form...
+                        string text = contact.Name;
+                        if (contact.PersonalMessage != null && !String.IsNullOrEmpty(contact.PersonalMessage.Message))
                         {
-                            // Get real passport contact to chat with... If this contact isn't on our forward list, show add contact form...
-                            string text = contact.Name;
-                            if (contact.PersonalMessage != null && !String.IsNullOrEmpty(contact.PersonalMessage.Message))
-                            {
-                                text += " - " + contact.PersonalMessage.Message;
-                            }
-                            if (contact.Name != contact.Account)
-                            {
-                                text += " (" + contact.Account + ")";
-                            }
-
-                            TreeNode newnode = circleNode.Nodes.Add(contact.Hash, text);
-                            newnode.NodeFont = contact.AppearOffline ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
-                            newnode.ImageIndex = newnode.SelectedImageIndex = ImageIndexes.GetStatusIndex(contact.Status);
-                            newnode.Tag = contact;
+                            text += " - " + contact.PersonalMessage.Message;
                         }
+                        if (contact.Name != contact.Account)
+                        {
+                            text += " (" + contact.Account + ")";
+                        }
+
+                        TreeNode newnode = circleNode.Nodes.Add(contact.Hash, text);
+                        newnode.NodeFont = contact.AppearOffline ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
+                        newnode.ImageIndex = newnode.SelectedImageIndex = ImageIndexes.GetStatusIndex(contact.Status);
+                        newnode.Tag = contact;
                     }
+
                 }
 
                 ContactGroup favGroup = messenger.ContactGroups.FavoriteGroup;

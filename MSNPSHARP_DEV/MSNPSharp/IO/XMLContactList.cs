@@ -2161,9 +2161,9 @@ namespace MSNPSharp.IO
 
             Contact circle = NSMessageHandler.ContactList.GetCircle(circleMail);
 
-            if (circle != null && circle.ContactList != null)
+            if (circle != null && circle.circleInfo != null)
             {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "[RestoreCircleFromAddressBook] circle already exists, restore skipped:" + lowerId);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "[RestoreCircleFromAddressBook] circle inverse info already exists, restore skipped:" + lowerId);
                 return false;
             }
 
@@ -2454,14 +2454,10 @@ namespace MSNPSharp.IO
                         {
                             if (!String.IsNullOrEmpty(netInfo.DomainTag) && 
                                 netInfo.DomainTag != WebServiceConstants.NullDomainTag &&
-                                netInfo.SourceId.ToLowerInvariant() != RemoteNetworkGateways.WindowsLiveGateway &&
-                                !NSMessageHandler.ContactList.HasContact(netInfo.SourceId, IMAddressInfoType.RemoteNetwork))
+                                netInfo.SourceId.ToLowerInvariant() != RemoteNetworkGateways.WindowsLiveGateway)
                             {
                                 Contact networkContact = NSMessageHandler.ContactList.GetContactWithCreate(netInfo.SourceId, IMAddressInfoType.RemoteNetwork);
                                 networkContact.Lists |= RoleLists.Forward;
-
-                                if (networkContact.ContactList == null)
-                                    networkContact.ContactList = new ContactList(Guid.Empty, NSMessageHandler.ContactList.Owner, NSMessageHandler);
 
                                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, networkContact + " added to network contacts", GetType().Name);
                             }
