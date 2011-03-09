@@ -605,10 +605,26 @@ namespace MSNPSharp
                 return base[type][hash];
             }
 
-            Contact tmpContact = new Contact(AddressBookId, account, type, 0, nsMessageHandler);
+            Contact tmpContact = null;
 
             if (type == IMAddressInfoType.Circle)
+            {
+                string[] accountAndDomain = account.ToLowerInvariant().Split('@');
+                Guid circleABID = new Guid(accountAndDomain[0]);
+                tmpContact = new Contact(circleABID, account, type, 0, nsMessageHandler);
                 tmpContact.ContactType = MessengerContactType.Circle;
+                tmpContact.HostDomain = accountAndDomain[1];
+                tmpContact.ContactList = new ContactList(circleABID, Owner, nsMessageHandler);
+            }
+            else if (type == IMAddressInfoType.RemoteNetwork)
+            {
+                tmpContact = new Contact(AddressBookId, account, type, 0, nsMessageHandler);
+                tmpContact.ContactList = new ContactList(nsMessageHandler);
+            }
+            else
+            {
+                tmpContact = new Contact(AddressBookId, account, type, 0, nsMessageHandler);
+            }
 
             lock (SyncRoot)
             {

@@ -260,17 +260,15 @@ namespace MSNPSharp
             MeContact = me;
             CID = me.contactInfo.CID;
 
-            addressBookId = new Guid(circleInfo.Content.Handle.Id);
+            this.circleInfo = circleInfo;
+
             HostDomain = circleInfo.Content.Info.HostedDomain.ToLowerInvariant();
             CircleRole = (CirclePersonalMembershipRole)Enum.Parse(typeof(CirclePersonalMembershipRole), circleInfo.PersonalInfo.MembershipInfo.CirclePersonalMembership.Role);
 
             SetName(circleInfo.Content.Info.DisplayName);
             SetNickName(Name);
 
-            ContactType = MessengerContactType.Circle;
             Lists = RoleLists.Allow | RoleLists.Forward;
-
-            contactList = new ContactList(AddressBookId, new Owner(AddressBookId, me.contactInfo.passportName, me.contactInfo.CID, NSMessageHandler), NSMessageHandler);
         }
 
         #region Events
