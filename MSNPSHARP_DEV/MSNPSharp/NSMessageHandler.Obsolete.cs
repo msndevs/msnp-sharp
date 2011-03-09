@@ -45,38 +45,55 @@ namespace MSNPSharp
 
     partial class NSMessageHandler
     {
+
+#pragma warning disable 67 // disable "The event XXX is never used" warning
+
         [Obsolete(@"Obsoleted in 4.0. Please use TextMessageReceived instead.", true)]
         public event EventHandler<EventArgs> MobileMessageReceived;
+
         [Obsolete(@"Obsoleted in 4.0. Please use TypingMessageReceived instead.", true)]
         public event EventHandler<EventArgs> CircleTypingMessageReceived;
+
         [Obsolete(@"Obsoleted in 4.0. Please use NudgeReceived instead.", true)]
         public event EventHandler<EventArgs> CircleNudgeReceived;
+
         [Obsolete(@"Obsoleted in 4.0. Please use TextMessageReceived instead.", true)]
         public event EventHandler<EventArgs> CircleTextMessageReceived;
+
         [Obsolete(@"Obsoleted in 4.0. Please use TypingMessageReceived, NudgeReceived or TextMessageReceived instead.", true)]
         public event EventHandler<EventArgs> CrossNetworkMessageReceived;
+
         [Obsolete(@"Obsoleted in 4.0. There is no more support for SB.", true)]
         public event EventHandler<EventArgs> SBCreated;
+
         [Obsolete(@"Obsoleted in 4.0. There is no more support for SB.", true)]
         public event EventHandler<EventArgs> ConversationCreated;
 
         [Obsolete(@"Obsoleted in 4.0. Please use ContactStatusChanged event with Via property instead.", true)]
         public event EventHandler<EventArgs> CircleMemberStatusChanged;
+
         [Obsolete(@"Obsoleted in 4.0. Please use ContactOnline instead.", true)]
         public event EventHandler<EventArgs> CircleOnline;
+
         [Obsolete(@"Obsoleted in 4.0. Please use ContactOffline instead.", true)]
         public event EventHandler<EventArgs> CircleOffline;
+
         [Obsolete(@"Obsoleted in 4.0. Please use ContactStatusChanged instead.", true)]
         public event EventHandler<EventArgs> CircleStatusChanged;
+
         [Obsolete(@"Obsoleted in 4.0. Please use ContactOnline instead with Via property instead.", true)]
         public event EventHandler<EventArgs> CircleMemberOnline;
+
         [Obsolete(@"Obsoleted in 4.0. Please use ContactOffline instead with Via property instead.", true)]
         public event EventHandler<EventArgs> CircleMemberOffline;
+
         [Obsolete(@"Obsoleted in 4.0. Please use JoinedGroupChat instead. Multiparty chat is for valid for circles or temporary groups. To chat 1 on 1, just call contact.SendMessage(), contact.SendNudge()...", true)]
         public event EventHandler<EventArgs> JoinedCircleConversation;
+
         [Obsolete(@"Obsoleted in 4.0. Please use LeftGroupChat instead. Multiparty chat is for valid for circles or temporary groups. To chat 1 on 1, just call contact.SendMessage(), contact.SendNudge()...", true)]
         public event EventHandler<EventArgs> LeftCircleConversation;
 
+#pragma warning restore 67 // restore "The event XXX is never used" warning
 
         /// <summary>
         /// The owner of the contactlist. This is the identity that logged into the messenger network.
@@ -205,7 +222,7 @@ namespace MSNPSharp
             {
                 #region Circle Status, or Circle Member status
 
-                Circle circle = ContactList.GetCircle(viaAccount);
+                Contact circle = ContactList.GetCircle(viaAccount);
 
                 if (newcaps != ClientCapabilities.None &&
                     newcapsex != ClientCapabilitiesEx.None)  //This is NOT a circle's presence status.
@@ -373,7 +390,7 @@ namespace MSNPSharp
             {
                 #region Circle and CircleMemberStatus
 
-                Circle circle = ContactList.GetCircle(viaAccount);
+                Contact circle = ContactList.GetCircle(viaAccount);
 
                 if (circle == null)
                 {
@@ -496,7 +513,7 @@ namespace MSNPSharp
             Contact contact = null;
             if (viaAccountAddressType == IMAddressInfoType.Circle)
             {
-                Circle circle = ContactList.GetCircle(viaAccount);
+                Contact circle = ContactList.GetCircle(viaAccount);
 
                 if (circle == null)
                 {

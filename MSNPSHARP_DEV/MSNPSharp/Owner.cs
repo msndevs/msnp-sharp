@@ -57,19 +57,13 @@ namespace MSNPSharp
         private bool passportVerified;
 
         public Owner(string abId, string account, long cid, NSMessageHandler handler)
-            : base(abId, account, IMAddressInfoType.WindowsLive, cid, handler)
+            : this(new Guid(abId), account, cid, handler)
         {
         }
 
         public Owner(Guid abId, string account, long cid, NSMessageHandler handler)
             : base(abId, account, IMAddressInfoType.WindowsLive, cid, handler)
         {
-        }
-
-        protected override void Initialized(Guid abId, string account, IMAddressInfoType cliType, long cid, NSMessageHandler handler)
-        {
-            base.Initialized(abId, account, cliType, cid, handler);
-
             EndPointData.Clear();
             EndPointData.Add(Guid.Empty, new PrivateEndPointData(account, Guid.Empty));
             EndPointData.Add(NSMessageHandler.MachineGuid, new PrivateEndPointData(account, NSMessageHandler.MachineGuid));
@@ -210,8 +204,15 @@ namespace MSNPSharp
         /// </summary>
         public void SignoutFromEverywhere()
         {
-            Status = PresenceStatus.Hidden;
-            NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUN", new string[] { Account, "8" }, "gtfo"));
+            foreach (Guid x in EndPointData.Keys)
+            {
+                if (x != Guid.Empty && x != NSMessageHandler.MachineGuid)
+                {
+                    SignoutFrom(x);
+                }
+            }
+
+            SignoutFrom(NSMessageHandler.MachineGuid);
             Status = PresenceStatus.Offline;
         }
 
@@ -229,8 +230,7 @@ namespace MSNPSharp
 
             if (EndPointData.ContainsKey(endPointID))
             {
-                NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("UUN",
-                    new string[] { Account + ";" + endPointID.ToString("B").ToLowerInvariant(), "4" }, "goawyplzthxbye"));
+                NSMessageHandler.SignoutFrom(endPointID);
             }
             else
             {

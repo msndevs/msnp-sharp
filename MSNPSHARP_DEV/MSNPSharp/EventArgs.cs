@@ -584,9 +584,9 @@ namespace MSNPSharp
     [Serializable]
     public class MultipartyCreatedEventArgs : EventArgs
     {
-        private TemporaryGroup group;
+        private Contact group;
 
-        public TemporaryGroup Group
+        public Contact Group
         {
             get
             {
@@ -594,7 +594,7 @@ namespace MSNPSharp
             }
         }
 
-        public MultipartyCreatedEventArgs(TemporaryGroup group)
+        public MultipartyCreatedEventArgs(Contact group)
         {
             this.group = group;
         }
@@ -692,7 +692,7 @@ namespace MSNPSharp
             }
         }
 
-        public EmoticonArrivedEventArgs(Contact sender, Emoticon emoticon, Circle circle)
+        public EmoticonArrivedEventArgs(Contact sender, Emoticon emoticon, Contact circle)
             : base(sender, circle)
         {
             this.emoticon = emoticon;
@@ -704,8 +704,8 @@ namespace MSNPSharp
     /// </summary>
     public class BaseCircleEventArgs : EventArgs
     {
-        protected Circle circle = null;
-        internal BaseCircleEventArgs(Circle circle)
+        protected Contact circle = null;
+        internal BaseCircleEventArgs(Contact circle)
         {
             this.circle = circle;
         }
@@ -722,7 +722,7 @@ namespace MSNPSharp
         /// <summary>
         /// The affected contact group
         /// </summary>
-        public Circle Circle
+        public Contact Circle
         {
             get
             {
@@ -734,7 +734,7 @@ namespace MSNPSharp
         /// Constructor, mostly used internal by the library.
         /// </summary>
         /// <param name="circle"></param>
-        internal CircleEventArgs(Circle circle)
+        internal CircleEventArgs(Contact circle)
             : base(circle)
         {
         }
@@ -744,7 +744,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="circle"></param>
         /// <param name="remote">The affected Contact.</param>
-        internal CircleEventArgs(Circle circle, Contact remote)
+        internal CircleEventArgs(Contact circle, Contact remote)
             : base(circle)
         {
             remoteMember = remote;
@@ -768,7 +768,7 @@ namespace MSNPSharp
             }
         }
 
-        internal CircleMemberEventArgs(Circle circle, Contact member)
+        internal CircleMemberEventArgs(Contact circle, Contact member)
             : base(circle, member)
         {
         }
@@ -793,7 +793,7 @@ namespace MSNPSharp
             }
         }
 
-        internal JoinCircleInvitationEventArgs(Circle circle, CircleInviter invitor)
+        internal JoinCircleInvitationEventArgs(Contact circle, CircleInviter invitor)
             : base(circle)
         {
         }

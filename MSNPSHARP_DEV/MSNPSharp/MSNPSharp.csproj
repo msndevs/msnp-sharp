@@ -46,10 +46,6 @@
     <Compile Include="Apps\ObjectTransfer.cs" />
     <Compile Include="Apps\P2PActivity.cs" />
     <Compile Include="Apps\P2PApplication.cs" />
-    <Compile Include="Circle.cs" />
-    <Compile Include="Circle.Obsolete.cs">
-      <DependentUpon>Circle.cs</DependentUpon>
-    </Compile>
     <Compile Include="CircleInviter.cs" />
     <Compile Include="Comparers.cs" />
     <Compile Include="Configuration.cs" />
@@ -169,7 +165,6 @@
     <Compile Include="Core\SocketMessageProcessor.cs" />
     <Compile Include="Services\StorageService.cs" />
     <Compile Include="StrDictionary.cs" />
-    <Compile Include="TemporaryGroup.cs" />
     <Compile Include="TextMessage.cs" />
     <Compile Include="UnauthorizedException.cs" />
     <Compile Include="Services\ContactService.cs" />
@@ -413,7 +408,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\msnpsharp.snk" />
-    <None Include="Resources\WLXLarge_default.gif" />
     <None Include="Resources\default_scene.jpg" />
     <None Include="Web References\MSNWS.MSNABSharingService\ABAddResponseType.datasource">
       <DependentUpon>Reference.map</DependentUpon>

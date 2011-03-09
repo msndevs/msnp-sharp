@@ -106,12 +106,12 @@ namespace MSNPSharp
         public event EventHandler<ContactGroupEventArgs> ContactGroupRemoved;
 
         /// <summary>
-        /// Occurs when a new <see cref="Circle"/> is created.
+        /// Occurs when a new <see cref="Contact"/> is created.
         /// </summary>
         public event EventHandler<CircleEventArgs> CreateCircleCompleted;
 
         /// <summary>
-        /// Occurs when the owner has left a specific <see cref="Circle"/>.
+        /// Occurs when the owner has left a specific <see cref="Contact"/>.
         /// </summary>
         public event EventHandler<CircleEventArgs> ExitCircleCompleted;
 
@@ -583,7 +583,7 @@ namespace MSNPSharp
                         hashlist = new Dictionary<string, RoleLists>(NSMessageHandler.CircleList.Count);
                         lock (NSMessageHandler.ContactList.SyncRoot)
                         {
-                            foreach (Circle circle in NSMessageHandler.CircleList.Values)
+                            foreach (Contact circle in NSMessageHandler.CircleList.Values)
                             {
                                 if (circle.ADLCount == 0)
                                     continue;
@@ -1749,7 +1749,7 @@ namespace MSNPSharp
                 CircleMember circleMember = member as CircleMember;
                 circleMember.Type =  MembershipType.Circle;
                 circleMember.State = MemberState.Accepted;
-                circleMember.CircleId = (contact as Circle).AddressBookId.ToString("D").ToLowerInvariant();
+                circleMember.CircleId = contact.AddressBookId.ToString("D").ToLowerInvariant();
             }
 
             memberShip.Members = new BaseMember[] { member };
@@ -1918,7 +1918,7 @@ namespace MSNPSharp
                     deleteMember = new CircleMember();
                     deleteMember.Type = (baseMember == null) ? MembershipType.Circle : baseMember.Type;
                     deleteMember.State = (baseMember == null) ? MemberState.Accepted : baseMember.State;
-                    (deleteMember as CircleMember).CircleId = (contact as Circle).AddressBookId.ToString("D").ToLowerInvariant();
+                    (deleteMember as CircleMember).CircleId = contact.AddressBookId.ToString("D").ToLowerInvariant();
                     break;
             }
 
@@ -2172,7 +2172,7 @@ namespace MSNPSharp
         #region Create Circle
 
         /// <summary>
-        /// Use specific name to create a new <see cref="Circle"/>. <see cref="CreateCircleCompleted"/> event will be fired after creation succeeded.
+        /// Use specific name to create a new <see cref="Contact"/>. <see cref="CreateCircleCompleted"/> event will be fired after creation succeeded.
         /// </summary>
         /// <param name="circleName">New circle name.</param>
         public void CreateCircle(string circleName)
@@ -2188,7 +2188,7 @@ namespace MSNPSharp
             //This is M$ style, you will never guess out the meaning of these numbers.
             ContentInfoType properties = new ContentInfoType();
             properties.Domain = 1;
-            properties.HostedDomain = Circle.DefaultHostDomain;
+            properties.HostedDomain = Contact.DefaultHostDomain;
             properties.Type = 2;
             properties.MembershipAccess = 0;
             properties.IsPresenceEnabled = true;
@@ -2230,24 +2230,24 @@ namespace MSNPSharp
         #region Invite/Reject/Accept/Leave circle
 
         /// <summary>
-        /// Send and invitition to a specific contact to invite it join a <see cref="Circle"/>.
+        /// Send and invitition to a specific contact to invite it join a <see cref="Contact"/>.
         /// </summary>
         /// <param name="circle">Circle to join.</param>
         /// <param name="contact">Contact being invited.</param>
-        public void InviteCircleMember(Circle circle, Contact contact)
+        public void InviteCircleMember(Contact circle, Contact contact)
         {
             InviteCircleMember(circle, contact, string.Empty);
         }
 
         /// <summary>
-        /// Send and invitition to a specific contact to invite it join a <see cref="Circle"/>. A message will send with the invitition.
+        /// Send and invitition to a specific contact to invite it join a <see cref="Contact"/>. A message will send with the invitition.
         /// </summary>
         /// <param name="circle">Circle to join.</param>
         /// <param name="contact">Contact being invited.</param>
         /// <param name="message">Message send with the invitition email.</param>
         /// <exception cref="ArgumentNullException">One or more parameter(s) is/are null.</exception>
         /// <exception cref="InvalidOperationException">The owner is not the circle admin or the circle is blocked.</exception>
-        public void InviteCircleMember(Circle circle, Contact contact, string message)
+        public void InviteCircleMember(Contact circle, Contact contact, string message)
         {
             if (circle == null || contact == null || message == null)
             {
@@ -2305,7 +2305,7 @@ namespace MSNPSharp
         /// Reject a join circle invitation.
         /// </summary>
         /// <param name="circle">Circle to  join.</param>
-        public void RejectCircleInvitation(Circle circle)
+        public void RejectCircleInvitation(Contact circle)
         {
             if (circle == null)
                 throw new ArgumentNullException("circle");
@@ -2326,7 +2326,7 @@ namespace MSNPSharp
             if (arg == null)
                 return;
 
-            Circle circle = arg.Circle;
+            Contact circle = arg.Circle;
 
             if (NSMessageHandler.IsSignedIn)
             {
@@ -2418,7 +2418,7 @@ namespace MSNPSharp
         /// <param name="circle"></param>
         /// <exception cref="ArgumentNullException">The circle parameter is null.</exception>
         /// <exception cref="InvalidOperationException">The circle specified is not a pending circle.</exception>
-        public void AcceptCircleInvitation(Circle circle)
+        public void AcceptCircleInvitation(Contact circle)
         {
             if (circle == null)
                 throw new ArgumentNullException("circle");
@@ -2444,7 +2444,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="circle"></param>
         /// <exception cref="ArgumentNullException">The circle parameter is null.</exception>
-        public void ExitCircle(Circle circle)
+        public void ExitCircle(Contact circle)
         {
             if (circle == null)
                 throw new ArgumentNullException("circle");

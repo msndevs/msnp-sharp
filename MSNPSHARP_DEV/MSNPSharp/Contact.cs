@@ -45,14 +45,18 @@ namespace MSNPSharp
     using MSNPSharp.Core;
     using MSNPSharp.MSNWS.MSNABSharingService;
 
-
     /// <summary>
     /// User in roster list.
     /// </summary>
     [Serializable]
     public partial class Contact
     {
-        #region Fields
+        /// <summary>
+        /// live.com
+        /// </summary>
+        public const string DefaultHostDomain = "live.com";
+
+        #region Serializable Fields
 
         protected Guid guid = Guid.Empty;
         protected Guid addressBookId = Guid.Empty;
@@ -60,62 +64,144 @@ namespace MSNPSharp
         private string account = string.Empty;
         private string name = string.Empty;
         private string nickName = string.Empty;
-
-        private Dictionary<string, string> phoneNumbers = new Dictionary<string, string>();
-        private Dictionary<string, object> coreProfile = new Dictionary<string, object>();
         private string contactType = string.Empty;
-        private string comment = string.Empty;
-        private string siblingString = string.Empty;
-        private string hash = string.Empty;
-
+        
         private bool hasSpace = false;
         private bool mobileDevice = false;
         private bool mobileAccess = false;
         private bool isMessengerUser = false;
-        private bool hasInitialized = false;
-
+        
         private PresenceStatus status = PresenceStatus.Offline;
         private IMAddressInfoType clientType = IMAddressInfoType.WindowsLive;
         private CirclePersonalMembershipRole circleRole = CirclePersonalMembershipRole.None;
-
-        private List<ContactGroup> contactGroups = new List<ContactGroup>(0);
         private RoleLists lists = RoleLists.None;
 
-        private DisplayImage displayImage = null;
-        private SceneImage sceneImage = null;
-        private PersonalMessage personalMessage = null;
-        private Color colorScheme = Color.Empty;
+        #endregion
 
+        #region NonSerialized fields
+        
+        [NonSerialized]
+        private Dictionary<string, string> phoneNumbers = new Dictionary<string, string>();
+
+        [NonSerialized]
+        private Dictionary<string, object> coreProfile = new Dictionary<string, object>();
+
+        [NonSerialized]
+        private List<ContactGroup> contactGroups = new List<ContactGroup>(0);
+
+        [NonSerialized]
         private Dictionary<string, Emoticon> emoticons = new Dictionary<string, Emoticon>(0);
+
+        [NonSerialized]
         private Dictionary<string, Contact> siblings = new Dictionary<string, Contact>(0);
+
+        [NonSerialized]
         protected Dictionary<Guid, EndPointData> endPointData = new Dictionary<Guid, EndPointData>(0);
 
-        private ulong oimCount = 1;
-        private int adlCount = 1;
-        private object clientData = null;
-
+        [NonSerialized]
         private List<ActivityDetailsType> activities = new List<ActivityDetailsType>(0);
-        private Uri userTile = null;
-        private string userTileLocation = string.Empty;
-        private string sceneContext = string.Empty;
 
         [NonSerialized]
         private object syncObject = new object();
 
-        #region DC setup (These are here, because p2p session may be null)
-
         [NonSerialized]
         private NSMessageHandler nsMessageHandler = null;
+
+        [NonSerialized]
+        private string siblingString = string.Empty;
+
+        [NonSerialized]
+        private string hash = string.Empty;
+
+        [NonSerialized]
+        private string comment = string.Empty;
+
+        [NonSerialized]
+        private ulong oimCount = 1;
+        
+        [NonSerialized]
+        private int adlCount = 1;
+
+        [NonSerialized]
+        private object clientData = null;
+
+        [NonSerialized]
+        private DisplayImage displayImage = null;
+
+        [NonSerialized]
+        private SceneImage sceneImage = null;
+
+        [NonSerialized]
+        private PersonalMessage personalMessage = null;
+
+        [NonSerialized]
+        private Color colorScheme = Color.Empty;
+
+        [NonSerialized]
+        private Uri userTile = null;
+
+        [NonSerialized]
+        private string userTileLocation = string.Empty;
+
+        [NonSerialized]
+        private string sceneContext = string.Empty;
+ 
         [NonSerialized]
         private P2PBridge directBridge = null;
+
         [NonSerialized]
         internal DCNonceType dcType = DCNonceType.None;
+
         [NonSerialized]
         internal Guid dcPlainKey = Guid.Empty;
+
         [NonSerialized]
         internal Guid dcLocalHashedNonce = Guid.Empty;
+
         [NonSerialized]
         internal Guid dcRemoteHashedNonce = Guid.Empty;
+
+        [NonSerialized]
+        internal string HostDomain = DefaultHostDomain;
+
+        [NonSerialized]
+        private ContactList contactList = null;
+
+        public ContactList ContactList
+        {
+            get
+            {
+                return contactList;
+            }
+            internal set
+            {
+                contactList = value;
+            }
+        }
+
+        [NonSerialized]
+        internal ContactType MeContact = null;
+
+        [NonSerialized]
+        internal CircleInverseInfoType circleInfo = null;
+
+        [NonSerialized]
+        private int transactionID = 0;
+
+        /// <summary>
+        /// For temporary groups
+        /// </summary>
+        public int TransactionID
+        {
+            get
+            {
+                return transactionID;
+            }
+            internal set
+            {
+                transactionID = value;
+            }
+        }
 
         internal void GenerateNewDCKeys()
         {
@@ -127,28 +213,22 @@ namespace MSNPSharp
 
         #endregion
 
-
-        #endregion
-
         private Contact()
         {
         }
 
+        protected internal Contact(string account, IMAddressInfoType cliType, NSMessageHandler handler)
+            : this(Guid.Empty, account, cliType, 0, handler)
+        {
+        }
+
         protected internal Contact(string abId, string account, IMAddressInfoType cliType, long cid, NSMessageHandler handler)
+            : this(new Guid(abId), account, cliType, cid, handler)
         {
-            Initialized(new Guid(abId), account, cliType, cid, handler);
         }
 
-        protected internal Contact(Guid abId, string account, IMAddressInfoType cliType, long cid, NSMessageHandler handler)
+        protected internal Contact(Guid abId, string acc, IMAddressInfoType cliType, long cid, NSMessageHandler handler)
         {
-            Initialized(abId, account, cliType, cid, handler);
-        }
-
-        protected virtual void Initialized(Guid abId, string acc, IMAddressInfoType cliType, long cid, NSMessageHandler handler)
-        {
-            if (hasInitialized)
-                return;
-
             GenerateNewDCKeys();
 
             NSMessageHandler = handler;
@@ -160,6 +240,7 @@ namespace MSNPSharp
             SetName(account);
             siblingString = ClientType.ToString() + ":" + account;
             hash = MakeHash(Account, ClientType);
+
             EndPointData[Guid.Empty] = new EndPointData(account, Guid.Empty);
 
             if (NSMessageHandler != null)
@@ -169,8 +250,24 @@ namespace MSNPSharp
 
             displayImage = DisplayImage.CreateDefaultImage(Account);
             sceneImage = SceneImage.CreateDefaultImage(Account);
+        }
 
-            hasInitialized = true;
+        protected internal void SetCircleInfo(CircleInverseInfoType circleInfo, ContactType me)
+        {
+            MeContact = me;
+            CID = me.contactInfo.CID;
+
+            addressBookId = new Guid(circleInfo.Content.Handle.Id);
+            HostDomain = circleInfo.Content.Info.HostedDomain.ToLowerInvariant();
+            CircleRole = (CirclePersonalMembershipRole)Enum.Parse(typeof(CirclePersonalMembershipRole), circleInfo.PersonalInfo.MembershipInfo.CirclePersonalMembership.Role);
+
+            SetName(circleInfo.Content.Info.DisplayName);
+            SetNickName(Name);
+
+            ContactType = MessengerContactType.Circle;
+            Lists = RoleLists.Allow | RoleLists.Forward;
+
+            contactList = new ContactList(AddressBookId, new Owner(AddressBookId, me.contactInfo.passportName, me.contactInfo.CID, NSMessageHandler), NSMessageHandler);
         }
 
         #region Events
@@ -1728,7 +1825,10 @@ namespace MSNPSharp
             get
             {
                 if (NSMessageHandler == null || !NSMessageHandler.IsSignedIn)
-                    return false;
+                    throw new InvalidOperationException("Cannot send a message without signning in to the server. Please sign in first.");
+
+                if (ClientType == IMAddressInfoType.Circle && NSMessageHandler.ContactList.Owner.Status == PresenceStatus.Hidden)
+                    throw new InvalidOperationException("Cannot send a message to the group when you are in 'Hidden' status.");
 
                 return true;
             }

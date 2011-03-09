@@ -319,7 +319,7 @@ namespace MSNPSharp
             lock (multiparties)
                 multiparties[transId] = null;
 
-            string to = ((int)IMAddressInfoType.TemporaryGroup).ToString() + ":" + Guid.Empty.ToString("D").ToLowerInvariant() + "@" + Circle.DefaultHostDomain;
+            string to = ((int)IMAddressInfoType.TemporaryGroup).ToString() + ":" + Guid.Empty.ToString("D").ToLowerInvariant() + "@" + Contact.DefaultHostDomain;
             string from = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Account;
             MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
             mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = MachineGuid.ToString("B").ToLowerInvariant();
@@ -341,13 +341,13 @@ namespace MSNPSharp
 
         #region GetMultiparty
 
-        public TemporaryGroup GetMultiparty(string tempGroupAddress)
+        public Contact GetMultiparty(string tempGroupAddress)
         {
             if (!String.IsNullOrEmpty(tempGroupAddress))
             {
                 lock (multiparties)
                 {
-                    foreach (TemporaryGroup group in multiparties.Values)
+                    foreach (Contact group in multiparties.Values)
                     {
                         if (group != null && group.Account == tempGroupAddress)
                             return group;
@@ -362,7 +362,7 @@ namespace MSNPSharp
 
         #region InviteContactToMultiparty
 
-        public void InviteContactToMultiparty(Contact contact, TemporaryGroup group)
+        public void InviteContactToMultiparty(Contact contact, Contact group)
         {
             string to = ((int)group.ClientType).ToString() + ":" + group.Account;
             string from = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Account;
@@ -384,7 +384,7 @@ namespace MSNPSharp
 
         #region LeaveMultiparty
 
-        public void LeaveMultiparty(TemporaryGroup group)
+        public void LeaveMultiparty(Contact group)
         {
             string to = ((int)group.ClientType).ToString() + ":" + group.Account;
             string from = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Account;
@@ -404,7 +404,7 @@ namespace MSNPSharp
 
             lock (multiparties)
             {
-                foreach (TemporaryGroup g in multiparties.Values)
+                foreach (Contact g in multiparties.Values)
                 {
                     if (g != null && g.Account == group.Account)
                     {
@@ -423,7 +423,7 @@ namespace MSNPSharp
 
         internal void JoinMultiparty(Contact group)
         {
-            if (group is Circle || group is TemporaryGroup)
+            if (group.ClientType == IMAddressInfoType.Circle || group.ClientType == IMAddressInfoType.TemporaryGroup)
             {
                 string to = ((int)group.ClientType).ToString() + ":" + group.Account;
                 string from = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Account;
@@ -475,7 +475,10 @@ namespace MSNPSharp
 
                 if (addressType == IMAddressInfoType.TemporaryGroup)
                 {
-                    TemporaryGroup group = new TemporaryGroup(tempGroup[1].ToLowerInvariant(), this, message.TransactionID);
+                    Contact group = new Contact(tempGroup[1].ToLowerInvariant(), IMAddressInfoType.TemporaryGroup, this);
+                    group.TransactionID = message.TransactionID;
+                    group.ContactList = new ContactList(new Guid(tempGroup[1].ToLowerInvariant().Split('@')[0]),ContactList.Owner,this);
+                    
                     multiparties[message.TransactionID] = group;
 
                     JoinMultiparty(group);
@@ -494,6 +497,32 @@ namespace MSNPSharp
 
         #endregion
 
+        #region SignoutFrom
+
+        internal void SignoutFrom(Guid endPointID)
+        {
+            string me = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Account;
+
+            MultiMimeMessage mmMessage = new MultiMimeMessage(me, me);
+            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = MachineGuid.ToString("B").ToLowerInvariant();
+
+            mmMessage.ContentKey = MIMEContentHeaders.Publication;
+            mmMessage.ContentHeaders[MIMEContentHeaders.URI] = "/user";
+            mmMessage.ContentHeaders[MIMEContentHeaders.ContentType] = "application/user+xml";
+
+            string xml = "<user><sep n=\"IM\" epid=\"" + endPointID.ToString("B").ToLowerInvariant() + "\"/></user>";
+
+            mmMessage.InnerBody = Encoding.UTF8.GetBytes(xml);
+
+            NSMessage putPayload = new NSMessage("DEL");
+            putPayload.InnerMessage = mmMessage;
+            MessageProcessor.SendMessage(putPayload);
+        }
+
+        #endregion
+
+        #region OnDEL
+
         /// <summary>
         /// Called when a DEL command message has been received.
         /// </summary>
@@ -506,6 +535,8 @@ namespace MSNPSharp
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "DEL command accepted", GetType().Name);
             }
         }
+
+        #endregion
 
         #region OnNFYReceived
 
@@ -568,7 +599,7 @@ namespace MSNPSharp
                     viaHeaderContact = ContactList.GetCircle(viaHeaderAccount);
                     if (viaHeaderContact != null)
                     {
-                        fromContact = (viaHeaderContact as Circle).ContactList.GetContact(fromAccount, fromAccountAddressType);
+                        fromContact = viaHeaderContact.ContactList.GetContact(fromAccount, fromAccountAddressType);
                     }
                 }
                 else if (viaHeaderAddressType == IMAddressInfoType.TemporaryGroup)
@@ -576,7 +607,7 @@ namespace MSNPSharp
                     viaHeaderContact = GetMultiparty(viaHeaderAccount);
                     if (viaHeaderContact != null)
                     {
-                        fromContact = (viaHeaderContact as TemporaryGroup).ContactList.GetContact(fromAccount, fromAccountAddressType);
+                        fromContact = viaHeaderContact.ContactList.GetContact(fromAccount, fromAccountAddressType);
                     }
                 }
             }
@@ -732,7 +763,7 @@ namespace MSNPSharp
                         {
                             if (fromAccountAddressType == IMAddressInfoType.Circle)
                             {
-                                Circle circle = ContactList.GetCircle(fromAccount);
+                                Contact circle = ContactList.GetCircle(fromAccount);
 
                                 if (circle == null)
                                 {
@@ -800,14 +831,16 @@ namespace MSNPSharp
                             }
                             else if (fromAccountAddressType == IMAddressInfoType.TemporaryGroup)
                             {
-                                TemporaryGroup group = GetMultiparty(fromAccount);
+                                Contact group = GetMultiparty(fromAccount);
 
                                 if (group == null)
                                 {
                                     NSMessageProcessor nsmp = (NSMessageProcessor)MessageProcessor;
                                     int transId = nsmp.IncreaseTransactionID();
 
-                                    group = new TemporaryGroup(fromAccount, this, transId);
+                                    group = new Contact(fromAccount, IMAddressInfoType.TemporaryGroup, this);
+                                    group.TransactionID = transId;
+                                    group.ContactList = new ContactList(new Guid(fromAccount.Split('@')[0]), ContactList.Owner, this);
 
                                     lock (multiparties)
                                         multiparties[transId] = group;
@@ -975,8 +1008,8 @@ namespace MSNPSharp
 
                     case "application/circles+xml":
                         {
-                            Circle circle = null;
-                            TemporaryGroup group = null;
+                            Contact circle = null;
+                            Contact group = null;
 
                             if (fromAccountAddressType == IMAddressInfoType.Circle)
                             {

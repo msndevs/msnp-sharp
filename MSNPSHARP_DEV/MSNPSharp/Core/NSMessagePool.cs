@@ -221,6 +221,7 @@ namespace MSNPSharp.Core
                             case "509": // 509 UpsFailure, when sending mobile message
                             case "511": // 511
                             case "591": // 591
+                            case "731": // 731
                             case "933": // 933
                                 {
                                     bufferStream.Seek(-3, SeekOrigin.End);
