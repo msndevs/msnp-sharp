@@ -2434,6 +2434,7 @@ namespace MSNPSharp.IO
 
                     owner.UserTileURL = userTileURL;
                     SetContactPhones(owner, cinfo);
+
                     #endregion
 
                     if (null != cinfo.annotations && lowerId == WebServiceConstants.MessengerIndividualAddressBookId)
@@ -2445,6 +2446,28 @@ namespace MSNPSharp.IO
                     }
 
                     InitializeMyProperties();
+
+                    // Networks...
+                    if (cinfo.NetworkInfoList != null)
+                    {
+                        foreach (NetworkInfoType netInfo in cinfo.NetworkInfoList)
+                        {
+                            if (!String.IsNullOrEmpty(netInfo.DomainTag) && 
+                                netInfo.DomainTag != WebServiceConstants.NullDomainTag &&
+                                netInfo.SourceId.ToLowerInvariant() != RemoteNetworkGateways.WindowsLiveGateway &&
+                                !NSMessageHandler.ContactList.HasContact(netInfo.SourceId, IMAddressInfoType.RemoteNetwork))
+                            {
+                                Contact networkContact = NSMessageHandler.ContactList.GetContactWithCreate(netInfo.SourceId, IMAddressInfoType.RemoteNetwork);
+                                networkContact.Lists |= RoleLists.Forward;
+
+                                if (networkContact.ContactList == null)
+                                    networkContact.ContactList = new ContactList(Guid.Empty, NSMessageHandler.ContactList.Owner, NSMessageHandler);
+
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, networkContact + " added to network contacts", GetType().Name);
+                            }
+                        }
+                    }
+
 
                     updatedContact = owner;
                 }

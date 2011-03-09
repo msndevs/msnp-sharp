@@ -225,6 +225,10 @@ namespace MSNPSharp
             "yyyy-MM-ddTHH:mm:ssK",
             "yyyy-MM-ddTHH:mm:sszzz"
         };
+
+        public const string NullDomainTag = "$null";
+
+
     }
 
     /// <summary>

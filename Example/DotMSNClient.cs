@@ -1436,19 +1436,6 @@ namespace MSNPSharpClient
         {
             Contact contact = treeViewFavoriteList.SelectedNode.Tag as Contact;
 
-            if (!contact.OnForwardList)
-            {
-                AddContactForm acf = new AddContactForm(contact.Account);
-
-                if (DialogResult.OK == acf.ShowDialog(this) &&
-                    acf.Account != String.Empty)
-                {
-                    messenger.ContactService.AddNewContact(acf.Account, acf.InvitationMessage);
-                }
-
-                return;
-            }
-
             foreach (ConversationForm conv in ConversationForms)
             {
                 if (contact.IsSibling(conv.RemoteContact))

@@ -535,10 +535,13 @@ namespace MSNPSharp
 
                         string ch = contact.Hash;
                         RoleLists l = RoleLists.None;
-                        if (contact.IsMessengerUser)
+
+                        if (contact.OnForwardList)
                             l |= RoleLists.Forward;
+
                         if (contact.OnAllowedList)
                             l |= RoleLists.Allow;
+
                         if (contact.AppearOffline)
                             l |= RoleLists.Hide;
 
@@ -2321,36 +2324,6 @@ namespace MSNPSharp
                 });
         }
 
-        internal void FireJoinCircleEvent(JoinCircleInvitationEventArgs arg)
-        {
-            if (arg == null)
-                return;
-
-            Contact circle = arg.Circle;
-
-            if (NSMessageHandler.IsSignedIn)
-            {
-                abHandleType abHandle = new abHandleType();
-                abHandle.ABId = circle.AddressBookId.ToString().ToLowerInvariant();
-                abHandle.Cid = 0;
-                abHandle.Puid = 0;
-
-                abRequest(PartnerScenario.NewCircleDuringPull,
-                    abHandle,
-                    delegate
-                    {
-                        if (circle.CircleRole == CirclePersonalMembershipRole.StatePendingOutbound)
-                        {
-                            OnJoinCircleInvitationReceived(arg);
-                        }
-                    }
-                );
-            }
-            else
-            {
-                OnJoinCircleInvitationReceived(arg);
-            }
-        }
 
         internal void ServerNotificationRequest(PartnerScenario scene, object[] parameters, ABFindContactsPagedCompletedEventHandler onSuccess)
         {
