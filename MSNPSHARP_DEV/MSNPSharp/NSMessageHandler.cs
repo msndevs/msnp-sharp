@@ -598,7 +598,7 @@ namespace MSNPSharp
                 throw new MSNPSharpException("Not a valid owner");
 
             string xmlstr = "<EndpointData><Capabilities>" +
-                ((long)ContactList.Owner.LocalEndPointClientCapabilities).ToString() + ":" + ((long)ContactList.Owner.LocalEndPointClientCapabilitiesEx).ToString()
+                ((long)ContactList.Owner.LocalEndPointIMCapabilities).ToString() + ":" + ((long)ContactList.Owner.LocalEndPointIMCapabilitiesEx).ToString()
             + "</Capabilities></EndpointData>";
 
             MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", xmlstr));
@@ -633,15 +633,20 @@ namespace MSNPSharp
             {
                 string capacities = String.Empty;
 
-                if (ContactList.Owner.LocalEndPointClientCapabilities == ClientCapabilities.None)
+                if (ContactList.Owner.LocalEndPointIMCapabilities == ClientCapabilities.None)
                 {
                     isSetDefault = true;
 
-                    ClientCapabilitiesEx localCapsEx = ClientCapabilitiesEx.Default;
-                    ClientCapabilities localCaps = ClientCapabilities.Default;
+                    // P2P capabilities
+                    ClientCapabilitiesEx localPECapsEx = ClientCapabilitiesEx.DefaultPE;
+                    ClientCapabilities localPECaps = ClientCapabilities.DefaultPE;
+
+                    // Instant messaging capabilities
+                    ClientCapabilitiesEx localIMCapsEx = ClientCapabilitiesEx.DefaultIM;
+                    ClientCapabilities localIMCaps = ClientCapabilities.DefaultIM;
                     if (BotMode)
                     {
-                        localCaps |= ClientCapabilities.IsBot;
+                        localIMCaps |= ClientCapabilities.IsBot;
                     }
 
                     XmlDocument xmlDoc = new XmlDocument();
@@ -660,7 +665,7 @@ namespace MSNPSharp
                     TYP.InnerText = "1";
                     sep.AppendChild(TYP);
                     XmlElement Capabilities = xmlDoc.CreateElement("Capabilities");
-                    Capabilities.InnerText = ((long)localCaps).ToString() + ":" + ((long)localCapsEx).ToString();
+                    Capabilities.InnerText = ((long)localPECaps).ToString() + ":" + ((long)localPECapsEx).ToString();
                     sep.AppendChild(Capabilities);
                     userElement.AppendChild(sep);
 
@@ -682,7 +687,7 @@ namespace MSNPSharp
                     sep = xmlDoc.CreateElement("sep");
                     sep.SetAttribute("n", ServiceShortNames.IM.ToString());
                     Capabilities = xmlDoc.CreateElement("Capabilities");
-                    Capabilities.InnerText = ((long)localCaps).ToString() + ":" + ((long)localCapsEx).ToString();
+                    Capabilities.InnerText = ((long)localIMCaps).ToString() + ":" + ((long)localIMCapsEx).ToString();
                     sep.AppendChild(Capabilities);
 
                     userElement.AppendChild(sep);
@@ -726,8 +731,8 @@ namespace MSNPSharp
                     SetScreenName(ContactList.Owner.Name);
                 }
 
-                ClientCapabilitiesEx capsext = ContactList.Owner.LocalEndPointClientCapabilitiesEx;
-                capacities = ((long)ContactList.Owner.LocalEndPointClientCapabilities).ToString() + ":" + ((long)capsext).ToString();
+                ClientCapabilitiesEx capsext = ContactList.Owner.LocalEndPointIMCapabilitiesEx;
+                capacities = ((long)ContactList.Owner.LocalEndPointIMCapabilities).ToString() + ":" + ((long)capsext).ToString();
 
                 if (!isSetDefault)
                 {
@@ -1211,8 +1216,8 @@ namespace MSNPSharp
                     }
 
                     EndPointData epData = (isPrivateEndPoint ? new PrivateEndPointData(endpointAccount, epId) : new EndPointData(endpointAccount, epId));
-                    epData.ClientCapabilities = clientCaps;
-                    epData.ClientCapabilitiesEx = clientCapsEx;
+                    epData.IMCapabilities = clientCaps;
+                    epData.IMCapabilitiesEx = clientCapsEx;
                     endPoints.Add(epData);
                 }
             }

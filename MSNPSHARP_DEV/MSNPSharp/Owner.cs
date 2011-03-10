@@ -154,50 +154,95 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Get or set the <see cref="ClientCapabilities"/> of local end point.
+        /// Get or set the IM <see cref="ClientCapabilities"/> of local end point.
         /// </summary>
-        public ClientCapabilities LocalEndPointClientCapabilities
+        public ClientCapabilities LocalEndPointIMCapabilities
         {
             get
             {
                 if (EndPointData.ContainsKey(NSMessageHandler.MachineGuid))
-                    return EndPointData[NSMessageHandler.MachineGuid].ClientCapabilities;
+                    return EndPointData[NSMessageHandler.MachineGuid].IMCapabilities;
 
                 return ClientCapabilities.None;
             }
-
             set
             {
-                if (value != LocalEndPointClientCapabilities)
+                if (value != LocalEndPointIMCapabilities)
                 {
-                    EndPointData[NSMessageHandler.MachineGuid].ClientCapabilities = value;
+                    EndPointData[NSMessageHandler.MachineGuid].IMCapabilities = value;
                     BroadcastDisplayImage();
                 }
             }
         }
 
         /// <summary>
-        /// Get or set the <see cref="ClientCapabilitiesEx"/> of local end point.
+        /// Get or set the IM <see cref="ClientCapabilitiesEx"/> of local end point.
         /// </summary>
-        public ClientCapabilitiesEx LocalEndPointClientCapabilitiesEx
+        public ClientCapabilitiesEx LocalEndPointIMCapabilitiesEx
         {
             get
             {
                 if (EndPointData.ContainsKey(NSMessageHandler.MachineGuid))
-                    return EndPointData[NSMessageHandler.MachineGuid].ClientCapabilitiesEx;
+                    return EndPointData[NSMessageHandler.MachineGuid].IMCapabilitiesEx;
 
                 return ClientCapabilitiesEx.None;
             }
 
             set
             {
-                if (value != LocalEndPointClientCapabilitiesEx)
+                if (value != LocalEndPointIMCapabilitiesEx)
                 {
-                    EndPointData[NSMessageHandler.MachineGuid].ClientCapabilitiesEx = value;
+                    EndPointData[NSMessageHandler.MachineGuid].IMCapabilitiesEx = value;
                     BroadcastDisplayImage();
                 }
             }
         }
+
+        /// <summary>
+        /// Get or set the PE (P2P) <see cref="ClientCapabilities"/> of local end point.
+        /// </summary>
+        public ClientCapabilities LocalEndPointPECapabilities
+        {
+            get
+            {
+                if (EndPointData.ContainsKey(NSMessageHandler.MachineGuid))
+                    return EndPointData[NSMessageHandler.MachineGuid].PECapabilities;
+
+                return ClientCapabilities.None;
+            }
+            set
+            {
+                if (value != LocalEndPointPECapabilities)
+                {
+                    EndPointData[NSMessageHandler.MachineGuid].PECapabilities = value;
+                    BroadcastDisplayImage();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get or set the PE (P2P) <see cref="ClientCapabilitiesEx"/> of local end point.
+        /// </summary>
+        public ClientCapabilitiesEx LocalEndPointPECapabilitiesEx
+        {
+            get
+            {
+                if (EndPointData.ContainsKey(NSMessageHandler.MachineGuid))
+                    return EndPointData[NSMessageHandler.MachineGuid].PECapabilitiesEx;
+
+                return ClientCapabilitiesEx.None;
+            }
+
+            set
+            {
+                if (value != LocalEndPointPECapabilitiesEx)
+                {
+                    EndPointData[NSMessageHandler.MachineGuid].PECapabilitiesEx = value;
+                    BroadcastDisplayImage();
+                }
+            }
+        }
+
 
         /// <summary>
         /// Sign the owner out from every place.
@@ -380,7 +425,7 @@ namespace MSNPSharp
             {
                 // Resend the user status so other client can see the new msn object
 
-                string capacities = ((long)LocalEndPointClientCapabilities).ToString() + ":" + ((long)LocalEndPointClientCapabilitiesEx).ToString();
+                string capacities = ((long)LocalEndPointIMCapabilities).ToString() + ":" + ((long)LocalEndPointIMCapabilitiesEx).ToString();
 
                 string context = "0";
 

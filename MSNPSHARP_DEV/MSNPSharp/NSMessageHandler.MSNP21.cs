@@ -735,6 +735,7 @@ namespace MSNPSharp
                                     switch (serviceEnum)
                                     {
                                         case ServiceShortNames.IM:
+                                        case ServiceShortNames.PE:
                                             {
                                                 foreach (XmlNode node in service.ChildNodes)
                                                 {
@@ -755,9 +756,16 @@ namespace MSNPSharp
                                                             if (!fromContact.EndPointData.ContainsKey(epid))
                                                                 fromContact.EndPointData.Add(epid, new EndPointData(fromContact.Account, epid));
 
-                                                            fromContact.EndPointData[epid].ClientCapabilities = cap;
-                                                            fromContact.EndPointData[epid].ClientCapabilitiesEx = capEx;
-
+                                                            if (serviceEnum == ServiceShortNames.IM)
+                                                            {
+                                                                fromContact.EndPointData[epid].IMCapabilities = cap;
+                                                                fromContact.EndPointData[epid].IMCapabilitiesEx = capEx;
+                                                            }
+                                                            else if (serviceEnum == ServiceShortNames.PE)
+                                                            {
+                                                                fromContact.EndPointData[epid].PECapabilities = cap;
+                                                                fromContact.EndPointData[epid].PECapabilitiesEx = capEx;
+                                                            }
                                                             break;
                                                     }
                                                 }
@@ -1329,7 +1337,7 @@ namespace MSNPSharp
                     Guid epid = mmMessage.From.HasAttribute(MIMERoutingHeaders.EPID) ?
                         new Guid(mmMessage.From[MIMERoutingHeaders.EPID]) : Guid.Empty;
 
-                    P2PVersion ver = ((sender.EndPointData[epid].ClientCapabilitiesEx & ClientCapabilitiesEx.SupportsPeerToPeerV2) == ClientCapabilitiesEx.SupportsPeerToPeerV2)
+                    P2PVersion ver = ((sender.EndPointData[epid].PECapabilitiesEx & ClientCapabilitiesEx.SupportsPeerToPeerV2) == ClientCapabilitiesEx.SupportsPeerToPeerV2)
                         ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
 
                     P2PMessage p = new P2PMessage(ver);

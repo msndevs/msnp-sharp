@@ -46,6 +46,11 @@ namespace MSNPSharp
         #region Fields and Properties
 
         private Guid id = Guid.Empty;
+        private string account = string.Empty;
+        private ClientCapabilities imCapabilities = ClientCapabilities.None;
+        private ClientCapabilitiesEx imCapabilitiesEx = ClientCapabilitiesEx.None;
+        private ClientCapabilities peCapabilities = ClientCapabilities.None;
+        private ClientCapabilitiesEx peCapabilitiesEx = ClientCapabilitiesEx.None;
 
         /// <summary>
         /// The Id of endpoint data.
@@ -58,43 +63,6 @@ namespace MSNPSharp
             }
         }
 
-        private ClientCapabilities clientCapabilities = ClientCapabilities.None;
-
-        /// <summary>
-        /// The capacities of the client at this enpoint.
-        /// </summary>
-        public ClientCapabilities ClientCapabilities
-        {
-            get
-            {
-                return clientCapabilities;
-            }
-
-            internal set
-            {
-                clientCapabilities = value;
-            }
-        }
-
-        private ClientCapabilitiesEx clientCapabilitiesEx = ClientCapabilitiesEx.None;
-
-        /// <summary>
-        /// The new capabilities of the client at this enpoint.
-        /// </summary>
-        public ClientCapabilitiesEx ClientCapabilitiesEx
-        {
-            get
-            {
-                return clientCapabilitiesEx;
-            }
-            internal set
-            {
-                clientCapabilitiesEx = value;
-            }
-        }
-
-        private string account = string.Empty;
-
         /// <summary>
         /// The account of this endpoint, different endpoints might share the same account.
         /// </summary>
@@ -103,6 +71,66 @@ namespace MSNPSharp
             get
             {
                 return account;
+            }
+        }
+
+        /// <summary>
+        /// The IM capacities of the client at this enpoint.
+        /// </summary>
+        public ClientCapabilities IMCapabilities
+        {
+            get
+            {
+                return imCapabilities;
+            }
+            internal set
+            {
+                imCapabilities = value;
+            }
+        }
+
+        /// <summary>
+        /// The IM extended capabilities of the client at this enpoint.
+        /// </summary>
+        public ClientCapabilitiesEx IMCapabilitiesEx
+        {
+            get
+            {
+                return imCapabilitiesEx;
+            }
+            internal set
+            {
+                imCapabilitiesEx = value;
+            }
+        }
+
+        /// <summary>
+        /// The PE (p2p) capacities of the client at this enpoint.
+        /// </summary>
+        public ClientCapabilities PECapabilities
+        {
+            get
+            {
+                return peCapabilities;
+            }
+            internal set
+            {
+                peCapabilities = value;
+            }
+        }
+
+        /// <summary>
+        /// The PE (p2p) extended capabilities of the client at this enpoint.
+        /// </summary>
+        public ClientCapabilitiesEx PECapabilitiesEx
+        {
+            get
+            {
+                return peCapabilitiesEx;
+            }
+            internal set
+            {
+                peCapabilitiesEx = value;
             }
         }
 
@@ -162,7 +190,9 @@ namespace MSNPSharp
 
         public override string ToString()
         {
-            return Account + ";" + Id.ToString("B") + " " + ClientCapabilities + ":" + ClientCapabilitiesEx;
+            return Account + ";" + Id.ToString("B") +
+                "/IM/" + IMCapabilities + ":" + IMCapabilitiesEx +
+                "/PE/" + PECapabilities + ":" + PECapabilitiesEx;
         }
     }
 
