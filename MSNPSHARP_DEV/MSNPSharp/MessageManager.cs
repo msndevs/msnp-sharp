@@ -121,7 +121,7 @@ namespace MSNPSharp.Utilities
                 TextMessageReceived(this, e);
         }
 
-        #endregion       
+        #endregion
 
         #region Public methods
 
@@ -143,7 +143,7 @@ namespace MSNPSharp.Utilities
 
         public void SendEmoticonDefinitions(Contact remote, List<Emoticon> emoticons, EmoticonType icontype)
         {
-            /*MSNP21TODO:SendMessage(remote, new EmoticonObject(emoticons, icontype));*/
+            remote.SendEmoticonDefinitions(emoticons, icontype);
         }
 
         #endregion

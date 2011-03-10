@@ -333,6 +333,40 @@ namespace MSNPSharp
 
         #endregion
 
+        public void SendEmoticonDefinitions(Contact remoteContact, List<Emoticon> emoticons, EmoticonType icontype)
+        {
+            if (emoticons == null)
+                throw new ArgumentNullException("emoticons");
+
+            foreach (Emoticon emoticon in emoticons)
+            {
+                if (!ContactList.Owner.Emoticons.ContainsKey(emoticon.Sha))
+                {
+                    // Add the emotions to owner's emoticon collection.
+                    ContactList.Owner.Emoticons.Add(emoticon.Sha, emoticon);
+                }
+            }
+
+            EmoticonMessage emoticonMessage = new EmoticonMessage(emoticons, icontype);
+
+            string to = ((int)remoteContact.ClientType).ToString() + ":" + remoteContact.Account;
+            string from = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Account;
+
+            MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
+            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = MachineGuid.ToString("B").ToLowerInvariant();
+
+            mmMessage.ContentKeyVersion = "2.0";
+
+            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "CustomEmoticon";
+            mmMessage.ContentHeaders[MIMEHeaderStrings.Content_Type] = "text/x-mms-animemoticon";
+            mmMessage.InnerBody = emoticonMessage.GetBytes();
+
+            NSMessage sdgPayload = new NSMessage("SDG");
+            sdgPayload.InnerMessage = mmMessage;
+            MessageProcessor.SendMessage(sdgPayload);
+        }
+
+
         #region MULTIPARTY
 
         #region CreateMultiparty
@@ -424,9 +458,9 @@ namespace MSNPSharp
 
             mmMessage.InnerBody = new byte[0];
 
-            NSMessage putPayload = new NSMessage("DEL");
-            putPayload.InnerMessage = mmMessage;
-            MessageProcessor.SendMessage(putPayload);
+            NSMessage delPayload = new NSMessage("DEL");
+            delPayload.InnerMessage = mmMessage;
+            MessageProcessor.SendMessage(delPayload);
 
             lock (multiparties)
             {
@@ -540,9 +574,9 @@ namespace MSNPSharp
 
             mmMessage.InnerBody = Encoding.UTF8.GetBytes(xml);
 
-            NSMessage putPayload = new NSMessage("DEL");
-            putPayload.InnerMessage = mmMessage;
-            MessageProcessor.SendMessage(putPayload);
+            NSMessage delPayload = new NSMessage("DEL");
+            delPayload.InnerMessage = mmMessage;
+            MessageProcessor.SendMessage(delPayload);
         }
 
         #endregion
@@ -836,6 +870,11 @@ namespace MSNPSharp
                                         // The contact goes online
                                         OnContactOnline(new ContactStatusChangedEventArgs(circle, oldStatus, newStatus));
 
+                                        if (circle.AppearOnline && circle.OnForwardList &&
+                                            (ContactList.Owner.Status != PresenceStatus.Hidden && ContactList.Owner.Status != PresenceStatus.Offline))
+                                        {
+                                            //JoinMultiparty(circle);
+                                        }
                                     }
                                     return;
                                 }

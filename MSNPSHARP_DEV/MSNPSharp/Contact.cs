@@ -65,12 +65,12 @@ namespace MSNPSharp
         private string name = string.Empty;
         private string nickName = string.Empty;
         private string contactType = string.Empty;
-        
+
         private bool hasSpace = false;
         private bool mobileDevice = false;
         private bool mobileAccess = false;
         private bool isMessengerUser = false;
-        
+
         private PresenceStatus status = PresenceStatus.Offline;
         private IMAddressInfoType clientType = IMAddressInfoType.WindowsLive;
         private CirclePersonalMembershipRole circleRole = CirclePersonalMembershipRole.None;
@@ -79,7 +79,7 @@ namespace MSNPSharp
         #endregion
 
         #region NonSerialized fields
-        
+
         [NonSerialized]
         private Dictionary<string, string> phoneNumbers = new Dictionary<string, string>();
 
@@ -118,7 +118,7 @@ namespace MSNPSharp
 
         [NonSerialized]
         private ulong oimCount = 1;
-        
+
         [NonSerialized]
         private int adlCount = 1;
 
@@ -145,7 +145,7 @@ namespace MSNPSharp
 
         [NonSerialized]
         private string sceneContext = string.Empty;
- 
+
         [NonSerialized]
         private P2PBridge directBridge = null;
 
@@ -1889,6 +1889,12 @@ namespace MSNPSharp
         {
             if (CanReceiveMessage)
                 NSMessageHandler.SendTextMessage(this, textMessage);
+        }
+
+        public void SendEmoticonDefinitions(List<Emoticon> emoticons, EmoticonType icontype)
+        {
+            if (CanReceiveMessage)
+                NSMessageHandler.SendEmoticonDefinitions(this, emoticons, icontype);
         }
     }
 };
