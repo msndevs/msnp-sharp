@@ -43,6 +43,7 @@ using System.Collections.Generic;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
+    using MSNPSharp.P2P;
 
     partial class NSMessageHandler
     {
@@ -1322,6 +1323,19 @@ namespace MSNPSharp
 
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                         "TEXT MESSAGE: " + sender.ToString() + (sender == fromContact ? String.Empty : ";via=" + fromContact.ToString()) + "\r\n" + txtMessage.ToDebugString());
+                }
+                else if ("data" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
+                {
+                    Guid epid = mmMessage.From.HasAttribute(MIMERoutingHeaders.EPID) ?
+                        new Guid(mmMessage.From[MIMERoutingHeaders.EPID]) : Guid.Empty;
+
+                    P2PVersion ver = ((sender.EndPointData[epid].ClientCapabilitiesEx & ClientCapabilitiesEx.SupportsPeerToPeerV2) == ClientCapabilitiesEx.SupportsPeerToPeerV2)
+                        ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
+
+                    P2PMessage p = new P2PMessage(ver);
+                    p.ParseBytes(mmMessage.InnerBody);
+
+                    Trace.WriteLine(p.ToDebugString());
                 }
             }
         }
