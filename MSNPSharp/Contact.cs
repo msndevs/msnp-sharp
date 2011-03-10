@@ -601,7 +601,7 @@ namespace MSNPSharp
             {
                 Guid randGuid = SelectRandomEPID();
                 EndPointData epData = EndPointData[randGuid];
-                ClientCapabilities msnc = (epData.ClientCapabilities & ClientCapabilities.AppVersionMask);
+                ClientCapabilities msnc = (epData.PECapabilities & ClientCapabilities.AppVersionMask);
 
                 if (msnc > ClientCapabilities.None)
                 {
@@ -1847,7 +1847,7 @@ namespace MSNPSharp
                 {
                     foreach (EndPointData ep in EndPointData.Values)
                     {
-                        if (ClientCapabilitiesEx.SupportsMultipartyConversations == (ep.ClientCapabilitiesEx & ClientCapabilitiesEx.SupportsMultipartyConversations))
+                        if (ClientCapabilitiesEx.SupportsMultipartyConversations == (ep.IMCapabilitiesEx & ClientCapabilitiesEx.SupportsMultipartyConversations))
                             return true;
                     }
                 }

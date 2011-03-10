@@ -281,7 +281,8 @@ namespace MSNPSharp
         /// </summary>
         AppVersionMask = 0xF0000000,
 
-        Default = SupportsChunking | SupportsActivities | SupportsWinks | AppVersion2011
+        DefaultIM = SupportsChunking | SupportsActivities | SupportsWinks | AppVersion2011,
+        DefaultPE = SupportsTurn | SupportsDirectBootstrapping
     }
 
     [Flags]
@@ -318,10 +319,11 @@ namespace MSNPSharp
         CustomEmoticonsCapable = 0x8000000,
         SupportsUTF8MoodMessages = 0x10000000,
         FTURNCapable = 0x20000000,
-        SupportsP4Activity = 0x40000000, // I think this is P4. Because it contains 4, and advertised between UTF8MoodMessages and MultipartyIM :-)))
+        SupportsP4Activity = 0x40000000,
         SupportsMultipartyConversations = 0x80000000,
 
-        Default = Supports1On1ViaGroup | SupportsOfflineIM | SupportsSharingVideo | SupportsNudges | SharingEnabled | ConvWindowFileTransfer | SIPTunnelVersion2 | CustomEmoticonsCapable | SupportsUTF8MoodMessages | SupportsMultipartyConversations
+        DefaultIM = Supports1On1ViaGroup | SupportsOfflineIM | SupportsSharingVideo | SupportsNudges | SharingEnabled | ConvWindowFileTransfer | SIPTunnelVersion2 | CustomEmoticonsCapable | SupportsUTF8MoodMessages | SupportsMultipartyConversations,
+        DefaultPE = _0x4000 | SupportsPeerToPeerMixerRelay | _0x10000 | SupportsPeerToPeerEnveloping | _0x100000 | SupportsSocialNewsObjectTypes | SupportsP4Activity
     }
 
     /// <summary>

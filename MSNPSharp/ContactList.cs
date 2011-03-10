@@ -532,8 +532,10 @@ namespace MSNPSharp
             {
                 Owner.Emoticons.Clear();
                 Owner.EndPointData.Clear();
-                Owner.LocalEndPointClientCapabilities = ClientCapabilities.None;
-                Owner.LocalEndPointClientCapabilitiesEx = ClientCapabilitiesEx.None;
+                Owner.LocalEndPointIMCapabilities = ClientCapabilities.None;
+                Owner.LocalEndPointIMCapabilitiesEx = ClientCapabilitiesEx.None;
+                Owner.LocalEndPointPECapabilities = ClientCapabilities.None;
+                Owner.LocalEndPointPECapabilitiesEx = ClientCapabilitiesEx.None;
             }
 
             owner = null;

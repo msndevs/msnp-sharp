@@ -244,8 +244,8 @@ namespace MSNPSharp
                     Contact contact = circle.ContactList.GetContact(account, accountAddressType);
 
                     contact.SetName(MSNHttpUtility.NSDecode(message.CommandValues[2].ToString()));
-                    contact.EndPointData[Guid.Empty].ClientCapabilities = newcaps;
-                    contact.EndPointData[Guid.Empty].ClientCapabilitiesEx = newcapsex;
+                    contact.EndPointData[Guid.Empty].IMCapabilities = newcaps;
+                    contact.EndPointData[Guid.Empty].IMCapabilitiesEx = newcapsex;
 
                     if (contact != ContactList.Owner && newDisplayImageContext.Length > 10)
                     {
@@ -313,8 +313,8 @@ namespace MSNPSharp
                     }
 
                     contact.SetName(MSNHttpUtility.NSDecode(newName));
-                    contact.EndPointData[Guid.Empty].ClientCapabilities = newcaps;
-                    contact.EndPointData[Guid.Empty].ClientCapabilitiesEx = newcapsex;
+                    contact.EndPointData[Guid.Empty].IMCapabilities = newcaps;
+                    contact.EndPointData[Guid.Empty].IMCapabilitiesEx = newcapsex;
 
                     if (contact != ContactList.Owner)
                     {
@@ -456,8 +456,8 @@ namespace MSNPSharp
                     {
                         contact.EndPointData.Clear();
                         contact.EndPointData[Guid.Empty] = new EndPointData(contact.Account.ToLowerInvariant(), Guid.Empty);
-                        contact.EndPointData[Guid.Empty].ClientCapabilities = newCaps;
-                        contact.EndPointData[Guid.Empty].ClientCapabilitiesEx = newCapsEx;
+                        contact.EndPointData[Guid.Empty].IMCapabilities = newCaps;
+                        contact.EndPointData[Guid.Empty].IMCapabilitiesEx = newCapsEx;
                     }
 
                     if (contact != ContactList.Owner && message.CommandValues.Count >= 3 &&
