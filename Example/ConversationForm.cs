@@ -1018,7 +1018,8 @@ namespace MSNPSharpClient
 
             try
             {
-                _messenger.MessageManager.SendEmoticonDefinitions(remoteContact, emolist, EmoticonType.StaticEmoticon);
+                remoteContact.SendEmoticonDefinitions(emolist, EmoticonType.StaticEmoticon);
+
                 TextMessage emotxt = new TextMessage("Hey, this is a custom emoticon: " + emotest.Shortcut);
                 remoteContact.SendMessage(emotxt);
 
