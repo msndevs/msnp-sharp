@@ -1023,7 +1023,9 @@ namespace MSNPSharp
                     if (clitype != IMAddressInfoType.Telephone && clitype != IMAddressInfoType.RemoteNetwork)
                         contactElement.SetAttribute("t", type);
 
-                    foreach (string s in new string[] { ServiceShortNames.IM.ToString() })
+                    foreach (string s in new string[] { 
+                        ServiceShortNames.IM.ToString(),
+                        ServiceShortNames.PE.ToString() })
                     {
                         XmlElement service = xmlDoc.CreateElement("s");
                         service.SetAttribute("l", ((int)sendlist).ToString());
