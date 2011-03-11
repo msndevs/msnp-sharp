@@ -111,8 +111,8 @@ namespace MSNPSharp.IO
                         }
                         else if (bm is CircleMember)
                         {
-                            type = IMAddressInfoType.Circle;
-                            account = ((CircleMember)bm).CircleId + "@" + Contact.DefaultHostDomain;
+                            //type = IMAddressInfoType.Circle;
+                            //account = ((CircleMember)bm).CircleId + "@" + Contact.DefaultHostDomain;
                         }
                         else if (bm is ExternalIDMember)
                         {
@@ -170,8 +170,8 @@ namespace MSNPSharp.IO
                     }
                     else if (bm is CircleMember)
                     {
-                        type = IMAddressInfoType.Circle;
-                        account = ((CircleMember)bm).CircleId + "@" + Contact.DefaultHostDomain;
+                        //type = IMAddressInfoType.Circle;
+                        //account = ((CircleMember)bm).CircleId + "@" + Contact.DefaultHostDomain;
                     }
                     else if (bm is ExternalIDMember)
                     {
