@@ -975,7 +975,7 @@ namespace MSNPSharp
 
                 IMAddressInfoType clitype = (IMAddressInfoType)Enum.Parse(typeof(IMAddressInfoType), type);
                 type = ((int)clitype).ToString();
-                RoleLists sendlist = Contact.GetListForADL(contacts[contact_hash]);
+                RoleLists sendlist = Contact.GetListForADL(contacts[contact_hash], clitype);
 
                 if (clitype == IMAddressInfoType.Telephone)
                 {

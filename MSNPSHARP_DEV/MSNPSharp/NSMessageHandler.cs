@@ -507,7 +507,7 @@ namespace MSNPSharp
                         ContactList.Owner.Status,
                         ContactList.Owner.LocalEndPointIMCapabilities, ContactList.Owner.LocalEndPointIMCapabilitiesEx,
                         ContactList.Owner.LocalEndPointPECapabilities, ContactList.Owner.LocalEndPointPECapabilitiesEx,
-                        ContactList.Owner.EpName, pm);
+                        ContactList.Owner.EpName, pm, true);
 
             StorageService.UpdateProfile(newName, ContactList.Owner.PersonalMessage != null && ContactList.Owner.PersonalMessage.Message != null ? ContactList.Owner.PersonalMessage.Message : String.Empty);
         }
@@ -524,7 +524,7 @@ namespace MSNPSharp
                         ContactList.Owner.Status,
                         ContactList.Owner.LocalEndPointIMCapabilities, ContactList.Owner.LocalEndPointIMCapabilitiesEx,
                         ContactList.Owner.LocalEndPointPECapabilities, ContactList.Owner.LocalEndPointPECapabilitiesEx,
-                        ContactList.Owner.EpName, newPSM);
+                        ContactList.Owner.EpName, newPSM, true);
 
             StorageService.UpdateProfile(ContactList.Owner.Name, newPSM.Message);
         }
@@ -547,7 +547,7 @@ namespace MSNPSharp
             SetPresenceStatus(ContactList.Owner.Status,
                 ContactList.Owner.LocalEndPointIMCapabilities, ContactList.Owner.LocalEndPointIMCapabilitiesEx,
                 ContactList.Owner.LocalEndPointPECapabilities, ContactList.Owner.LocalEndPointPECapabilitiesEx,
-                ContactList.Owner.EpName, pm);
+                ContactList.Owner.EpName, pm, true);
         }
 
         #endregion
@@ -563,8 +563,8 @@ namespace MSNPSharp
             ClientCapabilities newLocalIMCaps, ClientCapabilitiesEx newLocalIMCapsex,
             ClientCapabilities newLocalPECaps, ClientCapabilitiesEx newLocalPECapsex,
             string newEPName,
-            PersonalMessage newPM
-            )
+            PersonalMessage newPM,
+            bool forcePEservice)
         {
             if (IsSignedIn == false)
                 throw new MSNPSharpException("Can't set status. You must wait for the SignedIn event before you can set an initial status.");
@@ -584,7 +584,7 @@ namespace MSNPSharp
             if (ContactList.Owner.DisplayImage != null && ContactList.Owner.DisplayImage.Image != null)
                 context = ContactList.Owner.DisplayImage.Context;
 
-            if (SETALL ||
+            if (SETALL || forcePEservice ||
                 newStatus != ContactList.Owner.Status ||
                 newLocalIMCaps != ContactList.Owner.LocalEndPointIMCapabilities ||
                 newLocalIMCapsex != ContactList.Owner.LocalEndPointIMCapabilitiesEx ||
@@ -611,7 +611,7 @@ namespace MSNPSharp
                 }
 
                 // s.PE (UserTileLocation, FriendlyName, PSM, Scene, ColorScheme)
-                if (SETALL ||
+                if (SETALL || forcePEservice ||
                     psm.Payload != ContactList.Owner.PersonalMessage.Payload)
                 {
                     XmlElement service = xmlDoc.CreateElement("s");

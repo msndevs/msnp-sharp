@@ -149,7 +149,7 @@ namespace MSNPSharp
                         Status,
                         LocalEndPointIMCapabilities, LocalEndPointIMCapabilitiesEx,
                         LocalEndPointPECapabilities, LocalEndPointPECapabilitiesEx,
-                        value, PersonalMessage);
+                        value, PersonalMessage, false);
                 }
 
                 epName = value;
@@ -176,7 +176,7 @@ namespace MSNPSharp
                         Status,
                         value, LocalEndPointIMCapabilitiesEx,
                         LocalEndPointPECapabilities, LocalEndPointPECapabilitiesEx,
-                        EpName, PersonalMessage);
+                        EpName, PersonalMessage, false);
 
                     EndPointData[NSMessageHandler.MachineGuid].IMCapabilities = value;
                 }
@@ -204,7 +204,7 @@ namespace MSNPSharp
                         Status,
                         LocalEndPointIMCapabilities, value,
                         LocalEndPointPECapabilities, LocalEndPointPECapabilitiesEx,
-                        EpName, PersonalMessage);
+                        EpName, PersonalMessage, false);
 
                     EndPointData[NSMessageHandler.MachineGuid].IMCapabilitiesEx = value;
                 }
@@ -231,7 +231,7 @@ namespace MSNPSharp
                         Status,
                         LocalEndPointIMCapabilities, LocalEndPointIMCapabilitiesEx,
                         value, LocalEndPointPECapabilitiesEx,
-                        EpName, PersonalMessage);
+                        EpName, PersonalMessage, false);
 
                     EndPointData[NSMessageHandler.MachineGuid].PECapabilities = value;
                 }
@@ -259,7 +259,7 @@ namespace MSNPSharp
                         Status,
                         LocalEndPointIMCapabilities, LocalEndPointIMCapabilitiesEx,
                         LocalEndPointPECapabilities, value,
-                        EpName, PersonalMessage);
+                        EpName, PersonalMessage, false);
 
                     EndPointData[NSMessageHandler.MachineGuid].PECapabilitiesEx = value;
                 }
@@ -334,11 +334,21 @@ namespace MSNPSharp
 
                     MSNObjectCatalog.GetInstance().Add(base.DisplayImage);
 
-                    NSMessageHandler.SetPresenceStatus(
-                        Status,
-                        LocalEndPointIMCapabilities, LocalEndPointIMCapabilitiesEx,
-                        LocalEndPointPECapabilities, LocalEndPointPECapabilitiesEx,
-                        EpName, PersonalMessage);
+                    PersonalMessage pm = (PersonalMessage == null)
+                        ? new PersonalMessage(String.IsNullOrEmpty(NSMessageHandler.ContactService.Deltas.Profile.DisplayName) ? NickName : NSMessageHandler.ContactService.Deltas.Profile.DisplayName)
+                        : PersonalMessage;
+
+                    pm.UserTileLocation = value.IsDefaultImage ? string.Empty : MSNHttpUtility.XmlEncode(value.ContextPlain);
+                    
+                    if (NSMessageHandler != null && NSMessageHandler.IsSignedIn &&
+                        Status != PresenceStatus.Offline && Status != PresenceStatus.Unknown)
+                    {
+                        NSMessageHandler.SetPresenceStatus(
+                            Status,
+                            LocalEndPointIMCapabilities, LocalEndPointIMCapabilitiesEx,
+                            LocalEndPointPECapabilities, LocalEndPointPECapabilitiesEx,
+                            EpName, PersonalMessage, true);
+                    }
                 }
             }
         }
@@ -544,7 +554,7 @@ namespace MSNPSharp
                         value,
                         LocalEndPointIMCapabilities, LocalEndPointIMCapabilitiesEx,
                         LocalEndPointPECapabilities, LocalEndPointPECapabilitiesEx,
-                        EpName, PersonalMessage);
+                        EpName, PersonalMessage, false);
                 }
 
                 if (PersonalMessage != null)

@@ -1740,12 +1740,17 @@ namespace MSNPSharp
             return ((lists & msnlists) == msnlists);
         }
 
-        internal static RoleLists GetListForADL(RoleLists currentContactList)
+        internal static RoleLists GetListForADL(RoleLists currentContactList, IMAddressInfoType addressType)
         {
             // Delete Reverse and Block roles, no more supported.
-
             currentContactList &= ~RoleLists.Reverse;
             currentContactList &= ~RoleLists.Block;
+
+            // Don't send ADL if circle has only Hide role.
+            if (addressType == IMAddressInfoType.Circle && currentContactList == RoleLists.Hide)
+            {
+                currentContactList &= ~RoleLists.Hide;
+            }
 
             return currentContactList;
         }
