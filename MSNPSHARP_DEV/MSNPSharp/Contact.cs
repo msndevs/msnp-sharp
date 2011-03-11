@@ -431,15 +431,7 @@ namespace MSNPSharp
         {
             get
             {
-                if (PersonalMessage != null)
-                {
-                    if (PersonalMessage.MachineGuid != null)
-                    {
-                        if (PersonalMessage.MachineGuid != Guid.Empty)
-                            return PersonalMessage.MachineGuid;
-                    }
-                }
-                return Guid.Empty;
+                return SelectRandomEPID();
             }
         }
 
@@ -601,7 +593,7 @@ namespace MSNPSharp
             {
                 Guid randGuid = SelectRandomEPID();
                 EndPointData epData = EndPointData[randGuid];
-                ClientCapabilities msnc = (epData.PECapabilities & ClientCapabilities.AppVersionMask);
+                ClientCapabilities msnc = (epData.IMCapabilities & ClientCapabilities.AppVersionMask);
 
                 if (msnc > ClientCapabilities.None)
                 {

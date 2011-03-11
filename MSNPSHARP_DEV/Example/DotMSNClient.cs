@@ -2262,7 +2262,7 @@ namespace MSNPSharpClient
 
                 if (lstPersonalMessage[1] != "")
                 {
-                    messenger.ContactList.Owner.PersonalMessage = new PersonalMessage(lstPersonalMessage[1], MediaType.None, null, NSMessageHandler.MachineGuid);
+                    messenger.ContactList.Owner.PersonalMessage = new PersonalMessage(lstPersonalMessage[1]);
                 }
 
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Update personal message completed.");
@@ -2277,8 +2277,8 @@ namespace MSNPSharpClient
                 Messenger.ContactList.Owner.PersonalMessage = new PersonalMessage(
                     Messenger.ContactList.Owner.PersonalMessage.Message,
                     MediaType.Music,
-                    new string[] { musicForm.Artist, musicForm.Song, musicForm.Album, "" },
-                    NSMessageHandler.MachineGuid);
+                    new string[] { musicForm.Artist, musicForm.Song, musicForm.Album, "" }
+                );
             }
         }
 

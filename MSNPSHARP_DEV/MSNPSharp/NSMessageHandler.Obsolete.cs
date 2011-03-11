@@ -635,52 +635,9 @@ namespace MSNPSharp
             }
         }
 
-        /// <summary>
-        /// Called when an PRP command has been received.
-        /// </summary>
-        /// <remarks>
-        /// Informs about the phone numbers of the contact list owner.
-        /// <code>PRP [TransactionID] [ListVersion] PhoneType Number</code>
-        /// </remarks>
-        /// <param name="message"></param>
         [Obsolete(@"Obsoleted in MSNP21", true)]
         protected virtual void OnPRPReceived(NSMessage message)
         {
-            string number = String.Empty;
-            string type = String.Empty;
-            if (message.CommandValues.Count >= 3)
-            {
-                number = MSNHttpUtility.NSDecode((string)message.CommandValues[2]);
-                type = message.CommandValues[1].ToString();
-            }
-            else
-            {
-                number = MSNHttpUtility.NSDecode((string)message.CommandValues[1]);
-                type = message.CommandValues[0].ToString();
-            }
-
-            switch (type)
-            {
-                case "PHH":
-                    ContactList.Owner.PhoneNumbers[ContactPhoneTypes.ContactPhonePersonal] = number;
-                    break;
-                case "PHW":
-                    ContactList.Owner.PhoneNumbers[ContactPhoneTypes.ContactPhoneBusiness] = number;
-                    break;
-                case "PHM":
-                    ContactList.Owner.PhoneNumbers[ContactPhoneTypes.ContactPhoneMobile] = number;
-                    break;
-                case "MBE":
-                    ContactList.Owner.SetMobileDevice((number == "Y") ? true : false);
-                    break;
-                case "MOB":
-                    ContactList.Owner.SetMobileAccess((number == "Y") ? true : false);
-                    break;
-                case "MFN":
-                    ContactList.Owner.SetName(MSNHttpUtility.NSDecode((string)message.CommandValues[1]));
-                    break;
-            }
         }
-
     }
 };

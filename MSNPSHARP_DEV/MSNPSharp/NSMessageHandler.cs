@@ -455,63 +455,6 @@ namespace MSNPSharp
 
         #region Public Methods
 
-        #region Mobile
-
-        /// <summary>
-        /// Sets the telephonenumber for the contact list owner's homephone.
-        /// </summary>
-        internal void SetPhoneNumberHome(string number)
-        {
-            if (ContactList.Owner == null)
-                throw new MSNPSharpException("Not a valid owner");
-
-            if (number.Length > 30)
-                throw new MSNPSharpException("Telephone number too long. Maximum length for a phone number is 30 digits.");
-
-            MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "PHH", HttpUtility.UrlEncode(number) }));
-        }
-
-        /// <summary>
-        /// Sets the telephonenumber for the contact list owner's workphone.
-        /// </summary>
-        internal void SetPhoneNumberWork(string number)
-        {
-            if (ContactList.Owner == null)
-                throw new MSNPSharpException("Not a valid owner");
-
-            if (number.Length > 30)
-                throw new MSNPSharpException("Telephone number too long. Maximum length for a phone number is 30 digits.");
-
-            MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "PHW", HttpUtility.UrlEncode(number) }));
-        }
-
-        /// <summary>
-        /// Sets the telephonenumber for the contact list owner's mobile phone.
-        /// </summary>
-        internal void SetPhoneNumberMobile(string number)
-        {
-            if (ContactList.Owner == null)
-                throw new MSNPSharpException("Not a valid owner");
-
-            if (number.Length > 30)
-                throw new MSNPSharpException("Telephone number too long. Maximum length for a phone number is 30 digits.");
-
-            MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "PHM", HttpUtility.UrlEncode(number) }));
-        }
-
-        /// <summary>
-        /// Sets whether the contact list owner allows remote contacts to send messages to it's mobile device.
-        /// </summary>
-        internal void SetMobileAccess(bool enabled)
-        {
-            if (ContactList.Owner == null)
-                throw new MSNPSharpException("Not a valid owner");
-
-            MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MOB", enabled ? "Y" : "N" }));
-        }
-
-        #endregion
-
         #region SendPing
 
         /// <summary>
@@ -554,28 +497,36 @@ namespace MSNPSharp
             if (ContactList.Owner == null)
                 throw new MSNPSharpException("Not a valid owner");
 
-            if (ContactList.Owner.PassportVerified)
-            {
-                MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", MSNHttpUtility.NSEncode(newName) }));
-            }
+            PersonalMessage pm = (ContactList.Owner.PersonalMessage == null)
+                ? new PersonalMessage(String.IsNullOrEmpty(ContactService.Deltas.Profile.DisplayName) ? ContactList.Owner.NickName : ContactService.Deltas.Profile.DisplayName)
+                : ContactList.Owner.PersonalMessage;
 
+            pm.FriendlyName = newName;
+
+            SetPresenceStatus(
+                        ContactList.Owner.Status,
+                        ContactList.Owner.LocalEndPointIMCapabilities, ContactList.Owner.LocalEndPointIMCapabilitiesEx,
+                        ContactList.Owner.LocalEndPointPECapabilities, ContactList.Owner.LocalEndPointPECapabilitiesEx,
+                        ContactList.Owner.EpName, pm);
 
             StorageService.UpdateProfile(newName, ContactList.Owner.PersonalMessage != null && ContactList.Owner.PersonalMessage.Message != null ? ContactList.Owner.PersonalMessage.Message : String.Empty);
-
         }
 
         /// <summary>
         /// Sets personal message.
         /// </summary>
-        /// <param name="pmsg"></param>
-        internal void SetPersonalMessage(PersonalMessage pmsg)
+        internal void SetPersonalMessage(PersonalMessage newPSM)
         {
             if (ContactList.Owner == null)
                 throw new MSNPSharpException("Not a valid owner");
 
-            MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", pmsg.Payload));
+            SetPresenceStatus(
+                        ContactList.Owner.Status,
+                        ContactList.Owner.LocalEndPointIMCapabilities, ContactList.Owner.LocalEndPointIMCapabilitiesEx,
+                        ContactList.Owner.LocalEndPointPECapabilities, ContactList.Owner.LocalEndPointPECapabilitiesEx,
+                        ContactList.Owner.EpName, newPSM);
 
-            StorageService.UpdateProfile(ContactList.Owner.Name, pmsg.Message);
+            StorageService.UpdateProfile(ContactList.Owner.Name, newPSM.Message);
         }
 
         /// <summary>
@@ -586,32 +537,39 @@ namespace MSNPSharp
             if (ContactList.Owner == null)
                 throw new MSNPSharpException("Not a valid owner");
 
-            string pload = String.Format("<Data><Scene>{0}</Scene><ColorScheme>{1}</ColorScheme></Data>",
-                scimg.IsDefaultImage ? string.Empty : MSNHttpUtility.XmlEncode(scimg.ContextPlain), ColorTranslator.ToOle(sccolor).ToString());
+            PersonalMessage pm = (ContactList.Owner.PersonalMessage == null)
+                ? new PersonalMessage(String.IsNullOrEmpty(ContactService.Deltas.Profile.DisplayName) ? ContactList.Owner.NickName : ContactService.Deltas.Profile.DisplayName)
+                : ContactList.Owner.PersonalMessage;
 
-            MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", pload));
+            pm.ColorScheme = sccolor;
+            pm.Scene = scimg.IsDefaultImage ? string.Empty : MSNHttpUtility.XmlEncode(scimg.ContextPlain);
+
+            SetPresenceStatus(ContactList.Owner.Status,
+                ContactList.Owner.LocalEndPointIMCapabilities, ContactList.Owner.LocalEndPointIMCapabilitiesEx,
+                ContactList.Owner.LocalEndPointPECapabilities, ContactList.Owner.LocalEndPointPECapabilitiesEx,
+                ContactList.Owner.EpName, pm);
         }
-
 
         #endregion
 
-        #region SetPrivacyMode & SetNotifyPrivacyMode & SetPresenceStatus
+        #region SetPresenceStatus
 
         /// <summary>
         /// Set the status of the contact list owner (the client).
         /// </summary>
         /// <remarks>You can only set the status _after_ SignedIn event. Otherwise you won't receive online notifications from other clients or the connection is closed by the server.</remarks>
         internal void SetPresenceStatus(
-            PresenceStatus status,
-            ClientCapabilities localimcaps, ClientCapabilitiesEx localimcapsex,
-            ClientCapabilities localpecaps, ClientCapabilitiesEx localpecapsex,
-            string epname
+            PresenceStatus newStatus,
+            ClientCapabilities newLocalIMCaps, ClientCapabilitiesEx newLocalIMCapsex,
+            ClientCapabilities newLocalPECaps, ClientCapabilitiesEx newLocalPECapsex,
+            string newEPName,
+            PersonalMessage newPM
             )
         {
             if (IsSignedIn == false)
                 throw new MSNPSharpException("Can't set status. You must wait for the SignedIn event before you can set an initial status.");
 
-            if (status == PresenceStatus.Offline)
+            if (newStatus == PresenceStatus.Offline)
             {
                 messageProcessor.Disconnect();
                 return;
@@ -619,42 +577,58 @@ namespace MSNPSharp
 
             string context = "0";
             bool SETALL = (ContactList.Owner.Status == PresenceStatus.Offline);
+            PersonalMessage psm = (newPM == null)
+                ? new PersonalMessage(String.IsNullOrEmpty(ContactService.Deltas.Profile.DisplayName) ? ContactList.Owner.NickName : ContactService.Deltas.Profile.DisplayName)
+                : newPM;
 
             if (ContactList.Owner.DisplayImage != null && ContactList.Owner.DisplayImage.Image != null)
                 context = ContactList.Owner.DisplayImage.Context;
 
             if (SETALL ||
-                status != ContactList.Owner.Status ||
-                localimcaps != ContactList.Owner.LocalEndPointIMCapabilities ||
-                localimcapsex != ContactList.Owner.LocalEndPointIMCapabilitiesEx ||
-                localpecaps != ContactList.Owner.LocalEndPointPECapabilities ||
-                localpecapsex != ContactList.Owner.LocalEndPointPECapabilitiesEx ||
-                epname != ContactList.Owner.EpName)
+                newStatus != ContactList.Owner.Status ||
+                newLocalIMCaps != ContactList.Owner.LocalEndPointIMCapabilities ||
+                newLocalIMCapsex != ContactList.Owner.LocalEndPointIMCapabilitiesEx ||
+                newLocalPECaps != ContactList.Owner.LocalEndPointPECapabilities ||
+                newLocalPECapsex != ContactList.Owner.LocalEndPointPECapabilitiesEx ||
+                newEPName != ContactList.Owner.EpName ||
+                psm.Payload != ContactList.Owner.PersonalMessage.Payload)
             {
                 XmlDocument xmlDoc = new XmlDocument();
                 XmlElement userElement = xmlDoc.CreateElement("user");
 
                 // s.IM.Status
-                if (SETALL || status != ContactList.Owner.Status)
+                if (SETALL || newStatus != ContactList.Owner.Status ||
+                    psm.Payload != ContactList.Owner.PersonalMessage.Payload)
                 {
                     XmlElement service = xmlDoc.CreateElement("s");
                     service.SetAttribute("n", ServiceShortNames.IM.ToString());
-                    service.InnerXml = "<Status>" + ParseStatus(status) + "</Status>" +
-                        "<CurrentMedia></CurrentMedia>";
+                    service.InnerXml = 
+                        "<Status>" + ParseStatus(newStatus) + "</Status>" +
+                        "<CurrentMedia>" + MSNHttpUtility.XmlEncode(psm.CurrentMedia) + "</CurrentMedia>";
                     userElement.AppendChild(service);
 
-                    ContactList.Owner.SetStatus(status);
+                    ContactList.Owner.SetStatus(newStatus);
                 }
 
                 // s.PE (UserTileLocation, FriendlyName, PSM, Scene, ColorScheme)
+                if (SETALL ||
+                    psm.Payload != ContactList.Owner.PersonalMessage.Payload)
+                {
+                    XmlElement service = xmlDoc.CreateElement("s");
+                    service.SetAttribute("n", ServiceShortNames.PE.ToString());
+                    service.InnerXml = psm.Payload;
+                    userElement.AppendChild(service);
+
+                    ContactList.Owner.SetPersonalMessage(psm);
+                }
 
                 // sep.IM.Capabilities
                 if (SETALL ||
-                    localimcaps != ContactList.Owner.LocalEndPointIMCapabilities ||
-                    localimcapsex != ContactList.Owner.LocalEndPointIMCapabilitiesEx)
+                    newLocalIMCaps != ContactList.Owner.LocalEndPointIMCapabilities ||
+                    newLocalIMCapsex != ContactList.Owner.LocalEndPointIMCapabilitiesEx)
                 {
-                    ClientCapabilities localIMCaps = SETALL ? ClientCapabilities.DefaultIM : localimcaps;
-                    ClientCapabilitiesEx localIMCapsEx = SETALL ? ClientCapabilitiesEx.DefaultIM : localimcapsex;
+                    ClientCapabilities localIMCaps = SETALL ? ClientCapabilities.DefaultIM : newLocalIMCaps;
+                    ClientCapabilitiesEx localIMCapsEx = SETALL ? ClientCapabilitiesEx.DefaultIM : newLocalIMCapsex;
                     if (BotMode)
                     {
                         localIMCaps |= ClientCapabilities.IsBot;
@@ -673,11 +647,11 @@ namespace MSNPSharp
 
                 // sep.PE.Capabilities
                 if (SETALL ||
-                    localpecaps != ContactList.Owner.LocalEndPointPECapabilities ||
-                    localpecapsex != ContactList.Owner.LocalEndPointPECapabilitiesEx)
+                    newLocalPECaps != ContactList.Owner.LocalEndPointPECapabilities ||
+                    newLocalPECapsex != ContactList.Owner.LocalEndPointPECapabilitiesEx)
                 {
-                    ClientCapabilities localPECaps = SETALL ? ClientCapabilities.DefaultPE : localpecaps;
-                    ClientCapabilitiesEx localPECapsEx = SETALL ? ClientCapabilitiesEx.DefaultPE : localpecapsex;
+                    ClientCapabilities localPECaps = SETALL ? ClientCapabilities.DefaultPE : newLocalPECaps;
+                    ClientCapabilitiesEx localPECapsEx = SETALL ? ClientCapabilitiesEx.DefaultPE : newLocalPECapsex;
 
                     XmlElement sep = xmlDoc.CreateElement("sep");
                     sep.SetAttribute("n", ServiceShortNames.PE.ToString());
@@ -698,7 +672,7 @@ namespace MSNPSharp
 
                 // sep.PD.EpName
                 if (SETALL ||
-                    epname != ContactList.Owner.EpName)
+                    newEPName != ContactList.Owner.EpName)
                 {
                     XmlElement sep = xmlDoc.CreateElement("sep");
                     sep.SetAttribute("n", ServiceShortNames.PD.ToString());
@@ -709,10 +683,10 @@ namespace MSNPSharp
                     EpName.InnerText = MSNHttpUtility.XmlEncode(ContactList.Owner.EpName);
                     sep.AppendChild(EpName);
                     XmlElement Idle = xmlDoc.CreateElement("Idle");
-                    Idle.InnerText = ((status == PresenceStatus.Idle) ? "true" : "false");
+                    Idle.InnerText = ((newStatus == PresenceStatus.Idle) ? "true" : "false");
                     sep.AppendChild(Idle);
                     XmlElement State = xmlDoc.CreateElement("State");
-                    State.InnerText = ParseStatus(status);
+                    State.InnerText = ParseStatus(newStatus);
                     sep.AppendChild(State);
                     userElement.AppendChild(sep);
                 }

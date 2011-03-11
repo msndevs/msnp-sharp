@@ -450,7 +450,7 @@ namespace MSNPSharp
 
             // Set display name, personal status and photo
             string mydispName = String.IsNullOrEmpty(Deltas.Profile.DisplayName) ? NSMessageHandler.ContactList.Owner.NickName : Deltas.Profile.DisplayName;
-            PersonalMessage pm = new PersonalMessage(Deltas.Profile.PersonalMessage, MediaType.None, null, NSMessageHandler.MachineGuid);
+            PersonalMessage pm = new PersonalMessage(Deltas.Profile.PersonalMessage);
 
             NSMessageHandler.ContactList.Owner.SetName(mydispName);
             NSMessageHandler.ContactList.Owner.SetPersonalMessage(pm);
