@@ -35,44 +35,52 @@ using System.IO;
 using System.Web;
 using System.Xml;
 using System.Text;
+using System.Drawing;
 using System.Text.RegularExpressions;
 
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
 
-    [Serializable()]
+    [Serializable]
     public class PersonalMessage
     {
-        private string personalMessage;
-        private Guid machineGuid;
-
+        private string userTileLocation = string.Empty;
+        private string friendlyName = string.Empty;
+        private string rum = string.Empty;
+        private string personalMessage = string.Empty;
+        private string ddp = string.Empty;
+        private string scene = string.Empty;
+        private Color colorScheme = Color.Empty;
         private string signatureSound;
 
+        private MediaType mediaType = MediaType.None;
+        private string currentMedia = string.Empty;
         private string appName;
-        private string format;
-        private MediaType mediaType;
+        private string format;        
+        private string[] content;
 
         [NonSerialized]
         private NSMessage nsMessage;
 
-        private string[] content;
+        public PersonalMessage(string personalmsg)
+        {
+            Message = personalmsg;
+        }
 
-        public PersonalMessage(string personalmsg, MediaType mediatype, string[] currentmediacontent, Guid machineguid)
+        public PersonalMessage(string personalmsg, MediaType mediatype, string[] currentmediacontent)
         {
             Message = personalmsg;
             mediaType = mediatype;
             content = currentmediacontent;
-            machineGuid = machineguid;
             Format = "{0}";
         }
 
-        public PersonalMessage(string personalmsg, MediaType mediatype, string[] currentmediacontent, string contentformat, Guid machineguid)
+        public PersonalMessage(string personalmsg, MediaType mediatype, string[] currentmediacontent, string contentformat)
         {
             Message = personalmsg;
             mediaType = mediatype;
             content = currentmediacontent;
-            machineGuid = machineguid;
             Format = contentformat;
         }
 
@@ -80,7 +88,6 @@ namespace MSNPSharp
         {
             nsMessage = message;
             mediaType = MediaType.None;
-            machineGuid = Guid.Empty;
 
             try
             {
@@ -100,36 +107,27 @@ namespace MSNPSharp
             }
         }
 
-        public string Payload
+        public string UserTileLocation
         {
             get
             {
-                string currentmedia = String.Empty;
+                return userTileLocation;
+            }
+            set
+            {
+                userTileLocation = value;
+            }
+        }
 
-                if (mediaType != MediaType.None)
-                {
-                    foreach (string media in content)
-                    {
-                        currentmedia = currentmedia + media + @"\0";
-                    }
-
-                    if (Format == null || Format == "" || Format == String.Empty)
-                        Format = "{0}";
-
-                    currentmedia = @"\0" + mediaType.ToString() + @"\01\0" + Format + @"\0" + currentmedia;
-                }
-
-                string pload = String.Format(
-                    "<Data><PSM>{0}</PSM><CurrentMedia>{1}</CurrentMedia>" +
-                    "<MachineGuid>{2}</MachineGuid>" +
-                    "<SignatureSound>{3}</SignatureSound>" +
-                    "</Data>",
-                    MSNHttpUtility.XmlEncode(personalMessage),
-                    MSNHttpUtility.XmlEncode(currentmedia),
-                    MSNHttpUtility.XmlEncode(machineGuid.ToString("B")),
-                    MSNHttpUtility.XmlEncode(signatureSound));
-
-                return pload;
+        public string FriendlyName
+        {
+            get
+            {
+                return friendlyName;
+            }
+            set
+            {
+                friendlyName = value;
             }
         }
 
@@ -145,11 +143,52 @@ namespace MSNPSharp
             }
         }
 
-        public Guid MachineGuid
+        public string Rum
         {
             get
             {
-                return machineGuid;
+                return rum;
+            }
+            set
+            {
+                rum = value;
+            }
+        }
+
+        public string Ddp
+        {
+            get
+            {
+                return ddp;
+            }
+            set
+            {
+                ddp = value;
+            }
+        }
+
+        public string Scene
+        {
+            get
+            {
+                return scene;
+            }
+            set
+            {
+                scene = value;
+            }
+        }
+
+
+        public Color ColorScheme
+        {
+            get
+            {
+                return colorScheme;
+            }
+            set
+            {
+                colorScheme = value;
             }
         }
 
@@ -201,6 +240,115 @@ namespace MSNPSharp
                 content = value;
             }
         }
+        public string CurrentMedia
+        {
+            get
+            {
+                string currentmedia = String.Empty;
+
+                if (mediaType != MediaType.None)
+                {
+                    foreach (string media in content)
+                    {
+                        currentmedia = currentmedia + media + @"\0";
+                    }
+
+                    if (String.IsNullOrEmpty(Format))
+                        Format = "{0}";
+
+                    currentmedia = @"\0" + mediaType.ToString() + @"\01\0" + Format + @"\0" + currentmedia;
+                }
+
+                return currentmedia;
+            }
+        }
+
+        public string Payload
+        {
+            get
+            {
+                StringBuilder pload = new StringBuilder();
+
+                if (!String.IsNullOrEmpty(userTileLocation))
+                {
+                    pload.Append("<UserTileLocation>");
+                    pload.Append(MSNHttpUtility.XmlEncode(userTileLocation));
+                    pload.Append("</UserTileLocation>");
+                }
+
+                if (!String.IsNullOrEmpty(friendlyName))
+                {
+                    pload.Append("<FriendlyName>");
+                    pload.Append(MSNHttpUtility.XmlEncode(friendlyName));
+                    pload.Append("</FriendlyName>");
+                }
+
+                if (!String.IsNullOrEmpty(rum))
+                {
+                    pload.Append("<RUM>");
+                    pload.Append(MSNHttpUtility.XmlEncode(rum));
+                    pload.Append("</RUM>");
+                }
+
+                if (!String.IsNullOrEmpty(personalMessage))
+                {
+                    pload.Append("<PSM>");
+                    pload.Append(MSNHttpUtility.XmlEncode(personalMessage));
+                    pload.Append("</PSM>");
+                }
+
+                if (!String.IsNullOrEmpty(ddp))
+                {
+                    pload.Append("<DDP>");
+                    pload.Append(MSNHttpUtility.XmlEncode(ddp));
+                    pload.Append("</DDP>");
+                }
+
+                pload.Append("<ColorScheme>");
+                pload.Append(MSNHttpUtility.XmlEncode(colorScheme.ToArgb().ToString()));
+                pload.Append("</ColorScheme>");
+
+                if (!String.IsNullOrEmpty(scene))
+                {
+                    pload.Append("<Scene>");
+                    pload.Append(MSNHttpUtility.XmlEncode(scene));
+                    pload.Append("</Scene>");
+                }
+
+                if (!String.IsNullOrEmpty(signatureSound))
+                {
+                    pload.Append("<SignatureSound>");
+                    pload.Append(MSNHttpUtility.XmlEncode(signatureSound));
+                    pload.Append("</SignatureSound>");
+                }
+
+                string currentmedia = String.Empty;
+
+                if (mediaType != MediaType.None)
+                {
+                    foreach (string media in content)
+                    {
+                        currentmedia = currentmedia + media + @"\0";
+                    }
+
+                    if (String.IsNullOrEmpty(Format))
+                        Format = "{0}";
+
+                    currentmedia = @"\0" + mediaType.ToString() + @"\01\0" + Format + @"\0" + currentmedia;
+                }
+
+                if (!String.IsNullOrEmpty(currentmedia))
+                {
+                    pload.Append("<CurrentMedia>");
+                    pload.Append(MSNHttpUtility.XmlEncode(currentmedia));
+                    pload.Append("</CurrentMedia>");
+                }
+
+                return pload.ToString();
+            }
+        }
+
+        
 
         public string ToDebugString()
         {
@@ -217,26 +365,62 @@ namespace MSNPSharp
             if (nsMessage.InnerBody == null)
                 return;
 
+            XmlNode node = null;
             XmlDocument xmlDoc = new XmlDocument();
             MemoryStream ms = new MemoryStream(nsMessage.InnerBody);
             TextReader reader = new StreamReader(ms, new System.Text.UTF8Encoding(false));
-
             xmlDoc.Load(reader);
 
-            XmlNode node = xmlDoc.SelectSingleNode("//Data/PSM");
+            node = xmlDoc.SelectSingleNode("//UserTileLocation");
+            if (node != null)
+            {
+                userTileLocation = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
+            }
+
+            node = xmlDoc.SelectSingleNode("//FriendlyName");
+            if (node != null)
+            {
+                friendlyName = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
+            }
+
+            node = xmlDoc.SelectSingleNode("//RUM");
+            if (node != null)
+            {
+                rum = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
+            }
+
+            node = xmlDoc.SelectSingleNode("//PSM");
             if (node != null)
             {
                 personalMessage = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
             }
 
-            node = xmlDoc.SelectSingleNode("//Data/CurrentMedia");
+            node = xmlDoc.SelectSingleNode("//DDP");
             if (node != null)
             {
-                string cmedia = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
+                ddp = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
+            }
 
-                if (cmedia.Length > 0)
+            node = xmlDoc.SelectSingleNode("//ColorScheme");
+            if (node != null)
+            {
+                colorScheme = ColorTranslator.FromOle(int.Parse(node.InnerText));
+            }
+
+            node = xmlDoc.SelectSingleNode("//Scene");
+            if (node != null)
+            {
+                scene = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
+            }
+
+            node = xmlDoc.SelectSingleNode("//CurrentMedia");
+            if (node != null)
+            {
+                currentMedia = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
+
+                if (currentMedia.Length > 0)
                 {
-                    string[] vals = cmedia.Split(new string[] { @"\0" }, StringSplitOptions.None);
+                    string[] vals = currentMedia.Split(new string[] { @"\0" }, StringSplitOptions.None);
 
                     if (vals[0] != "")
                         appName = vals[0];
@@ -278,14 +462,9 @@ namespace MSNPSharp
                 }
             }
 
-            node = xmlDoc.SelectSingleNode("//Data/MachineGuid");
-            if (node != null && node.InnerText != String.Empty)
-                machineGuid = new Guid(node.InnerText);
-
-            node = xmlDoc.SelectSingleNode("//Data/SignatureSound");
+            node = xmlDoc.SelectSingleNode("//SignatureSound");
             if (node != null)
                 signatureSound = node.InnerText;
-
         }
     }
 };

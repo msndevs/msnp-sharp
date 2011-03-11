@@ -149,7 +149,7 @@ namespace MSNPSharp
                         Status,
                         LocalEndPointIMCapabilities, LocalEndPointIMCapabilitiesEx,
                         LocalEndPointPECapabilities, LocalEndPointPECapabilitiesEx,
-                        value);
+                        value, PersonalMessage);
                 }
 
                 epName = value;
@@ -176,7 +176,7 @@ namespace MSNPSharp
                         Status,
                         value, LocalEndPointIMCapabilitiesEx,
                         LocalEndPointPECapabilities, LocalEndPointPECapabilitiesEx,
-                        EpName);
+                        EpName, PersonalMessage);
 
                     EndPointData[NSMessageHandler.MachineGuid].IMCapabilities = value;
                 }
@@ -204,7 +204,7 @@ namespace MSNPSharp
                         Status,
                         LocalEndPointIMCapabilities, value,
                         LocalEndPointPECapabilities, LocalEndPointPECapabilitiesEx,
-                        EpName);
+                        EpName, PersonalMessage);
 
                     EndPointData[NSMessageHandler.MachineGuid].IMCapabilitiesEx = value;
                 }
@@ -231,7 +231,7 @@ namespace MSNPSharp
                         Status,
                         LocalEndPointIMCapabilities, LocalEndPointIMCapabilitiesEx,
                         value, LocalEndPointPECapabilitiesEx,
-                        EpName);
+                        EpName, PersonalMessage);
 
                     EndPointData[NSMessageHandler.MachineGuid].PECapabilities = value;
                 }
@@ -259,7 +259,7 @@ namespace MSNPSharp
                         Status,
                         LocalEndPointIMCapabilities, LocalEndPointIMCapabilitiesEx,
                         LocalEndPointPECapabilities, value,
-                        EpName);
+                        EpName, PersonalMessage);
 
                     EndPointData[NSMessageHandler.MachineGuid].PECapabilitiesEx = value;
                 }
@@ -466,10 +466,7 @@ namespace MSNPSharp
             }
             set
             {
-                if (NSMessageHandler != null)
-                {
-                    NSMessageHandler.SetPhoneNumberMobile(value);
-                }
+                PhoneNumbers[ContactPhoneTypes.ContactPhoneMobile] = value;
             }
         }
 
@@ -483,7 +480,7 @@ namespace MSNPSharp
             {
                 if (NSMessageHandler != null)
                 {
-                    NSMessageHandler.SetPhoneNumberWork(value);
+                    ContactList.Owner.PhoneNumbers[ContactPhoneTypes.ContactPhoneBusiness] = value;
                 }
             }
         }
@@ -498,7 +495,7 @@ namespace MSNPSharp
             {
                 if (NSMessageHandler != null)
                 {
-                    NSMessageHandler.SetPhoneNumberHome(value);
+                    ContactList.Owner.PhoneNumbers[ContactPhoneTypes.ContactPhonePersonal] = value;
                 }
             }
         }
@@ -509,14 +506,6 @@ namespace MSNPSharp
             {
                 return base.MobileDevice;
             }
-            // it seems the server does not like it when we want to set mobile device ourselves!
-            /*set 
-            {
-                if(nsMessageHandler != null)
-                {
-                    nsMessageHandler.SetMobileDevice(value);
-                }
-            }*/
         }
 
         public new bool MobileAccess
@@ -524,13 +513,6 @@ namespace MSNPSharp
             get
             {
                 return base.MobileAccess;
-            }
-            set
-            {
-                if (NSMessageHandler != null)
-                {
-                    NSMessageHandler.SetMobileAccess(value);
-                }
             }
         }
 
@@ -576,7 +558,7 @@ namespace MSNPSharp
                         value,
                         LocalEndPointIMCapabilities, LocalEndPointIMCapabilitiesEx,
                         LocalEndPointPECapabilities, LocalEndPointPECapabilitiesEx,
-                        EpName);
+                        EpName, PersonalMessage);
                 }
 
                 if (PersonalMessage != null)
