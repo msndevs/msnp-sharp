@@ -308,7 +308,7 @@ namespace MSNPSharp
                     if (IsSignedIn && account == ContactList.Owner.Account.ToLowerInvariant() &&
                         accountAddressType == IMAddressInfoType.WindowsLive)
                     {
-                        SetPresenceStatus(newstatus);
+                        //SetPresenceStatus(newstatus);
                         return;
                     }
 

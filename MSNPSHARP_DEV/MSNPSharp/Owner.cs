@@ -31,6 +31,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
+using System.IO;
 using System.Net;
 using System.Drawing;
 using System.Reflection;
@@ -42,8 +43,6 @@ namespace MSNPSharp
 {
     using MSNPSharp.IO;
     using MSNPSharp.Core;
-    using System.IO;
-
 
     [Serializable]
     public class Owner : Contact
@@ -144,12 +143,16 @@ namespace MSNPSharp
             }
             set
             {
-                epName = value;
-
                 if (NSMessageHandler != null && NSMessageHandler.IsSignedIn && Status != PresenceStatus.Offline)
                 {
-                    NSMessageHandler.SetPresenceStatusUUX(Status);
+                    NSMessageHandler.SetPresenceStatus(
+                        Status,
+                        LocalEndPointIMCapabilities, LocalEndPointIMCapabilitiesEx,
+                        LocalEndPointPECapabilities, LocalEndPointPECapabilitiesEx,
+                        value);
                 }
+
+                epName = value;
             }
         }
 
@@ -169,8 +172,13 @@ namespace MSNPSharp
             {
                 if (value != LocalEndPointIMCapabilities)
                 {
+                    NSMessageHandler.SetPresenceStatus(
+                        Status,
+                        value, LocalEndPointIMCapabilitiesEx,
+                        LocalEndPointPECapabilities, LocalEndPointPECapabilitiesEx,
+                        EpName);
+
                     EndPointData[NSMessageHandler.MachineGuid].IMCapabilities = value;
-                    BroadcastDisplayImage();
                 }
             }
         }
@@ -192,8 +200,13 @@ namespace MSNPSharp
             {
                 if (value != LocalEndPointIMCapabilitiesEx)
                 {
+                    NSMessageHandler.SetPresenceStatus(
+                        Status,
+                        LocalEndPointIMCapabilities, value,
+                        LocalEndPointPECapabilities, LocalEndPointPECapabilitiesEx,
+                        EpName);
+
                     EndPointData[NSMessageHandler.MachineGuid].IMCapabilitiesEx = value;
-                    BroadcastDisplayImage();
                 }
             }
         }
@@ -214,8 +227,13 @@ namespace MSNPSharp
             {
                 if (value != LocalEndPointPECapabilities)
                 {
+                    NSMessageHandler.SetPresenceStatus(
+                        Status,
+                        LocalEndPointIMCapabilities, LocalEndPointIMCapabilitiesEx,
+                        value, LocalEndPointPECapabilitiesEx,
+                        EpName);
+
                     EndPointData[NSMessageHandler.MachineGuid].PECapabilities = value;
-                    BroadcastDisplayImage();
                 }
             }
         }
@@ -237,12 +255,16 @@ namespace MSNPSharp
             {
                 if (value != LocalEndPointPECapabilitiesEx)
                 {
+                    NSMessageHandler.SetPresenceStatus(
+                        Status,
+                        LocalEndPointIMCapabilities, LocalEndPointIMCapabilitiesEx,
+                        LocalEndPointPECapabilities, value,
+                        EpName);
+
                     EndPointData[NSMessageHandler.MachineGuid].PECapabilitiesEx = value;
-                    BroadcastDisplayImage();
                 }
             }
         }
-
 
         /// <summary>
         /// Sign the owner out from every place.
@@ -550,7 +572,11 @@ namespace MSNPSharp
             {
                 if (NSMessageHandler != null)
                 {
-                    NSMessageHandler.SetPresenceStatus(value);
+                    NSMessageHandler.SetPresenceStatus(
+                        value,
+                        LocalEndPointIMCapabilities, LocalEndPointIMCapabilitiesEx,
+                        LocalEndPointPECapabilities, LocalEndPointPECapabilitiesEx,
+                        EpName);
                 }
 
                 if (PersonalMessage != null)
@@ -575,6 +601,7 @@ namespace MSNPSharp
             {
                 if (Name == value)
                     return;
+
                 if (NSMessageHandler != null)
                 {
                     NSMessageHandler.SetScreenName(value);

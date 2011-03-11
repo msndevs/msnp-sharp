@@ -592,17 +592,6 @@ namespace MSNPSharp
             MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", pload));
         }
 
-        internal void SetEndPointCapabilities()
-        {
-            if (ContactList.Owner == null)
-                throw new MSNPSharpException("Not a valid owner");
-
-            string xmlstr = "<EndpointData><Capabilities>" +
-                ((long)ContactList.Owner.LocalEndPointIMCapabilities).ToString() + ":" + ((long)ContactList.Owner.LocalEndPointIMCapabilitiesEx).ToString()
-            + "</Capabilities></EndpointData>";
-
-            MessageProcessor.SendMessage(new NSPayLoadMessage("UUX", xmlstr));
-        }
 
         #endregion
 
@@ -612,49 +601,83 @@ namespace MSNPSharp
         /// Set the status of the contact list owner (the client).
         /// </summary>
         /// <remarks>You can only set the status _after_ SignedIn event. Otherwise you won't receive online notifications from other clients or the connection is closed by the server.</remarks>
-        /// <param name="status"></param>
-        internal void SetPresenceStatus(PresenceStatus status)
+        internal void SetPresenceStatus(
+            PresenceStatus status,
+            ClientCapabilities localimcaps, ClientCapabilitiesEx localimcapsex,
+            ClientCapabilities localpecaps, ClientCapabilitiesEx localpecapsex,
+            string epname
+            )
         {
-            // check whether we are allowed to send a CHG command
             if (IsSignedIn == false)
                 throw new MSNPSharpException("Can't set status. You must wait for the SignedIn event before you can set an initial status.");
-
-            string context = "0";
-            bool isSetDefault = false;
-
-            if (ContactList.Owner.DisplayImage != null && ContactList.Owner.DisplayImage.Image != null)
-                context = ContactList.Owner.DisplayImage.Context;
 
             if (status == PresenceStatus.Offline)
             {
                 messageProcessor.Disconnect();
+                return;
             }
-            else if (status != ContactList.Owner.Status)
+
+            string context = "0";
+            bool SETALL = (ContactList.Owner.Status == PresenceStatus.Offline);
+
+            if (ContactList.Owner.DisplayImage != null && ContactList.Owner.DisplayImage.Image != null)
+                context = ContactList.Owner.DisplayImage.Context;
+
+            if (SETALL ||
+                status != ContactList.Owner.Status ||
+                localimcaps != ContactList.Owner.LocalEndPointIMCapabilities ||
+                localimcapsex != ContactList.Owner.LocalEndPointIMCapabilitiesEx ||
+                localpecaps != ContactList.Owner.LocalEndPointPECapabilities ||
+                localpecapsex != ContactList.Owner.LocalEndPointPECapabilitiesEx ||
+                epname != ContactList.Owner.EpName)
             {
-                string capacities = String.Empty;
+                XmlDocument xmlDoc = new XmlDocument();
+                XmlElement userElement = xmlDoc.CreateElement("user");
 
-                if (ContactList.Owner.LocalEndPointIMCapabilities == ClientCapabilities.None)
+                // s.IM.Status
+                if (SETALL || status != ContactList.Owner.Status)
                 {
-                    isSetDefault = true;
+                    XmlElement service = xmlDoc.CreateElement("s");
+                    service.SetAttribute("n", ServiceShortNames.IM.ToString());
+                    service.InnerXml = "<Status>" + ParseStatus(status) + "</Status>" +
+                        "<CurrentMedia></CurrentMedia>";
+                    userElement.AppendChild(service);
 
-                    // P2P capabilities
-                    ClientCapabilitiesEx localPECapsEx = ClientCapabilitiesEx.DefaultPE;
-                    ClientCapabilities localPECaps = ClientCapabilities.DefaultPE;
+                    ContactList.Owner.SetStatus(status);
+                }
 
-                    // Instant messaging capabilities
-                    ClientCapabilitiesEx localIMCapsEx = ClientCapabilitiesEx.DefaultIM;
-                    ClientCapabilities localIMCaps = ClientCapabilities.DefaultIM;
+                // s.PE (UserTileLocation, FriendlyName, PSM, Scene, ColorScheme)
+
+                // sep.IM.Capabilities
+                if (SETALL ||
+                    localimcaps != ContactList.Owner.LocalEndPointIMCapabilities ||
+                    localimcapsex != ContactList.Owner.LocalEndPointIMCapabilitiesEx)
+                {
+                    ClientCapabilities localIMCaps = SETALL ? ClientCapabilities.DefaultIM : localimcaps;
+                    ClientCapabilitiesEx localIMCapsEx = SETALL ? ClientCapabilitiesEx.DefaultIM : localimcapsex;
                     if (BotMode)
                     {
                         localIMCaps |= ClientCapabilities.IsBot;
                     }
 
-                    XmlDocument xmlDoc = new XmlDocument();
-                    XmlElement userElement = xmlDoc.CreateElement("user");
-                    XmlElement service = xmlDoc.CreateElement("s");
-                    service.SetAttribute("n", ServiceShortNames.IM.ToString());
-                    service.InnerXml = "<Status>" + ParseStatus(status) + "</Status>";
-                    userElement.AppendChild(service);
+                    XmlElement sep = xmlDoc.CreateElement("sep");
+                    sep.SetAttribute("n", ServiceShortNames.IM.ToString());
+                    XmlElement Capabilities = xmlDoc.CreateElement("Capabilities");
+                    Capabilities.InnerText = ((long)localIMCaps).ToString() + ":" + ((long)localIMCapsEx).ToString();
+                    sep.AppendChild(Capabilities);
+                    userElement.AppendChild(sep);
+
+                    ContactList.Owner.EndPointData[NSMessageHandler.MachineGuid].IMCapabilities = localIMCaps;
+                    ContactList.Owner.EndPointData[NSMessageHandler.MachineGuid].IMCapabilitiesEx = localIMCapsEx;
+                }
+
+                // sep.PE.Capabilities
+                if (SETALL ||
+                    localpecaps != ContactList.Owner.LocalEndPointPECapabilities ||
+                    localpecapsex != ContactList.Owner.LocalEndPointPECapabilitiesEx)
+                {
+                    ClientCapabilities localPECaps = SETALL ? ClientCapabilities.DefaultPE : localpecaps;
+                    ClientCapabilitiesEx localPECapsEx = SETALL ? ClientCapabilitiesEx.DefaultPE : localpecapsex;
 
                     XmlElement sep = xmlDoc.CreateElement("sep");
                     sep.SetAttribute("n", ServiceShortNames.PE.ToString());
@@ -669,7 +692,15 @@ namespace MSNPSharp
                     sep.AppendChild(Capabilities);
                     userElement.AppendChild(sep);
 
-                    sep = xmlDoc.CreateElement("sep");
+                    ContactList.Owner.EndPointData[NSMessageHandler.MachineGuid].PECapabilities = localPECaps;
+                    ContactList.Owner.EndPointData[NSMessageHandler.MachineGuid].PECapabilitiesEx = localPECapsEx;
+                }
+
+                // sep.PD.EpName
+                if (SETALL ||
+                    epname != ContactList.Owner.EpName)
+                {
+                    XmlElement sep = xmlDoc.CreateElement("sep");
                     sep.SetAttribute("n", ServiceShortNames.PD.ToString());
                     XmlElement ClientType = xmlDoc.CreateElement("ClientType");
                     ClientType.InnerText = "1";
@@ -683,15 +714,11 @@ namespace MSNPSharp
                     XmlElement State = xmlDoc.CreateElement("State");
                     State.InnerText = ParseStatus(status);
                     sep.AppendChild(State);
-
-                    sep = xmlDoc.CreateElement("sep");
-                    sep.SetAttribute("n", ServiceShortNames.IM.ToString());
-                    Capabilities = xmlDoc.CreateElement("Capabilities");
-                    Capabilities.InnerText = ((long)localIMCaps).ToString() + ":" + ((long)localIMCapsEx).ToString();
-                    sep.AppendChild(Capabilities);
-
                     userElement.AppendChild(sep);
+                }
 
+                if (userElement.HasChildNodes)
+                {
                     string xml = userElement.OuterXml;
                     string me = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Account;
 
@@ -710,31 +737,30 @@ namespace MSNPSharp
                     NSMessage nsMessage = new NSMessage("PUT");
                     nsMessage.InnerMessage = mmMessage;
                     MessageProcessor.SendMessage(nsMessage);
-
-
-                    return;
-
-
-                    //don't set the same status or it will result in disconnection
-                    // ContactList.Owner.LocalEndPointClientCapabilities = ClientCapabilities.Default;
-                    // ContactList.Owner.LocalEndPointClientCapabilitiesEx = ClientCapabilitiesEx.Default;
-
-                    SetEndPointCapabilities();
-                    SetPresenceStatusUUX(status);
-
-                    SetPersonalMessage(ContactList.Owner.PersonalMessage);
-
-                    if (!contactList.Owner.SceneImage.IsDefaultImage)
-                        SetSceneData(contactList.Owner.SceneImage, contactList.Owner.ColorScheme);
-
-                    // Set screen name
-                    SetScreenName(ContactList.Owner.Name);
                 }
+
+
+
+                //don't set the same status or it will result in disconnection
+                // ContactList.Owner.LocalEndPointClientCapabilities = ClientCapabilities.Default;
+                // ContactList.Owner.LocalEndPointClientCapabilitiesEx = ClientCapabilitiesEx.Default;
+                /*
+                SetEndPointCapabilities();
+                SetPresenceStatusUUX(status);
+
+                SetPersonalMessage(ContactList.Owner.PersonalMessage);
+
+                if (!contactList.Owner.SceneImage.IsDefaultImage)
+                    SetSceneData(contactList.Owner.SceneImage, contactList.Owner.ColorScheme);
+
+                // Set screen name
+                SetScreenName(ContactList.Owner.Name);
+
 
                 ClientCapabilitiesEx capsext = ContactList.Owner.LocalEndPointIMCapabilitiesEx;
                 capacities = ((long)ContactList.Owner.LocalEndPointIMCapabilities).ToString() + ":" + ((long)capsext).ToString();
 
-                if (!isSetDefault)
+                if (!true)
                 {
                     //Well, only update the status after receiving the CHG command is right. However,
                     //we need to send UUX before CHG.
@@ -743,23 +769,10 @@ namespace MSNPSharp
                 }
 
                 MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), capacities, context }));
+                 * */
             }
         }
 
-        internal void SetPresenceStatusUUX(PresenceStatus status)
-        {
-            if (ContactList.Owner == null)
-                throw new MSNPSharpException("Not a valid owner");
-
-            MessageProcessor.SendMessage(new NSPayLoadMessage("UUX",
-                "<PrivateEndpointData>" +
-                "<EpName>" + MSNHttpUtility.XmlEncode(ContactList.Owner.EpName) + "</EpName>" +
-                "<Idle>" + ((status == PresenceStatus.Idle) ? "true" : "false") + "</Idle>" +
-                "<ClientType>1</ClientType>" +
-                "<State>" + ParseStatus(status) + "</State>" +
-                "</PrivateEndpointData>")
-            );
-        }
 
         #endregion
 
