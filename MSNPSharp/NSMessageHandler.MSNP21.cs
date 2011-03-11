@@ -864,7 +864,8 @@ namespace MSNPSharp
                                     return;
                                 }
 
-                                if (mmm.InnerBody == null || mmm.InnerBody.Length == 0)
+                                if (mmm.InnerBody == null || mmm.InnerBody.Length == 0 ||
+                                    "<circle></circle>" == Encoding.UTF8.GetString(mmm.InnerBody))
                                 {
                                     // No xml content and full notify... Circle goes online...
                                     if (mmm.ContentHeaders[MIMEHeaderStrings.NotifType].Value == "Full")
@@ -879,10 +880,10 @@ namespace MSNPSharp
                                         // The contact goes online
                                         OnContactOnline(new ContactStatusChangedEventArgs(circle, oldStatus, newStatus));
 
-                                        if (circle.AppearOnline && circle.OnForwardList &&
-                                            (ContactList.Owner.Status != PresenceStatus.Hidden && ContactList.Owner.Status != PresenceStatus.Offline))
+                                        if (circle.AppearOnline &&
+                                            (oldStatus == PresenceStatus.Offline || oldStatus == PresenceStatus.Hidden))
                                         {
-                                            //JoinMultiparty(circle);
+                                            JoinMultiparty(circle);
                                         }
                                     }
                                     return;
