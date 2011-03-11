@@ -979,6 +979,9 @@ namespace MSNPSharp
 
                 if (clitype == IMAddressInfoType.Telephone)
                 {
+                    if (!arr[1].StartsWith("+"))
+                        continue;
+
                     domain = String.Empty;
                     name = "tel:" + arr[1];
                 }
