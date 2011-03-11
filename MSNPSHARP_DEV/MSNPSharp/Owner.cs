@@ -334,7 +334,11 @@ namespace MSNPSharp
 
                     MSNObjectCatalog.GetInstance().Add(base.DisplayImage);
 
-                    BroadcastDisplayImage();
+                    NSMessageHandler.SetPresenceStatus(
+                        Status,
+                        LocalEndPointIMCapabilities, LocalEndPointIMCapabilitiesEx,
+                        LocalEndPointPECapabilities, LocalEndPointPECapabilitiesEx,
+                        EpName, PersonalMessage);
                 }
             }
         }
@@ -437,24 +441,6 @@ namespace MSNPSharp
 
                 if (value != null)
                     base.SetPersonalMessage(value);
-            }
-        }
-
-
-        internal void BroadcastDisplayImage()
-        {
-            if (NSMessageHandler != null && NSMessageHandler.IsSignedIn && Status != PresenceStatus.Offline && Status != PresenceStatus.Unknown)
-            {
-                // Resend the user status so other client can see the new msn object
-
-                string capacities = ((long)LocalEndPointIMCapabilities).ToString() + ":" + ((long)LocalEndPointIMCapabilitiesEx).ToString();
-
-                string context = "0";
-
-                if (DisplayImage != null && DisplayImage.Image != null)
-                    context = DisplayImage.Context;
-
-                NSMessageHandler.MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { NSMessageHandler.ParseStatus(Status), capacities, context }));
             }
         }
 

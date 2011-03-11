@@ -57,11 +57,8 @@ namespace MSNPSharp
         private MediaType mediaType = MediaType.None;
         private string currentMedia = string.Empty;
         private string appName;
-        private string format;        
+        private string format;
         private string[] content;
-
-        [NonSerialized]
-        private NSMessage nsMessage;
 
         public PersonalMessage(string personalmsg)
         {
@@ -84,26 +81,15 @@ namespace MSNPSharp
             Format = contentformat;
         }
 
-        internal PersonalMessage(NSMessage message)
+        internal PersonalMessage(XmlNodeList nodeList)
         {
-            nsMessage = message;
-            mediaType = MediaType.None;
-
             try
             {
-                Handle();
+                Handle(nodeList);
             }
             catch (Exception exception)
             {
                 System.Diagnostics.Trace.WriteLineIf(Settings.TraceSwitch.TraceError, exception.Message, GetType().Name);
-            }
-        }
-
-        public NSMessage NSMessage
-        {
-            get
-            {
-                return nsMessage;
             }
         }
 
@@ -304,9 +290,12 @@ namespace MSNPSharp
                     pload.Append("</DDP>");
                 }
 
-                pload.Append("<ColorScheme>");
-                pload.Append(MSNHttpUtility.XmlEncode(colorScheme.ToArgb().ToString()));
-                pload.Append("</ColorScheme>");
+                if (colorScheme != Color.Empty)
+                {
+                    pload.Append("<ColorScheme>");
+                    pload.Append(MSNHttpUtility.XmlEncode(colorScheme.ToArgb().ToString()));
+                    pload.Append("</ColorScheme>");
+                }
 
                 if (!String.IsNullOrEmpty(scene))
                 {
@@ -323,7 +312,6 @@ namespace MSNPSharp
                 }
 
                 string currentmedia = String.Empty;
-
                 if (mediaType != MediaType.None)
                 {
                     foreach (string media in content)
@@ -336,7 +324,6 @@ namespace MSNPSharp
 
                     currentmedia = @"\0" + mediaType.ToString() + @"\01\0" + Format + @"\0" + currentmedia;
                 }
-
                 if (!String.IsNullOrEmpty(currentmedia))
                 {
                     pload.Append("<CurrentMedia>");
@@ -348,123 +335,111 @@ namespace MSNPSharp
             }
         }
 
-        
-
         public string ToDebugString()
         {
-            return System.Text.UTF8Encoding.UTF8.GetString(nsMessage.InnerBody);
+            return Payload;
         }
 
         public override string ToString()
         {
-            return personalMessage;
+            return Payload;
         }
 
-        private void Handle()
+        private void Handle(XmlNodeList nodeList)
         {
-            if (nsMessage.InnerBody == null)
+            if (nodeList == null || nodeList.Count == 0)
                 return;
 
-            XmlNode node = null;
-            XmlDocument xmlDoc = new XmlDocument();
-            MemoryStream ms = new MemoryStream(nsMessage.InnerBody);
-            TextReader reader = new StreamReader(ms, new System.Text.UTF8Encoding(false));
-            xmlDoc.Load(reader);
-
-            node = xmlDoc.SelectSingleNode("//UserTileLocation");
-            if (node != null)
+            foreach (XmlNode node in nodeList)
             {
-                userTileLocation = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
-            }
-
-            node = xmlDoc.SelectSingleNode("//FriendlyName");
-            if (node != null)
-            {
-                friendlyName = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
-            }
-
-            node = xmlDoc.SelectSingleNode("//RUM");
-            if (node != null)
-            {
-                rum = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
-            }
-
-            node = xmlDoc.SelectSingleNode("//PSM");
-            if (node != null)
-            {
-                personalMessage = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
-            }
-
-            node = xmlDoc.SelectSingleNode("//DDP");
-            if (node != null)
-            {
-                ddp = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
-            }
-
-            node = xmlDoc.SelectSingleNode("//ColorScheme");
-            if (node != null)
-            {
-                colorScheme = ColorTranslator.FromOle(int.Parse(node.InnerText));
-            }
-
-            node = xmlDoc.SelectSingleNode("//Scene");
-            if (node != null)
-            {
-                scene = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
-            }
-
-            node = xmlDoc.SelectSingleNode("//CurrentMedia");
-            if (node != null)
-            {
-                currentMedia = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
-
-                if (currentMedia.Length > 0)
+                if (!String.IsNullOrEmpty(node.InnerText))
                 {
-                    string[] vals = currentMedia.Split(new string[] { @"\0" }, StringSplitOptions.None);
-
-                    if (vals[0] != "")
-                        appName = vals[0];
-
-                    switch (vals[1])
+                    switch (node.Name)
                     {
-                        case "Music":
-                            mediaType = MediaType.Music;
+                        case "UserTileLocation":
+                            userTileLocation = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
                             break;
-                        case "Games":
-                            mediaType = MediaType.Games;
+
+                        case "FriendlyName":
+                            friendlyName = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
                             break;
-                        case "Office":
-                            mediaType = MediaType.Office;
+
+                        case "RUM":
+                            rum = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
                             break;
+
+                        case "PSM":
+                            personalMessage = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
+                            break;
+
+                        case "DDP":
+                            ddp = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
+                            break;
+
+                        case "ColorScheme":
+                            colorScheme = ColorTranslator.FromOle(int.Parse(node.InnerText));
+                            break;
+
+                        case "Scene":
+                            scene = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
+                            break;
+
+                        case "SignatureSound":
+                            signatureSound = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
+                            break;
+
+                        case "CurrentMedia":
+
+                            currentMedia = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
+
+                            if (currentMedia.Length > 0)
+                            {
+                                string[] vals = currentMedia.Split(new string[] { @"\0" }, StringSplitOptions.None);
+
+                                if (vals[0] != "")
+                                    appName = vals[0];
+
+                                switch (vals[1])
+                                {
+                                    case "Music":
+                                        mediaType = MediaType.Music;
+                                        break;
+                                    case "Games":
+                                        mediaType = MediaType.Games;
+                                        break;
+                                    case "Office":
+                                        mediaType = MediaType.Office;
+                                        break;
+                                }
+
+                                /*
+                                0 
+                                1 Music
+                                2 1
+                                3 {0} - {1}
+                                4 Evanescence
+                                5 Call Me When You're Sober
+                                6 Album
+                                7 WMContentID
+                                8 
+                                */
+                                //vals[2] = Enabled/Disabled
+
+                                format = vals[3];
+
+                                int size = vals.Length - 4;
+
+                                content = new String[size];
+
+                                for (int i = 0; i < size; i++)
+                                    content[i] = vals[i + 4];
+                            }
+                            break;
+
+
                     }
-
-                    /*
-                    0 
-                    1 Music
-                    2 1
-                    3 {0} - {1}
-                    4 Evanescence
-                    5 Call Me When You're Sober
-                    6 Album
-                    7 WMContentID
-                    8 
-                    */
-                    //vals[2] = Enabled/Disabled
-
-                    format = vals[3];
-
-                    int size = vals.Length - 4;
-
-                    content = new String[size];
-
-                    for (int i = 0; i < size; i++)
-                        content[i] = vals[i + 4];
                 }
             }
-
-            node = xmlDoc.SelectSingleNode("//SignatureSound");
-            if (node != null)
-                signatureSound = node.InnerText;
         }
     }
 };

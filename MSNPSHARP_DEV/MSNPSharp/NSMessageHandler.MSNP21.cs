@@ -725,6 +725,84 @@ namespace MSNPSharp
                             XmlNodeList services = xmlDoc.SelectNodes("//user/s");
                             XmlNodeList serviceEndPoints = xmlDoc.SelectNodes("//user/sep");
 
+                            if (services.Count > 0)
+                            {
+                                foreach (XmlNode service in services)
+                                {
+                                    ServiceShortNames serviceEnum = (ServiceShortNames)Enum.Parse(typeof(ServiceShortNames), service.Attributes["n"].Value);
+                                    switch (serviceEnum)
+                                    {
+                                        case ServiceShortNames.IM:
+                                            {
+                                                foreach (XmlNode node in service.ChildNodes)
+                                                {
+                                                    switch (node.Name)
+                                                    {
+                                                        case "Status":
+
+                                                            PresenceStatus oldStatus = fromContact.Status;
+                                                            PresenceStatus newStatus = ParseStatus(node.InnerText);
+                                                            fromContact.SetStatus(newStatus);
+
+                                                            // The contact changed status
+                                                            OnContactStatusChanged(new ContactStatusChangedEventArgs(fromContact, viaHeaderContact, oldStatus, newStatus));
+
+                                                            // The contact goes online
+                                                            OnContactOnline(new ContactStatusChangedEventArgs(fromContact, viaHeaderContact, oldStatus, newStatus));
+
+                                                            break;
+
+                                                        case "CurrentMedia":
+                                                            //MSNP21TODO: UBX implementation
+
+                                                            break;
+                                                    }
+                                                }
+                                                break;
+                                            }
+
+                                        case ServiceShortNames.PE:
+                                            {
+                                                PersonalMessage pm = new PersonalMessage(service.ChildNodes);
+
+                                                if (!String.IsNullOrEmpty(pm.Payload))
+                                                {
+                                                    fromContact.SetPersonalMessage(pm);
+
+                                                    // FriendlyName
+                                                    fromContact.SetName(String.IsNullOrEmpty(pm.FriendlyName) ? fromContact.Account : pm.FriendlyName);
+
+                                                    // UserTileLocation
+                                                    if (!String.IsNullOrEmpty(pm.UserTileLocation))
+                                                        fromContact.UserTileLocation = pm.UserTileLocation;
+
+                                                    // Scene
+                                                    if (!String.IsNullOrEmpty(pm.Scene))
+                                                    {
+                                                        if (fromContact.SceneContext != pm.Scene)
+                                                        {
+                                                            fromContact.SceneContext = pm.Scene;
+                                                            fromContact.FireSceneImageContextChangedEvent(pm.Scene);
+                                                        }
+                                                    }
+
+                                                    // ColorScheme
+                                                    if (pm.ColorScheme != Color.Empty)
+                                                    {
+                                                        if (fromContact.ColorScheme != pm.ColorScheme)
+                                                        {
+                                                            fromContact.ColorScheme = pm.ColorScheme;
+                                                            fromContact.OnColorSchemeChanged();
+                                                        }
+                                                    }
+
+                                                }
+                                            }
+                                            break;
+                                    }
+                                }
+                            }
+
                             if (serviceEndPoints.Count > 0)
                             {
                                 foreach (XmlNode service in serviceEndPoints)
@@ -807,44 +885,6 @@ namespace MSNPSharp
                                 }
                             }
 
-                            if (services.Count > 0)
-                            {
-                                foreach (XmlNode service in services)
-                                {
-                                    ServiceShortNames serviceEnum = (ServiceShortNames)Enum.Parse(typeof(ServiceShortNames), service.Attributes["n"].Value);
-                                    switch (serviceEnum)
-                                    {
-                                        case ServiceShortNames.IM:
-                                            {
-                                                foreach (XmlNode node in service.ChildNodes)
-                                                {
-                                                    switch (node.Name)
-                                                    {
-                                                        case "Status":
-
-                                                            PresenceStatus oldStatus = fromContact.Status;
-                                                            PresenceStatus newStatus = ParseStatus(node.InnerText);
-                                                            fromContact.SetStatus(newStatus);
-
-                                                            // The contact changed status
-                                                            OnContactStatusChanged(new ContactStatusChangedEventArgs(fromContact, viaHeaderContact, oldStatus, newStatus));
-
-                                                            // The contact goes online
-                                                            OnContactOnline(new ContactStatusChangedEventArgs(fromContact, viaHeaderContact, oldStatus, newStatus));
-
-                                                            break;
-
-                                                        case "CurrentMedia":
-                                                            //MSNP21TODO: UBX implementation
-
-                                                            break;
-                                                    }
-                                                }
-                                                break;
-                                            }
-                                    }
-                                }
-                            }
                         }
                         break;
                     #endregion
@@ -880,7 +920,7 @@ namespace MSNPSharp
                                         // The contact goes online
                                         OnContactOnline(new ContactStatusChangedEventArgs(circle, oldStatus, newStatus));
 
-                                        if (circle.AppearOnline &&
+                                        if (circle.AppearOnline && circle.OnForwardList &&
                                             (oldStatus == PresenceStatus.Offline || oldStatus == PresenceStatus.Hidden))
                                         {
                                             JoinMultiparty(circle);
