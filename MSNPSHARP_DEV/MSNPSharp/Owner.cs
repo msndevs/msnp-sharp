@@ -563,7 +563,10 @@ namespace MSNPSharp
                         EpName, PersonalMessage, false);
                 }
 
-                (EndPointData[NSMessageHandler.MachineGuid] as PrivateEndPointData).State = base.Status;
+                if (value != PresenceStatus.Offline)
+                {
+                    (EndPointData[NSMessageHandler.MachineGuid] as PrivateEndPointData).State = base.Status;
+                }
             }
         }
 

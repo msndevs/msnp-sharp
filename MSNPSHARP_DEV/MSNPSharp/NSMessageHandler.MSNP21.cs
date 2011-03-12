@@ -1095,20 +1095,30 @@ namespace MSNPSharp
                                     {
                                         case ServiceShortNames.IM:
                                             {
-                                                if (fromContact.EndPointData.ContainsKey(epid))
-                                                    fromContact.EndPointData.Remove(epid);
+                                                if (epid == MachineGuid)
+                                                {
+                                                    if (ContactList.Owner.EndPointData.ContainsKey(epid))
+                                                    {
+                                                        ContactList.Owner.SetChangedPlace(ContactList.Owner.EndPointData[epid] as PrivateEndPointData, PlaceChangedReason.SignedOut);
+                                                    }
 
+                                                    ContactList.Owner.Status = PresenceStatus.Offline;
+                                                }
+                                                else
+                                                {
+                                                    if (fromContact.EndPointData.ContainsKey(epid))
+                                                        fromContact.EndPointData.Remove(epid);
 
-                                                PresenceStatus oldStatus = fromContact.Status;
-                                                PresenceStatus newStatus = PresenceStatus.Offline;
-                                                fromContact.SetStatus(newStatus);
+                                                    PresenceStatus oldStatus = fromContact.Status;
+                                                    PresenceStatus newStatus = PresenceStatus.Offline;
+                                                    fromContact.SetStatus(newStatus);
 
-                                                // the contact changed status
-                                                OnContactStatusChanged(new ContactStatusChangedEventArgs(fromContact, viaHeaderContact, oldStatus, newStatus));
+                                                    // the contact changed status
+                                                    OnContactStatusChanged(new ContactStatusChangedEventArgs(fromContact, viaHeaderContact, oldStatus, newStatus));
 
-                                                // the contact goes offline
-                                                OnContactOffline(new ContactStatusChangedEventArgs(fromContact, viaHeaderContact, oldStatus, newStatus));
-
+                                                    // the contact goes offline
+                                                    OnContactOffline(new ContactStatusChangedEventArgs(fromContact, viaHeaderContact, oldStatus, newStatus));
+                                                }
                                                 break;
                                             }
 
@@ -1118,7 +1128,10 @@ namespace MSNPSharp
                                                 {
                                                     ContactList.Owner.SetChangedPlace(ContactList.Owner.EndPointData[epid] as PrivateEndPointData, PlaceChangedReason.SignedOut);
                                                 }
-
+                                                if (epid == MachineGuid)
+                                                {
+                                                    ContactList.Owner.Status = PresenceStatus.Offline;
+                                                }
                                                 break;
                                             }
                                     }
