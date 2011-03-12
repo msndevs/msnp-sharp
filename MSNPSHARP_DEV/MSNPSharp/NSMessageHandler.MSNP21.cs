@@ -1105,14 +1105,12 @@ namespace MSNPSharp
                                     {
                                         case ServiceShortNames.IM:
                                             {
-                                                if (epid == MachineGuid)
+                                                if (fromIsMe)
                                                 {
                                                     if (ContactList.Owner.EndPointData.ContainsKey(epid))
                                                     {
                                                         ContactList.Owner.SetChangedPlace(ContactList.Owner.EndPointData[epid] as PrivateEndPointData, PlaceChangedReason.SignedOut);
                                                     }
-
-                                                    ContactList.Owner.Status = PresenceStatus.Offline;
                                                 }
                                                 else
                                                 {
