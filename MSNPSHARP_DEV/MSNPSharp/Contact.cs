@@ -244,8 +244,6 @@ namespace MSNPSharp
             siblingString = ClientType.ToString() + ":" + account;
             hash = MakeHash(Account, ClientType);
 
-            EndPointData[Guid.Empty] = new EndPointData(account, Guid.Empty);
-
             if (NSMessageHandler != null)
             {
                 NSMessageHandler.Manager.Add(this);
@@ -425,17 +423,6 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Machine ID, this may be different from the endpoint id.
-        /// </summary>
-        public Guid MachineGuid
-        {
-            get
-            {
-                return SelectRandomEPID();
-            }
-        }
-
-        /// <summary>
         /// The contact id of contact, only PassportMembers have CID.
         /// </summary>
         public long CID
@@ -574,8 +561,7 @@ namespace MSNPSharp
         {
             get
             {
-                //One for Guid.Empty added when calling the constructor, another for contact's own end point.
-                return EndPointData.Count > 2;
+                return EndPointData.Count > 1;
             }
         }
 
@@ -583,7 +569,7 @@ namespace MSNPSharp
         {
             get
             {
-                return HasSignedInWithMultipleEndPoints ? EndPointData.Count - 1 : 1;
+                return EndPointData.Count;
             }
         }
 
@@ -591,22 +577,20 @@ namespace MSNPSharp
         {
             get
             {
-                Guid randGuid = SelectRandomEPID();
-                EndPointData epData = EndPointData[randGuid];
-                ClientCapabilities msnc = (epData.IMCapabilities & ClientCapabilities.AppVersionMask);
-
-                if (msnc > ClientCapabilities.None)
+                if (EndPointData.Count > 0)
                 {
-                    return (msnc < ClientCapabilities.AppVersion90) ? P2PVersion.P2PV1 : P2PVersion.P2PV2;
-                }
+                    Guid randGuid = SelectRandomEPID();
+                    EndPointData epData = EndPointData[randGuid];
+                    ClientCapabilities msnc = (epData.IMCapabilities & ClientCapabilities.AppVersionMask);
 
-                // Caps hasn't received yet or user is offline. Caps are received by:
-                // NS: UBX
-                // SB: JOI/IRO
+                    if (msnc > ClientCapabilities.None)
+                    {
+                        return (msnc < ClientCapabilities.AppVersion90) ? P2PVersion.P2PV1 : P2PVersion.P2PV2;
+                    }
+                }
                 return P2PVersion.None;
             }
         }
-
 
         public P2PBridge DirectBridge
         {
@@ -939,15 +923,6 @@ namespace MSNPSharp
                 }
 
                 adlCount = value;
-            }
-        }
-
-        internal string LocalContactString
-        {
-            get
-            {
-                return GetLocalContactString();
-
             }
         }
 
@@ -1344,14 +1319,6 @@ namespace MSNPSharp
         }
 
         #region Protected
-
-        protected virtual string GetLocalContactString()
-        {
-            if (MachineGuid == Guid.Empty)
-                return Account.ToLowerInvariant();
-
-            return Account.ToLowerInvariant() + ";" + MachineGuid.ToString("B");
-        }
 
         protected virtual void OnScreenNameChanged(string oldName)
         {

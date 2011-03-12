@@ -938,23 +938,21 @@ namespace MSNPSharpClient
             if (comboPlaces.SelectedIndex > 0)
             {
                 string place = comboPlaces.Text.Split(' ')[comboPlaces.Text.Split(' ').Length - 1];
+
                 if (comboPlaces.SelectedIndex == 1)
                 {
-                    Messenger.ContactList.Owner.Status = PresenceStatus.Offline;
                     comboPlaces.Visible = false;
+                    Messenger.ContactList.Owner.SignoutFrom(NSMessageHandler.MachineGuid);
                 }
-                else if (comboPlaces.SelectedIndex >= 1)
+                else if (comboPlaces.SelectedIndex == 2)
                 {
-                    Guid placeId = places[comboPlaces.SelectedIndex - 2];
-                    if (placeId == Guid.Empty)
-                    {
-                        comboPlaces.Visible = false;
-                        Messenger.ContactList.Owner.SignoutFromEverywhere();
-                    }
-                    else
-                    {
-                        Messenger.ContactList.Owner.SignoutFrom(placeId);  //places does not contain the current places.
-                    }
+                    comboPlaces.Visible = false;
+                    Messenger.ContactList.Owner.SignoutFromEverywhere();
+                }
+                else if (comboPlaces.SelectedIndex > 2)
+                {
+                    Guid placeId = new Guid(place);
+                    Messenger.ContactList.Owner.SignoutFrom(placeId);
                 }
             }
         }
@@ -965,13 +963,11 @@ namespace MSNPSharpClient
             messenger.Nameserver.BotMode = cbRobotMode.Checked;
         }
 
-        List<Guid> places = new List<Guid>(0);
-
-        private void Owner_PlacesChanged(object sender, EventArgs e)
+        private void Owner_PlacesChanged(object sender, PlaceChangedEventArgs e)
         {
             if (comboPlaces.InvokeRequired)
             {
-                comboPlaces.BeginInvoke(new EventHandler(Owner_PlacesChanged), new object[] { sender, e });
+                comboPlaces.BeginInvoke(new EventHandler<PlaceChangedEventArgs>(Owner_PlacesChanged), sender, e);
                 return;
             }
 
@@ -980,15 +976,14 @@ namespace MSNPSharpClient
                 comboPlaces.BeginUpdate();
                 comboPlaces.Items.Clear();
                 comboPlaces.Items.Add("(" + Messenger.ContactList.Owner.PlaceCount + ") Places");
+
                 comboPlaces.Items.Add("Signout from here (" + Messenger.ContactList.Owner.EpName + ")");
+                comboPlaces.Items.Add("Signout from everywhere");
 
                 foreach (KeyValuePair<Guid, EndPointData> keyvalue in Messenger.ContactList.Owner.EndPointData)
                 {
-                    if (keyvalue.Key != NSMessageHandler.MachineGuid)
-                    {
-                        comboPlaces.Items.Add("Signout from " + (keyvalue.Value as PrivateEndPointData).Name);
-                        places.Add(keyvalue.Key);
-                    }
+                    PrivateEndPointData ipep = keyvalue.Value as PrivateEndPointData;
+                    comboPlaces.Items.Add(ipep.Name + " " + ipep.Id);
                 }
 
                 comboPlaces.SelectedIndex = 0;
@@ -1076,7 +1071,8 @@ namespace MSNPSharpClient
             else
                 SortByGroup(null);
 
-            places.Clear();
+            comboPlaces.Visible = false;
+            comboPlaces.Items.Clear();
 
             List<ConversationForm> convFormsClone = new List<ConversationForm>(ConversationForms);
             foreach(ConversationForm convForm in convFormsClone)

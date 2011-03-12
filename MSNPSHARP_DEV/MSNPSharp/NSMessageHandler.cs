@@ -697,7 +697,7 @@ namespace MSNPSharp
                     string me = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Account;
 
                     MultiMimeMessage mmMessage = new MultiMimeMessage(me, me);
-                    mmMessage.RoutingHeaders["From"]["epid"] = ContactList.Owner.MachineGuid.ToString("B").ToLowerInvariant();
+                    mmMessage.RoutingHeaders["From"]["epid"] = NSMessageHandler.MachineGuid.ToString("B").ToLowerInvariant();
 
                     mmMessage.Stream = 1;
                     mmMessage.ReliabilityHeaders["Flags"] = "ACK";
@@ -979,6 +979,8 @@ namespace MSNPSharp
         {
             isSignedIn = true;
 
+            ContactList.Owner.EndPointData[NSMessageHandler.MachineGuid] = new PrivateEndPointData(ContactList.Owner.Account, NSMessageHandler.MachineGuid);
+
             if (SignedIn != null)
                 SignedIn(this, e);
 
@@ -1078,41 +1080,6 @@ namespace MSNPSharp
             }
 
             return PresenceStatus.Unknown;
-        }
-
-        private void TriggerPlaceChangeEvent(Dictionary<Guid, PrivateEndPointData> epList)
-        {
-            if (ContactList.Owner == null)
-                return;
-
-            Dictionary<Guid, EndPointData> epDataClone = new Dictionary<Guid, EndPointData>(ContactList.Owner.EndPointData);
-            foreach (Guid id in epDataClone.Keys)
-            {
-                if (id == Guid.Empty)
-                    continue;
-
-                if (!epList.ContainsKey(id))
-                {
-                    if (id == NSMessageHandler.MachineGuid)
-                    {
-                        continue;
-                    }
-                    else
-                    {
-                        ContactList.Owner.SetChangedPlace(id, (epDataClone[id] as PrivateEndPointData).Name, PlaceChangedReason.SignedOut);
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "The account was signed out at another place: " + (epDataClone[id] as PrivateEndPointData).Name + " " + id, GetType().Name);
-                    }
-                }
-            }
-
-            foreach (Guid id in epList.Keys)
-            {
-                if (!epDataClone.ContainsKey(id))
-                {
-                    ContactList.Owner.SetChangedPlace(id, (epList[id] as PrivateEndPointData).Name, PlaceChangedReason.SignedIn);
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "The account was signed in at another place: " + (epList[id] as PrivateEndPointData).Name + " " + id, GetType().Name);
-                }
-            }
         }
 
         private string GetFriendlyNameFromUBXXmlData(XmlDocument ubxData)

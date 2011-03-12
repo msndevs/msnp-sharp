@@ -195,8 +195,7 @@ namespace MSNPSharp
     /// </summary>
     public class PlaceChangedEventArgs : EventArgs
     {
-        private string placeName = string.Empty;
-        private Guid placeId = Guid.Empty;
+        private PrivateEndPointData epData;
         private PlaceChangedReason reason = PlaceChangedReason.None;
 
         public PlaceChangedReason Reason
@@ -211,7 +210,7 @@ namespace MSNPSharp
         {
             get
             {
-                return placeName;
+                return epData.Name;
             }
         }
 
@@ -220,7 +219,7 @@ namespace MSNPSharp
         {
             get
             {
-                return placeId;
+                return epData.Id;
             }
         }
 
@@ -229,14 +228,12 @@ namespace MSNPSharp
         {
         }
 
-        public PlaceChangedEventArgs(Guid id, string name, PlaceChangedReason action)
+        public PlaceChangedEventArgs(PrivateEndPointData pep, PlaceChangedReason action)
             : base()
         {
-            placeId = id;
-            placeName = name;
+            this.epData = pep;
             reason = action;
         }
-
     }
 
 

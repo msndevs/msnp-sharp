@@ -190,7 +190,7 @@ namespace MSNPSharp
             string from = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Account;
 
             MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
-            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = ContactList.Owner.MachineGuid.ToString("B").ToLowerInvariant();
+            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = NSMessageHandler.MachineGuid.ToString("B").ToLowerInvariant();
 
             if (remoteContact.ClientType == IMAddressInfoType.Circle)
             {
@@ -223,7 +223,7 @@ namespace MSNPSharp
             string from = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Account;
 
             MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
-            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = ContactList.Owner.MachineGuid.ToString("B").ToLowerInvariant();
+            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = NSMessageHandler.MachineGuid.ToString("B").ToLowerInvariant();
 
             if (remoteContact.ClientType == IMAddressInfoType.Circle)
             {
@@ -258,7 +258,7 @@ namespace MSNPSharp
             string from = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Account;
 
             MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
-            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = ContactList.Owner.MachineGuid.ToString("B").ToLowerInvariant();
+            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = NSMessageHandler.MachineGuid.ToString("B").ToLowerInvariant();
 
             if (remoteContact.ClientType == IMAddressInfoType.Circle)
             {
@@ -313,7 +313,7 @@ namespace MSNPSharp
                 string from = ((int)ContactList.Owner.ClientType).ToString() + ":" + ContactList.Owner.Account;
 
                 MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
-                mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = ContactList.Owner.MachineGuid.ToString("B").ToLowerInvariant();
+                mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = NSMessageHandler.MachineGuid.ToString("B").ToLowerInvariant();
                 mmMessage.RoutingHeaders[MIMERoutingHeaders.ServiceChannel] = "IM/Mobile";
 
                 mmMessage.ContentKeyVersion = "2.0";
@@ -851,8 +851,7 @@ namespace MSNPSharp
                                             }
 
                                         case ServiceShortNames.PD:
-                                            {
-                                                Dictionary<Guid, PrivateEndPointData> epList = new Dictionary<Guid, PrivateEndPointData>(0);
+                                            {                                        
                                                 PrivateEndPointData privateEndPoint = new PrivateEndPointData(ContactList.Owner.Account, epid);
 
                                                 foreach (XmlNode node in service.ChildNodes)
@@ -877,8 +876,7 @@ namespace MSNPSharp
                                                     }
                                                 }
 
-                                                epList[epid] = privateEndPoint;
-                                                TriggerPlaceChangeEvent(epList);
+                                                ContactList.Owner.SetChangedPlace(privateEndPoint, PlaceChangedReason.SignedIn);
                                                 break;
                                             }
                                     }
@@ -923,7 +921,7 @@ namespace MSNPSharp
                                         if (circle.AppearOnline && circle.OnForwardList &&
                                             (oldStatus == PresenceStatus.Offline || oldStatus == PresenceStatus.Hidden))
                                         {
-                                            JoinMultiparty(circle);
+                                            //JoinMultiparty(circle);
                                         }
                                     }
                                     return;
@@ -1118,7 +1116,7 @@ namespace MSNPSharp
                                             {
                                                 if (ContactList.Owner.EndPointData.ContainsKey(epid))
                                                 {
-                                                    TriggerPlaceChangeEvent(new Dictionary<Guid, PrivateEndPointData>(0));
+                                                    ContactList.Owner.SetChangedPlace(ContactList.Owner.EndPointData[epid] as PrivateEndPointData, PlaceChangedReason.SignedOut);
                                                 }
 
                                                 break;
