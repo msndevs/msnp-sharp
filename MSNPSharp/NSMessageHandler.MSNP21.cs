@@ -578,6 +578,9 @@ namespace MSNPSharp
             NSMessage delPayload = new NSMessage("DEL");
             delPayload.InnerMessage = mmMessage;
             MessageProcessor.SendMessage(delPayload);
+
+            if (endPointID == MachineGuid)
+                messageProcessor.Disconnect();
         }
 
         #endregion

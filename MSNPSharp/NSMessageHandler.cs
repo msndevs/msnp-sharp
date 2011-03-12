@@ -556,7 +556,7 @@ namespace MSNPSharp
 
             if (newStatus == PresenceStatus.Offline)
             {
-                messageProcessor.Disconnect();
+                SignoutFrom(MachineGuid);
                 return;
             }
 
