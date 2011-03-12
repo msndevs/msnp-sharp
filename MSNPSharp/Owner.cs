@@ -63,9 +63,6 @@ namespace MSNPSharp
         public Owner(Guid abId, string account, long cid, NSMessageHandler handler)
             : base(abId, account, IMAddressInfoType.WindowsLive, cid, handler)
         {
-            EndPointData.Clear();
-            EndPointData.Add(Guid.Empty, new PrivateEndPointData(account, Guid.Empty));
-            EndPointData.Add(NSMessageHandler.MachineGuid, new PrivateEndPointData(account, NSMessageHandler.MachineGuid));
         }
 
         /// <summary>
@@ -98,37 +95,35 @@ namespace MSNPSharp
             this.DisplayImage = displayImage;
         }
 
-        internal void SetChangedPlace(Guid epId, string placeName, PlaceChangedReason action)
+        internal void SetChangedPlace(PrivateEndPointData signedOnOffPlace, PlaceChangedReason action)
         {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                "The account was " + action + " at another place: " + signedOnOffPlace.Name + " " + signedOnOffPlace.Id, GetType().Name);
+
             bool triggerEvent = false;
+
             lock (SyncObject)
             {
                 switch (action)
                 {
                     case PlaceChangedReason.SignedIn:
-                        if (!EndPointData.ContainsKey(epId))
-                        {
-                            PrivateEndPointData newEndPoint = new PrivateEndPointData(Account, epId);
-                            newEndPoint.Name = placeName;
-                            EndPointData[epId] = newEndPoint;
-                            triggerEvent = true;
-                        }
+                        EndPointData[signedOnOffPlace.Id] = signedOnOffPlace;
+                        triggerEvent = true;
                         break;
 
                     case PlaceChangedReason.SignedOut:
-                        if (EndPointData.ContainsKey(epId))
+                        if (EndPointData.ContainsKey(signedOnOffPlace.Id))
                         {
-                            EndPointData.Remove(epId);
+                            EndPointData.Remove(signedOnOffPlace.Id);
                             triggerEvent = true;
                         }
                         break;
                 }
-
             }
 
             if (triggerEvent)
             {
-                OnPlacesChanged(new PlaceChangedEventArgs(epId, placeName, action));
+                OnPlacesChanged(new PlaceChangedEventArgs(signedOnOffPlace, action));
             }
         }
 
@@ -271,11 +266,11 @@ namespace MSNPSharp
         /// </summary>
         public void SignoutFromEverywhere()
         {
-            foreach (Guid x in EndPointData.Keys)
+            foreach (Guid place in EndPointData.Keys)
             {
-                if (x != Guid.Empty && x != NSMessageHandler.MachineGuid)
+                if (place != NSMessageHandler.MachineGuid)
                 {
-                    SignoutFrom(x);
+                    SignoutFrom(place);
                 }
             }
 
@@ -298,6 +293,11 @@ namespace MSNPSharp
             if (EndPointData.ContainsKey(endPointID))
             {
                 NSMessageHandler.SignoutFrom(endPointID);
+
+                if (endPointID == NSMessageHandler.MachineGuid)
+                {
+                    Status = PresenceStatus.Offline;
+                }
             }
             else
             {
@@ -338,7 +338,7 @@ namespace MSNPSharp
                         ? new PersonalMessage(String.IsNullOrEmpty(NSMessageHandler.ContactService.Deltas.Profile.DisplayName) ? NickName : NSMessageHandler.ContactService.Deltas.Profile.DisplayName)
                         : PersonalMessage;
 
-                    pm.UserTileLocation = value.IsDefaultImage ? string.Empty : MSNHttpUtility.XmlEncode(value.ContextPlain);
+                    pm.UserTileLocation = value.IsDefaultImage ? string.Empty : value.ContextPlain;
                     
                     if (NSMessageHandler != null && NSMessageHandler.IsSignedIn &&
                         Status != PresenceStatus.Offline && Status != PresenceStatus.Unknown)
@@ -557,14 +557,7 @@ namespace MSNPSharp
                         EpName, PersonalMessage, false);
                 }
 
-                if (PersonalMessage != null)
-                {
-                    (EndPointData[MachineGuid] as PrivateEndPointData).State = base.Status;
-                }
-                else
-                {
-                    (EndPointData[NSMessageHandler.MachineGuid] as PrivateEndPointData).State = base.Status;
-                }
+                (EndPointData[NSMessageHandler.MachineGuid] as PrivateEndPointData).State = base.Status;
             }
         }
 

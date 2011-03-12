@@ -339,7 +339,7 @@ namespace MSNPSharp.P2P
 
             localContact = app.Local;
             remoteContact = app.Remote;
-            localContactEndPointID = app.Local.MachineGuid;
+            localContactEndPointID = NSMessageHandler.MachineGuid;
             remoteContactEndPointID = app.Remote.SelectRandomEPID();
 
             nsMessageHandler = app.Local.NSMessageHandler;

@@ -47,6 +47,16 @@ namespace MSNPSharp
 
     partial class Contact
     {
+
+        [Obsolete("Please use EndPointData instead.", true)]
+        public Guid MachineGuid
+        {
+            get
+            {
+                return SelectRandomEPID();
+            }
+        }
+
         [Obsolete("Block role is no more supported. Please use AppearOffline instead.")]
         public bool Blocked
         {

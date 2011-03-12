@@ -135,7 +135,7 @@ namespace MSNPSharpClient
             this.appearOnlineMenuItem,
             this.deleteMenuItem});
             this.userMenuStrip.Name = "contextMenuStrip1";
-            this.userMenuStrip.Size = new System.Drawing.Size(201, 214);
+            this.userMenuStrip.Size = new System.Drawing.Size(201, 192);
             // 
             // sendIMMenuItem
             // 
@@ -743,7 +743,7 @@ namespace MSNPSharpClient
             // 
             this.comboPlaces.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.comboPlaces.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboPlaces.DropDownWidth = 220;
+            this.comboPlaces.DropDownWidth = 400;
             this.comboPlaces.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.comboPlaces.FormattingEnabled = true;
             this.comboPlaces.ItemHeight = 15;

@@ -244,9 +244,6 @@ namespace MSNPSharp
                     Contact contact = circle.ContactList.GetContact(account, accountAddressType);
 
                     contact.SetName(MSNHttpUtility.NSDecode(message.CommandValues[2].ToString()));
-                    contact.EndPointData[Guid.Empty].IMCapabilities = newcaps;
-                    contact.EndPointData[Guid.Empty].IMCapabilitiesEx = newcapsex;
-
                     if (contact != ContactList.Owner && newDisplayImageContext.Length > 10)
                     {
                         if (contact.DisplayImage != newDisplayImageContext)
@@ -313,8 +310,6 @@ namespace MSNPSharp
                     }
 
                     contact.SetName(MSNHttpUtility.NSDecode(newName));
-                    contact.EndPointData[Guid.Empty].IMCapabilities = newcaps;
-                    contact.EndPointData[Guid.Empty].IMCapabilitiesEx = newcapsex;
 
                     if (contact != ContactList.Owner)
                     {
@@ -452,13 +447,6 @@ namespace MSNPSharp
 
                 if (contact != null)
                 {
-                    lock (contact.EndPointData)
-                    {
-                        contact.EndPointData.Clear();
-                        contact.EndPointData[Guid.Empty] = new EndPointData(contact.Account.ToLowerInvariant(), Guid.Empty);
-                        contact.EndPointData[Guid.Empty].IMCapabilities = newCaps;
-                        contact.EndPointData[Guid.Empty].IMCapabilitiesEx = newCapsEx;
-                    }
 
                     if (contact != ContactList.Owner && message.CommandValues.Count >= 3 &&
                         accountAddressType == IMAddressInfoType.Yahoo)
