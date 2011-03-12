@@ -607,8 +607,6 @@ namespace MSNPSharp
         [Obsolete(@"Obsoleted in MSNP21. Replaced by SIPv2.", true)]
         protected virtual void OnUUNReceived(NSMessage message)
         {
-            bool ok = message.CommandValues.Count > 0 && message.CommandValues[0].ToString() == "OK";
-            uunBridge.ProcessUUN(message.TransactionID, ok);
         }
 
     }

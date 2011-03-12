@@ -46,7 +46,7 @@ namespace MSNPSharp.Core
         private MimeDictionary routingHeaders = new MimeDictionary();
         private MimeDictionary reliabilityHeaders = new MimeDictionary();
         private MimeDictionary contentHeaders = new MimeDictionary();
-        
+
         private string contentKey = MIMEContentHeaders.Messaging;
         private string contentKeyVersion = "1.0";
 
@@ -103,9 +103,6 @@ namespace MSNPSharp.Core
             To = to;
             From = from;
 
-            Stream = 0;
-            Segment = 0;
-
             contentHeaders[MIMEContentHeaders.ContentLength] = "0";
             contentHeaders[MIMEContentHeaders.ContentType] = "Text/plain";
             contentHeaders[MIMEContentHeaders.ContentType][MIMEContentHeaders.CharSet] = "UTF-8"; // Don't delete space
@@ -145,7 +142,8 @@ namespace MSNPSharp.Core
         {
             get
             {
-                return long.Parse(reliabilityHeaders[MIMEReliabilityHeaders.Stream], System.Globalization.CultureInfo.InvariantCulture);
+                return reliabilityHeaders.ContainsKey(MIMEReliabilityHeaders.Stream) ?
+                    long.Parse(reliabilityHeaders[MIMEReliabilityHeaders.Stream], System.Globalization.CultureInfo.InvariantCulture) : 0;
             }
             set
             {
@@ -157,7 +155,8 @@ namespace MSNPSharp.Core
         {
             get
             {
-                return long.Parse(reliabilityHeaders[MIMEReliabilityHeaders.Segment], System.Globalization.CultureInfo.InvariantCulture);
+                return reliabilityHeaders.ContainsKey(MIMEReliabilityHeaders.Segment) ?
+                    long.Parse(reliabilityHeaders[MIMEReliabilityHeaders.Segment], System.Globalization.CultureInfo.InvariantCulture) : 0;
             }
             set
             {

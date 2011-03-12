@@ -48,13 +48,17 @@ namespace MSNPSharp
     partial class NSMessageHandler
     {
 
-        private void HandleSIP(SLPMessage slp)
+        private void HandleSIPv2(SLPMessage slpMessage)
         {
-            Trace.WriteLine(slp.ToDebugString());
+            Trace.WriteLine(slpMessage.ToDebugString());
         }
 
-        private void HandleP2PData(P2PMessage p2pMessage)
+        private void HandleP2PData(P2PMessage p2pMessage, Contact source, Guid sourceGuid)
         {
+            // This is SIPv1 via SDG
+
+            P2PHandler.ProcessP2PMessage(this.SDGBridge, source, sourceGuid, p2pMessage);
+
             Trace.WriteLine(p2pMessage.ToDebugString());
         }
     }

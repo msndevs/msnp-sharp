@@ -125,7 +125,7 @@ namespace MSNPSharp
         private SocketMessageProcessor messageProcessor = null;
         private long hopCount = 0;
 
-        private UUNBridge uunBridge = null;
+        private SDGBridge sdgBridge = null;
         private P2PHandler p2pHandler = null;
 
         private ContactGroupList contactGroups = null;
@@ -159,7 +159,7 @@ namespace MSNPSharp
             whatsUpService = new WhatsUpService(this);
             dirService = new MSNDirectoryService(this);
 
-            uunBridge = new UUNBridge(this);
+            sdgBridge = new SDGBridge(this);
             p2pHandler = new P2PHandler(this);
         }
 
@@ -432,11 +432,11 @@ namespace MSNPSharp
             }
         }
 
-        public UUNBridge UUNBridge
+        public SDGBridge SDGBridge
         {
             get
             {
-                return uunBridge;
+                return sdgBridge;
             }
         }
 
@@ -665,7 +665,7 @@ namespace MSNPSharp
                     ClientType.InnerText = "1";
                     sep.AppendChild(ClientType);
                     XmlElement EpName = xmlDoc.CreateElement("EpName");
-                    EpName.InnerText = MSNHttpUtility.XmlEncode(ContactList.Owner.EpName);
+                    EpName.InnerText = MSNHttpUtility.XmlEncode(newEPName);
                     sep.AppendChild(EpName);
                     XmlElement Idle = xmlDoc.CreateElement("Idle");
                     Idle.InnerText = ((newStatus == PresenceStatus.Idle) ? "true" : "false");

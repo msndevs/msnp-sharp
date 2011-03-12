@@ -1217,6 +1217,7 @@ namespace MSNPSharp
 		public const string To = MIMEHeaderStrings.To;
 		public const string EPID = MIMEHeaderStrings.EPID;
 		public const string Path = MIMEHeaderStrings.Path;
+        public const string Options = "Options";
 		
 		/// <summary>
 		/// The service that this message should sent through. 

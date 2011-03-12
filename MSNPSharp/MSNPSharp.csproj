@@ -67,6 +67,7 @@
     <Compile Include="Credentials.cs" />
     <Compile Include="Core\MimeDictionary.cs" />
     <Compile Include="DisplayImage.cs" />
+    <Compile Include="P2P\SDGBridge.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
@@ -115,7 +116,6 @@
       <DependentUpon>P2PSession.cs</DependentUpon>
     </Compile>
     <Compile Include="P2P\TCPv1Bridge.cs" />
-    <Compile Include="P2P\UUNBridge.cs" />
     <Compile Include="Services\ABServiceBindingWrapper.cs" />
     <Compile Include="Services\DirectoryService.cs" />
     <Compile Include="Services\DirectoryServiceBindingWrapper.cs" />
