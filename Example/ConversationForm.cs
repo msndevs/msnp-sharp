@@ -847,7 +847,7 @@ namespace MSNPSharpClient
                 {
                     try
                     {
-                        RequestDisplayImage(remoteContact, null);
+                        //RequestDisplayImage(remoteContact, null);
                     }
                     catch (Exception ex)
                     {

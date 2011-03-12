@@ -1384,18 +1384,18 @@ namespace MSNPSharp
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                         "TEXT MESSAGE: " + sender.ToString() + (sender == fromContact ? String.Empty : ";via=" + fromContact.ToString()) + "\r\n" + txtMessage.ToDebugString());
                 }
+                else if ("signal/p2p" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
+                {
+                    SLPMessage slp = SLPMessage.Parse(mmMessage.InnerBody);
+                    HandleSIP(slp);
+                }
                 else if ("data" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
                 {
-                    Guid epid = mmMessage.From.HasAttribute(MIMERoutingHeaders.EPID) ?
-                        new Guid(mmMessage.From[MIMERoutingHeaders.EPID]) : Guid.Empty;
+                    P2PVersion toVer = mmMessage.To.HasAttribute(MIMERoutingHeaders.EPID) ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
 
-                    P2PVersion ver = ((sender.EndPointData[epid].PECapabilitiesEx & ClientCapabilitiesEx.SupportsPeerToPeerV2) == ClientCapabilitiesEx.SupportsPeerToPeerV2)
-                        ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
-
-                    P2PMessage p = new P2PMessage(ver);
-                    p.ParseBytes(mmMessage.InnerBody);
-
-                    Trace.WriteLine(p.ToDebugString());
+                    P2PMessage p2pData = new P2PMessage(toVer);
+                    p2pData.ParseBytes(mmMessage.InnerBody);
+                    HandleP2PData(p2pData);
                 }
             }
         }
