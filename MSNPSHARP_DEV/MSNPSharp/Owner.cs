@@ -114,6 +114,11 @@ namespace MSNPSharp
                     case PlaceChangedReason.SignedOut:
                         if (EndPointData.ContainsKey(signedOnOffPlace.Id))
                         {
+                            if (signedOnOffPlace.Id == NSMessageHandler.MachineGuid)
+                            {
+                                Status = PresenceStatus.Offline;
+                            }
+
                             EndPointData.Remove(signedOnOffPlace.Id);
                             triggerEvent = true;
                         }
@@ -124,12 +129,6 @@ namespace MSNPSharp
             if (triggerEvent)
             {
                 OnPlacesChanged(new PlaceChangedEventArgs(signedOnOffPlace, action));
-
-                if (action == PlaceChangedReason.SignedOut &&
-                    signedOnOffPlace.Id == NSMessageHandler.MachineGuid)
-                {
-                    Status = PresenceStatus.Offline;
-                }
             }
         }
 
