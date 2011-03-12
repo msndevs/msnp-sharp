@@ -171,10 +171,6 @@ namespace MSNPSharp.P2P
             P2PBridge p2pBridge,
             P2PSession p2pSession)
         {
-            // Only send the direct invite if we're currently using an SBBridge or UUNBridge
-            if (/*MSNP21TODO !(p2pBridge is SBBridge) &&*/ !(p2pBridge is UUNBridge))
-                return;
-
             int netId;
             string connectionType = ConnectionType(nsMessageHandler, out netId);
             Contact remote = p2pSession.Remote;
@@ -220,11 +216,6 @@ namespace MSNPSharp.P2P
 
             // Wait a bit, otherwise SLP message queued when called p2pBridge.StopSending(this);
             p2pSession.SetupDCTimer();
-            Thread.CurrentThread.Join(900);
-
-            // Stop sending until we receive a response to the direct invite or the timeout expires
-            if (!(p2pBridge is UUNBridge))
-                p2pBridge.StopSending(p2pSession);
         }
 
         private static void ProcessDCReqInvite(SLPMessage message, NSMessageHandler ns, P2PSession startupSession)
@@ -333,7 +324,7 @@ namespace MSNPSharp.P2P
                 }
                 else
                 {
-                    ns.UUNBridge.Send(null, remote, remoteGuid, p2pMessage, null);
+                    ns.SDGBridge.Send(null, remote, remoteGuid, p2pMessage, null);
                 }
             }
             else
@@ -404,7 +395,7 @@ namespace MSNPSharp.P2P
                         P2PMessage msg = new P2PMessage(ver);
                         msg.InnerMessage = slpResponseMessage;
 
-                        ns.UUNBridge.Send(null, remote, remoteGuid, msg, null);
+                        ns.SDGBridge.Send(null, remote, remoteGuid, msg, null);
                     }
 
                     return;

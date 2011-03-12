@@ -136,18 +136,28 @@ namespace MSNPSharp
         {
             if (TypingMessageReceived != null)
                 TypingMessageReceived(this, e);
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                "TYPING: " + e.Sender.ToString() + (e.Sender == e.OriginalSender ? String.Empty : ";via=" + e.OriginalSender.ToString()));
+
         }
 
         protected virtual void OnNudgeReceived(NudgeArrivedEventArgs e)
         {
             if (NudgeReceived != null)
                 NudgeReceived(this, e);
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                "NUDGE: " + e.Sender.ToString() + (e.Sender == e.OriginalSender ? String.Empty : ";via=" + e.OriginalSender.ToString()));
         }
 
         protected virtual void OnTextMessageReceived(TextMessageArrivedEventArgs e)
         {
             if (TextMessageReceived != null)
                 TextMessageReceived(this, e);
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                "TEXT MESSAGE: " + e.Sender.ToString() + (e.Sender == e.OriginalSender ? String.Empty : ";via=" + e.OriginalSender.ToString()) + "\r\n" + e.TextMessage.ToDebugString());
         }
 
         protected virtual void OnEmoticonReceived(EmoticonArrivedEventArgs e)
@@ -267,7 +277,7 @@ namespace MSNPSharp
 
             if (!remoteContact.Online)
             {
-                mmMessage.RoutingHeaders[MIMERoutingHeaders.ServiceChannel] = "IM/Offline";
+                //mmMessage.RoutingHeaders[MIMERoutingHeaders.ServiceChannel] = "IM/Offline";
             }
 
             if (remoteContact.ViaContact != null)
@@ -1369,16 +1379,11 @@ namespace MSNPSharp
             {
                 if ("nudge" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
                 {
-                    OnNudgeReceived(new NudgeArrivedEventArgs(sender, fromContact));
-
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                        "NUDGE: " + sender.ToString() + (sender == fromContact ? String.Empty : ";via=" + fromContact.ToString()));
+                    OnNudgeReceived(new NudgeArrivedEventArgs(sender, fromContact));                    
                 }
                 else if ("control/typing" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
                 {
                     OnTypingMessageReceived(new TypingArrivedEventArgs(sender, fromContact));
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                        "TYPING: " + sender.ToString() + (sender == fromContact ? String.Empty : ";via=" + fromContact.ToString()));
                 }
                 else if ("text" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
                 {
@@ -1390,23 +1395,21 @@ namespace MSNPSharp
                     }
                     txtMessage.ParseHeader(strDic);
 
-                    OnTextMessageReceived(new TextMessageArrivedEventArgs(sender, txtMessage, fromContact));
-
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                        "TEXT MESSAGE: " + sender.ToString() + (sender == fromContact ? String.Empty : ";via=" + fromContact.ToString()) + "\r\n" + txtMessage.ToDebugString());
+                    OnTextMessageReceived(new TextMessageArrivedEventArgs(sender, txtMessage, fromContact));                   
                 }
                 else if ("signal/p2p" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
                 {
                     SLPMessage slp = SLPMessage.Parse(mmMessage.InnerBody);
-                    HandleSIP(slp);
+                    HandleSIPv2(slp);
                 }
                 else if ("data" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
                 {
                     P2PVersion toVer = mmMessage.To.HasAttribute(MIMERoutingHeaders.EPID) ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
+                    Guid ep = (toVer == P2PVersion.P2PV1) ? Guid.Empty : new Guid(mmMessage.From[MIMERoutingHeaders.EPID]);
 
                     P2PMessage p2pData = new P2PMessage(toVer);
                     p2pData.ParseBytes(mmMessage.InnerBody);
-                    HandleP2PData(p2pData);
+                    HandleP2PData(p2pData, sender, ep);
                 }
             }
         }

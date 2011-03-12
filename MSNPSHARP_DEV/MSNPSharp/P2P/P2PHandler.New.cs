@@ -228,6 +228,8 @@ namespace MSNPSharp.P2P
 
         internal P2PBridge GetBridge(P2PSession session)
         {
+            return nsMessageHandler.SDGBridge;
+
             foreach (P2PBridge existing in bridges)
                 if (existing.SuitableFor(session))
                     return existing;

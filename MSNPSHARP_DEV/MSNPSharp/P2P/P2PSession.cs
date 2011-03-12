@@ -118,7 +118,6 @@ namespace MSNPSharp.P2P
         private SLPRequestMessage invitation = null;
         private P2PBridge p2pBridge = null;
         private P2PApplication p2pApplication = null;
-        private bool uunTried = false;
         internal ushort dataPacketNumber = 0;
 
         private P2PVersion version = P2PVersion.P2PV1;
@@ -293,18 +292,6 @@ namespace MSNPSharp.P2P
             }
         }
 
-        public bool UUNTried
-        {
-            get
-            {
-                return uunTried;
-            }
-            protected internal set
-            {
-                uunTried = value;
-            }
-        }
-
         /// <summary>
         /// Session state
         /// </summary>
@@ -458,12 +445,9 @@ namespace MSNPSharp.P2P
             }
             else
             {
-                if (UUNTried == false && Remote.DirectBridge == null &&
-                    NSMessageHandler.UUNBridge.SuitableFor(this))
-                {
-                    UUNTried = true;
-                    P2PSession.SendDirectInvite(NSMessageHandler, NSMessageHandler.UUNBridge, this);
-                }
+
+                P2PSession.SendDirectInvite(NSMessageHandler, NSMessageHandler.SDGBridge, this);
+
 
                 // Get id from bridge....
                 {
