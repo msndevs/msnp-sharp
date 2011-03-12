@@ -124,6 +124,12 @@ namespace MSNPSharp
             if (triggerEvent)
             {
                 OnPlacesChanged(new PlaceChangedEventArgs(signedOnOffPlace, action));
+
+                if (action == PlaceChangedReason.SignedOut &&
+                    signedOnOffPlace.Id == NSMessageHandler.MachineGuid)
+                {
+                    Status = PresenceStatus.Offline;
+                }
             }
         }
 
