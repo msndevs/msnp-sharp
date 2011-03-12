@@ -56,7 +56,66 @@ namespace MSNPSharp
     /// </summary>
     public partial class NSMessageHandler : IMessageHandler
     {
+        /// <summary>
+        /// Machine Guid
+        /// </summary>
         public static readonly Guid MachineGuid = Guid.NewGuid();
+
+        #region Public Events
+
+        /// <summary>
+        /// Occurs when the authentication and authorzation with the server has finished. The client is now connected to the messenger network.
+        /// </summary>
+        public event EventHandler<EventArgs> SignedIn;
+
+        /// <summary>
+        /// Occurs when the message processor has disconnected, and thus the user is no longer signed in.
+        /// </summary>
+        public event EventHandler<SignedOffEventArgs> SignedOff;
+
+        /// <summary>
+        /// Occurs when the user finished the authentication step, the owner was created.
+        /// </summary>
+        public event EventHandler<EventArgs> OwnerVerified;
+
+        /// <summary>
+        /// Occurs when an answer is received after sending a ping to the MSN server via the SendPing() method.
+        /// </summary>
+        public event EventHandler<PingAnswerEventArgs> PingAnswer;
+
+        /// <summary>
+        /// Occurs when the server notifies the client with the status of the owner's mailbox.
+        /// </summary>
+        public event EventHandler<MailboxStatusEventArgs> MailboxStatusReceived;
+
+        /// <summary>
+        /// Occurs when new mail is received.
+        /// </summary>
+        public event EventHandler<NewMailEventArgs> NewMailReceived;
+
+        /// <summary>
+        /// Occurs when unread mail is read or mail is moved.
+        /// </summary>
+        public event EventHandler<MailChangedEventArgs> MailboxChanged;
+
+        /// <summary>
+        /// Occurs when the server sends an error.
+        /// </summary>
+        public event EventHandler<MSNErrorEventArgs> ServerErrorReceived;
+
+        /// <summary>
+        /// Occurs when an exception is thrown while handling the incoming or outgoing messages.
+        /// </summary>
+        public event EventHandler<ExceptionEventArgs> ExceptionOccurred;
+
+        /// <summary>
+        /// Occurs when the user could not be signed in due to authentication errors. Most likely due
+        /// to an invalid account or password. Note that this event will also raise the more general
+        /// <see cref="ExceptionOccurred"/> event.
+        /// </summary>
+        public event EventHandler<ExceptionEventArgs> AuthenticationError;
+
+        #endregion
 
         #region Members
 
@@ -395,64 +454,6 @@ namespace MSNPSharp
 
         #endregion
 
-        #region Public Events
-
-        /// <summary>
-        /// Occurs when an exception is thrown while handling the incoming or outgoing messages
-        /// </summary>
-        public event EventHandler<ExceptionEventArgs> ExceptionOccurred;
-
-        /// <summary>
-        /// Occurs when the user could not be signed in due to authentication errors. Most likely due to an invalid account or password. Note that this event will also raise the more general <see cref="ExceptionOccurred"/> event.
-        /// </summary>
-        public event EventHandler<ExceptionEventArgs> AuthenticationError;
-
-        /// <summary>
-        /// Occurs when the user finished the authentication step, the owner was created
-        /// </summary>
-        public event EventHandler<EventArgs> OwnerVerified;
-
-        /// <summary>
-        /// Occurs when an answer is received after sending a ping to the MSN server via the SendPing() method
-        /// </summary>
-        public event EventHandler<PingAnswerEventArgs> PingAnswer;
-
-
-        /// <summary>
-        /// Occurs when the authentication and authorzation with the server has finished. The client is now connected to the messenger network.
-        /// </summary>
-        public event EventHandler<EventArgs> SignedIn;
-
-        /// <summary>
-        /// Occurs when the message processor has disconnected, and thus the user is no longer signed in.
-        /// </summary>
-        public event EventHandler<SignedOffEventArgs> SignedOff;
-
-
-        /// <summary>
-        /// Occurs when the server notifies the client with the status of the owner's mailbox.
-        /// </summary>
-        public event EventHandler<MailboxStatusEventArgs> MailboxStatusReceived;
-
-        /// <summary>
-        /// Occurs when new mail is received by the Owner.
-        /// </summary>
-        public event EventHandler<NewMailEventArgs> NewMailReceived;
-
-        /// <summary>
-        /// Occurs when unread mail is read or mail is moved by the Owner.
-        /// </summary>
-        public event EventHandler<MailChangedEventArgs> MailboxChanged;
-
-        /// <summary>
-        /// Occurs when the server sends an error.
-        /// </summary>
-        public event EventHandler<MSNErrorEventArgs> ServerErrorReceived;
-
-
-
-        #endregion
-
         #region Public Methods
 
         #region SendPing
@@ -470,23 +471,7 @@ namespace MSNPSharp
 
         #endregion
 
-        #region RequestScreenName & SetScreenName & SetPersonalMessage
-
-        /// <summary>
-        /// Send the server a request for the contact's screen name.
-        /// </summary>
-        /// <remarks>
-        /// When the server replies with the screen name the Name property of the <see cref="Contact"/> will
-        /// be updated.
-        /// </remarks>
-        /// <param name="contact"></param>
-        internal void RequestScreenName(Contact contact)
-        {
-            if (contact.Guid == null || contact.Guid == Guid.Empty)
-                throw new InvalidOperationException("This is not a valid Messenger contact.");
-
-            MessageProcessor.SendMessage(new NSMessage("SBP", new string[] { contact.Guid.ToString(), "MFN", MSNHttpUtility.NSEncode(contact.Name) }));
-        }
+        #region SetScreenName & SetPersonalMessage
 
         /// <summary>
         /// Sets the contactlist owner's screenname. After receiving confirmation from the server
@@ -542,7 +527,7 @@ namespace MSNPSharp
                 : ContactList.Owner.PersonalMessage;
 
             pm.ColorScheme = sccolor;
-            pm.Scene = scimg.IsDefaultImage ? string.Empty : MSNHttpUtility.XmlEncode(scimg.ContextPlain);
+            pm.Scene = scimg.IsDefaultImage ? string.Empty : scimg.ContextPlain;
 
             SetPresenceStatus(ContactList.Owner.Status,
                 ContactList.Owner.LocalEndPointIMCapabilities, ContactList.Owner.LocalEndPointIMCapabilitiesEx,
@@ -602,7 +587,7 @@ namespace MSNPSharp
                 {
                     XmlElement service = xmlDoc.CreateElement("s");
                     service.SetAttribute("n", ServiceShortNames.IM.ToString());
-                    service.InnerXml = 
+                    service.InnerXml =
                         "<Status>" + ParseStatus(newStatus) + "</Status>" +
                         "<CurrentMedia>" + MSNHttpUtility.XmlEncode(psm.CurrentMedia) + "</CurrentMedia>";
                     userElement.AppendChild(service);
@@ -1082,103 +1067,6 @@ namespace MSNPSharp
             return PresenceStatus.Unknown;
         }
 
-        private string GetFriendlyNameFromUBXXmlData(XmlDocument ubxData)
-        {
-            XmlNode friendlyNameNode = ubxData.SelectSingleNode(@"//Data/FriendlyName");
-            if (friendlyNameNode != null)
-            {
-                return string.IsNullOrEmpty(friendlyNameNode.InnerXml) ? string.Empty : friendlyNameNode.InnerText;
-            }
-
-            return string.Empty;
-        }
-
-        private string GetUserTileLocationFromUBXXmlData(XmlDocument ubxData)
-        {
-            XmlNode userTileLocationNode = ubxData.SelectSingleNode(@"//Data/UserTileLocation");
-            if (userTileLocationNode != null)
-            {
-                return string.IsNullOrEmpty(userTileLocationNode.InnerXml) ? string.Empty : userTileLocationNode.InnerText;
-            }
-
-            return string.Empty;
-        }
-
-        private string GetSceneContextFromUBXXmlData(XmlDocument ubxData)
-        {
-            XmlNode sceneLocationNode = ubxData.SelectSingleNode(@"//Data/Scene");
-            if (sceneLocationNode != null)
-            {
-                return string.IsNullOrEmpty(sceneLocationNode.InnerXml) ? string.Empty : sceneLocationNode.InnerText;
-            }
-
-            return string.Empty;
-        }
-
-        private Color GetColorSchemeFromUBXXmlData(XmlDocument ubxData)
-        {
-            XmlNode colorSchemeNode = ubxData.SelectSingleNode(@"//Data/ColorScheme");
-            if (colorSchemeNode != null)
-            {
-                if (string.IsNullOrEmpty(colorSchemeNode.InnerXml))
-                {
-                    return Color.Empty;
-                }
-
-                int color;
-                if (int.TryParse(colorSchemeNode.InnerXml, out color))
-                {
-                    /*
-                    int red = color & 0xFF;
-                    int green = ((color & 0xFF00) >> 8) & 0xFF;
-                    int blue = ((color & 0xFF0000) >> 16) & 0xFF;
-                    color = (255 << 24) | (red << 16) | (green << 8) | blue;
-
-                    return Color.FromArgb(color);
-                    */
-
-                    return ColorTranslator.FromOle(color);
-                }
-            }
-
-            return Color.Empty;
-        }
-
-        private List<EndPointData> GetEndPointDataFromUBXXmlData(string endpointAccount, XmlDocument ubxData, bool isPrivateEndPoint)
-        {
-            List<EndPointData> endPoints = new List<EndPointData>(0);
-
-            XmlNodeList endPointNodes = ubxData.GetElementsByTagName("EndpointData");
-            if (endPointNodes.Count > 0)
-            {
-                foreach (XmlNode epNode in endPointNodes)
-                {
-                    Guid epId = new Guid(epNode.Attributes["id"].Value);
-                    string capsString = (epNode["Capabilities"] == null) ? "0:0" : epNode["Capabilities"].InnerText;
-                    ClientCapabilities clientCaps = ClientCapabilities.None;
-                    ClientCapabilitiesEx clientCapsEx = ClientCapabilitiesEx.None;
-
-                    string[] capsGroup = capsString.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
-                    if (capsGroup.Length > 0)
-                    {
-                        clientCaps = (ClientCapabilities)uint.Parse(capsGroup[0]);
-                    }
-
-                    if (capsGroup.Length > 1)
-                    {
-                        clientCapsEx = (ClientCapabilitiesEx)uint.Parse(capsGroup[1]);
-                    }
-
-                    EndPointData epData = (isPrivateEndPoint ? new PrivateEndPointData(endpointAccount, epId) : new EndPointData(endpointAccount, epId));
-                    epData.IMCapabilities = clientCaps;
-                    epData.IMCapabilitiesEx = clientCapsEx;
-                    endPoints.Add(epData);
-                }
-            }
-
-            return endPoints;
-        }
-
         /// <summary>
         /// Called when an OUT command has been received.
         /// </summary>
@@ -1208,133 +1096,6 @@ namespace MSNPSharp
                 OnSignedOff(new SignedOffEventArgs(SignedOffReason.None));
         }
 
-        /// <summary>
-        /// Called when a UBN command has been received.
-        /// </summary>
-        /// <remarks>
-        /// <code>UBN [account;{GUID}] [1:xml data,2:sip invite, 3: MSNP2P SLP data, 4:logout, 10: TURN] [PayloadLegth]</code>
-        /// </remarks>
-        /// <param name="message"></param>
-        protected virtual void OnUBNReceived(NSMessage message)
-        {
-            NetworkMessage networkMessage = message as NetworkMessage;
-            if (message.InnerBody != null)
-            {
-                switch (message.CommandValues[1].ToString())
-                {
-                    case "3":
-                        {
-                            SLPMessage slpMessage = SLPMessage.Parse(message.InnerBody);
-
-                            if (slpMessage == null)
-                            {
-                                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                                    "Received P2P UBN message with unknown payload:\r\n" + Encoding.UTF8.GetString(message.InnerBody), GetType().Name);
-                            }
-                            else
-                            {
-                                string source = message.CommandValues[0].ToString();
-                                if (String.IsNullOrEmpty(source))
-                                    source = slpMessage.Source;
-
-                                string sourceEmail = source;
-                                if (sourceEmail.Contains(";"))
-                                    sourceEmail = sourceEmail.Split(';')[0].ToLowerInvariant();
-
-                                Guid sourceGuid = slpMessage.FromEndPoint;
-                                Contact sourceContact;
-
-                                P2PVersion ver = (sourceGuid != Guid.Empty) ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
-
-                                if (ContactList.HasContact(sourceEmail, IMAddressInfoType.WindowsLive))
-                                {
-                                    sourceContact = ContactList.GetContact(sourceEmail, IMAddressInfoType.WindowsLive);
-                                    if (sourceContact.Status == PresenceStatus.Hidden || sourceContact.Status == PresenceStatus.Offline)
-                                    {
-                                        // If not return, we will get a 217 error (User not online).
-                                        return;
-                                    }
-                                }
-
-                                sourceContact = ContactList.GetContactWithCreate(sourceEmail, IMAddressInfoType.WindowsLive);
-
-                                if (slpMessage.ContentType == "application/x-msnmsgr-transreqbody" ||
-                                    slpMessage.ContentType == "application/x-msnmsgr-transrespbody" ||
-                                    slpMessage.ContentType == "application/x-msnmsgr-transdestaddrupdate")
-                                {
-                                    P2PSession.ProcessDirectInvite(slpMessage, this, null);
-                                }
-                            }
-                        }
-                        break;
-
-                    case "4":
-                    case "8":
-                        {
-                            string logoutMsg = Encoding.UTF8.GetString(message.InnerBody);
-                            if (logoutMsg.StartsWith("goawyplzthxbye") || logoutMsg == "gtfo")
-                            {
-                                if (messageProcessor != null)
-                                    messageProcessor.Disconnect();
-                            }
-                            return;
-                        }
-
-                    case "10":
-                        {
-                            SLPMessage slpMessage = SLPMessage.Parse(message.InnerBody);
-                            if (slpMessage != null &&
-                                slpMessage.ContentType == "application/x-msnmsgr-turnsetup")
-                            {
-                                SLPRequestMessage request = slpMessage as SLPRequestMessage;
-                                if (request != null && request.Method == "ACK")
-                                {
-                                    HttpWebRequest wr = (HttpWebRequest)WebRequest.Create("https://" + request.BodyValues["ServerAddress"].Value);
-                                    wr.Proxy = ConnectivitySettings.WebProxy;
-                                    //wr.Credentials = new NetworkCredential(request.BodyValues["SessionUsername"].Value, request.BodyValues["SessionPassword"].Value);
-
-                                    wr.Credentials = new NetworkCredential(
-                                        request.BodyValues["SessionUsername"].Value,
-                                        request.BodyValues["SessionPassword"].Value
-                                    );
-
-                                    wr.BeginGetResponse(delegate(IAsyncResult result)
-                                    {
-                                        try
-                                        {
-                                            using (Stream stream = ((WebRequest)result.AsyncState).EndGetResponse(result).GetResponseStream())
-                                            {
-                                                using (StreamReader r = new StreamReader(stream, Encoding.UTF8))
-                                                {
-                                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                                                    "TURN response: " + r.ReadToEnd(), GetType().Name);
-                                                }
-                                            }
-                                            wr.Abort();
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                                                "TURN error: " + ex.ToString(), GetType().Name);
-                                        }
-                                    }, wr);
-                                }
-                            }
-                        }
-                        break;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Called when a UUN command has been received.
-        /// </summary>
-        /// <param name="message"></param>
-        protected virtual void OnUUNReceived(NSMessage message)
-        {
-            bool ok = message.CommandValues.Count > 0 && message.CommandValues[0].ToString() == "OK";
-            uunBridge.ProcessUUN(message.TransactionID, ok);
-        }
 
 
 
@@ -1969,6 +1730,12 @@ namespace MSNPSharp
                 case "RML":
                     OnRMLReceived(nsMessage);
                     break;
+                case "PUT":
+                    OnPUTReceived(nsMessage);
+                    break;
+                case "DEL":
+                    OnDELReceived(nsMessage);
+                    break;
 
                 // Other CMDs               
                 case "CHL":
@@ -1983,15 +1750,8 @@ namespace MSNPSharp
                 case "QRY":
                     OnQRYReceived(nsMessage);
                     break;
-
                 case "SBS":
                     OnSBSReceived(nsMessage);
-                    break;
-                case "PUT":
-                    OnPUTReceived(nsMessage);
-                    break;
-                case "DEL":
-                    OnDELReceived(nsMessage);
                     break;
                 case "VER":
                     OnVERReceived(nsMessage);
@@ -2008,16 +1768,6 @@ namespace MSNPSharp
                 case "GCF":
                     OnGCFReceived(nsMessage);
                     break;
-
-                // Deprecated CMDs, MSNP21TODO
-
-                case "UBN":
-                    OnUBNReceived(nsMessage);
-                    break;
-                case "UUN":
-                    OnUUNReceived(nsMessage);
-                    break;
-
                 default:
                     isUnknownMessage = true;
                     break;
