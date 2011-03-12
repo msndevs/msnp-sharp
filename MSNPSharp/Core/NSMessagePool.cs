@@ -204,12 +204,10 @@ namespace MSNPSharp.Core
 
                             case "NOT": // NOT notification command
                             case "GCF": // GCF privacy settings
-                            case "UBN": // UBN Unified Budy Notification (for SIP requests)
-
                             case "GET": // GET                            
-                            case "IPG": // IPG pager command 
-                            case "UUN": // UUN Unified User Notification                            
+                            case "IPG": // IPG pager command                            
                             case "FSL": // FSL
+
                             case "201": // 201
                             case "203": // 203
                             case "204": // 204 Invalid contact network in ADL/RML

@@ -39,38 +39,10 @@ using System.Globalization;
 namespace MSNPSharp.Core
 {
     /// <summary>
-    /// NS payload message class, such as ADL and FQY
+    /// NS payload message class, such as ADL and SDG
     /// <para>The format of these mseeages is: COMMAND TRANSID [PARAM1] [PARAM2] .. PAYLOADLENGTH\r\nPAYLOAD</para>
     /// <remarks>
     /// DONOT pass the payload length as command value, the payload length will be calculated automatically
-    /// <para>
-    /// <list type="bullet">
-    /// List of NS payload commands:
-    /// <item>
-    /// RML
-    /// <description>Remove contact </description>
-    /// </item>
-    /// <item>
-    /// ADL
-    /// <description>Add users to your contact lists.</description>
-    /// </item>
-    /// <item>
-    /// FQY
-    /// <description>Query client's network types except PassportMember</description>
-    /// </item>
-    /// <item>
-    /// QRY
-    /// <description>Response to CHL by client </description>
-    /// </item>
-    /// <item>NOT</item>
-    /// <item>UBX</item>
-    /// <item>GCF</item>
-    /// <item>IPG</item>
-    /// <item>UUX</item>
-    /// <item>MSG</item>
-    /// <item>UBN</item>
-    /// </list>
-    /// </para>
     /// </remarks>
     /// </summary>
     [Serializable()]

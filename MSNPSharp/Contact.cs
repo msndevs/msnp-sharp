@@ -1730,14 +1730,6 @@ namespace MSNPSharp
             return contactGroups.Contains(group);
         }
 
-        public void UpdateScreenName()
-        {
-            if (NSMessageHandler == null)
-                throw new MSNPSharpException("No valid message handler object");
-
-            NSMessageHandler.RequestScreenName(this);
-        }
-
         public override int GetHashCode()
         {
             return Hash.GetHashCode();

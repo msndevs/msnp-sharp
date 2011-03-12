@@ -35,6 +35,7 @@ using System.IO;
 using System.Net;
 using System.Xml;
 using System.Web;
+using System.Text;
 using System.Drawing;
 using System.Diagnostics;
 using System.Collections.Generic;
@@ -42,6 +43,7 @@ using System.Collections.Generic;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
+    using MSNPSharp.P2P;
 
     partial class NSMessageHandler
     {
@@ -481,5 +483,133 @@ namespace MSNPSharp
         protected virtual void OnPRPReceived(NSMessage message)
         {
         }
+
+
+        /// <summary>
+        /// Called when a UBN command has been received.
+        /// </summary>
+        /// <remarks>
+        /// <code>UBN [account;{GUID}] [1:xml data,2:sip invite, 3: MSNP2P SLP data, 4:logout, 10: TURN] [PayloadLegth]</code>
+        /// </remarks>
+        /// <param name="message"></param>
+        [Obsolete(@"Obsoleted in MSNP21. Replaced by SIPv2.", true)]
+        protected virtual void OnUBNReceived(NSMessage message)
+        {
+            NetworkMessage networkMessage = message as NetworkMessage;
+            if (message.InnerBody != null)
+            {
+                switch (message.CommandValues[1].ToString())
+                {
+                    case "3":
+                        {
+                            SLPMessage slpMessage = SLPMessage.Parse(message.InnerBody);
+
+                            if (slpMessage == null)
+                            {
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                                    "Received P2P UBN message with unknown payload:\r\n" + Encoding.UTF8.GetString(message.InnerBody), GetType().Name);
+                            }
+                            else
+                            {
+                                string source = message.CommandValues[0].ToString();
+                                if (String.IsNullOrEmpty(source))
+                                    source = slpMessage.Source;
+
+                                string sourceEmail = source;
+                                if (sourceEmail.Contains(";"))
+                                    sourceEmail = sourceEmail.Split(';')[0].ToLowerInvariant();
+
+                                Guid sourceGuid = slpMessage.FromEndPoint;
+                                Contact sourceContact;
+
+                                P2PVersion ver = (sourceGuid != Guid.Empty) ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
+
+                                if (ContactList.HasContact(sourceEmail, IMAddressInfoType.WindowsLive))
+                                {
+                                    sourceContact = ContactList.GetContact(sourceEmail, IMAddressInfoType.WindowsLive);
+                                    if (sourceContact.Status == PresenceStatus.Hidden || sourceContact.Status == PresenceStatus.Offline)
+                                    {
+                                        // If not return, we will get a 217 error (User not online).
+                                        return;
+                                    }
+                                }
+
+                                sourceContact = ContactList.GetContactWithCreate(sourceEmail, IMAddressInfoType.WindowsLive);
+
+                                if (slpMessage.ContentType == "application/x-msnmsgr-transreqbody" ||
+                                    slpMessage.ContentType == "application/x-msnmsgr-transrespbody" ||
+                                    slpMessage.ContentType == "application/x-msnmsgr-transdestaddrupdate")
+                                {
+                                    P2PSession.ProcessDirectInvite(slpMessage, this, null);
+                                }
+                            }
+                        }
+                        break;
+
+                    case "4":
+                    case "8":
+                        {
+                            string logoutMsg = Encoding.UTF8.GetString(message.InnerBody);
+                            if (logoutMsg.StartsWith("goawyplzthxbye") || logoutMsg == "gtfo")
+                            {
+                                if (messageProcessor != null)
+                                    messageProcessor.Disconnect();
+                            }
+                            return;
+                        }
+
+                    case "10":
+                        {
+                            SLPMessage slpMessage = SLPMessage.Parse(message.InnerBody);
+                            if (slpMessage != null &&
+                                slpMessage.ContentType == "application/x-msnmsgr-turnsetup")
+                            {
+                                SLPRequestMessage request = slpMessage as SLPRequestMessage;
+                                if (request != null && request.Method == "ACK")
+                                {
+                                    HttpWebRequest wr = (HttpWebRequest)WebRequest.Create("https://" + request.BodyValues["ServerAddress"].Value);
+                                    wr.Proxy = ConnectivitySettings.WebProxy;
+                                    //wr.Credentials = new NetworkCredential(request.BodyValues["SessionUsername"].Value, request.BodyValues["SessionPassword"].Value);
+
+                                    wr.Credentials = new NetworkCredential(
+                                        request.BodyValues["SessionUsername"].Value,
+                                        request.BodyValues["SessionPassword"].Value
+                                    );
+
+                                    wr.BeginGetResponse(delegate(IAsyncResult result)
+                                    {
+                                        try
+                                        {
+                                            using (Stream stream = ((WebRequest)result.AsyncState).EndGetResponse(result).GetResponseStream())
+                                            {
+                                                using (StreamReader r = new StreamReader(stream, Encoding.UTF8))
+                                                {
+                                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                                                    "TURN response: " + r.ReadToEnd(), GetType().Name);
+                                                }
+                                            }
+                                            wr.Abort();
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                                                "TURN error: " + ex.ToString(), GetType().Name);
+                                        }
+                                    }, wr);
+                                }
+                            }
+                        }
+                        break;
+                }
+            }
+        }
+
+        [Obsolete(@"Obsoleted in MSNP21. Replaced by SIPv2.", true)]
+        protected virtual void OnUUNReceived(NSMessage message)
+        {
+            bool ok = message.CommandValues.Count > 0 && message.CommandValues[0].ToString() == "OK";
+            uunBridge.ProcessUUN(message.TransactionID, ok);
+        }
+
     }
 };
