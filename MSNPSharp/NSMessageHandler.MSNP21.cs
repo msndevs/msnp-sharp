@@ -648,6 +648,7 @@ namespace MSNPSharp
 
             Contact viaHeaderContact = null;
             Contact fromContact = null;
+            bool fromIsMe = false;
 
             if (mmm.RoutingHeaders.ContainsKey(MIMEHeaderStrings.Via) ||
                 fromViaAccountAddressType != IMAddressInfoType.None ||
@@ -698,7 +699,8 @@ namespace MSNPSharp
 
             if (fromContact == null)
             {
-                fromContact = ContactList.GetContactWithCreate(fromAccount, fromAccountAddressType);
+                fromIsMe = (fromAccount == ContactList.Owner.Account && fromAccountAddressType == IMAddressInfoType.WindowsLive);
+                fromContact = fromIsMe ? ContactList.Owner : ContactList.GetContactWithCreate(fromAccount, fromAccountAddressType);
             }
 
             fromContact.ViaContact = viaHeaderContact;
@@ -739,6 +741,13 @@ namespace MSNPSharp
                                                     switch (node.Name)
                                                     {
                                                         case "Status":
+
+                                                            if (fromIsMe && IsSignedIn == false)
+                                                            {
+                                                                // We have already signed in another place, but not here...
+                                                                // Don't set status... This place will set the status later.
+                                                                return;
+                                                            }
 
                                                             PresenceStatus oldStatus = fromContact.Status;
                                                             PresenceStatus newStatus = ParseStatus(node.InnerText);
@@ -832,7 +841,7 @@ namespace MSNPSharp
                                                             cap = (ClientCapabilities)long.Parse(caps[0]);
 
                                                             if (!fromContact.EndPointData.ContainsKey(epid))
-                                                                fromContact.EndPointData.Add(epid, new EndPointData(fromContact.Account, epid));
+                                                                fromContact.EndPointData.Add(epid, fromIsMe ? new PrivateEndPointData(fromContact.Account, epid) : new EndPointData(fromContact.Account, epid));
 
                                                             if (serviceEnum == ServiceShortNames.IM)
                                                             {
@@ -852,7 +861,8 @@ namespace MSNPSharp
 
                                         case ServiceShortNames.PD:
                                             {                                        
-                                                PrivateEndPointData privateEndPoint = new PrivateEndPointData(ContactList.Owner.Account, epid);
+                                                PrivateEndPointData privateEndPoint = ContactList.Owner.EndPointData.ContainsKey(epid) ?
+                                                    ContactList.Owner.EndPointData[epid] as PrivateEndPointData : new PrivateEndPointData(ContactList.Owner.Account, epid);
 
                                                 foreach (XmlNode node in service.ChildNodes)
                                                 {

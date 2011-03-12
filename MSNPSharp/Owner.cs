@@ -281,7 +281,6 @@ namespace MSNPSharp
             }
 
             SignoutFrom(NSMessageHandler.MachineGuid);
-            Status = PresenceStatus.Offline;
         }
 
         /// <summary>
