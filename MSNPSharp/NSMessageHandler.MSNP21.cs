@@ -1163,7 +1163,6 @@ namespace MSNPSharp
                                 foreach (XmlNode service in services)
                                 {
                                     ServiceShortNames serviceEnum = (ServiceShortNames)Enum.Parse(typeof(ServiceShortNames), service.Attributes["n"].Value);
-                                    Guid epid = service.Attributes["epid"] == null ? Guid.Empty : new Guid(service.Attributes["epid"].Value);
 
                                     switch (serviceEnum)
                                     {

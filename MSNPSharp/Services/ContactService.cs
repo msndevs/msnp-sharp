@@ -453,9 +453,21 @@ namespace MSNPSharp
             PersonalMessage pm = new PersonalMessage(Deltas.Profile.PersonalMessage);
 
             NSMessageHandler.Owner.SetName(mydispName);
-            NSMessageHandler.Owner.SetPersonalMessage(pm);
-            NSMessageHandler.Owner.CreateDefaultDisplayImage(Deltas.Profile.Photo.DisplayImage);
+            pm.FriendlyName = mydispName;
+
             NSMessageHandler.Owner.SetColorScheme(System.Drawing.ColorTranslator.FromOle(Deltas.Profile.ColorScheme));
+            pm.ColorScheme = System.Drawing.ColorTranslator.FromOle(Deltas.Profile.ColorScheme);
+
+            SceneImage sceneImage = NSMessageHandler.Owner.SceneImage;
+            if (sceneImage != null && !sceneImage.IsDefaultImage)
+            {
+                pm.Scene = sceneImage.ContextPlain;
+            }
+
+            NSMessageHandler.Owner.CreateDefaultDisplayImage(Deltas.Profile.Photo.DisplayImage);
+            pm.UserTileLocation = NSMessageHandler.Owner.DisplayImage.IsDefaultImage ? string.Empty : NSMessageHandler.Owner.DisplayImage.ContextPlain;
+            
+            NSMessageHandler.Owner.SetPersonalMessage(pm);
 
             if (NSMessageHandler.AutoSynchronize)
             {

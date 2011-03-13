@@ -441,5 +441,34 @@ namespace MSNPSharp
                 }
             }
         }
+
+        public static bool operator ==(PersonalMessage psm1, PersonalMessage psm2)
+        {
+            if (((object)psm1) == null && ((object)psm2) == null)
+                return true;
+
+            if (((object)psm1) == null || ((object)psm2) == null)
+                return false;
+
+            return psm1.Payload.Equals(psm2.Payload);
+        }
+
+        public static bool operator !=(PersonalMessage psm1, PersonalMessage psm2)
+        {
+            return !(psm1 == psm2);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null || obj.GetType() != GetType())
+                return false;
+
+            return this.Payload == ((PersonalMessage)obj).Payload;
+        }
+
+        public override int GetHashCode()
+        {
+            return Payload.GetHashCode();
+        }
     }
 };
