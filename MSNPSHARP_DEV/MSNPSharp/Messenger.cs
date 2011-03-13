@@ -259,6 +259,7 @@ namespace MSNPSharp
 
         /// <summary>
         /// The local user logged into the network. It will remain null until user successfully login.
+        /// You can register owner events after <see cref="NSMessageHandler.OwnerVerified"/> event.
         /// </summary>
         public Owner Owner
         {

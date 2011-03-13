@@ -64,7 +64,13 @@ namespace MSNPSharp
         #region Public Events
 
         /// <summary>
-        /// Occurs when the authentication and authorzation with the server has finished. The client is now connected to the messenger network.
+        /// Occurs when the user finished the authentication step, the owner was created.
+        /// </summary>
+        public event EventHandler<EventArgs> OwnerVerified;
+
+        /// <summary>
+        /// Occurs when the authentication and authorization with the server has finished.
+        /// The client is now connected to the messenger network.
         /// </summary>
         public event EventHandler<EventArgs> SignedIn;
 
@@ -73,11 +79,7 @@ namespace MSNPSharp
         /// </summary>
         public event EventHandler<SignedOffEventArgs> SignedOff;
 
-        /// <summary>
-        /// Occurs when the user finished the authentication step, the owner was created.
-        /// </summary>
-        public event EventHandler<EventArgs> OwnerVerified;
-
+        
         /// <summary>
         /// Occurs when an answer is received after sending a ping to the MSN server via the SendPing() method.
         /// </summary>
@@ -166,17 +168,6 @@ namespace MSNPSharp
         #endregion
 
         #region Properties
-
-        /// <summary>
-        /// The local user logged into the network. It will remain null until user successfully login.
-        /// </summary>
-        public Owner Owner
-        {
-            get
-            {
-                return ContactList.Owner;
-            }
-        }
 
         /// <summary>
         /// The library runs as a bot. Not to auto synchronize the addressbook when login.
@@ -379,6 +370,17 @@ namespace MSNPSharp
             get
             {
                 return dirService;
+            }
+        }
+
+        /// <summary>
+        /// The local user logged into the network. It will remain null until user successfully login.
+        /// </summary>
+        internal Owner Owner
+        {
+            get
+            {
+                return ContactList.Owner;
             }
         }
 
@@ -944,7 +946,7 @@ namespace MSNPSharp
                 {
                     // set the owner's name and CID
                     ContactList.SetOwner(new Owner(WebServiceConstants.MessengerIndividualAddressBookId, message.CommandValues[1].ToString(), msnticket.OwnerCID, this));
-                    OnOwnerVerified();
+                    OnOwnerVerified(EventArgs.Empty);
 
                     DirectoryService.Get(Owner.CID,
                             delegate(object sender, GetCompletedEventArgs ge)
@@ -1886,10 +1888,10 @@ namespace MSNPSharp
         /// <summary>
         /// Fires the <see cref="OwnerVerified"/> event.
         /// </summary>
-        protected virtual void OnOwnerVerified()
+        protected virtual void OnOwnerVerified(EventArgs e)
         {
             if (OwnerVerified != null)
-                OwnerVerified(this, new EventArgs());
+                OwnerVerified(this, e);
         }
 
         #endregion

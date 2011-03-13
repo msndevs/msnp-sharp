@@ -297,11 +297,6 @@ namespace MSNPSharp
             if (EndPointData.ContainsKey(endPointID))
             {
                 NSMessageHandler.SignoutFrom(endPointID);
-
-                if (endPointID == NSMessageHandler.MachineGuid)
-                {
-                    Status = PresenceStatus.Offline;
-                }
             }
             else
             {
