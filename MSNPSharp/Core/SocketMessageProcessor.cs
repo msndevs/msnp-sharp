@@ -316,6 +316,7 @@ namespace MSNPSharp.Core
             }
             catch (ObjectDisposedException)
             {
+                OnDisconnected();
             }
         }
 
@@ -542,7 +543,8 @@ namespace MSNPSharp.Core
                 }
 
                 socket = null;
-                //We don't need to call OnDisconnect here since EndReceiveCallback will be call automatically later on.
+                // We don't need to call OnDisconnect here since EndReceiveCallback will be call automatically later on. (This is not valid if disconnected remotelly)
+                // We need to call OnDisconnect after EndReceiveCallback if disconnected locally.
             }
         }
 
