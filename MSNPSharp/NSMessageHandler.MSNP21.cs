@@ -589,7 +589,7 @@ namespace MSNPSharp
             delPayload.InnerMessage = mmMessage;
             MessageProcessor.SendMessage(delPayload);
 
-            if (endPointID == MachineGuid)
+            if (endPointID == MachineGuid && messageProcessor.Connected)
                 messageProcessor.Disconnect();
         }
 
