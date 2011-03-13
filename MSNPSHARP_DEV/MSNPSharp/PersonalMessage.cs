@@ -345,6 +345,12 @@ namespace MSNPSharp
             return Payload;
         }
 
+        public void IAmListening(string artist, string song, string album)
+        {
+            this.mediaType = MediaType.Music;
+            this.content = new string[] { artist, song, album, String.Empty };
+        }
+
         private void Handle(XmlNodeList nodeList)
         {
             if (nodeList == null || nodeList.Count == 0)
