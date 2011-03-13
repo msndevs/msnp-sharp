@@ -67,6 +67,7 @@
     <Compile Include="Credentials.cs" />
     <Compile Include="Core\MimeDictionary.cs" />
     <Compile Include="DisplayImage.cs" />
+    <Compile Include="MSNObjectCatalog.cs" />
     <Compile Include="P2P\SDGBridge.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -98,7 +99,6 @@
     <Compile Include="Core\MessageProcessor.cs" />
     <Compile Include="MessageManager.cs" />
     <Compile Include="Messenger.cs" />
-    <Compile Include="MobileMessage.cs" />
     <Compile Include="Core\MSNMessage.cs" />
     <Compile Include="MSNObject.cs" />
     <Compile Include="MSNPSharpException.cs" />

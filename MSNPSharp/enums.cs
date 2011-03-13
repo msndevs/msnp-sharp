@@ -882,90 +882,6 @@ namespace MSNPSharp
         AnimEmoticon
     }
 
-
-    /// <summary>
-    /// The state of contact in a conversation.
-    /// </summary>
-    public enum ContactConversationState
-    {
-        None,
-        /// <summary>
-        /// The contact is invited, but not join in yet.
-        /// </summary>
-        Invited,
-        /// <summary>
-        /// The contact is in the conversation.
-        /// </summary>
-        Joined,
-        /// <summary>
-        /// The contact has left the conversation.
-        /// </summary>
-        Left
-    }
-
-    /// <summary>
-    /// Types of different conversations.
-    /// </summary>
-    [Flags]
-    public enum ConversationType : long
-    {
-        /// <summary>
-        /// Unspecified
-        /// </summary>
-        None = 0,
-        /// <summary>
-        /// MSN user conversation.
-        /// </summary>
-        SwitchBoard = 1,
-        /// <summary>
-        /// Yahoo Messenger conversation
-        /// </summary>
-        YIM = 2,
-        /// <summary>
-        /// A conversation that contains more than 2 users.
-        /// </summary>
-        MutipleUsers = 4,
-        /// <summary>
-        /// A conversation use for chatting.
-        /// </summary>
-        Chat = 8
-    }
-
-    /// <summary>
-    /// Types of text messages send through switchboard.
-    /// </summary>
-    public enum NetworkMessageType : int
-    {
-        /// <summary>
-        /// Unspecified
-        /// </summary>
-        None = 0,
-
-        /// <summary>
-        /// Plain text message
-        /// </summary>
-        Text = 1,
-
-        /// <summary>
-        /// User typing message
-        /// </summary>
-        Typing = 2,
-
-        /// <summary>
-        /// A nudge message
-        /// </summary>
-        Nudge = 3,
-
-        /// <summary>
-        /// The emoticon data.
-        /// </summary>
-        Emoticon,
-        /// <summary>
-        /// The object data.
-        /// </summary>
-        MSNObject
-    }
-
     /// <summary>
     /// CacheKey for webservices
     /// </summary>
@@ -1005,7 +921,11 @@ namespace MSNPSharp
         public const string Reliability = "Reliability";
         public const string Stream = "Stream";
         public const string Segment = "Segment";
+
         public const string Messaging = "Messaging";
+        public const string Publication = "Publication";
+        public const string Notification = "Notification";
+
         /// <summary>
         /// The value is: Content-Length
         /// </summary>
@@ -1045,21 +965,20 @@ namespace MSNPSharp
         /// </summary>
         public const string Max_Forwards = "Max-Forwards";
         public const string Uri = "Uri";
-		/// <summary>
-		/// The key string for charset header 
-		/// </summary>
-		public const string CharSet = " charset";
-		public const string Publication = "Publication";
-		public const string EPID = "epid";
-		public const string Path = "path";
-		public const string ServiceChannel = "Service-Channel";
-		
+        /// <summary>
+        /// The key string for charset header 
+        /// </summary>
+        public const string CharSet = " charset"; // Don't delete space
+        public const string EPID = "epid";
+        public const string Path = "path";
+        public const string ServiceChannel = "Service-Channel";
+
         internal const string KeyParam = ";";
-		
-		/// <summary>
-		/// The separator of key-value pair in MIME header 
-		/// </summary>
-		public const string KeyValueSeparator = ": ";
+
+        /// <summary>
+        /// The separator of key-value pair in MIME header 
+        /// </summary>
+        public const string KeyValueSeparator = ": ";
 
     }
 
@@ -1126,16 +1045,6 @@ namespace MSNPSharp
         AddImageRelationshipFailed
     }
 
-    public enum RosterProperties
-    {
-        None,
-        Name,
-        ClientCapacityString,
-        ClientCapabilities,
-        ClientCapabilitiesEx,
-        Status
-    }
-
     /// <summary>
     /// The reason that fires <see cref="Contact.DisplayImageChanged"/> event.
     /// </summary>
@@ -1165,76 +1074,79 @@ namespace MSNPSharp
         SignedIn,
         SignedOut
     }
-	
-	/// <summary>
-	/// The special account of remote network's gateways, i.e. FaceBook and LinkedIn 
-	/// </summary>
-	public class RemoteNetworkGateways
-	{
-		/// <summary>
-		/// FaceBook Gateway account. 
-		/// </summary>
-		public const string FaceBookGatewayAccount = "fb";
+
+    /// <summary>
+    /// The special account of remote network's gateways, i.e. FaceBook and LinkedIn 
+    /// </summary>
+    public class RemoteNetworkGateways
+    {
+        /// <summary>
+        /// FaceBook Gateway account. 
+        /// </summary>
+        public const string FaceBookGatewayAccount = "fb";
 
         public const string WindowsLiveGateway = "wl";
-	}
-	
-	/// <summary>
-	/// The keys for MIME Content Headers. 
-	/// </summary>
-	public class MIMEContentHeaders
-	{
-		/// <summary>
-		/// The key string for Content-Length header 
-		/// </summary>
-		public const string ContentLength = MIMEHeaderStrings.Content_Length;
-		
-		/// <summary>
-		/// The key string for Content-Type header 
-		/// </summary>
-		public const string ContentType = MIMEHeaderStrings.Content_Type;
-		
-		/// <summary>
-		/// The key string for charset header 
-		/// </summary>
-		public const string CharSet = MIMEHeaderStrings.CharSet;
-		
-		public const string Publication = MIMEHeaderStrings.Publication;
-		public const string Messaging = MIMEHeaderStrings.Messaging;
-		public const string URI = MIMEHeaderStrings.Uri;
-		public const string MessageType = MIMEHeaderStrings.Message_Type;
-		
-		public const string MSIMFormat = MIMEHeaderStrings.X_MMS_IM_Format;
-	}
-	
-	/// <summary>
-	/// The keys for MIME Reouting Header of MultiMimeMessage. 
-	/// </summary>
-	public class MIMERoutingHeaders
-	{
-		public const string Routing = MIMEHeaderStrings.Routing;
-		public const string From = MIMEHeaderStrings.From;
-		public const string To = MIMEHeaderStrings.To;
-		public const string EPID = MIMEHeaderStrings.EPID;
-		public const string Path = MIMEHeaderStrings.Path;
+    }
+
+    /// <summary>
+    /// The keys for MIME Content Headers. 
+    /// </summary>
+    public class MIMEContentHeaders
+    {
+        /// <summary>
+        /// The key string for Content-Length header 
+        /// </summary>
+        public const string ContentLength = MIMEHeaderStrings.Content_Length;
+
+        /// <summary>
+        /// The key string for Content-Type header 
+        /// </summary>
+        public const string ContentType = MIMEHeaderStrings.Content_Type;
+
+        /// <summary>
+        /// The key string for charset header 
+        /// </summary>
+        public const string CharSet = MIMEHeaderStrings.CharSet;
+
+        public const string Publication = MIMEHeaderStrings.Publication;
+        public const string Messaging = MIMEHeaderStrings.Messaging;
+        public const string Notification = MIMEHeaderStrings.Notification;
+
+
+        public const string URI = MIMEHeaderStrings.Uri;
+        public const string MessageType = MIMEHeaderStrings.Message_Type;
+
+        public const string MSIMFormat = MIMEHeaderStrings.X_MMS_IM_Format;
+    }
+
+    /// <summary>
+    /// The keys for MIME Reouting Header of MultiMimeMessage. 
+    /// </summary>
+    public class MIMERoutingHeaders
+    {
+        public const string Routing = MIMEHeaderStrings.Routing;
+        public const string From = MIMEHeaderStrings.From;
+        public const string To = MIMEHeaderStrings.To;
+        public const string EPID = MIMEHeaderStrings.EPID;
+        public const string Path = MIMEHeaderStrings.Path;
         public const string Options = "Options";
-		
-		/// <summary>
-		/// The service that this message should sent through. 
-		/// </summary>
-		public const string ServiceChannel = MIMEHeaderStrings.ServiceChannel;
-		
-	}
-	
-	/// <summary>
-	/// Keys for MIME header, reliability parts. 
-	/// </summary>
-	public class MIMEReliabilityHeaders
-	{
-		public const string Reliability = MIMEHeaderStrings.Reliability;
-		public const string Stream = MIMEHeaderStrings.Stream;
-		public const string Segment = MIMEHeaderStrings.Segment;
-	}
+
+        /// <summary>
+        /// The service that this message should sent through. 
+        /// </summary>
+        public const string ServiceChannel = MIMEHeaderStrings.ServiceChannel;
+
+    }
+
+    /// <summary>
+    /// Keys for MIME header, reliability parts. 
+    /// </summary>
+    public class MIMEReliabilityHeaders
+    {
+        public const string Reliability = MIMEHeaderStrings.Reliability;
+        public const string Stream = MIMEHeaderStrings.Stream;
+        public const string Segment = MIMEHeaderStrings.Segment;
+    }
 
     #region P2PFlag
 
@@ -1397,13 +1309,6 @@ namespace MSNPSharp
         RAK = 0x2
     }
 
-    internal enum SessionCloseState : int
-    {
-        None = 2,
-        TimeWait = 1,
-        Close = 0
-    }
-
     internal static class MSNSLPRequestMethod
     {
         public const string INVITE = "INVITE";
@@ -1412,37 +1317,4 @@ namespace MSNPSharp
     }
 
     #endregion
-
-    internal enum ConversationState : int
-    {
-        /// <summary>
-        /// Default state
-        /// </summary>
-        None = 0,
-
-        /// <summary>
-        /// The conversation object created. User not yet been invited.
-        /// </summary>
-        ConversationCreated = 1,
-
-        /// <summary>
-        /// Conversation has sent a request to create a switchboard for it.
-        /// </summary>
-        SwitchboardRequestSent = 2,
-
-        /// <summary>
-        /// One remote user has joined into the conversation. There're two users in the conversation now (including Owner).
-        /// </summary>
-        OneRemoteUserJoined = 3,
-
-        /// <summary>
-        /// The switchboard has ended.
-        /// </summary>
-        SwitchboardEnded = 4,
-
-        /// <summary>
-        /// The conversation already ended.
-        /// </summary>
-        ConversationEnded = 5
-    }
 };
