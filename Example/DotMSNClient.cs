@@ -2274,11 +2274,10 @@ namespace MSNPSharpClient
             MusicForm musicForm = new MusicForm();
             if (musicForm.ShowDialog() == DialogResult.OK)
             {
-                Messenger.Owner.PersonalMessage = new PersonalMessage(
-                    Messenger.Owner.PersonalMessage.Message,
-                    MediaType.Music,
-                    new string[] { musicForm.Artist, musicForm.Song, musicForm.Album, "" }
-                );
+                PersonalMessage pm = Messenger.Owner.PersonalMessage;
+                pm.IAmListening(musicForm.Artist, musicForm.Song, musicForm.Album);
+
+                Messenger.Owner.PersonalMessage = pm;
             }
         }
 

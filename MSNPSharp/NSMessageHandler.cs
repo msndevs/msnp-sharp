@@ -591,7 +591,7 @@ namespace MSNPSharp
                 XmlElement userElement = xmlDoc.CreateElement("user");
 
                 // s.IM (Status, CurrentMedia)
-                if (SETALL ||
+                if (SETALL || forcePEservice ||
                     newStatus != Owner.Status ||
                     psm.Payload != Owner.PersonalMessage.Payload)
                 {
