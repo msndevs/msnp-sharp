@@ -105,7 +105,7 @@ namespace MSNPSharp.Core
 
             contentHeaders[MIMEContentHeaders.ContentLength] = "0";
             contentHeaders[MIMEContentHeaders.ContentType] = "Text/plain";
-            contentHeaders[MIMEContentHeaders.ContentType][MIMEContentHeaders.CharSet] = "UTF-8"; // Don't delete space
+            contentHeaders[MIMEContentHeaders.ContentType][MIMEContentHeaders.CharSet] = "UTF-8";
         }
 
         public MultiMimeMessage(byte[] data)
@@ -236,7 +236,9 @@ namespace MSNPSharp.Core
             Array.Copy(reliabilityData, reliabilityHeaderEnd, messagingData, 0, messagingData.Length);
             contentHeaders.Clear();
             int messagingHeaderEnd = contentHeaders.Parse(messagingData);
-            contentKey = contentHeaders.ContainsKey(MIMEContentHeaders.Publication) ? MIMEContentHeaders.Publication : MIMEContentHeaders.Messaging;
+            contentKey = contentHeaders.ContainsKey(MIMEContentHeaders.Publication)
+                ? MIMEContentHeaders.Publication
+                : (contentHeaders.ContainsKey(MIMEContentHeaders.Notification) ? MIMEContentHeaders.Notification : MIMEContentHeaders.Messaging);
 
             int bodyLen = data.Length - routerHeaderEnd - reliabilityHeaderEnd - messagingHeaderEnd;
             int contentLen = bodyLen;

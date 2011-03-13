@@ -43,7 +43,7 @@ using System.Text.RegularExpressions;
 
 namespace MSNPSharp
 {
-    using MSNPSharp.Core;     
+    using MSNPSharp.Core;
 
     /// <summary>
     /// Defines the type of MSNObject.
@@ -140,7 +140,10 @@ namespace MSNPSharp
 
         public object SyncObject
         {
-            get { return syncObject; }
+            get
+            {
+                return syncObject;
+            }
         }
 
         /// <summary>
@@ -629,149 +632,5 @@ namespace MSNPSharp
         {
             return CalculateChecksum().GetHashCode();
         }
-    }
-
-
-    /// <summary>
-    /// A collection of all available MSN objects. This class is implemented following the singleton pattern.
-    /// </summary>
-    /// <remarks>
-    /// In this collection all user display's, emoticons, etc for the entire application are stored.
-    /// This allows for easy retrieval of the corresponding msn object by passing in the encrypted hash.
-    /// Note: Use <see cref="GetInstance"/> to get a reference to the global MSNObjectCatalog object on which you can call methods.
-    /// </remarks>
-    [Serializable()]
-    public class MSNObjectCatalog : ICollection
-    {
-        /// <summary>
-        /// The single instance
-        /// </summary>
-        [NonSerialized]
-        private static MSNObjectCatalog instance = new MSNObjectCatalog();
-
-        /// <summary>
-        /// Collection of all msn objects
-        /// </summary>
-        private Hashtable objectCollection = new Hashtable();
-
-        /// <summary>
-        /// Returns the msn object with the supplied hash as checksum.
-        /// </summary>
-        /// <param name="hash"></param>
-        /// <returns></returns>
-        public MSNObject Get(string hash)
-        {
-            return (objectCollection.ContainsKey(hash)) ? (MSNObject)objectCollection[hash] : null;
-        }
-
-        /// <summary>
-        /// Removes the msn object with the specified checksum from the collection.
-        /// </summary>
-        /// <param name="checksum"></param>
-        public void Remove(string checksum)
-        {
-            objectCollection.Remove(checksum);
-        }
-
-        /// <summary>
-        /// Removes the specified msn object from the collection.
-        /// </summary>
-        /// <param name="msnObject"></param>
-        public void Remove(MSNObject msnObject)
-        {
-            objectCollection.Remove(msnObject.CalculateChecksum());
-        }
-
-        /// <summary>
-        /// Adds the MSNObject (a user display, emoticon, etc) in the global collection.		
-        /// </summary>
-        /// <param name="msnObject"></param>
-        public void Add(MSNObject msnObject)
-        {
-            string hash = msnObject.CalculateChecksum();
-            Add(hash, msnObject);
-        }
-
-        /// <summary>
-        /// Adds the MSNObject (a user display, emoticon, etc) in the global collection, with the specified checksum as index.
-        /// </summary>
-        /// <param name="checksum"></param>
-        /// <param name="msnObject"></param>
-        public void Add(string checksum, MSNObject msnObject)
-        {
-            objectCollection[checksum] = msnObject;
-        }
-
-        /// <summary>
-        /// Returns a reference to the global MSNObjectCatalog object.
-        /// </summary>
-        public static MSNObjectCatalog GetInstance()
-        {
-            return instance;
-        }
-
-        /// <summary>
-        /// Constructor.
-        /// </summary>
-        private MSNObjectCatalog()
-        {
-        }
-
-        #region ICollection Members
-
-        /// <summary>
-        /// Returns false,because ObjectCatalog is by default not synchronized.
-        /// </summary>
-        public bool IsSynchronized
-        {
-            get
-            {
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// The number of objects in the catalog.
-        /// </summary>
-        public int Count
-        {
-            get
-            {
-                return objectCollection.Count;
-            }
-        }
-
-        /// <summary>
-        /// </summary>
-        /// <param name="array"></param>
-        /// <param name="index"></param>
-        public void CopyTo(Array array, int index)
-        {
-            objectCollection.CopyTo(array, index);
-        }
-
-        /// <summary>
-        /// </summary>
-        public object SyncRoot
-        {
-            get
-            {
-                return null;
-            }
-        }
-
-        #endregion
-
-        #region IEnumerable Members
-
-        /// <summary>
-        /// </summary>
-        /// <returns></returns>
-        public IEnumerator GetEnumerator()
-        {
-            return objectCollection.GetEnumerator();
-        }
-
-        #endregion
     }
 };
