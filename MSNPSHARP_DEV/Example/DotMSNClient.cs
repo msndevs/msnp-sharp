@@ -2251,14 +2251,18 @@ namespace MSNPSharpClient
             if (profileObject is List<string>)
             {
                 List<string> lstPersonalMessage = profileObject as List<string>;
+                PersonalMessage pm = messenger.Owner.PersonalMessage;
+
                 if (lstPersonalMessage[0] != "")
                 {
                     messenger.Owner.Name = lstPersonalMessage[0];
+                    pm.FriendlyName = lstPersonalMessage[0];
                 }
 
                 if (lstPersonalMessage[1] != "")
-                {
-                    messenger.Owner.PersonalMessage = new PersonalMessage(lstPersonalMessage[1]);
+                {                    
+                    pm.FriendlyName = lstPersonalMessage[1];
+                    messenger.Owner.PersonalMessage = pm;
                 }
 
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Update personal message completed.");

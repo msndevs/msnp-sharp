@@ -573,14 +573,10 @@ namespace MSNPSharp
                 return;
             }
 
-            string context = "0";
             bool SETALL = (Owner.Status == PresenceStatus.Offline);
             PersonalMessage psm = (newPM == null)
                 ? new PersonalMessage(String.IsNullOrEmpty(ContactService.Deltas.Profile.DisplayName) ? Owner.NickName : ContactService.Deltas.Profile.DisplayName)
                 : newPM;
-
-            if (Owner.DisplayImage != null && Owner.DisplayImage.Image != null)
-                context = Owner.DisplayImage.Context;
 
             if (SETALL || forcePEservice ||
                 newStatus != Owner.Status ||
