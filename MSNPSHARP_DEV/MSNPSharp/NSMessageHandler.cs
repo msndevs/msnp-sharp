@@ -594,8 +594,9 @@ namespace MSNPSharp
                 XmlDocument xmlDoc = new XmlDocument();
                 XmlElement userElement = xmlDoc.CreateElement("user");
 
-                // s.IM.Status
-                if (SETALL || newStatus != Owner.Status ||
+                // s.IM (Status, CurrentMedia)
+                if (SETALL ||
+                    newStatus != Owner.Status ||
                     psm.Payload != Owner.PersonalMessage.Payload)
                 {
                     XmlElement service = xmlDoc.CreateElement("s");
@@ -604,12 +605,11 @@ namespace MSNPSharp
                         "<Status>" + ParseStatus(newStatus) + "</Status>" +
                         "<CurrentMedia>" + MSNHttpUtility.XmlEncode(psm.CurrentMedia) + "</CurrentMedia>";
                     userElement.AppendChild(service);
-
-                    Owner.SetStatus(newStatus);
                 }
 
                 // s.PE (UserTileLocation, FriendlyName, PSM, Scene, ColorScheme)
-                if (SETALL || forcePEservice ||
+                if (SETALL || 
+                    forcePEservice ||
                     psm.Payload != Owner.PersonalMessage.Payload)
                 {
                     XmlElement service = xmlDoc.CreateElement("s");
@@ -620,7 +620,7 @@ namespace MSNPSharp
                     Owner.SetPersonalMessage(psm);
                 }
 
-                // sep.IM.Capabilities
+                // sep.IM (Capabilities)
                 if (SETALL ||
                     newLocalIMCaps != Owner.LocalEndPointIMCapabilities ||
                     newLocalIMCapsex != Owner.LocalEndPointIMCapabilitiesEx)
@@ -638,12 +638,9 @@ namespace MSNPSharp
                     Capabilities.InnerText = ((long)localIMCaps).ToString() + ":" + ((long)localIMCapsEx).ToString();
                     sep.AppendChild(Capabilities);
                     userElement.AppendChild(sep);
-
-                    Owner.EndPointData[NSMessageHandler.MachineGuid].IMCapabilities = localIMCaps;
-                    Owner.EndPointData[NSMessageHandler.MachineGuid].IMCapabilitiesEx = localIMCapsEx;
                 }
 
-                // sep.PE.Capabilities
+                // sep.PE (Capabilities)
                 if (SETALL ||
                     newLocalPECaps != Owner.LocalEndPointPECapabilities ||
                     newLocalPECapsex != Owner.LocalEndPointPECapabilitiesEx)
@@ -663,14 +660,12 @@ namespace MSNPSharp
                     Capabilities.InnerText = ((long)localPECaps).ToString() + ":" + ((long)localPECapsEx).ToString();
                     sep.AppendChild(Capabilities);
                     userElement.AppendChild(sep);
-
-                    Owner.EndPointData[NSMessageHandler.MachineGuid].PECapabilities = localPECaps;
-                    Owner.EndPointData[NSMessageHandler.MachineGuid].PECapabilitiesEx = localPECapsEx;
                 }
 
-                // sep.PD.EpName
+                // sep.PD (EpName, State)
                 if (SETALL ||
-                    newEPName != Owner.EpName)
+                    newEPName != Owner.EpName ||
+                    newStatus != Owner.Status)
                 {
                     XmlElement sep = xmlDoc.CreateElement("sep");
                     sep.SetAttribute("n", ServiceShortNames.PD.ToString());

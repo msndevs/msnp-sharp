@@ -831,6 +831,9 @@ namespace MSNPSharp
                                 {
                                     ServiceShortNames serviceEnum = (ServiceShortNames)Enum.Parse(typeof(ServiceShortNames), service.Attributes["n"].Value);
                                     Guid epid = service.Attributes["epid"] == null ? Guid.Empty : new Guid(service.Attributes["epid"].Value);
+                                    
+                                    if (!fromContact.EndPointData.ContainsKey(epid))
+                                        fromContact.EndPointData.Add(epid, fromIsMe ? new PrivateEndPointData(fromContact.Account, epid) : new EndPointData(fromContact.Account, epid));
 
                                     switch (serviceEnum)
                                     {
@@ -853,9 +856,6 @@ namespace MSNPSharp
                                                             }
                                                             cap = (ClientCapabilities)long.Parse(caps[0]);
 
-                                                            if (!fromContact.EndPointData.ContainsKey(epid))
-                                                                fromContact.EndPointData.Add(epid, fromIsMe ? new PrivateEndPointData(fromContact.Account, epid) : new EndPointData(fromContact.Account, epid));
-
                                                             if (serviceEnum == ServiceShortNames.IM)
                                                             {
                                                                 fromContact.EndPointData[epid].IMCapabilities = cap;
@@ -873,9 +873,8 @@ namespace MSNPSharp
                                             }
 
                                         case ServiceShortNames.PD:
-                                            {                                        
-                                                PrivateEndPointData privateEndPoint = Owner.EndPointData.ContainsKey(epid) ?
-                                                    Owner.EndPointData[epid] as PrivateEndPointData : new PrivateEndPointData(Owner.Account, epid);
+                                            {
+                                                PrivateEndPointData privateEndPoint = fromContact.EndPointData[epid] as PrivateEndPointData;
 
                                                 foreach (XmlNode node in service.ChildNodes)
                                                 {
