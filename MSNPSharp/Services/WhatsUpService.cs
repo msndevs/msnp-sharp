@@ -155,7 +155,7 @@ namespace MSNPSharp
 
                 GetContactsRecentActivityRequestType request = new GetContactsRecentActivityRequestType();
                 request.entityHandle = new entityHandle();
-                request.entityHandle.Cid = Convert.ToInt64(NSMessageHandler.ContactList.Owner.CID);
+                request.entityHandle.Cid = Convert.ToInt64(NSMessageHandler.Owner.CID);
                 request.locales = new string[] { System.Globalization.CultureInfo.CurrentCulture.Name };
                 request.count = count;
 

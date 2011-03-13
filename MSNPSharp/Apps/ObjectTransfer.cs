@@ -107,13 +107,13 @@ namespace MSNPSharp.Apps
             if (msnObject.ObjectType == MSNObjectType.UserDisplay ||
                 msnObject.ObjectType == MSNObjectType.Unknown)
             {
-                msnObject = NSMessageHandler.ContactList.Owner.DisplayImage;
-                objStream = NSMessageHandler.ContactList.Owner.DisplayImage.OpenStream();
+                msnObject = NSMessageHandler.Owner.DisplayImage;
+                objStream = NSMessageHandler.Owner.DisplayImage.OpenStream();
             }
             else if (msnObject.ObjectType == MSNObjectType.Scene)
             {
-                msnObject = NSMessageHandler.ContactList.Owner.SceneImage;
-                objStream = NSMessageHandler.ContactList.Owner.SceneImage.OpenStream();
+                msnObject = NSMessageHandler.Owner.SceneImage;
+                objStream = NSMessageHandler.Owner.SceneImage.OpenStream();
             }
             else if (msnObject.ObjectType == MSNObjectType.Emoticon &&
                 Local.Emoticons.ContainsKey(msnObject.Sha))

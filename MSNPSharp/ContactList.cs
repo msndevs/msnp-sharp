@@ -648,7 +648,7 @@ namespace MSNPSharp
                 throw new InvalidOperationException("Only default addressbook can call this function.");
             }
 
-            if (Owner != null)
+            if (this.Owner != null)
             {
                 throw new InvalidOperationException("Owner already set.");
             }

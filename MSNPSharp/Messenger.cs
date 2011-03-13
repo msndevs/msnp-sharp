@@ -264,7 +264,7 @@ namespace MSNPSharp
         {
             get
             {
-                return Nameserver.ContactList.Owner;
+                return Nameserver.Owner;
             }
         }
 
@@ -323,9 +323,9 @@ namespace MSNPSharp
         {
             if (nsMessageProcessor.Connected)
             {
-                if (nsMessageHandler != null && Nameserver.ContactList.Owner != null)
+                if (nsMessageHandler != null && Nameserver.Owner != null)
                 {
-                    Nameserver.ContactList.Owner.SetStatus(PresenceStatus.Offline);
+                    Nameserver.Owner.SetStatus(PresenceStatus.Offline);
                 }
 
                 nsMessageProcessor.Disconnect();

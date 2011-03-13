@@ -109,7 +109,7 @@ namespace MSNPSharp.P2P
 
 
             string to = ((int)remote.ClientType).ToString() + ":" + remote.Account;
-            string from = ((int)nsHandler.ContactList.Owner.ClientType).ToString() + ":" + nsHandler.ContactList.Owner.Account;
+            string from = ((int)nsHandler.Owner.ClientType).ToString() + ":" + nsHandler.Owner.Account;
 
             MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
             mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = NSMessageHandler.MachineGuid.ToString("B").ToLowerInvariant();

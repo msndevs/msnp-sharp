@@ -483,7 +483,7 @@ namespace MSNPSharp.P2P
         private bool CheckSLPMessage(P2PBridge bridge, Contact source, Guid sourceGuid, P2PMessage msg, SLPMessage slp)
         {
             string src = source.Account.ToLowerInvariant();
-            string target = nsMessageHandler.ContactList.Owner.Account.ToLowerInvariant();
+            string target = nsMessageHandler.Owner.Account.ToLowerInvariant();
 
             if (msg.Version == P2PVersion.P2PV2)
             {

@@ -368,8 +368,8 @@ namespace MSNPSharp
             }
 
             MclSerialization st = Settings.SerializationType;
-            string addressbookFile = Path.Combine(Settings.SavePath, NSMessageHandler.ContactList.Owner.Account.GetHashCode() + ".mcl");
-            string deltasResultsFile = Path.Combine(Settings.SavePath, NSMessageHandler.ContactList.Owner.Account.GetHashCode() + "d" + ".mcl");
+            string addressbookFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Account.GetHashCode() + ".mcl");
+            string deltasResultsFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Account.GetHashCode() + "d" + ".mcl");
 
             try
             {
@@ -449,13 +449,13 @@ namespace MSNPSharp
             Deltas.Profile = NSMessageHandler.StorageService.GetProfile();
 
             // Set display name, personal status and photo
-            string mydispName = String.IsNullOrEmpty(Deltas.Profile.DisplayName) ? NSMessageHandler.ContactList.Owner.NickName : Deltas.Profile.DisplayName;
+            string mydispName = String.IsNullOrEmpty(Deltas.Profile.DisplayName) ? NSMessageHandler.Owner.NickName : Deltas.Profile.DisplayName;
             PersonalMessage pm = new PersonalMessage(Deltas.Profile.PersonalMessage);
 
-            NSMessageHandler.ContactList.Owner.SetName(mydispName);
-            NSMessageHandler.ContactList.Owner.SetPersonalMessage(pm);
-            NSMessageHandler.ContactList.Owner.CreateDefaultDisplayImage(Deltas.Profile.Photo.DisplayImage);
-            NSMessageHandler.ContactList.Owner.SetColorScheme(System.Drawing.ColorTranslator.FromOle(Deltas.Profile.ColorScheme));
+            NSMessageHandler.Owner.SetName(mydispName);
+            NSMessageHandler.Owner.SetPersonalMessage(pm);
+            NSMessageHandler.Owner.CreateDefaultDisplayImage(Deltas.Profile.Photo.DisplayImage);
+            NSMessageHandler.Owner.SetColorScheme(System.Drawing.ColorTranslator.FromOle(Deltas.Profile.ColorScheme));
 
             if (NSMessageHandler.AutoSynchronize)
             {
@@ -505,7 +505,7 @@ namespace MSNPSharp
 
             if ((scene & Scenario.SendServiceADL) != Scenario.None)
             {
-                string[] ownerAccount = NSMessageHandler.ContactList.Owner.Account.Split('@');
+                string[] ownerAccount = NSMessageHandler.Owner.Account.Split('@');
                 string payload = "<ml><d n=\"" + ownerAccount[1] + "\"><c n=\"" + ownerAccount[0] + "\" t=\"1\"><s l=\"3\" n=\"IM\" /><s l=\"3\" n=\"PE\" /><s l=\"3\" n=\"PD\" /><s l=\"3\" n=\"PF\"/></c></d></ml>";
 
                 serviceADL = nsmp.IncreaseTransactionID();
@@ -785,7 +785,7 @@ namespace MSNPSharp
                                     };
                                     ABAddRequestType abAddRequest = new ABAddRequestType();
                                     abAddRequest.abInfo = new abInfoType();
-                                    abAddRequest.abInfo.ownerEmail = NSMessageHandler.ContactList.Owner.Account;
+                                    abAddRequest.abInfo.ownerEmail = NSMessageHandler.Owner.Account;
                                     abAddRequest.abInfo.ownerPuid = "0";
                                     abAddRequest.abInfo.fDefault = true;
 
@@ -1339,7 +1339,7 @@ namespace MSNPSharp
                             contactToChange.contactInfo.isMessengerUserSpecified = true;
                             propertiesChanged.Add(PropertyString.MessengerMemberInfo); // Pang found WLM2009 add this.
                             contactToChange.contactInfo.MessengerMemberInfo = new MessengerMemberInfo(); // But forgot to add this...
-                            contactToChange.contactInfo.MessengerMemberInfo.DisplayName = NSMessageHandler.ContactList.Owner.Name; // and also this :)
+                            contactToChange.contactInfo.MessengerMemberInfo.DisplayName = NSMessageHandler.Owner.Name; // and also this :)
                         }
 
                         // ContactType
@@ -2191,7 +2191,7 @@ namespace MSNPSharp
             SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, createCircleObject);
             CreateCircleRequestType request = new CreateCircleRequestType();
             request.callerInfo = new callerInfoType();
-            request.callerInfo.PublicDisplayName = NSMessageHandler.ContactList.Owner.Name == string.Empty ? NSMessageHandler.ContactList.Owner.Account : NSMessageHandler.ContactList.Owner.Name;
+            request.callerInfo.PublicDisplayName = NSMessageHandler.Owner.Name == string.Empty ? NSMessageHandler.Owner.Account : NSMessageHandler.Owner.Name;
 
             //This is M$ style, you will never guess out the meaning of these numbers.
             ContentInfoType properties = new ContentInfoType();
@@ -2273,7 +2273,7 @@ namespace MSNPSharp
                 throw new InvalidOperationException("The owner is not the administrator of this circle.");
             }
 
-            if (contact == NSMessageHandler.ContactList.Owner)
+            if (contact == NSMessageHandler.Owner)
                 return;
 
             CreateContactAsync(contact.Account, circle.ClientType, circle.AddressBookId,
@@ -2662,16 +2662,16 @@ namespace MSNPSharp
         /// </summary>
         public void DeleteRecordFile()
         {
-            if (NSMessageHandler.ContactList.Owner != null && NSMessageHandler.ContactList.Owner.Account != null)
+            if (NSMessageHandler.Owner != null && NSMessageHandler.Owner.Account != null)
             {
-                string addressbookFile = Path.Combine(Settings.SavePath, NSMessageHandler.ContactList.Owner.Account.GetHashCode() + ".mcl");
+                string addressbookFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Account.GetHashCode() + ".mcl");
                 if (File.Exists(addressbookFile))
                 {
                     File.SetAttributes(addressbookFile, FileAttributes.Normal);  //By default, the file is hidden.
                     File.Delete(addressbookFile);
                 }
 
-                string deltasResultFile = Path.Combine(Settings.SavePath, NSMessageHandler.ContactList.Owner.Account.GetHashCode() + "d" + ".mcl");
+                string deltasResultFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Account.GetHashCode() + "d" + ".mcl");
                 if (File.Exists(deltasResultFile))
                 {
                     if (Deltas != null)
