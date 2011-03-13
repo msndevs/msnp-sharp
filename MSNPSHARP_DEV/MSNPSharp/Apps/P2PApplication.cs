@@ -158,7 +158,7 @@ namespace MSNPSharp.Apps
         {
             this.version = ver;
 
-            this.local = remote.NSMessageHandler.ContactList.Owner;
+            this.local = remote.NSMessageHandler.Owner;
             this.localEP = NSMessageHandler.MachineGuid;
 
             this.remote = remote;

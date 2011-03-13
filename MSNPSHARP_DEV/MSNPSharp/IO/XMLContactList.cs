@@ -1442,11 +1442,11 @@ namespace MSNPSharp.IO
             if (!HasAddressBookContactPage(abId))
                 return null;
 
-            if (NSMessageHandler.ContactList.Owner == null)
+            if (NSMessageHandler.Owner == null)
                 return null;
 
             lock (AddressbookContacts)
-                return SelectSelfContactFromContactList((new List<ContactType>(AddressbookContacts[abId.ToLowerInvariant()].Values)).ToArray(), NSMessageHandler.ContactList.Owner.Account);
+                return SelectSelfContactFromContactList((new List<ContactType>(AddressbookContacts[abId.ToLowerInvariant()].Values)).ToArray(), NSMessageHandler.Owner.Account);
         }
 
         /// <summary>
@@ -2361,9 +2361,9 @@ namespace MSNPSharp.IO
                         needsDelete |= true;
                     }
 
-                    if (account == NSMessageHandler.ContactList.Owner.Account.ToLowerInvariant() &&
+                    if (account == NSMessageHandler.Owner.Account.ToLowerInvariant() &&
                         cinfo.NetworkInfoList != null &&
-                        type == NSMessageHandler.ContactList.Owner.ClientType &&
+                        type == NSMessageHandler.Owner.ClientType &&
                         isDefaultAddressBook == false)
                     {
                         //This is a self contact. If we need to left a circle, we need its contactId.
@@ -2393,7 +2393,7 @@ namespace MSNPSharp.IO
 
                     if (lowerId == WebServiceConstants.MessengerIndividualAddressBookId)
                     {
-                        owner = NSMessageHandler.ContactList.Owner;
+                        owner = NSMessageHandler.Owner;
                         if (owner == null)
                         {
                             owner = new Owner(abId, cinfo.passportName, Convert.ToInt64(cinfo.CID), NSMessageHandler);

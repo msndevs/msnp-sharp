@@ -1788,7 +1788,7 @@ namespace MSNPSharp
                 if (NSMessageHandler == null || !NSMessageHandler.IsSignedIn)
                     throw new InvalidOperationException("Cannot send a message without signning in to the server. Please sign in first.");
 
-                if (ClientType == IMAddressInfoType.Circle && NSMessageHandler.ContactList.Owner.Status == PresenceStatus.Hidden)
+                if (ClientType == IMAddressInfoType.Circle && NSMessageHandler.Owner.Status == PresenceStatus.Hidden)
                     throw new InvalidOperationException("Cannot send a message to the group when you are in 'Hidden' status.");
 
                 return true;

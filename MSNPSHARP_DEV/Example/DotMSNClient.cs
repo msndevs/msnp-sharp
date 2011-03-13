@@ -266,7 +266,7 @@ namespace MSNPSharpClient
 
         private void AutoGroupMessageReply(Contact circle)
         {
-            if (Messenger.ContactList.Owner.Status != PresenceStatus.Hidden || Messenger.ContactList.Owner.Status != PresenceStatus.Offline)
+            if (Messenger.Owner.Status != PresenceStatus.Hidden || Messenger.Owner.Status != PresenceStatus.Offline)
                 circle.SendMessage(new TextMessage("MSNPSharp example client auto reply."));
         }
 
@@ -488,11 +488,11 @@ namespace MSNPSharpClient
                 return;
             }
 
-            lblName.Text = Messenger.ContactList.Owner.Name;
+            lblName.Text = Messenger.Owner.Name;
 
-            if (Messenger.ContactList.Owner.PersonalMessage != null && Messenger.ContactList.Owner.PersonalMessage.Message != null)
+            if (Messenger.Owner.PersonalMessage != null && Messenger.Owner.PersonalMessage.Message != null)
             {
-                lblPM.Text = System.Web.HttpUtility.HtmlDecode(Messenger.ContactList.Owner.PersonalMessage.Message);
+                lblPM.Text = System.Web.HttpUtility.HtmlDecode(Messenger.Owner.PersonalMessage.Message);
             }
         }
 
@@ -527,12 +527,12 @@ namespace MSNPSharpClient
                 return;
             }
 
-            Messenger.ContactList.Owner.SceneImageChanged += new EventHandler<SceneImageChangedEventArgs>(Owner_SceneImageChanged);
-            Messenger.ContactList.Owner.DisplayImageChanged += new EventHandler<DisplayImageChangedEventArgs>(Owner_DisplayImageChanged);
-            Messenger.ContactList.Owner.PersonalMessageChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
-            Messenger.ContactList.Owner.ScreenNameChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
-            Messenger.ContactList.Owner.PlacesChanged += new EventHandler<PlaceChangedEventArgs>(Owner_PlacesChanged);
-            Messenger.ContactList.Owner.StatusChanged += new EventHandler<StatusChangedEventArgs>(Owner_StatusChanged);
+            Messenger.Owner.SceneImageChanged += new EventHandler<SceneImageChangedEventArgs>(Owner_SceneImageChanged);
+            Messenger.Owner.DisplayImageChanged += new EventHandler<DisplayImageChangedEventArgs>(Owner_DisplayImageChanged);
+            Messenger.Owner.PersonalMessageChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
+            Messenger.Owner.ScreenNameChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
+            Messenger.Owner.PlacesChanged += new EventHandler<PlaceChangedEventArgs>(Owner_PlacesChanged);
+            Messenger.Owner.StatusChanged += new EventHandler<StatusChangedEventArgs>(Owner_StatusChanged);
         }
 
         void Owner_SceneImageChanged(object sender, SceneImageChangedEventArgs e)
@@ -818,7 +818,7 @@ namespace MSNPSharpClient
 
             if (messenger.Nameserver.IsSignedIn)
             {
-                comboStatus.SelectedIndex = comboStatus.FindString(GetStatusString(Messenger.ContactList.Owner.Status));
+                comboStatus.SelectedIndex = comboStatus.FindString(GetStatusString(Messenger.Owner.Status));
             }
         }
 
@@ -860,7 +860,7 @@ namespace MSNPSharpClient
             {
                 if (newstatus == PresenceStatus.Offline)
                 {
-                    PresenceStatus old = Messenger.ContactList.Owner.Status;
+                    PresenceStatus old = Messenger.Owner.Status;
 
                     foreach (ConversationForm convform in ConversationForms)
                     {
@@ -882,7 +882,7 @@ namespace MSNPSharpClient
                 }
                 else
                 {
-                    Messenger.ContactList.Owner.Status = newstatus;
+                    Messenger.Owner.Status = newstatus;
                 }
             }
             else if (newstatus == PresenceStatus.Offline)
@@ -942,17 +942,17 @@ namespace MSNPSharpClient
                 if (comboPlaces.SelectedIndex == 1)
                 {
                     comboPlaces.Visible = false;
-                    Messenger.ContactList.Owner.SignoutFrom(NSMessageHandler.MachineGuid);
+                    Messenger.Owner.SignoutFrom(NSMessageHandler.MachineGuid);
                 }
                 else if (comboPlaces.SelectedIndex == 2)
                 {
                     comboPlaces.Visible = false;
-                    Messenger.ContactList.Owner.SignoutFromEverywhere();
+                    Messenger.Owner.SignoutFromEverywhere();
                 }
                 else if (comboPlaces.SelectedIndex > 2)
                 {
                     Guid placeId = new Guid(place);
-                    Messenger.ContactList.Owner.SignoutFrom(placeId);
+                    Messenger.Owner.SignoutFrom(placeId);
                 }
             }
         }
@@ -971,16 +971,16 @@ namespace MSNPSharpClient
                 return;
             }
 
-            // if (Messenger.ContactList.Owner.Places.Count > 1)
+            // if (Messenger.Owner.Places.Count > 1)
             {
                 comboPlaces.BeginUpdate();
                 comboPlaces.Items.Clear();
-                comboPlaces.Items.Add("(" + Messenger.ContactList.Owner.PlaceCount + ") Places");
+                comboPlaces.Items.Add("(" + Messenger.Owner.PlaceCount + ") Places");
 
-                comboPlaces.Items.Add("Signout from here (" + Messenger.ContactList.Owner.EpName + ")");
+                comboPlaces.Items.Add("Signout from here (" + Messenger.Owner.EpName + ")");
                 comboPlaces.Items.Add("Signout from everywhere");
 
-                foreach (KeyValuePair<Guid, EndPointData> keyvalue in Messenger.ContactList.Owner.EndPointData)
+                foreach (KeyValuePair<Guid, EndPointData> keyvalue in Messenger.Owner.EndPointData)
                 {
                     PrivateEndPointData ipep = keyvalue.Value as PrivateEndPointData;
                     comboPlaces.Items.Add(ipep.Name + " " + ipep.Id);
@@ -1014,7 +1014,7 @@ namespace MSNPSharpClient
                 return;
             }
 
-            SetStatus("Signed into the messenger network as " + Messenger.ContactList.Owner.Name);
+            SetStatus("Signed into the messenger network as " + Messenger.Owner.Name);
 
             // set our presence status
             loginButton.Tag = 2;
@@ -1022,10 +1022,10 @@ namespace MSNPSharpClient
             pnlNameAndPM.Visible = true;
             comboPlaces.Visible = true;
 
-            Messenger.ContactList.Owner.Status = (PresenceStatus)Enum.Parse(typeof(PresenceStatus), comboStatus.Text);
+            Messenger.Owner.Status = (PresenceStatus)Enum.Parse(typeof(PresenceStatus), comboStatus.Text);
 
-            propertyGrid.SelectedObject = Messenger.ContactList.Owner;
-            displayImageBox.Image = Messenger.ContactList.Owner.DisplayImage.Image;
+            propertyGrid.SelectedObject = Messenger.Owner;
+            displayImageBox.Image = Messenger.Owner.DisplayImage.Image;
             displayImageBox.SizeMode = PictureBoxSizeMode.Zoom;
 
             if (Messenger.Owner.SceneImage != null && Messenger.Owner.SceneImage.Image != null)
@@ -2201,13 +2201,13 @@ namespace MSNPSharpClient
 
             List<string> lstPersonalMessage = new List<string>(new string[] { "", "" });
 
-            if (dn != messenger.ContactList.Owner.Name)
+            if (dn != messenger.Owner.Name)
             {
 
                 lstPersonalMessage[0] = dn;
             }
 
-            if (messenger.ContactList.Owner.PersonalMessage == null || pm != messenger.ContactList.Owner.PersonalMessage.Message)
+            if (messenger.Owner.PersonalMessage == null || pm != messenger.Owner.PersonalMessage.Message)
             {
                 lstPersonalMessage[1] = pm;
 
@@ -2253,12 +2253,12 @@ namespace MSNPSharpClient
                 List<string> lstPersonalMessage = profileObject as List<string>;
                 if (lstPersonalMessage[0] != "")
                 {
-                    messenger.ContactList.Owner.Name = lstPersonalMessage[0];
+                    messenger.Owner.Name = lstPersonalMessage[0];
                 }
 
                 if (lstPersonalMessage[1] != "")
                 {
-                    messenger.ContactList.Owner.PersonalMessage = new PersonalMessage(lstPersonalMessage[1]);
+                    messenger.Owner.PersonalMessage = new PersonalMessage(lstPersonalMessage[1]);
                 }
 
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Update personal message completed.");
@@ -2270,8 +2270,8 @@ namespace MSNPSharpClient
             MusicForm musicForm = new MusicForm();
             if (musicForm.ShowDialog() == DialogResult.OK)
             {
-                Messenger.ContactList.Owner.PersonalMessage = new PersonalMessage(
-                    Messenger.ContactList.Owner.PersonalMessage.Message,
+                Messenger.Owner.PersonalMessage = new PersonalMessage(
+                    Messenger.Owner.PersonalMessage.Message,
                     MediaType.Music,
                     new string[] { musicForm.Artist, musicForm.Song, musicForm.Album, "" }
                 );

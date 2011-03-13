@@ -366,15 +366,15 @@ namespace MSNPSharp.P2P
 
             if (version == P2PVersion.P2PV1)
             {
-                localContact = (slp.ToEmailAccount == ns.ContactList.Owner.Account) ?
-                    ns.ContactList.Owner : ns.ContactList.GetContactWithCreate(slp.ToEmailAccount, IMAddressInfoType.WindowsLive);
+                localContact = (slp.ToEmailAccount == ns.Owner.Account) ?
+                    ns.Owner : ns.ContactList.GetContactWithCreate(slp.ToEmailAccount, IMAddressInfoType.WindowsLive);
 
                 remoteContact = ns.ContactList.GetContactWithCreate(slp.FromEmailAccount, IMAddressInfoType.WindowsLive);
             }
             else
             {
-                localContact = (slp.ToEmailAccount == ns.ContactList.Owner.Account) ?
-                    ns.ContactList.Owner : ns.ContactList.GetContactWithCreate(slp.ToEmailAccount, IMAddressInfoType.WindowsLive);
+                localContact = (slp.ToEmailAccount == ns.Owner.Account) ?
+                    ns.Owner : ns.ContactList.GetContactWithCreate(slp.ToEmailAccount, IMAddressInfoType.WindowsLive);
                 localContactEndPointID = slp.ToEndPoint;
 
                 remoteContact = ns.ContactList.GetContactWithCreate(slp.FromEmailAccount, IMAddressInfoType.WindowsLive);

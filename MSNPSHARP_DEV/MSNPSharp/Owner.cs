@@ -420,10 +420,10 @@ namespace MSNPSharp
                     MemoryStream sms = new MemoryStream();
                     imageScene.Save(sms, imageScene.RawFormat);
 
-                    SceneImage = new SceneImage(NSMessageHandler.ContactList.Owner.Account.ToLowerInvariant(), sms);
+                    SceneImage = new SceneImage(NSMessageHandler.Owner.Account.ToLowerInvariant(), sms);
                 }
                 else
-                    SceneImage = new SceneImage(NSMessageHandler.ContactList.Owner.Account.ToLowerInvariant(), true);
+                    SceneImage = new SceneImage(NSMessageHandler.Owner.Account.ToLowerInvariant(), true);
 
                 SaveOriginalSceneImageAndFireSceneImageChangedEvent(
                     new SceneImageChangedEventArgs(SceneImage, DisplayImageChangedType.TransmissionCompleted, false));

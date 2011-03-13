@@ -97,22 +97,6 @@ namespace MSNPSharp
 
 #pragma warning restore 67 // restore "The event XXX is never used" warning
 
-        /// <summary>
-        /// The owner of the contactlist. This is the identity that logged into the messenger network.
-        /// </summary>
-        [Obsolete(@"Obsoleted in 3.1, please use Messenger.Owner instead.
-        The Owner property's behavior changed a little.
-        It will remain null until user successfully login.
-        You may need to change your code if you see this notice.
-        For more information and example, please refer to the example client.", true)]
-        public Owner Owner
-        {
-            get
-            {
-                return ContactList.Owner;
-            }
-        }
-
         [Obsolete(@"Obsoleted in MSNP21. Replaced by ADL.", true)]
         protected virtual void OnADGReceived(NSMessage message)
         {
@@ -156,7 +140,7 @@ namespace MSNPSharp
         [Obsolete(@"Obsoleted in MSNP21. Replaced by PUT", true)]
         protected virtual void OnCHGReceived(NSMessage message)
         {
-            ContactList.Owner.SetStatus(ParseStatus((string)message.CommandValues[0]));
+            Owner.SetStatus(ParseStatus((string)message.CommandValues[0]));
         }
 
         /// <summary>
@@ -165,7 +149,7 @@ namespace MSNPSharp
         [Obsolete(@"Obsoleted in 4.0", true)]
         internal void SetMobileDevice(bool enabled)
         {
-            if (ContactList.Owner == null)
+            if (Owner == null)
                 throw new MSNPSharpException("Not a valid owner");
 
             MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MBE", enabled ? "Y" : "N" }));
@@ -246,7 +230,7 @@ namespace MSNPSharp
                     Contact contact = circle.ContactList.GetContact(account, accountAddressType);
 
                     contact.SetName(MSNHttpUtility.NSDecode(message.CommandValues[2].ToString()));
-                    if (contact != ContactList.Owner && newDisplayImageContext.Length > 10)
+                    if (contact != Owner && newDisplayImageContext.Length > 10)
                     {
                         if (contact.DisplayImage != newDisplayImageContext)
                         {
@@ -270,7 +254,7 @@ namespace MSNPSharp
                 }
                 else
                 {
-                    if (account == ContactList.Owner.Account.ToLowerInvariant())
+                    if (account == Owner.Account.ToLowerInvariant())
                     {
                         if (circle == null)
                             return;
@@ -297,14 +281,14 @@ namespace MSNPSharp
             }
             else
             {
-                Contact contact = (account == ContactList.Owner.Account.ToLowerInvariant() && accountAddressType == IMAddressInfoType.WindowsLive)
-                    ? ContactList.Owner : ContactList.GetContact(account, accountAddressType);
+                Contact contact = (account == Owner.Account.ToLowerInvariant() && accountAddressType == IMAddressInfoType.WindowsLive)
+                    ? Owner : ContactList.GetContact(account, accountAddressType);
 
                 #region Contact Status
 
                 if (contact != null)
                 {
-                    if (IsSignedIn && account == ContactList.Owner.Account.ToLowerInvariant() &&
+                    if (IsSignedIn && account == Owner.Account.ToLowerInvariant() &&
                         accountAddressType == IMAddressInfoType.WindowsLive)
                     {
                         //SetPresenceStatus(newstatus);
@@ -313,7 +297,7 @@ namespace MSNPSharp
 
                     contact.SetName(MSNHttpUtility.NSDecode(newName));
 
-                    if (contact != ContactList.Owner)
+                    if (contact != Owner)
                     {
                         if (newDisplayImageContext.Length > 10 && contact.DisplayImage != newDisplayImageContext)
                         {
@@ -396,7 +380,7 @@ namespace MSNPSharp
                     return;
                 }
 
-                if (account == ContactList.Owner.Account.ToLowerInvariant())  //Circle status
+                if (account == Owner.Account.ToLowerInvariant())  //Circle status
                 {
                     string capabilityString = message.CommandValues[1].ToString();
                     if (capabilityString == "0:0")  //This is a circle's presence status.
@@ -442,15 +426,15 @@ namespace MSNPSharp
             }
             else
             {
-                Contact contact = (account == ContactList.Owner.Account.ToLowerInvariant() && accountAddressType == IMAddressInfoType.WindowsLive)
-                    ? ContactList.Owner : ContactList.GetContactWithCreate(account, accountAddressType);
+                Contact contact = (account == Owner.Account.ToLowerInvariant() && accountAddressType == IMAddressInfoType.WindowsLive)
+                    ? Owner : ContactList.GetContactWithCreate(account, accountAddressType);
 
                 #region Contact Staus
 
                 if (contact != null)
                 {
 
-                    if (contact != ContactList.Owner && message.CommandValues.Count >= 3 &&
+                    if (contact != Owner && message.CommandValues.Count >= 3 &&
                         accountAddressType == IMAddressInfoType.Yahoo)
                     {
                         string newdp = message.CommandValues[2].ToString();

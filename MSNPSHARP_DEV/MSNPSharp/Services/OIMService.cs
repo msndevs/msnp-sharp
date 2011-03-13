@@ -529,14 +529,14 @@ namespace MSNPSharp
                 if (userstate == null)
                     userstate = new OIMUserState(contact.OIMCount, account);
 
-                string name48 = NSMessageHandler.ContactList.Owner.Name;
+                string name48 = NSMessageHandler.Owner.Name;
                 if (name48.Length > 48)
                     name48 = name48.Substring(47);
 
                 MsnServiceState storeObject = new MsnServiceState(PartnerScenario.None, "Store", true);
                 OIMStoreService oimService = (OIMStoreService)CreateService(MsnServiceType.OIMStore, storeObject);
                 oimService.FromValue = new From();
-                oimService.FromValue.memberName = NSMessageHandler.ContactList.Owner.Account;
+                oimService.FromValue.memberName = NSMessageHandler.Owner.Account;
                 oimService.FromValue.friendlyName = "=?utf-8?B?" + Convert.ToBase64String(Encoding.UTF8.GetBytes(name48)) + "?=";
                 oimService.FromValue.buildVer = "8.5.1302";
                 oimService.FromValue.msnpVer = "MSNP15";
@@ -566,7 +566,7 @@ namespace MSNPSharp
                             contact.OIMCount++; // Sent successfully.
                             OnOIMSendCompleted(this,
                                 new OIMSendCompletedEventArgs(
-                                NSMessageHandler.ContactList.Owner.Account,
+                                NSMessageHandler.Owner.Account,
                                 userstate.account,
                                 userstate.oimcount,
                                 msg,
@@ -599,7 +599,7 @@ namespace MSNPSharp
 
                         OnOIMSendCompleted(this,
                                 new OIMSendCompletedEventArgs(
-                                NSMessageHandler.ContactList.Owner.Account,
+                                NSMessageHandler.Owner.Account,
                                 userstate.account,
                                 userstate.oimcount,
                                 msg,
@@ -640,7 +640,7 @@ namespace MSNPSharp
 
             OnOIMSendCompleted(this,
                             new OIMSendCompletedEventArgs(
-                            NSMessageHandler.ContactList.Owner.Account,
+                            NSMessageHandler.Owner.Account,
                             receiver.Account,
                             0,
                             msg.Text,

@@ -689,7 +689,7 @@ namespace MSNPSharpClient
             richTextHistory.SelectionColor = Color.Navy;
             richTextHistory.SelectionIndent = 0;
             richTextHistory.AppendText("[" + DateTime.Now.ToLongTimeString() + "]" + " ");
-            richTextHistory.SelectionColor = c.Account == _messenger.ContactList.Owner.Account ? Color.Blue : Color.Black;
+            richTextHistory.SelectionColor = c.Account == _messenger.Owner.Account ? Color.Blue : Color.Black;
             richTextHistory.AppendText(c.Name + " <" + c.Account + ">" + Environment.NewLine);
             richTextHistory.SelectionColor = message.Color;
             richTextHistory.SelectionIndent = 10;
@@ -755,8 +755,8 @@ namespace MSNPSharpClient
             Text = "Conversation with " + remoteContact.Account + " - MSNPSharp";
             Icon = (Icon)((remoteContact.ClientType == IMAddressInfoType.WindowsLive) ? Properties.Resources.msn_ico : Properties.Resources.yahoo_ico);
 
-            if (_messenger.ContactList.Owner.DisplayImage.Image != null)
-                displayOwner.Image = _messenger.ContactList.Owner.DisplayImage.Image;
+            if (_messenger.Owner.DisplayImage.Image != null)
+                displayOwner.Image = _messenger.Owner.DisplayImage.Image;
             else
                 displayOwner.Image = DisplayImage.DefaultImage;
 
@@ -948,7 +948,7 @@ namespace MSNPSharpClient
             inputTextBox.Focus();
 
             remoteContact.SendMessage(message);
-            PrintText(_messenger.ContactList.Owner, message);
+            PrintText(_messenger.Owner, message);
         }
 
         private void bMessageSendNudge_Click(object sender, EventArgs e)
