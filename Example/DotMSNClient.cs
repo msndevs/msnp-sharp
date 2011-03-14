@@ -980,7 +980,9 @@ namespace MSNPSharpClient
                 comboPlaces.Items.Add("Signout from here (" + Messenger.Owner.EpName + ")");
                 comboPlaces.Items.Add("Signout from everywhere");
 
-                foreach (KeyValuePair<Guid, EndPointData> keyvalue in Messenger.Owner.EndPointData)
+                Dictionary<Guid, EndPointData> copyPlaces = new Dictionary<Guid, EndPointData>(Messenger.Owner.EndPointData);
+
+                foreach (KeyValuePair<Guid, EndPointData> keyvalue in copyPlaces)
                 {
                     PrivateEndPointData ipep = keyvalue.Value as PrivateEndPointData;
                     comboPlaces.Items.Add(ipep.Name + " " + ipep.Id);

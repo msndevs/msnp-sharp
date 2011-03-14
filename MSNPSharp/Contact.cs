@@ -1365,15 +1365,21 @@ namespace MSNPSharp
                 switch (e.Reason)
                 {
                     case PlaceChangedReason.SignedIn:
-                        EndPointData[e.EndPointData.Id] = e.EndPointData;
+
+                        lock(SyncObject)
+                            EndPointData[e.EndPointData.Id] = e.EndPointData;
+
                         triggerEvent = true;
                         break;
 
                     case PlaceChangedReason.SignedOut:
-                        if (EndPointData.ContainsKey(e.EndPointData.Id))
+                        lock (SyncObject)
                         {
-                            EndPointData.Remove(e.EndPointData.Id);
-                            triggerEvent = true;
+                            if (EndPointData.ContainsKey(e.EndPointData.Id))
+                            {
+                                EndPointData.Remove(e.EndPointData.Id);
+                                triggerEvent = true;
+                            }
                         }
                         break;
                 }

@@ -500,11 +500,6 @@ namespace MSNPSharp
                         LocalEndPointPECapabilities, LocalEndPointPECapabilitiesEx,
                         EpName, PersonalMessage, false);
                 }
-
-                if (value != PresenceStatus.Offline)
-                {
-                    (EndPointData[NSMessageHandler.MachineGuid] as PrivateEndPointData).State = base.Status;
-                }
             }
         }
 
