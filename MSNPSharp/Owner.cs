@@ -48,9 +48,9 @@ namespace MSNPSharp
     public class Owner : Contact
     {
         /// <summary>
-        /// Fired when owner places changed.
+        /// Fired when owner profile received.
         /// </summary>
-        public event EventHandler<PlaceChangedEventArgs> PlacesChanged;
+        public event EventHandler<EventArgs> ProfileReceived;        
 
         private string epName = Environment.MachineName;
         private bool passportVerified;
@@ -65,22 +65,6 @@ namespace MSNPSharp
         {
         }
 
-        /// <summary>
-        /// Called when the End Points changed.
-        /// </summary>
-        /// <param name="e"></param>
-        protected virtual void OnPlacesChanged(PlaceChangedEventArgs e)
-        {
-            if (PlacesChanged != null)
-                PlacesChanged(this, e);
-        }
-
-
-        /// <summary>
-        /// Fired when owner profile received.
-        /// </summary>
-        public event EventHandler<EventArgs> ProfileReceived;
-
         internal void CreateDefaultDisplayImage(SerializableMemoryStream sms)
         {
             if (sms == null)
@@ -93,43 +77,6 @@ namespace MSNPSharp
             DisplayImage displayImage = new DisplayImage(Account.ToLowerInvariant(), sms);
 
             this.DisplayImage = displayImage;
-        }
-
-        internal void SetChangedPlace(PrivateEndPointData signedOnOffPlace, PlaceChangedReason action)
-        {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                "The account was " + action + " at another place: " + signedOnOffPlace.Name + " " + signedOnOffPlace.Id, GetType().Name);
-
-            bool triggerEvent = false;
-
-            lock (SyncObject)
-            {
-                switch (action)
-                {
-                    case PlaceChangedReason.SignedIn:
-                        EndPointData[signedOnOffPlace.Id] = signedOnOffPlace;
-                        triggerEvent = true;
-                        break;
-
-                    case PlaceChangedReason.SignedOut:
-                        if (EndPointData.ContainsKey(signedOnOffPlace.Id))
-                        {
-                            if (signedOnOffPlace.Id == NSMessageHandler.MachineGuid)
-                            {
-                                Status = PresenceStatus.Offline;
-                            }
-
-                            EndPointData.Remove(signedOnOffPlace.Id);
-                            triggerEvent = true;
-                        }
-                        break;
-                }
-            }
-
-            if (triggerEvent)
-            {
-                OnPlacesChanged(new PlaceChangedEventArgs(signedOnOffPlace, action));
-            }
         }
 
         /// <summary>

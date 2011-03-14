@@ -271,6 +271,12 @@ namespace MSNPSharp
         }
 
         #region Events
+
+        /// <summary>
+        /// Fired when contact places changed.
+        /// </summary>
+        public event EventHandler<PlaceChangedEventArgs> PlacesChanged;
+
         /// <summary>
         /// Fired when contact's display name changed.
         /// </summary>
@@ -1334,6 +1340,51 @@ namespace MSNPSharp
                 PersonalMessageChanged(this, EventArgs.Empty);
             }
         }
+
+        /// <summary>
+        /// Called when the End Points changed.
+        /// </summary>
+        /// <param name="e"></param>
+        protected virtual void OnPlacesChanged(PlaceChangedEventArgs e)
+        {
+            if (PlacesChanged != null)
+                PlacesChanged(this, e);
+        }
+
+        internal void SetChangedPlace(PlaceChangedEventArgs e)
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                "The account " + e.EndPointData.Account +
+                " was " + e.Reason +
+                " at another place: " + e.PlaceName + " " + e.EndPointData.Id, GetType().Name);
+
+            bool triggerEvent = false;
+
+            lock (SyncObject)
+            {
+                switch (e.Reason)
+                {
+                    case PlaceChangedReason.SignedIn:
+                        EndPointData[e.EndPointData.Id] = e.EndPointData;
+                        triggerEvent = true;
+                        break;
+
+                    case PlaceChangedReason.SignedOut:
+                        if (EndPointData.ContainsKey(e.EndPointData.Id))
+                        {
+                            EndPointData.Remove(e.EndPointData.Id);
+                            triggerEvent = true;
+                        }
+                        break;
+                }
+            }
+
+            if (triggerEvent)
+            {
+                OnPlacesChanged(e);
+            }
+        }
+
 
         protected virtual void OnStatusChanged(StatusChangedEventArgs e)
         {
