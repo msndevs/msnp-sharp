@@ -1147,9 +1147,7 @@ namespace MSNPSharp
                                                     fromContact.SetChangedPlace(new PlaceChangedEventArgs(fromContact.EndPointData[epid], PlaceChangedReason.SignedOut));
                                                 }
 
-                                                if (serviceEnum == ServiceShortNames.PD &&
-                                                    fromIsMe &&
-                                                    epid == MachineGuid)
+                                                if (fromIsMe && epid == MachineGuid)
                                                 {
                                                     SignoutFrom(epid);
                                                 }
