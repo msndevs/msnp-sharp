@@ -2277,7 +2277,7 @@ namespace MSNPSharpClient
             if (musicForm.ShowDialog() == DialogResult.OK)
             {
                 PersonalMessage pm = Messenger.Owner.PersonalMessage;
-                pm.SetListiningAlbum(musicForm.Artist, musicForm.Song, musicForm.Album);
+                pm.SetListeningAlbum(musicForm.Artist, musicForm.Song, musicForm.Album);
 
                 Messenger.Owner.PersonalMessage = pm;
             }
