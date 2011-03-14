@@ -972,6 +972,9 @@ namespace MSNPSharp
         public const string EPID = "epid";
         public const string Path = "path";
         public const string ServiceChannel = "Service-Channel";
+		
+		public const string Options = "Options";
+		public const string Flags = "Flags";
 
         internal const string KeyParam = ";";
 
@@ -1129,7 +1132,7 @@ namespace MSNPSharp
         public const string To = MIMEHeaderStrings.To;
         public const string EPID = MIMEHeaderStrings.EPID;
         public const string Path = MIMEHeaderStrings.Path;
-        public const string Options = "Options";
+        public const string Options = MIMEHeaderStrings.Options;
 
         /// <summary>
         /// The service that this message should sent through. 
@@ -1146,6 +1149,7 @@ namespace MSNPSharp
         public const string Reliability = MIMEHeaderStrings.Reliability;
         public const string Stream = MIMEHeaderStrings.Stream;
         public const string Segment = MIMEHeaderStrings.Segment;
+		public const string Flags = MIMEHeaderStrings.Flags;
     }
 
     #region P2PFlag

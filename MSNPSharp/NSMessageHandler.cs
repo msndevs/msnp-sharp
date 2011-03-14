@@ -677,14 +677,14 @@ namespace MSNPSharp
                     string me = ((int)Owner.ClientType).ToString() + ":" + Owner.Account;
 
                     MultiMimeMessage mmMessage = new MultiMimeMessage(me, me);
-                    mmMessage.RoutingHeaders["From"]["epid"] = NSMessageHandler.MachineGuid.ToString("B").ToLowerInvariant();
+                    mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = NSMessageHandler.MachineGuid.ToString("B").ToLowerInvariant();
 
                     mmMessage.Stream = 1;
-                    mmMessage.ReliabilityHeaders["Flags"] = "ACK";
+                    mmMessage.ReliabilityHeaders[MIMEReliabilityHeaders.Flags] = "ACK";
 
-                    mmMessage.ContentKey = "Publication";
-                    mmMessage.ContentHeaders["Uri"] = "/user";
-                    mmMessage.ContentHeaders["Content-Type"] = "application/user+xml";
+                    mmMessage.ContentKey = MIMEContentHeaders.Publication;
+                    mmMessage.ContentHeaders[MIMEContentHeaders.URI] = "/user";
+                    mmMessage.ContentHeaders[MIMEContentHeaders.ContentType] = "application/user+xml";
 
                     mmMessage.InnerBody = System.Text.Encoding.UTF8.GetBytes(xml);
 
