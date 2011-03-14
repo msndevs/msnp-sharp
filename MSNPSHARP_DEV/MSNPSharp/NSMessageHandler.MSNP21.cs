@@ -833,7 +833,8 @@ namespace MSNPSharp
 
                                     if (!fromContact.EndPointData.ContainsKey(epid))
                                     {
-                                        fromContact.EndPointData.Add(epid, fromIsMe ? new PrivateEndPointData(fromContact.Account, epid) : new EndPointData(fromContact.Account, epid));
+                                        lock(fromContact.SyncObject)
+                                            fromContact.EndPointData.Add(epid, fromIsMe ? new PrivateEndPointData(fromContact.Account, epid) : new EndPointData(fromContact.Account, epid));
                                     }
 
                                     switch (serviceEnum)
