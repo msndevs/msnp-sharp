@@ -993,7 +993,8 @@ namespace MSNPSharp
 
                 IMAddressInfoType clitype = (IMAddressInfoType)Enum.Parse(typeof(IMAddressInfoType), type);
                 type = ((int)clitype).ToString();
-                RoleLists sendlist = Contact.GetListForADL(contacts[contact_hash], clitype);
+                RoleLists imlist = Contact.GetListForADL(contacts[contact_hash], clitype, ServiceShortNames.IM);
+                RoleLists pelist = Contact.GetListForADL(contacts[contact_hash], clitype, ServiceShortNames.PE);
 
                 if (clitype == IMAddressInfoType.Telephone)
                 {
@@ -1015,7 +1016,7 @@ namespace MSNPSharp
                     name = usernameanddomain[0];
                 }
 
-                if (sendlist != RoleLists.None)
+                if (imlist != RoleLists.None)
                 {
                     if (currentDomain != domain)
                     {
@@ -1044,15 +1045,19 @@ namespace MSNPSharp
                     if (clitype != IMAddressInfoType.Telephone && clitype != IMAddressInfoType.RemoteNetwork)
                         contactElement.SetAttribute("t", type);
 
-                    foreach (string s in new string[] { 
-                        ServiceShortNames.IM.ToString(),
-                        ServiceShortNames.PE.ToString() })
-                    {
-                        XmlElement service = xmlDoc.CreateElement("s");
-                        service.SetAttribute("l", ((int)sendlist).ToString());
-                        service.SetAttribute("n", s);
+                    // IM
+                    XmlElement IMservice = xmlDoc.CreateElement("s");
+                    IMservice.SetAttribute("l", ((int)imlist).ToString());
+                    IMservice.SetAttribute("n", ServiceShortNames.IM.ToString());
+                    contactElement.AppendChild(IMservice);
 
-                        contactElement.AppendChild(service);
+                    // PE
+                    if (pelist != RoleLists.None)
+                    {
+                        XmlElement PEservice = xmlDoc.CreateElement("s");
+                        PEservice.SetAttribute("l", ((int)pelist).ToString());
+                        PEservice.SetAttribute("n", ServiceShortNames.PE.ToString());
+                        contactElement.AppendChild(PEservice);
                     }
 
                     domtelElement.AppendChild(contactElement);
