@@ -36,7 +36,7 @@ namespace MSNPSharpClient
         {
             get
             {
-                return txtSong.Text;
+                return txtAlbum.Text;
             }
         }
 

@@ -35,6 +35,7 @@ using System.IO;
 using System.Net;
 using System.Xml;
 using System.Text;
+using System.Drawing;
 using System.Threading;
 using System.Diagnostics;
 using System.Globalization;
@@ -449,14 +450,19 @@ namespace MSNPSharp
             Deltas.Profile = NSMessageHandler.StorageService.GetProfile();
 
             // Set display name, personal status and photo
+            PersonalMessage pm = NSMessageHandler.Owner.PersonalMessage;
+
             string mydispName = String.IsNullOrEmpty(Deltas.Profile.DisplayName) ? NSMessageHandler.Owner.NickName : Deltas.Profile.DisplayName;
-            PersonalMessage pm = new PersonalMessage(Deltas.Profile.PersonalMessage);
-
+            string psmMessage = Deltas.Profile.PersonalMessage;
+            
             NSMessageHandler.Owner.SetName(mydispName);
-            pm.FriendlyName = mydispName;
 
-            NSMessageHandler.Owner.SetColorScheme(System.Drawing.ColorTranslator.FromOle(Deltas.Profile.ColorScheme));
-            pm.ColorScheme = System.Drawing.ColorTranslator.FromOle(Deltas.Profile.ColorScheme);
+            pm.FriendlyName = mydispName;
+            pm.Message = psmMessage;
+
+            Color colorScheme = ColorTranslator.FromOle(Deltas.Profile.ColorScheme);
+            NSMessageHandler.Owner.SetColorScheme(colorScheme);
+            pm.ColorScheme = colorScheme;
 
             SceneImage sceneImage = NSMessageHandler.Owner.SceneImage;
             if (sceneImage != null && !sceneImage.IsDefaultImage)
@@ -466,8 +472,8 @@ namespace MSNPSharp
 
             NSMessageHandler.Owner.CreateDefaultDisplayImage(Deltas.Profile.Photo.DisplayImage);
             pm.UserTileLocation = NSMessageHandler.Owner.DisplayImage.IsDefaultImage ? string.Empty : NSMessageHandler.Owner.DisplayImage.ContextPlain;
-            
-            NSMessageHandler.Owner.SetPersonalMessage(pm);
+
+            NSMessageHandler.Owner.PersonalMessage = pm;
 
             if (NSMessageHandler.AutoSynchronize)
             {

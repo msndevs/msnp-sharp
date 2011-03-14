@@ -251,6 +251,7 @@ namespace MSNPSharp
 
             displayImage = DisplayImage.CreateDefaultImage(Account);
             sceneImage = SceneImage.CreateDefaultImage(Account);
+            personalMessage = new PersonalMessage();
         }
 
         protected internal void SetCircleInfo(CircleInverseInfoType circleInfo, ContactType me)
@@ -742,6 +743,14 @@ namespace MSNPSharp
             {
                 return personalMessage;
             }
+            protected internal set
+            {
+                if (null != value /*don't eval this: && value != personalMessage*/)
+                {
+                    personalMessage = value;
+                    OnPersonalMessageChanged(value);
+                }
+            }
         }
 
         /// <summary>
@@ -1124,16 +1133,6 @@ namespace MSNPSharp
         internal void SetNickName(string newNick)
         {
             nickName = newNick;
-        }
-
-        internal void SetPersonalMessage(PersonalMessage newpmessage)
-        {
-            if (personalMessage != newpmessage)
-            {
-                personalMessage = newpmessage;
-                // notify the user we changed our display message
-                OnPersonalMessageChanged(newpmessage);
-            }
         }
 
         internal void SetStatus(PresenceStatus newStatus)

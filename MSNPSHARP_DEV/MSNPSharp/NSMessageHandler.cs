@@ -495,9 +495,7 @@ namespace MSNPSharp
             if (Owner == null)
                 throw new MSNPSharpException("Not a valid owner");
 
-            PersonalMessage pm = (Owner.PersonalMessage == null)
-                ? new PersonalMessage(String.IsNullOrEmpty(ContactService.Deltas.Profile.DisplayName) ? Owner.NickName : ContactService.Deltas.Profile.DisplayName)
-                : Owner.PersonalMessage;
+            PersonalMessage pm = Owner.PersonalMessage;
 
             pm.FriendlyName = newName;
 
@@ -535,12 +533,10 @@ namespace MSNPSharp
             if (Owner == null)
                 throw new MSNPSharpException("Not a valid owner");
 
-            PersonalMessage pm = (Owner.PersonalMessage == null)
-                ? new PersonalMessage(String.IsNullOrEmpty(ContactService.Deltas.Profile.DisplayName) ? Owner.NickName : ContactService.Deltas.Profile.DisplayName)
-                : Owner.PersonalMessage;
+            PersonalMessage pm = Owner.PersonalMessage;
 
             pm.ColorScheme = sccolor;
-            pm.Scene = scimg.IsDefaultImage ? string.Empty : scimg.ContextPlain;
+            pm.Scene = scimg.IsDefaultImage ? String.Empty : scimg.ContextPlain;
 
             SetPresenceStatus(Owner.Status,
                 Owner.LocalEndPointIMCapabilities, Owner.LocalEndPointIMCapabilitiesEx,
@@ -561,7 +557,7 @@ namespace MSNPSharp
             ClientCapabilities newLocalIMCaps, ClientCapabilitiesEx newLocalIMCapsex,
             ClientCapabilities newLocalPECaps, ClientCapabilitiesEx newLocalPECapsex,
             string newEPName,
-            PersonalMessage newPM,
+            PersonalMessage newPSM,
             bool forcePEservice)
         {
             if (IsSignedIn == false)
@@ -574,9 +570,6 @@ namespace MSNPSharp
             }
 
             bool SETALL = (Owner.Status == PresenceStatus.Offline);
-            PersonalMessage psm = (newPM == null)
-                ? new PersonalMessage(String.IsNullOrEmpty(ContactService.Deltas.Profile.DisplayName) ? Owner.NickName : ContactService.Deltas.Profile.DisplayName)
-                : newPM;
 
             if (SETALL || forcePEservice ||
                 newStatus != Owner.Status ||
@@ -584,36 +577,34 @@ namespace MSNPSharp
                 newLocalIMCapsex != Owner.LocalEndPointIMCapabilitiesEx ||
                 newLocalPECaps != Owner.LocalEndPointPECapabilities ||
                 newLocalPECapsex != Owner.LocalEndPointPECapabilitiesEx ||
-                newEPName != Owner.EpName ||
-                psm.Payload != Owner.PersonalMessage.Payload)
+                newEPName != Owner.EpName)
             {
                 XmlDocument xmlDoc = new XmlDocument();
                 XmlElement userElement = xmlDoc.CreateElement("user");
 
                 // s.IM (Status, CurrentMedia)
                 if (SETALL || forcePEservice ||
-                    newStatus != Owner.Status ||
-                    psm.Payload != Owner.PersonalMessage.Payload)
+                    newStatus != Owner.Status)
                 {
                     XmlElement service = xmlDoc.CreateElement("s");
                     service.SetAttribute("n", ServiceShortNames.IM.ToString());
                     service.InnerXml =
                         "<Status>" + ParseStatus(newStatus) + "</Status>" +
-                        "<CurrentMedia>" + MSNHttpUtility.XmlEncode(psm.CurrentMedia) + "</CurrentMedia>";
+                        "<CurrentMedia>" + MSNHttpUtility.XmlEncode(newPSM.CurrentMedia) + "</CurrentMedia>";
+                    
                     userElement.AppendChild(service);
                 }
 
                 // s.PE (UserTileLocation, FriendlyName, PSM, Scene, ColorScheme)
-                if (SETALL || 
-                    forcePEservice ||
-                    psm.Payload != Owner.PersonalMessage.Payload)
+                if (SETALL ||
+                    forcePEservice)
                 {
                     XmlElement service = xmlDoc.CreateElement("s");
                     service.SetAttribute("n", ServiceShortNames.PE.ToString());
-                    service.InnerXml = psm.Payload;
+                    service.InnerXml = newPSM.Payload;
                     userElement.AppendChild(service);
 
-                    Owner.SetPersonalMessage(psm);
+                    // Don't set owner.PersonalMessage here. It is replaced (with a new reference) when NFY PUT received.
                 }
 
                 // sep.IM (Capabilities)
@@ -695,44 +686,12 @@ namespace MSNPSharp
                     mmMessage.ContentHeaders["Uri"] = "/user";
                     mmMessage.ContentHeaders["Content-Type"] = "application/user+xml";
 
-                    mmMessage.InnerBody = System.Text.Encoding.ASCII.GetBytes(xml);
+                    mmMessage.InnerBody = System.Text.Encoding.UTF8.GetBytes(xml);
 
                     NSMessage nsMessage = new NSMessage("PUT");
                     nsMessage.InnerMessage = mmMessage;
                     MessageProcessor.SendMessage(nsMessage);
                 }
-
-
-
-                //don't set the same status or it will result in disconnection
-                // Owner.LocalEndPointClientCapabilities = ClientCapabilities.Default;
-                // Owner.LocalEndPointClientCapabilitiesEx = ClientCapabilitiesEx.Default;
-                /*
-                SetEndPointCapabilities();
-                SetPresenceStatusUUX(status);
-
-                SetPersonalMessage(Owner.PersonalMessage);
-
-                if (!Owner.SceneImage.IsDefaultImage)
-                    SetSceneData(Owner.SceneImage, Owner.ColorScheme);
-
-                // Set screen name
-                SetScreenName(Owner.Name);
-
-
-                ClientCapabilitiesEx capsext = Owner.LocalEndPointIMCapabilitiesEx;
-                capacities = ((long)Owner.LocalEndPointIMCapabilities).ToString() + ":" + ((long)capsext).ToString();
-
-                if (!true)
-                {
-                    //Well, only update the status after receiving the CHG command is right. However,
-                    //we need to send UUX before CHG.
-
-                    SetPresenceStatusUUX(status);
-                }
-
-                MessageProcessor.SendMessage(new NSMessage("CHG", new string[] { ParseStatus(status), capacities, context }));
-                 * */
             }
         }
 

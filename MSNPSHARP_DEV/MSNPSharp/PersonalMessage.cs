@@ -52,13 +52,17 @@ namespace MSNPSharp
         private string ddp = string.Empty;
         private string scene = string.Empty;
         private Color colorScheme = Color.Empty;
-        private string signatureSound;
+        private string signatureSound = string.Empty;
 
         private MediaType mediaType = MediaType.None;
         private string currentMedia = string.Empty;
-        private string appName;
-        private string format;
+        private string appName = string.Empty;
+        private string format = string.Empty;
         private string[] content;
+
+        public PersonalMessage()
+        {
+        }
 
         public PersonalMessage(string personalmsg)
         {
@@ -311,19 +315,8 @@ namespace MSNPSharp
                     pload.Append("</SignatureSound>");
                 }
 
-                string currentmedia = String.Empty;
-                if (mediaType != MediaType.None)
-                {
-                    foreach (string media in content)
-                    {
-                        currentmedia = currentmedia + media + @"\0";
-                    }
+                string currentmedia = CurrentMedia;
 
-                    if (String.IsNullOrEmpty(Format))
-                        Format = "{0}";
-
-                    currentmedia = @"\0" + mediaType.ToString() + @"\01\0" + Format + @"\0" + currentmedia;
-                }
                 if (!String.IsNullOrEmpty(currentmedia))
                 {
                     pload.Append("<CurrentMedia>");
@@ -402,7 +395,7 @@ namespace MSNPSharp
                             {
                                 string[] vals = currentMedia.Split(new string[] { @"\0" }, StringSplitOptions.None);
 
-                                if (vals[0] != "")
+                                if (!String.IsNullOrEmpty(vals[0]))
                                     appName = vals[0];
 
                                 switch (vals[1])
@@ -441,8 +434,6 @@ namespace MSNPSharp
                                     content[i] = vals[i + 4];
                             }
                             break;
-
-
                     }
                 }
             }
