@@ -2260,8 +2260,6 @@ namespace MSNPSharpClient
 
                 if (lstPersonalMessage[1] != "")
                 {
-                    messenger.Owner.PersonalMessage = pm;
-
                     pm.Message = lstPersonalMessage[1];
                 }
 
