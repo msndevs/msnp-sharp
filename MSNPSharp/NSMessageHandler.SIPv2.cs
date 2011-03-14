@@ -50,7 +50,7 @@ namespace MSNPSharp
 
         private void HandleSIPv2(SLPMessage slpMessage)
         {
-            Trace.WriteLine(slpMessage.ToDebugString());
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, slpMessage.ToDebugString());
         }
 
         private void HandleP2PData(P2PMessage p2pMessage, Contact source, Guid sourceGuid)
@@ -59,7 +59,7 @@ namespace MSNPSharp
 
             P2PHandler.ProcessP2PMessage(this.SDGBridge, source, sourceGuid, p2pMessage);
 
-            Trace.WriteLine(p2pMessage.ToDebugString());
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, p2pMessage.ToDebugString());
         }
     }
 };
