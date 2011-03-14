@@ -69,6 +69,7 @@
     <Compile Include="DisplayImage.cs" />
     <Compile Include="MSNObjectCatalog.cs" />
     <Compile Include="P2P\SDGBridge.cs" />
+    <Compile Include="P2P\SLPHandler.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>

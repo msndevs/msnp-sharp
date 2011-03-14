@@ -267,6 +267,7 @@ namespace MSNPSharp
             SetName(circleInfo.Content.Info.DisplayName);
             SetNickName(Name);
 
+            contactList = new ContactList(AddressBookId, new Owner(AddressBookId, me.contactInfo.passportName, me.contactInfo.CID, NSMessageHandler), NSMessageHandler);
             Lists = RoleLists.Allow | RoleLists.Forward;
         }
 

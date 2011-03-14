@@ -616,7 +616,7 @@ namespace MSNPSharp
                 tmpContact = new Contact(circleABID, account, type, 0, nsMessageHandler);
                 tmpContact.ContactType = MessengerContactType.Circle;
                 tmpContact.HostDomain = accountAndDomain[1];
-                tmpContact.ContactList = new ContactList(circleABID, Owner, nsMessageHandler);
+                // Contact list created when contact.SetCircleInfo called.
             }
             else if (type == IMAddressInfoType.RemoteNetwork)
             {
