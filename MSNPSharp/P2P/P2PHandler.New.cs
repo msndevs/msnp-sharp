@@ -67,6 +67,7 @@ namespace MSNPSharp.P2P
 
         #region Members
 
+        private SLPHandler slpHandler;
         private NSMessageHandler nsMessageHandler = null;
         private P2PMessagePool slpMessagePool = new P2PMessagePool();
         private List<P2PBridge> bridges = new List<P2PBridge>();
@@ -78,6 +79,7 @@ namespace MSNPSharp.P2P
         protected internal P2PHandler(NSMessageHandler nsHandler)
         {
             this.nsMessageHandler = nsHandler;
+            this.slpHandler = new SLPHandler(nsHandler);
         }
 
         #endregion
@@ -143,7 +145,7 @@ namespace MSNPSharp.P2P
             SLPMessage slp = p2pMessage.IsSLPData ? p2pMessage.InnerMessage as SLPMessage : null;
             if (slp != null)
             {
-                if (!CheckSLPMessage(bridge, source, sourceGuid, p2pMessage, slp))
+                if (!slpHandler.CheckSLPMessage(bridge, source, sourceGuid, p2pMessage, slp))
                     return;
             }
 
@@ -163,8 +165,19 @@ namespace MSNPSharp.P2P
             // 6) FIRST SLP MESSAGE: Create applications/sessions based on invitation
             if (slp != null)
             {
-                if (ProcessSLPMessage(bridge, source, sourceGuid, p2pMessage, slp))
+                session = slpHandler.ProcessSLPMessage(bridge, source, sourceGuid, p2pMessage, slp);
+
+                if (session != null)
+                {
+                    session.Closed += P2PSessionClosed;
+
+                    if (session.Version == P2PVersion.P2PV2)
+                        p2pV2Sessions.Add(session);
+                    else
+                        p2pV1Sessions.Add(session);
+
                     return;
+                }
             }
 
             if (!requireAck)
@@ -474,109 +487,6 @@ namespace MSNPSharp.P2P
                 p2pV1Sessions.Remove(session);
 
             session.Dispose();
-        }
-
-        #endregion
-
-        #region CheckSLPMessage & ProcessSLPMessage & SendSLPStatus
-
-        private bool CheckSLPMessage(P2PBridge bridge, Contact source, Guid sourceGuid, P2PMessage msg, SLPMessage slp)
-        {
-            string src = source.Account.ToLowerInvariant();
-            string target = nsMessageHandler.Owner.Account.ToLowerInvariant();
-
-            if (msg.Version == P2PVersion.P2PV2)
-            {
-                src += ";" + sourceGuid.ToString("B").ToLowerInvariant();
-                target += ";" + NSMessageHandler.MachineGuid.ToString("B").ToLowerInvariant();
-            }
-
-            if (slp.Source.ToLowerInvariant() != src)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                    String.Format("Received message from '{0}', differing from source '{1}'", slp.Source, src), GetType().Name);
-
-                return false;
-            }
-            else if (slp.Target.ToLowerInvariant() != target)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                    String.Format("Received P2P message intended for '{0}', not us '{1}'", slp.Target, target), GetType().Name);
-
-                if (slp.Source == target)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                        "We received a message from ourselves?", GetType().Name);
-                }
-                else
-                {
-                    SendSLPStatus(bridge, msg, source, sourceGuid, 404, "Not Found");
-                }
-
-                return false;
-            }
-
-            return true;
-        }
-
-        private bool ProcessSLPMessage(P2PBridge bridge, Contact source, Guid sourceGuid, P2PMessage msg, SLPMessage slp)
-        {
-            SLPRequestMessage req = slp as SLPRequestMessage;
-
-            if (req != null && req.Method == "INVITE" &&
-                req.ContentType == "application/x-msnmsgr-sessionreqbody")
-            {
-                // Start a new session
-                P2PSession session = new P2PSession(req, msg, nsMessageHandler, bridge);
-                session.Closed += P2PSessionClosed;
-
-                if (session.Version == P2PVersion.P2PV2)
-                    p2pV2Sessions.Add(session);
-                else
-                    p2pV1Sessions.Add(session);
-
-                return true;
-            }
-
-            return false;
-        }
-
-        private void SendSLPStatus(P2PBridge bridge, P2PMessage msg, Contact dest, Guid destGuid, int code, string phrase)
-        {
-            string target = dest.Account.ToLowerInvariant();
-
-            if (msg.Version == P2PVersion.P2PV2)
-            {
-                target += ";" + destGuid.ToString("B");
-            }
-
-            SLPMessage slp = new SLPStatusMessage(target, code, phrase);
-
-            if (msg.IsSLPData)
-            {
-                SLPMessage msgSLP = msg.InnerMessage as SLPMessage;
-                slp.Branch = msgSLP.Branch;
-                slp.CallId = msgSLP.CallId;
-                slp.Source = msgSLP.Target;
-                slp.ContentType = msgSLP.ContentType;
-            }
-            else
-                slp.ContentType = "null";
-
-            P2PMessage response = new P2PMessage(msg.Version);
-            response.InnerMessage = slp;
-
-            if (msg.Version == P2PVersion.P2PV1)
-            {
-                response.V1Header.Flags = P2PFlag.MSNSLPInfo;
-            }
-            else if (msg.Version == P2PVersion.P2PV2)
-            {
-                response.V2Header.OperationCode = (byte)OperationCode.None;
-                response.V2Header.TFCombination = TFCombination.First;
-            }
-
-            bridge.Send(null, dest, destGuid, response, null);
         }
 
         #endregion
