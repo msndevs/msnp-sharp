@@ -157,15 +157,25 @@ namespace MSNPSharp.P2P
 
             // 5) FIND SESSION: Search session by SessionId/ExpectedIdentifier
             P2PSession session = FindSession(p2pMessage, slp);
-            if (session != null && session.ProcessP2PMessage(bridge, p2pMessage, slp))
+            if (session != null)
             {
-                return;
+                // ResetTimeoutTimer();
+
+                // Keep track of theremoteIdentifier
+
+                // Session SLP
+                if (slp != null && slpHandler.HandleP2PSessionSignal(bridge, p2pMessage, slp, session))
+                    return;
+
+                // Session Data
+                if (session.ProcessP2PData(bridge, p2pMessage))
+                    return;
             }
 
             // 6) FIRST SLP MESSAGE: Create applications/sessions based on invitation
             if (slp != null)
             {
-                session = slpHandler.ProcessSLPMessage(bridge, source, sourceGuid, p2pMessage, slp);
+                session = slpHandler.CreateNewP2PSession(bridge, source, sourceGuid, p2pMessage, slp);
 
                 if (session != null)
                 {
