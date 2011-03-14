@@ -2203,14 +2203,12 @@ namespace MSNPSharpClient
 
             if (dn != messenger.Owner.Name)
             {
-
                 lstPersonalMessage[0] = dn;
             }
 
             if (messenger.Owner.PersonalMessage == null || pm != messenger.Owner.PersonalMessage.Message)
             {
                 lstPersonalMessage[1] = pm;
-
             }
 
             Thread updateThread = new Thread(new ParameterizedThreadStart(UpdateProfile));
@@ -2256,14 +2254,18 @@ namespace MSNPSharpClient
                 if (lstPersonalMessage[0] != "")
                 {
                     messenger.Owner.Name = lstPersonalMessage[0];
+
                     pm.FriendlyName = lstPersonalMessage[0];
                 }
 
                 if (lstPersonalMessage[1] != "")
-                {                    
-                    pm.FriendlyName = lstPersonalMessage[1];
+                {
                     messenger.Owner.PersonalMessage = pm;
+
+                    pm.Message = lstPersonalMessage[1];
                 }
+
+                messenger.Owner.PersonalMessage = pm;
 
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Update personal message completed.");
             }

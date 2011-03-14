@@ -785,11 +785,13 @@ namespace MSNPSharp
 
                                         case ServiceShortNames.PE:
                                             {
+                                                // Create a new reference to fire PersonalMessageChanged event.
                                                 PersonalMessage pm = new PersonalMessage(service.ChildNodes);
 
-                                                if (!String.IsNullOrEmpty(pm.Payload))
+                                                if (!String.IsNullOrEmpty(pm.Payload) &&
+                                                    fromContact.PersonalMessage != pm)
                                                 {
-                                                    fromContact.SetPersonalMessage(pm);
+                                                    fromContact.PersonalMessage = pm;
 
                                                     // FriendlyName
                                                     fromContact.SetName(String.IsNullOrEmpty(pm.FriendlyName) ? fromContact.Account : pm.FriendlyName);

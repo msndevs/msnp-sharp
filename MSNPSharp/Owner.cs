@@ -333,9 +333,7 @@ namespace MSNPSharp
 
                     MSNObjectCatalog.GetInstance().Add(base.DisplayImage);
 
-                    PersonalMessage pm = (PersonalMessage == null)
-                        ? new PersonalMessage(String.IsNullOrEmpty(NSMessageHandler.ContactService.Deltas.Profile.DisplayName) ? NickName : NSMessageHandler.ContactService.Deltas.Profile.DisplayName)
-                        : PersonalMessage;
+                    PersonalMessage pm = PersonalMessage;
 
                     pm.UserTileLocation = value.IsDefaultImage ? string.Empty : value.ContextPlain;
                     
@@ -443,13 +441,13 @@ namespace MSNPSharp
             }
             set
             {
-                if (NSMessageHandler != null)
+                if (NSMessageHandler != null && NSMessageHandler.IsSignedIn)
                 {
                     NSMessageHandler.SetPersonalMessage(value);
                 }
 
                 if (value != null)
-                    base.SetPersonalMessage(value);
+                    base.PersonalMessage = value;
             }
         }
 
