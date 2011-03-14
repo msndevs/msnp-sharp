@@ -548,8 +548,8 @@ namespace MSNPSharp
                 {
                     Contact group = new Contact(tempGroup[1].ToLowerInvariant(), IMAddressInfoType.TemporaryGroup, this);
                     group.TransactionID = message.TransactionID;
-                    group.ContactList = new ContactList(new Guid(tempGroup[1].ToLowerInvariant().Split('@')[0]),Owner,this);
-                    
+                    group.ContactList = new ContactList(new Guid(tempGroup[1].ToLowerInvariant().Split('@')[0]), Owner, this);
+
                     multiparties[message.TransactionID] = group;
 
                     JoinMultiparty(group);
@@ -766,10 +766,7 @@ namespace MSNPSharp
                                                             PresenceStatus newStatus = ParseStatus(node.InnerText);
                                                             fromContact.SetStatus(newStatus);
 
-                                                            // The contact changed status
                                                             OnContactStatusChanged(new ContactStatusChangedEventArgs(fromContact, viaHeaderContact, oldStatus, newStatus));
-
-                                                            // The contact goes online
                                                             OnContactOnline(new ContactStatusChangedEventArgs(fromContact, viaHeaderContact, oldStatus, newStatus));
 
                                                             break;
@@ -829,11 +826,11 @@ namespace MSNPSharp
 
                             if (serviceEndPoints.Count > 0)
                             {
-                                foreach (XmlNode service in serviceEndPoints)
+                                foreach (XmlNode serviceEndPoint in serviceEndPoints)
                                 {
-                                    ServiceShortNames serviceEnum = (ServiceShortNames)Enum.Parse(typeof(ServiceShortNames), service.Attributes["n"].Value);
-                                    Guid epid = service.Attributes["epid"] == null ? Guid.Empty : new Guid(service.Attributes["epid"].Value);
-                                    
+                                    ServiceShortNames serviceEnum = (ServiceShortNames)Enum.Parse(typeof(ServiceShortNames), serviceEndPoint.Attributes["n"].Value);
+                                    Guid epid = serviceEndPoint.Attributes["epid"] == null ? Guid.Empty : new Guid(serviceEndPoint.Attributes["epid"].Value);
+
                                     if (!fromContact.EndPointData.ContainsKey(epid))
                                         fromContact.EndPointData.Add(epid, fromIsMe ? new PrivateEndPointData(fromContact.Account, epid) : new EndPointData(fromContact.Account, epid));
 
@@ -842,7 +839,7 @@ namespace MSNPSharp
                                         case ServiceShortNames.IM:
                                         case ServiceShortNames.PE:
                                             {
-                                                foreach (XmlNode node in service.ChildNodes)
+                                                foreach (XmlNode node in serviceEndPoint.ChildNodes)
                                                 {
                                                     switch (node.Name)
                                                     {
@@ -878,7 +875,7 @@ namespace MSNPSharp
                                             {
                                                 PrivateEndPointData privateEndPoint = fromContact.EndPointData[epid] as PrivateEndPointData;
 
-                                                foreach (XmlNode node in service.ChildNodes)
+                                                foreach (XmlNode node in serviceEndPoint.ChildNodes)
                                                 {
                                                     switch (node.Name)
                                                     {
@@ -1093,7 +1090,6 @@ namespace MSNPSharp
                     #region user xml
                     case "application/user+xml":
                         {
-
                             if (mmm.InnerBody == null || mmm.InnerBody.Length == 0)
                                 return;  //No xml content.
 
@@ -1110,10 +1106,10 @@ namespace MSNPSharp
 
                             if (serviceEndPoints.Count > 0)
                             {
-                                foreach (XmlNode service in serviceEndPoints)
+                                foreach (XmlNode serviceEndPoint in serviceEndPoints)
                                 {
-                                    ServiceShortNames serviceEnum = (ServiceShortNames)Enum.Parse(typeof(ServiceShortNames), service.Attributes["n"].Value);
-                                    Guid epid = service.Attributes["epid"] == null ? Guid.Empty : new Guid(service.Attributes["epid"].Value);
+                                    ServiceShortNames serviceEnum = (ServiceShortNames)Enum.Parse(typeof(ServiceShortNames), serviceEndPoint.Attributes["n"].Value);
+                                    Guid epid = serviceEndPoint.Attributes["epid"] == null ? Guid.Empty : new Guid(serviceEndPoint.Attributes["epid"].Value);
 
                                     switch (serviceEnum)
                                     {
@@ -1130,16 +1126,6 @@ namespace MSNPSharp
                                                 {
                                                     if (fromContact.EndPointData.ContainsKey(epid))
                                                         fromContact.EndPointData.Remove(epid);
-
-                                                    PresenceStatus oldStatus = fromContact.Status;
-                                                    PresenceStatus newStatus = PresenceStatus.Offline;
-                                                    fromContact.SetStatus(newStatus);
-
-                                                    // the contact changed status
-                                                    OnContactStatusChanged(new ContactStatusChangedEventArgs(fromContact, viaHeaderContact, oldStatus, newStatus));
-
-                                                    // the contact goes offline
-                                                    OnContactOffline(new ContactStatusChangedEventArgs(fromContact, viaHeaderContact, oldStatus, newStatus));
                                                 }
                                                 break;
                                             }
@@ -1170,13 +1156,17 @@ namespace MSNPSharp
                                     {
                                         case ServiceShortNames.IM:
                                             {
+                                                PresenceStatus oldStatus = fromContact.Status;
+                                                PresenceStatus newStatus = PresenceStatus.Offline;
+                                                fromContact.SetStatus(newStatus);
 
+                                                OnContactStatusChanged(new ContactStatusChangedEventArgs(fromContact, viaHeaderContact, oldStatus, newStatus));
+                                                OnContactOffline(new ContactStatusChangedEventArgs(fromContact, viaHeaderContact, oldStatus, newStatus));
                                                 break;
                                             }
                                     }
                                 }
                             }
-
                         }
                         break;
 
@@ -1379,7 +1369,7 @@ namespace MSNPSharp
             {
                 if ("nudge" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
                 {
-                    OnNudgeReceived(new NudgeArrivedEventArgs(sender, fromContact));                    
+                    OnNudgeReceived(new NudgeArrivedEventArgs(sender, fromContact));
                 }
                 else if ("control/typing" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
                 {
@@ -1395,7 +1385,7 @@ namespace MSNPSharp
                     }
                     txtMessage.ParseHeader(strDic);
 
-                    OnTextMessageReceived(new TextMessageArrivedEventArgs(sender, txtMessage, fromContact));                   
+                    OnTextMessageReceived(new TextMessageArrivedEventArgs(sender, txtMessage, fromContact));
                 }
                 else if ("signal/p2p" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
                 {
