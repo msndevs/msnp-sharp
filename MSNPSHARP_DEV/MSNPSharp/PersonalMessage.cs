@@ -338,7 +338,7 @@ namespace MSNPSharp
             return Payload;
         }
 
-        public void IAmListening(string artist, string song, string album)
+        public void SetListiningAlbum(string artist, string song, string album)
         {
             this.mediaType = MediaType.Music;
             this.content = new string[] { artist, song, album, String.Empty };
