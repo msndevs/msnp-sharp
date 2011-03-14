@@ -50,7 +50,103 @@ namespace MSNPSharp.P2P
         {
         }
 
-        internal P2PSession ProcessSLPMessage(P2PBridge bridge, Contact source, Guid sourceGuid, P2PMessage msg, SLPMessage slp)
+        internal bool HandleP2PSessionSignal(P2PBridge bridge, P2PMessage p2pMessage, SLPMessage slp, P2PSession session)
+        {
+            if (slp is SLPRequestMessage)
+            {
+                SLPRequestMessage slpRequest = slp as SLPRequestMessage;
+
+                if (slpRequest.ContentType == "application/x-msnmsgr-sessionclosebody" &&
+                    slpRequest.Method == "BYE")
+                {
+                    if (p2pMessage.Version == P2PVersion.P2PV1)
+                    {
+                        P2PMessage byeAck = p2pMessage.CreateAcknowledgement();
+                        byeAck.V1Header.Flags = P2PFlag.CloseSession;
+                        session.Send(byeAck);
+                    }
+                    else if (p2pMessage.Version == P2PVersion.P2PV2)
+                    {
+                        SLPRequestMessage slpMessage = new SLPRequestMessage(slp.Source, "BYE");
+                        slpMessage.Target = slp.Source;
+                        slpMessage.Source = slp.Target;
+                        slpMessage.Branch = slp.Branch;
+                        slpMessage.CallId = slp.CallId;
+                        slpMessage.ContentType = "application/x-msnmsgr-sessionclosebody";
+                        slpMessage.BodyValues["SessionID"] = session.SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+                        session.Send(session.WrapSLPMessage(slpMessage));
+                    }
+
+                    session.OnClosed(new ContactEventArgs(session.Remote));
+
+                    return true;
+                }
+                else if (slpRequest.ContentType == "application/x-msnmsgr-sessionreqbody" &&
+                    slpRequest.Method == "INVITE")
+                {
+                    SLPStatusMessage slpMessage = new SLPStatusMessage(slp.Source, 500, "Internal Error");
+                    slpMessage.Target = slp.Source;
+                    slpMessage.Source = slp.Target;
+                    slpMessage.Branch = slp.Branch;
+                    slpMessage.CallId = slp.CallId;
+                    slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
+                    slpMessage.BodyValues["SessionID"] = session.SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+                    P2PMessage errorMessage = session.WrapSLPMessage(slpMessage);
+                    bridge.Send(null, session.Remote, session.RemoteContactEndPointID, errorMessage, null);
+                    return true;
+                }
+                else
+                {
+                    if (slpRequest.ContentType == "application/x-msnmsgr-transreqbody" ||
+                        slpRequest.ContentType == "application/x-msnmsgr-transrespbody" ||
+                        slpRequest.ContentType == "application/x-msnmsgr-transdestaddrupdate")
+                    {
+                        P2PSession.ProcessDirectInvite(slpRequest, nsMessageHandler, session); // Direct connection invite
+                        return true;
+                    }
+                }
+            }
+            else if (slp is SLPStatusMessage)
+            {
+                SLPStatusMessage slpStatus = slp as SLPStatusMessage;
+
+                if (slpStatus.Code == 200) // OK
+                {
+                    if (slpStatus.ContentType == "application/x-msnmsgr-transrespbody")
+                    {
+                        P2PSession.ProcessDirectInvite(slpStatus, nsMessageHandler, session);
+                    }
+                    else
+                    {
+                        session.OnActive(EventArgs.Empty);
+                        session.Application.Start();
+                    }
+
+                    return true;
+                }
+                else if (slpStatus.Code == 603) // Decline
+                {
+                    session.OnClosed(new ContactEventArgs(session.Remote));
+
+                    return true;
+                }
+                else if (slpStatus.Code == 500) // Internal Error
+                {
+                    return true;
+                }
+            }
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                 String.Format("Unhandled SLP Message in session:---->>\r\n{0}", p2pMessage.ToString()), GetType().Name);
+
+            session.OnError(EventArgs.Empty);
+            return true;
+        }
+    
+
+        internal P2PSession CreateNewP2PSession(P2PBridge bridge, Contact source, Guid sourceGuid, P2PMessage msg, SLPMessage slp)
         {
             SLPRequestMessage req = slp as SLPRequestMessage;
 
