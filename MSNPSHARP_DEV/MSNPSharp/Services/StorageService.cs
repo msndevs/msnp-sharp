@@ -775,7 +775,7 @@ namespace MSNPSharp
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(ex.Message);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message);
             }
         }
 
