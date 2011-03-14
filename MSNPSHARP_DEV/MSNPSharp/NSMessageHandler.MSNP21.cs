@@ -832,11 +832,39 @@ namespace MSNPSharp
                                     Guid epid = serviceEndPoint.Attributes["epid"] == null ? Guid.Empty : new Guid(serviceEndPoint.Attributes["epid"].Value);
 
                                     if (!fromContact.EndPointData.ContainsKey(epid))
+                                    {
                                         fromContact.EndPointData.Add(epid, fromIsMe ? new PrivateEndPointData(fromContact.Account, epid) : new EndPointData(fromContact.Account, epid));
+                                    }
 
                                     switch (serviceEnum)
                                     {
                                         case ServiceShortNames.IM:
+                                            {
+                                                foreach (XmlNode node in serviceEndPoint.ChildNodes)
+                                                {
+                                                    switch (node.Name)
+                                                    {
+                                                        case "Capabilities":
+
+                                                            ClientCapabilities cap = ClientCapabilities.None;
+                                                            ClientCapabilitiesEx capEx = ClientCapabilitiesEx.None;
+
+                                                            string[] caps = node.InnerText.Split(':');
+                                                            if (caps.Length > 1)
+                                                            {
+                                                                capEx = (ClientCapabilitiesEx)long.Parse(caps[1]);
+                                                            }
+                                                            cap = (ClientCapabilities)long.Parse(caps[0]);
+
+                                                            fromContact.EndPointData[epid].IMCapabilities = cap;
+                                                            fromContact.EndPointData[epid].IMCapabilitiesEx = capEx;
+
+                                                            break;
+                                                    }
+                                                }
+                                                break;
+                                            }
+
                                         case ServiceShortNames.PE:
                                             {
                                                 foreach (XmlNode node in serviceEndPoint.ChildNodes)
@@ -855,19 +883,16 @@ namespace MSNPSharp
                                                             }
                                                             cap = (ClientCapabilities)long.Parse(caps[0]);
 
-                                                            if (serviceEnum == ServiceShortNames.IM)
-                                                            {
-                                                                fromContact.EndPointData[epid].IMCapabilities = cap;
-                                                                fromContact.EndPointData[epid].IMCapabilitiesEx = capEx;
-                                                            }
-                                                            else if (serviceEnum == ServiceShortNames.PE)
-                                                            {
-                                                                fromContact.EndPointData[epid].PECapabilities = cap;
-                                                                fromContact.EndPointData[epid].PECapabilitiesEx = capEx;
-                                                            }
+                                                            fromContact.EndPointData[epid].PECapabilities = cap;
+                                                            fromContact.EndPointData[epid].PECapabilitiesEx = capEx;
+
                                                             break;
                                                     }
                                                 }
+
+                                                fromContact.SetChangedPlace(new PlaceChangedEventArgs(fromContact.EndPointData[epid], PlaceChangedReason.SignedIn));
+
+
                                                 break;
                                             }
 
@@ -897,7 +922,8 @@ namespace MSNPSharp
                                                     }
                                                 }
 
-                                                Owner.SetChangedPlace(privateEndPoint, PlaceChangedReason.SignedIn);
+                                                Owner.SetChangedPlace(new PlaceChangedEventArgs(privateEndPoint, PlaceChangedReason.SignedIn));
+
                                                 break;
                                             }
                                     }
@@ -1114,32 +1140,20 @@ namespace MSNPSharp
                                     switch (serviceEnum)
                                     {
                                         case ServiceShortNames.IM:
-                                            {
-                                                if (fromIsMe)
-                                                {
-                                                    if (Owner.EndPointData.ContainsKey(epid))
-                                                    {
-                                                        Owner.SetChangedPlace(Owner.EndPointData[epid] as PrivateEndPointData, PlaceChangedReason.SignedOut);
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    if (fromContact.EndPointData.ContainsKey(epid))
-                                                        fromContact.EndPointData.Remove(epid);
-                                                }
-                                                break;
-                                            }
-
                                         case ServiceShortNames.PD:
                                             {
-                                                if (Owner.EndPointData.ContainsKey(epid))
+                                                if (fromContact.EndPointData.ContainsKey(epid))
                                                 {
-                                                    Owner.SetChangedPlace(Owner.EndPointData[epid] as PrivateEndPointData, PlaceChangedReason.SignedOut);
+                                                    fromContact.SetChangedPlace(new PlaceChangedEventArgs(fromContact.EndPointData[epid], PlaceChangedReason.SignedOut));
                                                 }
-                                                if (epid == MachineGuid)
+
+                                                if (serviceEnum == ServiceShortNames.PD &&
+                                                    fromIsMe &&
+                                                    epid == MachineGuid)
                                                 {
-                                                    Owner.Status = PresenceStatus.Offline;
+                                                    SignoutFrom(epid);
                                                 }
+
                                                 break;
                                             }
                                     }
