@@ -198,7 +198,10 @@ namespace MSNPSharp.P2P
             {
                 // UNHANDLED P2P MESSAGE
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                    String.Format("*******Unhandled P2P message!*******\r\n{0}", p2pMessage.ToDebugString()), GetType().Name);
+                    String.Format("*******Unhandled P2P message!******* PING sent:\r\n{0}", p2pMessage.ToDebugString()), GetType().Name);
+
+                P2PMessage ping = new P2PMessage(p2pMessage.Version);
+                bridge.Send(null, source, sourceGuid, ping, null);
             }
         }
 

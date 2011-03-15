@@ -218,7 +218,7 @@ namespace MSNPSharp.P2P
             p2pSession.SetupDCTimer();
             Thread.CurrentThread.Join(900);
 
-            if (p2pBridge is SDGBridge)
+            if (!(p2pBridge is SDGBridge))
                 p2pBridge.StopSending(p2pSession);
         }
 
