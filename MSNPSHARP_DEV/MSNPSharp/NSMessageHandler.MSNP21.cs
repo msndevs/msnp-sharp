@@ -1402,8 +1402,16 @@ namespace MSNPSharp
                 }
                 else if ("signal/p2p" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
                 {
-                    SLPMessage slp = SLPMessage.Parse(mmMessage.InnerBody);
-                    HandleSIPv2(slp);
+                    SLPMessage slpMessage = SLPMessage.Parse(mmMessage.InnerBody);
+                    if (slpMessage != null)
+                    {
+                        if (slpMessage.ContentType == "application/x-msnmsgr-transreqbody" ||
+                            slpMessage.ContentType == "application/x-msnmsgr-transrespbody" ||
+                            slpMessage.ContentType == "application/x-msnmsgr-transdestaddrupdate")
+                        {
+                            P2PSession.ProcessDirectInvite(slpMessage, this, null);
+                        }
+                    }
                 }
                 else if ("data" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
                 {
@@ -1412,7 +1420,13 @@ namespace MSNPSharp
 
                     P2PMessage p2pData = new P2PMessage(toVer);
                     p2pData.ParseBytes(mmMessage.InnerBody);
-                    HandleP2PData(p2pData, sender, ep);
+
+                    if (mmMessage.ContentHeaders.ContainsKey("Pipe"))
+                    {
+                        SDGBridge.pipeNo = int.Parse(mmMessage.ContentHeaders["Pipe"]);
+                    }
+
+                    P2PHandler.ProcessP2PMessage(fromContact.DirectBridge != null ? fromContact.DirectBridge : SDGBridge, sender, ep, p2pData);
                 }
             }
         }
