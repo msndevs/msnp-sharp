@@ -99,12 +99,13 @@ namespace MSNPSharp.P2P
                   slp.ContentType == "application/x-msnmsgr-transdestaddrupdate")))
             {
                 mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "Signal/P2P";
-                mmMessage.InnerBody = (msg.InnerMessage as SLPMessage).GetBytes(false);
+                mmMessage.InnerBody = slp.GetBytes(false);
             }
             else
             {
                 mmMessage.ContentHeaders[MIMEHeaderStrings.Content_Type] = "application/x-msnmsgrp2p";
                 mmMessage.ContentHeaders[MIMEHeaderStrings.Content_Transfer_Encoding] = "binary";
+                mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type] = "Data";
 
                 if (pipeNo != 0)
                 {
@@ -112,7 +113,7 @@ namespace MSNPSharp.P2P
                 }
 
                 mmMessage.ContentHeaders["Bridging-Offsets"] = "0"; //msg.Header.HeaderLength.ToString();
-                mmMessage.InnerBody = msg.GetBytes(false);
+                mmMessage.InnerBody = msg.GetBytes(true);
             }
 
             NSMessageProcessor nsmp = (NSMessageProcessor)nsHandler.MessageProcessor;

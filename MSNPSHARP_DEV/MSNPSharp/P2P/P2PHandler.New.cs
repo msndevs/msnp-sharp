@@ -372,7 +372,7 @@ namespace MSNPSharp.P2P
                 requireAck = true;
 
                 P2PMessage ack = msg.CreateAcknowledgement();
-                //ack.Header.Identifier = bridge.localTrackerId;
+                ack.Header.Identifier = bridge.localTrackerId;
 
                 if (ack.Header.RequireAck)
                 {
