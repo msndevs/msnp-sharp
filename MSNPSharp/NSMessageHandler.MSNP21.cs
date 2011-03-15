@@ -1417,7 +1417,9 @@ namespace MSNPSharp
                 {
                     P2PVersion toVer = mmMessage.To.HasAttribute(MIMERoutingHeaders.EPID) ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
                     Guid ep = (toVer == P2PVersion.P2PV1) ? Guid.Empty : new Guid(mmMessage.From[MIMERoutingHeaders.EPID]);
-                    string[] offsets = mmMessage.ContentHeaders["Bridging-Offsets"].ToString().Split(',');
+                    string[] offsets = mmMessage.ContentHeaders.ContainsKey("Bridging-Offsets") ?
+                        mmMessage.ContentHeaders["Bridging-Offsets"].ToString().Split(',') :
+                        new string[] { "0" };
                     List<long> offsetList = new List<long>();
                     foreach (string os in offsets)
                     {
