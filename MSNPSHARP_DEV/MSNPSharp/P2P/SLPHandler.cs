@@ -148,27 +148,21 @@ namespace MSNPSharp.P2P
         internal bool CheckSLPMessage(P2PBridge bridge, Contact source, Guid sourceGuid, P2PMessage msg, SLPMessage slp)
         {
             string src = source.Account.ToLowerInvariant();
-            string target = nsMessageHandler.Owner.Account.ToLowerInvariant();
+            string target = nsMessageHandler.Owner.Account;
 
-            if (msg.Version == P2PVersion.P2PV2)
-            {
-                src += ";" + sourceGuid.ToString("B").ToLowerInvariant();
-                target += ";" + NSMessageHandler.MachineGuid.ToString("B").ToLowerInvariant();
-            }
-
-            if (slp.Source.ToLowerInvariant() != src)
+            if (slp.FromEmailAccount.ToLowerInvariant() != src)
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
                     String.Format("Received message from '{0}', differing from source '{1}'", slp.Source, src), GetType().Name);
 
                 return false;
             }
-            else if (slp.Target.ToLowerInvariant() != target)
+            else if (slp.ToEmailAccount.ToLowerInvariant() != target)
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
                     String.Format("Received P2P message intended for '{0}', not us '{1}'", slp.Target, target), GetType().Name);
 
-                if (slp.Source == target)
+                if (slp.FromEmailAccount == target)
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
                         "We received a message from ourselves?", GetType().Name);
