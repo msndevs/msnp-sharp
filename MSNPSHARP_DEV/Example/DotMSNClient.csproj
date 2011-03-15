@@ -93,6 +93,7 @@
     <None Include="Resources\status\hidden.png" />
     <None Include="Resources\status\closed.png" />
     <None Include="Resources\status\circle.png" />
+    <None Include="Resources\status\circleoffline.png" />
     <None Include="Resources\status\busy.png" />
     <None Include="Resources\status\away.png" />
     <None Include="Resources\file.png" />

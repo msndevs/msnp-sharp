@@ -1417,16 +1417,26 @@ namespace MSNPSharp
                 {
                     P2PVersion toVer = mmMessage.To.HasAttribute(MIMERoutingHeaders.EPID) ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
                     Guid ep = (toVer == P2PVersion.P2PV1) ? Guid.Empty : new Guid(mmMessage.From[MIMERoutingHeaders.EPID]);
+                    string[] offsets = mmMessage.ContentHeaders["Bridging-Offsets"].ToString().Split(',');
+                    List<long> offsetList = new List<long>();
+                    foreach (string os in offsets)
+                    {
+                        offsetList.Add(long.Parse(os));
+                    }
 
                     P2PMessage p2pData = new P2PMessage(toVer);
-                    p2pData.ParseBytes(mmMessage.InnerBody);
+                    P2PMessage[] p2pDatas = p2pData.CreateFromOffsets(offsetList.ToArray(), mmMessage.InnerBody);
 
                     if (mmMessage.ContentHeaders.ContainsKey("Pipe"))
                     {
                         SDGBridge.pipeNo = int.Parse(mmMessage.ContentHeaders["Pipe"]);
                     }
 
-                    P2PHandler.ProcessP2PMessage(fromContact.DirectBridge != null ? fromContact.DirectBridge : SDGBridge, sender, ep, p2pData);
+                    foreach (P2PMessage m in p2pDatas)
+                    {
+                        P2PHandler.ProcessP2PMessage(fromContact.DirectBridge != null ? fromContact.DirectBridge : SDGBridge,
+                            sender, ep, m);
+                    }
                 }
             }
         }

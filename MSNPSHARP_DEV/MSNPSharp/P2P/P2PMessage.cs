@@ -397,6 +397,26 @@ namespace MSNPSharp.P2P
             return chunks.ToArray();
         }
 
+        public P2PMessage[] CreateFromOffsets(long[] offsets, byte[] allData)
+        {
+            List<P2PMessage> messages = new List<P2PMessage>(offsets.Length);
+            long offset = allData.Length;
+            for (int i = offsets.Length - 1; i >= 0; i--)
+            {
+                P2PMessage m = new P2PMessage(Version);
+                long length = offset - offsets[i];
+                byte[] part = new byte[length];
+                Array.Copy(allData, offsets[i], part, 0, length);
+                m.ParseBytes(part);
+                offset -= length;
+
+                messages.Add(m);
+            }
+            messages.Reverse();
+
+            return messages.ToArray();
+        }
+
 
         /// <summary>
         /// Returns debug info
