@@ -341,7 +341,7 @@ namespace MSNPSharpClient
             }
 
             lblNews.Text = "Getting your friends' news...";
-            //MSNP21TODO: messenger.WhatsUpService.GetWhatsUp(200);
+            messenger.WhatsUpService.GetWhatsUp(200);
         }
 
         List<ActivityDetailsType> activities = new List<ActivityDetailsType>();
