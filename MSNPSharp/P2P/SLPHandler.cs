@@ -67,11 +67,11 @@ namespace MSNPSharp.P2P
                     }
                     else if (p2pMessage.Version == P2PVersion.P2PV2)
                     {
-                        SLPRequestMessage slpMessage = new SLPRequestMessage(slp.Source, "BYE");
-                        slpMessage.Target = slp.Source;
-                        slpMessage.Source = slp.Target;
-                        slpMessage.Branch = slp.Branch;
-                        slpMessage.CallId = slp.CallId;
+                        SLPRequestMessage slpMessage = new SLPRequestMessage(session.RemoteContactEPIDString, "BYE");
+                        slpMessage.Target = session.RemoteContactEPIDString;
+                        slpMessage.Source = session.LocalContactEPIDString;
+                        slpMessage.Branch = session.Invitation.Branch;
+                        slpMessage.CallId = session.Invitation.CallId;
                         slpMessage.ContentType = "application/x-msnmsgr-sessionclosebody";
                         slpMessage.BodyValues["SessionID"] = session.SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
@@ -85,11 +85,11 @@ namespace MSNPSharp.P2P
                 else if (slpRequest.ContentType == "application/x-msnmsgr-sessionreqbody" &&
                     slpRequest.Method == "INVITE")
                 {
-                    SLPStatusMessage slpMessage = new SLPStatusMessage(slp.Source, 500, "Internal Error");
-                    slpMessage.Target = slp.Source;
-                    slpMessage.Source = slp.Target;
-                    slpMessage.Branch = slp.Branch;
-                    slpMessage.CallId = slp.CallId;
+                    SLPStatusMessage slpMessage = new SLPStatusMessage(session.RemoteContactEPIDString, 500, "Internal Error");
+                    slpMessage.Target = session.RemoteContactEPIDString;
+                    slpMessage.Source = session.LocalContactEPIDString;
+                    slpMessage.Branch = session.Invitation.Branch;
+                    slpMessage.CallId = session.Invitation.CallId;
                     slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
                     slpMessage.BodyValues["SessionID"] = session.SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
@@ -143,21 +143,6 @@ namespace MSNPSharp.P2P
 
             session.OnError(EventArgs.Empty);
             return true;
-        }
-    
-
-        internal P2PSession CreateNewP2PSession(P2PBridge bridge, Contact source, Guid sourceGuid, P2PMessage msg, SLPMessage slp)
-        {
-            SLPRequestMessage req = slp as SLPRequestMessage;
-
-            if (req != null && req.Method == "INVITE" &&
-                req.ContentType == "application/x-msnmsgr-sessionreqbody")
-            {
-                // Start a new session
-                return new P2PSession(req, msg, nsMessageHandler, bridge);
-            }
-
-            return null;
         }
 
         internal bool CheckSLPMessage(P2PBridge bridge, Contact source, Guid sourceGuid, P2PMessage msg, SLPMessage slp)

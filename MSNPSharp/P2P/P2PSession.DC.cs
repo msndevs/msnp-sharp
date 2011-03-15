@@ -216,6 +216,10 @@ namespace MSNPSharp.P2P
 
             // Wait a bit, otherwise SLP message queued when called p2pBridge.StopSending(this);
             p2pSession.SetupDCTimer();
+            Thread.CurrentThread.Join(900);
+
+            if (p2pBridge is SDGBridge)
+                p2pBridge.StopSending(p2pSession);
         }
 
         private static void ProcessDCReqInvite(SLPMessage message, NSMessageHandler ns, P2PSession startupSession)

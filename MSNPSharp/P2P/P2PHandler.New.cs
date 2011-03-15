@@ -163,6 +163,11 @@ namespace MSNPSharp.P2P
 
                 // Keep track of theremoteIdentifier
 
+                // Keep track of the remote identifier
+                session.remoteIdentifier = (p2pMessage.Version == P2PVersion.P2PV2) ?
+                    p2pMessage.Header.Identifier + p2pMessage.Header.MessageSize :
+                    p2pMessage.Header.Identifier;
+
                 // Session SLP
                 if (slp != null && slpHandler.HandleP2PSessionSignal(bridge, p2pMessage, slp, session))
                     return;
@@ -173,23 +178,22 @@ namespace MSNPSharp.P2P
             }
 
             // 6) FIRST SLP MESSAGE: Create applications/sessions based on invitation
-            if (slp != null)
+            if (slp != null && slp is SLPRequestMessage &&
+                (slp as SLPRequestMessage).Method == "INVITE" &&
+                slp.ContentType == "application/x-msnmsgr-sessionreqbody")
             {
-                session = slpHandler.CreateNewP2PSession(bridge, source, sourceGuid, p2pMessage, slp);
+                session = new P2PSession(slp as SLPRequestMessage, p2pMessage, nsMessageHandler, bridge);
 
-                if (session != null)
-                {
-                    session.Closed += P2PSessionClosed;
+                session.Closed += P2PSessionClosed;
 
-                    if (session.Version == P2PVersion.P2PV2)
-                        p2pV2Sessions.Add(session);
-                    else
-                        p2pV1Sessions.Add(session);
+                if (session.Version == P2PVersion.P2PV2)
+                    p2pV2Sessions.Add(session);
+                else
+                    p2pV1Sessions.Add(session);
 
-                    return;
-                }
+                return;
             }
-
+            
             if (!requireAck)
             {
                 // UNHANDLED P2P MESSAGE
@@ -251,11 +255,15 @@ namespace MSNPSharp.P2P
 
         internal P2PBridge GetBridge(P2PSession session)
         {
-            return nsMessageHandler.SDGBridge;
+            
 
             foreach (P2PBridge existing in bridges)
                 if (existing.SuitableFor(session))
                     return existing;
+
+
+            return nsMessageHandler.SDGBridge;
+
             /*MSNP21TODO
             P2PBridge bridge = new SBBridge(session);
             bridge.BridgeClosed += BridgeClosed;
@@ -364,7 +372,7 @@ namespace MSNPSharp.P2P
                 requireAck = true;
 
                 P2PMessage ack = msg.CreateAcknowledgement();
-                ack.Header.Identifier = bridge.localTrackerId;
+                //ack.Header.Identifier = bridge.localTrackerId;
 
                 if (ack.Header.RequireAck)
                 {

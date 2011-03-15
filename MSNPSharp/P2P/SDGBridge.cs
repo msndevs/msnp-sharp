@@ -41,6 +41,7 @@ namespace MSNPSharp.P2P
     public class SDGBridge : P2PBridge
     {
         private NSMessageHandler nsHandler;
+        internal int pipeNo = 0;
 
         public override bool IsOpen
         {
@@ -54,26 +55,7 @@ namespace MSNPSharp.P2P
         {
             get
             {
-                return 1000;
-            }
-        }
-
-        public override bool Synced
-        {
-            get
-            {
-                return true;
-            }
-        }
-
-        protected internal override uint SyncId
-        {
-            get
-            {
-                return uint.MaxValue;
-            }
-            set
-            {
+                return 5000;
             }
         }
 
@@ -99,30 +81,42 @@ namespace MSNPSharp.P2P
 
         protected override void SendOnePacket(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage msg)
         {
-            string target = (msg.Version == P2PVersion.P2PV1) ?
-                remote.Account.ToLowerInvariant()
-                :
-                remote.Account.ToLowerInvariant() + ";" + remoteGuid.ToString("B");
-
-            NSMessageProcessor nsmp = (NSMessageProcessor)nsHandler.MessageProcessor;
-            int transId = nsmp.IncreaseTransactionID();
-
-
             string to = ((int)remote.ClientType).ToString() + ":" + remote.Account;
             string from = ((int)nsHandler.Owner.ClientType).ToString() + ":" + nsHandler.Owner.Account;
 
             MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
             mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = NSMessageHandler.MachineGuid.ToString("B").ToLowerInvariant();
+            mmMessage.RoutingHeaders[MIMERoutingHeaders.To][MIMERoutingHeaders.EPID] = remoteGuid.ToString("B").ToLowerInvariant();
+
             mmMessage.RoutingHeaders[MIMERoutingHeaders.ServiceChannel] = "PE";
             mmMessage.RoutingHeaders[MIMERoutingHeaders.Options] = "0";
-
             mmMessage.ContentKeyVersion = "2.0";
-            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "Data";
-            mmMessage.ContentHeaders[MIMEHeaderStrings.Content_Type] = "application/x-msnmsgrp2p";
-            mmMessage.ContentHeaders[MIMEHeaderStrings.Content_Transfer_Encoding] = "binary";
-            mmMessage.ContentHeaders["Bridging-Offsets"] = "0";
 
-            mmMessage.InnerBody = msg.GetBytes();
+            SLPMessage slp = msg.IsSLPData ? msg.InnerMessage as SLPMessage : null;
+            if (slp != null &&
+                ((slp.ContentType == "application/x-msnmsgr-transreqbody" ||
+                  slp.ContentType == "application/x-msnmsgr-transrespbody" ||
+                  slp.ContentType == "application/x-msnmsgr-transdestaddrupdate")))
+            {
+                mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "Signal/P2P";
+                mmMessage.InnerBody = (msg.InnerMessage as SLPMessage).GetBytes(false);
+            }
+            else
+            {
+                mmMessage.ContentHeaders[MIMEHeaderStrings.Content_Type] = "application/x-msnmsgrp2p";
+                mmMessage.ContentHeaders[MIMEHeaderStrings.Content_Transfer_Encoding] = "binary";
+
+                if (pipeNo != 0)
+                {
+                    mmMessage.ContentHeaders["Pipe"] = pipeNo.ToString();
+                }
+
+                mmMessage.ContentHeaders["Bridging-Offsets"] = "0"; //msg.Header.HeaderLength.ToString();
+                mmMessage.InnerBody = msg.GetBytes(false);
+            }
+
+            NSMessageProcessor nsmp = (NSMessageProcessor)nsHandler.MessageProcessor;
+            int transId = nsmp.IncreaseTransactionID();
 
             NSMessage sdgPayload = new NSMessage("SDG");
             sdgPayload.TransactionID = transId;

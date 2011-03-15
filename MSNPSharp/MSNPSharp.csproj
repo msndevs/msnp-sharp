@@ -128,9 +128,6 @@
     <Compile Include="NSMessageHandler.MSNP21.cs">
       <DependentUpon>NSMessageHandler.cs</DependentUpon>
     </Compile>
-    <Compile Include="NSMessageHandler.SIPv2.cs">
-      <DependentUpon>NSMessageHandler.cs</DependentUpon>
-    </Compile>
     <Compile Include="NSMessageHandler.Obsolete.cs">
       <DependentUpon>NSMessageHandler.cs</DependentUpon>
     </Compile>

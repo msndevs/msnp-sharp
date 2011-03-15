@@ -108,7 +108,7 @@ namespace MSNPSharp.P2P
         private uint localBaseIdentifier = 0;
         private uint localIdentifier = 0;
         private uint remoteBaseIdentifier = 0;
-        private uint remoteIdentifier = 0;
+        internal uint remoteIdentifier = 0;
 
         private Contact localContact = null;
         private Contact remoteContact = null;
