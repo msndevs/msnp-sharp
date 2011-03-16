@@ -148,7 +148,8 @@ namespace MSNPSharp.Apps
                 applicationId = 12;
                 msnObject.SetContext(remote.SceneContext, false);
             }
-            else if (msnObject.ObjectType == MSNObjectType.Emoticon)
+            else if (msnObject.ObjectType == MSNObjectType.Emoticon ||
+                msnObject.ObjectType == MSNObjectType.Wink)
             {
                 applicationId = 11;
             }
@@ -337,6 +338,11 @@ namespace MSNPSharp.Apps
                     else if (msnObject.ObjectType == MSNObjectType.Emoticon)
                     {
                         ((Emoticon)msnObject).Image = Image.FromStream(objStream);
+                    }
+                    else if (msnObject.ObjectType == MSNObjectType.Wink)
+                    {
+                        Stream s = ((Wink)msnObject).OpenStream();
+                        s.Write(allData, 0, allData.Length);
                     }
 
                     objStream.Close();

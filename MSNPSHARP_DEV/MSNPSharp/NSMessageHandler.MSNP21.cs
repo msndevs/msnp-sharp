@@ -88,6 +88,16 @@ namespace MSNPSharp
         /// </summary>
         public event EventHandler<EmoticonArrivedEventArgs> EmoticonReceived;
 
+        /// <summary>
+        /// Fired when a contact sends a wink definition.
+        /// </summary>
+        public event EventHandler<WinkEventArgs> WinkDefinitionReceived;
+
+        /// <summary>
+        /// Occurs when we receive a wink from a user.
+        /// </summary>
+        public event EventHandler<WinkEventArgs> WinkReceived;
+
 
         /// <summary>
         /// Occurs when a multiparty chat created (locally or remotely).
@@ -221,6 +231,58 @@ namespace MSNPSharp
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Emoticon received", GetType().Name);
 
             OnEmoticonReceived(new EmoticonArrivedEventArgs(session.Remote, session.Object as Emoticon, null));
+        }
+
+        protected virtual void OnWinkReceived(WinkEventArgs e)
+        {
+            if (WinkReceived != null)
+                WinkReceived(this, e);
+        }
+
+        protected virtual void OnWinkDefinitionReceived(WinkEventArgs e)
+        {
+            if (!autoRequestEmoticons)
+                return;
+
+            MSNObject existing = MSNObjectCatalog.GetInstance().Get(e.Wink.CalculateChecksum());
+            if (existing == null)
+            {
+                // create a session and send the invitation
+                ObjectTransfer winkTransfer = P2PHandler.RequestMsnObject(e.Sender, e.Wink);
+                winkTransfer.TransferAborted += (winkTransfer_TransferAborted);
+                winkTransfer.TransferFinished += (winkTransfer_TransferFinished);
+
+                MSNObjectCatalog.GetInstance().Add(e.Wink);
+
+                if (WinkDefinitionReceived != null)
+                    WinkDefinitionReceived(this, e);
+            }
+            else
+            {
+                if (WinkDefinitionReceived != null)
+                    WinkDefinitionReceived(this, e);
+
+                //If exists, fire the event.
+                OnWinkReceived(e);
+            }
+        }
+
+        private void winkTransfer_TransferAborted(object objectTransfer, ContactEventArgs e)
+        {
+            ObjectTransfer session = objectTransfer as ObjectTransfer;
+            session.TransferAborted -= (winkTransfer_TransferAborted);
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Wink aborted", GetType().Name);
+        }
+
+        private void winkTransfer_TransferFinished(object objectTransfer, EventArgs e)
+        {
+            ObjectTransfer session = objectTransfer as ObjectTransfer;
+            session.TransferFinished -= (winkTransfer_TransferFinished);
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Wink received", GetType().Name);
+
+            OnWinkReceived(new WinkEventArgs(session.Remote, session.Object as Wink));
         }
 
         protected virtual void OnMultipartyCreated(MultipartyCreatedEventArgs e)
@@ -1480,6 +1542,13 @@ namespace MSNPSharp
                     {
                         OnEmoticonDefinitionReceived(new EmoticonDefinitionEventArgs(sender, emoticon));
                     }
+                }
+                else if ("wink" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
+                {
+                    Wink wink = new Wink();
+                    wink.SetContext(Encoding.UTF8.GetString(mmMessage.InnerBody));
+
+                    OnWinkDefinitionReceived(new WinkEventArgs(sender, wink));
                 }
                 else if ("signal/p2p" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
                 {
