@@ -579,7 +579,7 @@ namespace MSNPSharpClient
                     Wink wink = (e as WinkEventArgs).Wink;
                     if (wink != null)
                     {
-                        string path = Path.Combine(Settings.SavePath, Path.GetFileNameWithoutExtension(Path.GetRandomFileName()) + ".wink");
+                        string path = Path.Combine(Settings.SavePath, Path.GetFileNameWithoutExtension(Path.GetRandomFileName()) + ".cab");
                         FileStream fs = new FileStream(path, FileMode.Create);
 
                         byte[] byt = new byte[wink.OpenStream().Length];
