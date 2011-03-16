@@ -1912,10 +1912,36 @@ namespace MSNPSharp
                 NSMessageHandler.SendTextMessage(this, textMessage);
         }
 
+        public void SendMobileMessage(string text)
+        {
+            if (MobileAccess || ClientType == IMAddressInfoType.Telephone)
+            {
+                NSMessageHandler.SendMobileMessage(this, text);
+            }
+            else
+            {
+                SendMessage(new TextMessage(text));
+            }
+        }
+
         public void SendEmoticonDefinitions(List<Emoticon> emoticons, EmoticonType icontype)
         {
             if (CanReceiveMessage)
                 NSMessageHandler.SendEmoticonDefinitions(this, emoticons, icontype);
+
+            if (emoticons == null)
+                throw new ArgumentNullException("emoticons");
+
+            foreach (Emoticon emoticon in emoticons)
+            {
+                if (!NSMessageHandler.Owner.Emoticons.ContainsKey(emoticon.Sha))
+                {
+                    // Add the emotions to owner's emoticon collection.
+                    NSMessageHandler.Owner.Emoticons.Add(emoticon.Sha, emoticon);
+                }
+            }
+
+            NSMessageHandler.SendEmoticonDefinitions(this, emoticons, icontype);
         }
     }
 };

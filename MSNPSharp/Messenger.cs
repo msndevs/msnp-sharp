@@ -375,17 +375,27 @@ namespace MSNPSharp
 
         public void SendTextMessage(Contact contact, string msg)
         {
-            Nameserver.SendTextMessage(contact, new TextMessage(msg));
+            contact.SendMessage(new TextMessage(msg));
+        }
+
+        public void SendMobileMessage(Contact contact, string msg)
+        {
+            contact.SendMobileMessage(msg);
         }
 
         public void SendNudge(Contact contact)
         {
-            Nameserver.SendNudge(contact);
+            contact.SendNudge();
         }
 
         public void SendTypingMessage(Contact contact)
         {
-            Nameserver.SendTypingMessage(contact);
+            contact.SendTypingMessage();
+        }
+
+        public void SendEmoticonDefinitions(Contact contact, List<Emoticon> emoticons, EmoticonType icontype)
+        {
+            contact.SendEmoticonDefinitions(emoticons, icontype);
         }
 
         #endregion

@@ -192,192 +192,6 @@ namespace MSNPSharp
 
         #endregion
 
-        #region SendTypingMessage
-
-        public void SendTypingMessage(Contact remoteContact)
-        {
-            string to = ((int)remoteContact.ClientType).ToString() + ":" + remoteContact.Account;
-            string from = ((int)Owner.ClientType).ToString() + ":" + Owner.Account;
-
-            MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
-            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = NSMessageHandler.MachineGuid.ToString("B").ToLowerInvariant();
-
-            if (remoteContact.ClientType == IMAddressInfoType.Circle)
-            {
-                mmMessage.RoutingHeaders[MIMERoutingHeaders.To][MIMERoutingHeaders.Path] = "IM";
-            }
-
-            if (remoteContact.ViaContact != null)
-            {
-                mmMessage.RoutingHeaders[MIMERoutingHeaders.To]["via"] =
-                    ((int)remoteContact.ViaContact.ClientType).ToString() + ":" + remoteContact.ViaContact.Account;
-            }
-
-            mmMessage.ContentKeyVersion = "2.0";
-
-            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "Control/Typing";
-            mmMessage.InnerBody = new byte[0];
-
-            NSMessage sdgPayload = new NSMessage("SDG");
-            sdgPayload.InnerMessage = mmMessage;
-            MessageProcessor.SendMessage(sdgPayload);
-        }
-
-        #endregion
-
-        #region SendNudge
-
-        public void SendNudge(Contact remoteContact)
-        {
-            string to = ((int)remoteContact.ClientType).ToString() + ":" + remoteContact.Account;
-            string from = ((int)Owner.ClientType).ToString() + ":" + Owner.Account;
-
-            MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
-            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = NSMessageHandler.MachineGuid.ToString("B").ToLowerInvariant();
-
-            if (remoteContact.ClientType == IMAddressInfoType.Circle)
-            {
-                mmMessage.RoutingHeaders[MIMERoutingHeaders.To][MIMERoutingHeaders.Path] = "IM";
-            }
-
-            if (remoteContact.ViaContact != null)
-            {
-                mmMessage.RoutingHeaders[MIMERoutingHeaders.To]["via"] =
-                    ((int)remoteContact.ViaContact.ClientType).ToString() + ":" + remoteContact.ViaContact.Account;
-            }
-
-            mmMessage.ContentKeyVersion = "2.0";
-
-            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "Nudge";
-            mmMessage.InnerBody = Encoding.ASCII.GetBytes("\r\n");
-
-            NSMessage sdgPayload = new NSMessage("SDG");
-            sdgPayload.InnerMessage = mmMessage;
-            MessageProcessor.SendMessage(sdgPayload);
-        }
-
-        #endregion
-
-        #region SendTextMessage
-
-        public void SendTextMessage(Contact remoteContact, TextMessage textMessage)
-        {
-            textMessage.PrepareMessage();
-
-            string to = ((int)remoteContact.ClientType).ToString() + ":" + remoteContact.Account;
-            string from = ((int)Owner.ClientType).ToString() + ":" + Owner.Account;
-
-            MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
-            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = NSMessageHandler.MachineGuid.ToString("B").ToLowerInvariant();
-
-            if (remoteContact.ClientType == IMAddressInfoType.Circle)
-            {
-                mmMessage.RoutingHeaders[MIMERoutingHeaders.To][MIMERoutingHeaders.Path] = "IM";
-            }
-
-            if (!remoteContact.Online)
-            {
-                //mmMessage.RoutingHeaders[MIMERoutingHeaders.ServiceChannel] = "IM/Offline";
-            }
-
-            if (remoteContact.ViaContact != null)
-            {
-                mmMessage.RoutingHeaders[MIMERoutingHeaders.To]["via"] =
-                    ((int)remoteContact.ViaContact.ClientType).ToString() + ":" + remoteContact.ViaContact.Account;
-            }
-
-
-            mmMessage.ContentKeyVersion = "2.0";
-
-            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "Text";
-            mmMessage.ContentHeaders[MIMEHeaderStrings.X_MMS_IM_Format] = textMessage.GetStyleString();
-            mmMessage.InnerBody = Encoding.UTF8.GetBytes(textMessage.Text);
-
-            NSMessage sdgPayload = new NSMessage("SDG");
-            sdgPayload.InnerMessage = mmMessage;
-            MessageProcessor.SendMessage(sdgPayload);
-        }
-
-        public void SendOIMMessage(Contact remoteContact, TextMessage textMessage)
-        {
-            SendTextMessage(remoteContact, textMessage);
-        }
-
-        #endregion
-
-        #region SendMobileMessage
-
-        /// <summary>
-        /// Sends a mobile message to the specified remote contact. This only works when 
-        /// the remote contact has it's mobile device enabled and has MSN-direct enabled.
-        /// </summary>
-        /// <param name="receiver"></param>
-        /// <param name="text"></param>
-        public virtual void SendMobileMessage(Contact receiver, string text)
-        {
-            TextMessage txtMsg = new TextMessage(text);
-
-            if (receiver.MobileAccess || receiver.ClientType == IMAddressInfoType.Telephone)
-            {
-                string to = ((int)receiver.ClientType).ToString() + ":" + ((receiver.ClientType == IMAddressInfoType.Telephone) ? "tel:" + receiver.Account : receiver.Account);
-                string from = ((int)Owner.ClientType).ToString() + ":" + Owner.Account;
-
-                MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
-                mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = NSMessageHandler.MachineGuid.ToString("B").ToLowerInvariant();
-                mmMessage.RoutingHeaders[MIMERoutingHeaders.ServiceChannel] = "IM/Mobile";
-
-                mmMessage.ContentKeyVersion = "2.0";
-                mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "Text";
-                mmMessage.ContentHeaders[MIMEContentHeaders.MSIMFormat] = txtMsg.GetStyleString();
-
-                mmMessage.InnerBody = Encoding.UTF8.GetBytes(txtMsg.Text);
-
-                NSMessage sdgPayload = new NSMessage("SDG");
-                sdgPayload.InnerMessage = mmMessage;
-                MessageProcessor.SendMessage(sdgPayload);
-            }
-            else
-            {
-                SendTextMessage(receiver, txtMsg);
-            }
-        }
-
-        #endregion
-
-        public void SendEmoticonDefinitions(Contact remoteContact, List<Emoticon> emoticons, EmoticonType icontype)
-        {
-            if (emoticons == null)
-                throw new ArgumentNullException("emoticons");
-
-            foreach (Emoticon emoticon in emoticons)
-            {
-                if (!Owner.Emoticons.ContainsKey(emoticon.Sha))
-                {
-                    // Add the emotions to owner's emoticon collection.
-                    Owner.Emoticons.Add(emoticon.Sha, emoticon);
-                }
-            }
-
-            EmoticonMessage emoticonMessage = new EmoticonMessage(emoticons, icontype);
-
-            string to = ((int)remoteContact.ClientType).ToString() + ":" + remoteContact.Account;
-            string from = ((int)Owner.ClientType).ToString() + ":" + Owner.Account;
-
-            MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
-            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = MachineGuid.ToString("B").ToLowerInvariant();
-
-            mmMessage.ContentKeyVersion = "2.0";
-
-            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "CustomEmoticon";
-            mmMessage.ContentHeaders[MIMEHeaderStrings.Content_Type] = "text/x-mms-animemoticon";
-            mmMessage.InnerBody = emoticonMessage.GetBytes();
-
-            NSMessage sdgPayload = new NSMessage("SDG");
-            sdgPayload.InnerMessage = mmMessage;
-            MessageProcessor.SendMessage(sdgPayload);
-        }
-
-
         #region MULTIPARTY
 
         #region CreateMultiparty
@@ -521,6 +335,209 @@ namespace MSNPSharp
 
         #endregion
 
+        #region MESSAGING
+
+        #region SendTypingMessage
+
+        protected internal virtual void SendTypingMessage(Contact remoteContact)
+        {
+            string to = ((int)remoteContact.ClientType).ToString() + ":" + remoteContact.Account;
+            string from = ((int)Owner.ClientType).ToString() + ":" + Owner.Account;
+
+            MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
+            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = NSMessageHandler.MachineGuid.ToString("B").ToLowerInvariant();
+
+            if (remoteContact.ClientType == IMAddressInfoType.Circle)
+            {
+                mmMessage.RoutingHeaders[MIMERoutingHeaders.To][MIMERoutingHeaders.Path] = "IM";
+            }
+
+            if (remoteContact.ViaContact != null)
+            {
+                mmMessage.RoutingHeaders[MIMERoutingHeaders.To]["via"] =
+                    ((int)remoteContact.ViaContact.ClientType).ToString() + ":" + remoteContact.ViaContact.Account;
+            }
+
+            mmMessage.ContentKeyVersion = "2.0";
+
+            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "Control/Typing";
+            mmMessage.InnerBody = new byte[0];
+
+            NSMessage sdgPayload = new NSMessage("SDG");
+            sdgPayload.InnerMessage = mmMessage;
+            MessageProcessor.SendMessage(sdgPayload);
+        }
+
+        #endregion
+
+        #region SendNudge
+
+        protected internal virtual void SendNudge(Contact remoteContact)
+        {
+            string to = ((int)remoteContact.ClientType).ToString() + ":" + remoteContact.Account;
+            string from = ((int)Owner.ClientType).ToString() + ":" + Owner.Account;
+
+            MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
+            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = NSMessageHandler.MachineGuid.ToString("B").ToLowerInvariant();
+
+            if (remoteContact.ClientType == IMAddressInfoType.Circle)
+            {
+                mmMessage.RoutingHeaders[MIMERoutingHeaders.To][MIMERoutingHeaders.Path] = "IM";
+            }
+
+            if (remoteContact.ViaContact != null)
+            {
+                mmMessage.RoutingHeaders[MIMERoutingHeaders.To]["via"] =
+                    ((int)remoteContact.ViaContact.ClientType).ToString() + ":" + remoteContact.ViaContact.Account;
+            }
+
+            mmMessage.ContentKeyVersion = "2.0";
+
+            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "Nudge";
+            mmMessage.InnerBody = Encoding.ASCII.GetBytes("\r\n");
+
+            NSMessage sdgPayload = new NSMessage("SDG");
+            sdgPayload.InnerMessage = mmMessage;
+            MessageProcessor.SendMessage(sdgPayload);
+        }
+
+        #endregion
+
+        #region SendTextMessage
+
+        protected internal virtual void SendTextMessage(Contact remoteContact, TextMessage textMessage)
+        {
+            textMessage.PrepareMessage();
+
+            string to = ((int)remoteContact.ClientType).ToString() + ":" + remoteContact.Account;
+            string from = ((int)Owner.ClientType).ToString() + ":" + Owner.Account;
+
+            MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
+            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = NSMessageHandler.MachineGuid.ToString("B").ToLowerInvariant();
+
+            if (remoteContact.ClientType == IMAddressInfoType.Circle)
+            {
+                mmMessage.RoutingHeaders[MIMERoutingHeaders.To][MIMERoutingHeaders.Path] = "IM";
+            }
+
+            if (!remoteContact.Online)
+            {
+                //mmMessage.RoutingHeaders[MIMERoutingHeaders.ServiceChannel] = "IM/Offline";
+            }
+
+            if (remoteContact.ViaContact != null)
+            {
+                mmMessage.RoutingHeaders[MIMERoutingHeaders.To]["via"] =
+                    ((int)remoteContact.ViaContact.ClientType).ToString() + ":" + remoteContact.ViaContact.Account;
+            }
+
+
+            mmMessage.ContentKeyVersion = "2.0";
+
+            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "Text";
+            mmMessage.ContentHeaders[MIMEHeaderStrings.X_MMS_IM_Format] = textMessage.GetStyleString();
+            mmMessage.InnerBody = Encoding.UTF8.GetBytes(textMessage.Text);
+
+            NSMessage sdgPayload = new NSMessage("SDG");
+            sdgPayload.InnerMessage = mmMessage;
+            MessageProcessor.SendMessage(sdgPayload);
+        }
+
+        protected internal virtual void SendOIMMessage(Contact remoteContact, TextMessage textMessage)
+        {
+            SendTextMessage(remoteContact, textMessage);
+        }
+
+        #endregion
+
+        #region SendMobileMessage
+
+        /// <summary>
+        /// Sends a mobile message to the specified remote contact. This only works when 
+        /// the remote contact has it's mobile device enabled and has MSN-direct enabled.
+        /// </summary>
+        /// <param name="receiver"></param>
+        /// <param name="text"></param>
+        protected internal virtual void SendMobileMessage(Contact receiver, string text)
+        {
+            TextMessage txtMsg = new TextMessage(text);
+
+            string to = ((int)receiver.ClientType).ToString() + ":" + ((receiver.ClientType == IMAddressInfoType.Telephone) ? "tel:" + receiver.Account : receiver.Account);
+            string from = ((int)Owner.ClientType).ToString() + ":" + Owner.Account;
+
+            MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
+            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = MachineGuid.ToString("B").ToLowerInvariant();
+            mmMessage.RoutingHeaders[MIMERoutingHeaders.ServiceChannel] = "IM/Mobile";
+
+            mmMessage.ContentKeyVersion = "2.0";
+            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "Text";
+            mmMessage.ContentHeaders[MIMEContentHeaders.MSIMFormat] = txtMsg.GetStyleString();
+
+            mmMessage.InnerBody = Encoding.UTF8.GetBytes(txtMsg.Text);
+
+            NSMessage sdgPayload = new NSMessage("SDG");
+            sdgPayload.InnerMessage = mmMessage;
+            MessageProcessor.SendMessage(sdgPayload);
+        }
+
+        #endregion
+
+        #region SendEmoticonDefinitions
+
+        protected internal virtual void SendEmoticonDefinitions(Contact remoteContact, List<Emoticon> emoticons, EmoticonType icontype)
+        {
+            EmoticonMessage emoticonMessage = new EmoticonMessage(emoticons, icontype);
+
+            string to = ((int)remoteContact.ClientType).ToString() + ":" + remoteContact.Account;
+            string from = ((int)Owner.ClientType).ToString() + ":" + Owner.Account;
+
+            MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
+            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = MachineGuid.ToString("B").ToLowerInvariant();
+
+            mmMessage.ContentKeyVersion = "2.0";
+
+            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "CustomEmoticon";
+            mmMessage.ContentHeaders[MIMEHeaderStrings.Content_Type] = "text/x-mms-animemoticon";
+            mmMessage.InnerBody = emoticonMessage.GetBytes();
+
+            NSMessage sdgPayload = new NSMessage("SDG");
+            sdgPayload.InnerMessage = mmMessage;
+            MessageProcessor.SendMessage(sdgPayload);
+        }
+
+        #endregion
+
+        #endregion
+
+        #region SignoutFrom
+
+        internal void SignoutFrom(Guid endPointID)
+        {
+            string me = ((int)Owner.ClientType).ToString() + ":" + Owner.Account;
+
+            MultiMimeMessage mmMessage = new MultiMimeMessage(me, me);
+            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = MachineGuid.ToString("B").ToLowerInvariant();
+
+            mmMessage.ContentKey = MIMEContentHeaders.Publication;
+            mmMessage.ContentHeaders[MIMEContentHeaders.URI] = "/user";
+            mmMessage.ContentHeaders[MIMEContentHeaders.ContentType] = "application/user+xml";
+
+            string xml = "<user><sep n=\"IM\" epid=\"" + endPointID.ToString("B").ToLowerInvariant() + "\"/></user>";
+
+            mmMessage.InnerBody = Encoding.UTF8.GetBytes(xml);
+
+            NSMessage delPayload = new NSMessage("DEL");
+            delPayload.InnerMessage = mmMessage;
+            MessageProcessor.SendMessage(delPayload);
+
+            if (endPointID == MachineGuid && messageProcessor.Connected)
+                messageProcessor.Disconnect();
+        }
+
+        #endregion
+
+        #region COMMAND HANDLERS (PUT, DEL, NFY, SDG)
+
         #region OnPUTReceived
 
         /// <summary>
@@ -568,34 +585,7 @@ namespace MSNPSharp
 
         #endregion
 
-        #region SignoutFrom
-
-        internal void SignoutFrom(Guid endPointID)
-        {
-            string me = ((int)Owner.ClientType).ToString() + ":" + Owner.Account;
-
-            MultiMimeMessage mmMessage = new MultiMimeMessage(me, me);
-            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = MachineGuid.ToString("B").ToLowerInvariant();
-
-            mmMessage.ContentKey = MIMEContentHeaders.Publication;
-            mmMessage.ContentHeaders[MIMEContentHeaders.URI] = "/user";
-            mmMessage.ContentHeaders[MIMEContentHeaders.ContentType] = "application/user+xml";
-
-            string xml = "<user><sep n=\"IM\" epid=\"" + endPointID.ToString("B").ToLowerInvariant() + "\"/></user>";
-
-            mmMessage.InnerBody = Encoding.UTF8.GetBytes(xml);
-
-            NSMessage delPayload = new NSMessage("DEL");
-            delPayload.InnerMessage = mmMessage;
-            MessageProcessor.SendMessage(delPayload);
-
-            if (endPointID == MachineGuid && messageProcessor.Connected)
-                messageProcessor.Disconnect();
-        }
-
-        #endregion
-
-        #region OnDEL
+        #region OnDELReceived
 
         /// <summary>
         /// Called when a DEL command message has been received.
@@ -833,7 +823,7 @@ namespace MSNPSharp
 
                                     if (!fromContact.EndPointData.ContainsKey(epid))
                                     {
-                                        lock(fromContact.SyncObject)
+                                        lock (fromContact.SyncObject)
                                             fromContact.EndPointData.Add(epid, fromIsMe ? new PrivateEndPointData(fromContact.Account, epid) : new EndPointData(fromContact.Account, epid));
                                     }
 
@@ -1344,7 +1334,8 @@ namespace MSNPSharp
                 return;
             }
 
-            Contact sender = null;
+            Contact sender = null; // via=fb, circle or temporary group
+            Contact by = null; // invidiual sender, 1 on 1 chat
 
             if (toAccountAddressType == IMAddressInfoType.Circle)
             {
@@ -1356,6 +1347,11 @@ namespace MSNPSharp
                         "[OnSDGReceived] Error: Cannot find circle: " + mmMessage.To.ToString());
 
                     return;
+                }
+
+                if (sender.ContactList != null)
+                {
+                    by = sender.ContactList.GetContactWithCreate(fromAccount, fromAccountAddressType);
                 }
             }
             else if (toAccountAddressType == IMAddressInfoType.TemporaryGroup)
@@ -1369,24 +1365,39 @@ namespace MSNPSharp
 
                     return;
                 }
+
+                if (sender.ContactList != null)
+                {
+                    by = sender.ContactList.GetContactWithCreate(fromAccount, fromAccountAddressType);
+                }
             }
 
-            Contact fromContact = ContactList.GetContactWithCreate(fromAccount, fromAccountAddressType);
-
-            if (sender == null)
+            // External Network
+            if (by == null && fromViaAccountAddressType != IMAddressInfoType.None && !String.IsNullOrEmpty(fromViaAccount))
             {
-                sender = fromContact;
+                by = ContactList.GetContact(fromViaAccount, fromViaAccountAddressType);
+
+                if (by != null && by.ContactList != null)
+                {
+                    sender = by.ContactList.GetContactWithCreate(fromAccount, fromAccountAddressType);
+                }
+            }
+
+            if (by == null)
+            {
+                sender = ContactList.GetContactWithCreate(fromAccount, fromAccountAddressType);
+                by = sender;
             }
 
             if (mmMessage.ContentHeaders.ContainsKey(MIMEHeaderStrings.Message_Type))
             {
                 if ("nudge" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
                 {
-                    OnNudgeReceived(new NudgeArrivedEventArgs(sender, fromContact));
+                    OnNudgeReceived(new NudgeArrivedEventArgs(sender, by));
                 }
                 else if ("control/typing" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
                 {
-                    OnTypingMessageReceived(new TypingArrivedEventArgs(sender, fromContact));
+                    OnTypingMessageReceived(new TypingArrivedEventArgs(sender, by));
                 }
                 else if ("text" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
                 {
@@ -1398,7 +1409,7 @@ namespace MSNPSharp
                     }
                     txtMessage.ParseHeader(strDic);
 
-                    OnTextMessageReceived(new TextMessageArrivedEventArgs(sender, txtMessage, fromContact));
+                    OnTextMessageReceived(new TextMessageArrivedEventArgs(sender, txtMessage, by));
                 }
                 else if ("signal/p2p" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
                 {
@@ -1436,12 +1447,14 @@ namespace MSNPSharp
 
                     foreach (P2PMessage m in p2pDatas)
                     {
-                        P2PHandler.ProcessP2PMessage(fromContact.DirectBridge != null ? fromContact.DirectBridge : SDGBridge,
+                        P2PHandler.ProcessP2PMessage(by.DirectBridge != null ? by.DirectBridge : SDGBridge,
                             sender, ep, m);
                     }
                 }
             }
         }
+
+        #endregion
 
         #endregion
     }

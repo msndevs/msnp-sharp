@@ -1465,7 +1465,7 @@ namespace MSNPSharpClient
 
             if (selectedContact.MobileAccess || selectedContact.ClientType == IMAddressInfoType.Telephone)
             {
-                messenger.Nameserver.SendMobileMessage(selectedContact, "MSNP mobile message");
+                selectedContact.SendMobileMessage("MSNP mobile message");
             }
             else
                 MessageBox.Show("This contact is not able to receive mobile messages");
