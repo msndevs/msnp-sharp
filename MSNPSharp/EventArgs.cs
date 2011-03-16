@@ -302,75 +302,12 @@ namespace MSNPSharp
         }
     }
 
-
-    /// <summary>
-    /// Used as event argument when a textual message is send.
-    /// </summary>
-    [Serializable()]
-    public class TextMessageEventArgs : BaseMessageReceivedEventArgs
-    {
-        /// <summary>
-        /// </summary>
-        private TextMessage message;
-
-        /// <summary>
-        /// The message send.
-        /// </summary>
-        public TextMessage Message
-        {
-            get
-            {
-                return message;
-            }
-            set
-            {
-                message = value;
-            }
-        }
-
-        /// <summary>
-        /// Constructor.
-        /// </summary>
-        /// <param name="message"></param>
-        /// <param name="sender"></param>
-        public TextMessageEventArgs(TextMessage message, Contact sender)
-            : base(sender)
-        {
-            Message = message;
-        }
-    }
-
-    [Serializable()]
-    public class WinkEventArgs : BaseMessageReceivedEventArgs
-    {
-        private Wink wink;
-
-        public Wink Wink
-        {
-            get
-            {
-                return wink;
-            }
-            set
-            {
-                wink = value;
-            }
-        }
-
-        public WinkEventArgs(Contact contact, Wink wink)
-            : base(contact)
-        {
-            this.wink = wink;
-        }
-    }
-
     /// <summary>
     /// Used as event argument when a emoticon definition is send.
     /// </summary>
     [Serializable()]
     public class EmoticonDefinitionEventArgs : BaseMessageReceivedEventArgs
     {
-
         /// <summary>
         /// </summary>
         private Emoticon emoticon;
@@ -698,6 +635,25 @@ namespace MSNPSharp
             : base(sender, circle)
         {
             this.emoticon = emoticon;
+        }
+    }
+
+    public class WinkEventArgs : MessageArrivedEventArgs
+    {
+        private Wink wink;
+
+        public Wink Wink
+        {
+            get
+            {
+                return wink;
+            }
+        }
+
+        public WinkEventArgs(Contact contact, Wink wink)
+            : base(contact, null)
+        {
+            this.wink = wink;
         }
     }
 

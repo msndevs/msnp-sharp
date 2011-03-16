@@ -37,14 +37,13 @@ namespace MSNPSharp
 {
     using MSNPSharp.Core;
 
-    [Serializable()]
+    [Serializable]
     public class Wink : MSNObject
     {
         public Wink()
             : base()
         {
-            //Type = MSNObjectType.Wink;	
-            ObjectType = MSNObjectType.Unknown;
+            ObjectType = MSNObjectType.Wink;
         }
     }
 };

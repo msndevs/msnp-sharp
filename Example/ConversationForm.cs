@@ -572,6 +572,27 @@ namespace MSNPSharpClient
                         richTextHistory.InsertEmotion();
                     }
                 }
+                else if (e is WinkEventArgs)
+                {
+                    MakeVisible(sender, e);
+
+                    Wink wink = (e as WinkEventArgs).Wink;
+                    if (wink != null)
+                    {
+                        string path = Path.Combine(Settings.SavePath, Path.GetFileNameWithoutExtension(Path.GetRandomFileName()) + ".wink");
+                        FileStream fs = new FileStream(path, FileMode.Create);
+
+                        byte[] byt = new byte[wink.OpenStream().Length];
+                        wink.OpenStream().Seek(0, SeekOrigin.Begin);
+                        wink.OpenStream().Read(byt, 0, byt.Length);
+                        fs.Write(byt, 0, byt.Length);
+                        fs.Close();
+
+                        DisplaySystemMessage("WINK saved as " + path);
+                    }
+
+                    
+                }
             }
         }
     
