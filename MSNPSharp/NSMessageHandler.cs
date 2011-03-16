@@ -127,6 +127,7 @@ namespace MSNPSharp
         private SocketMessageProcessor messageProcessor = null;
         private P2PHandler p2pHandler = null;
         private long hopCount = 0;
+        private bool autoRequestEmoticons = true;
 
         private ContactGroupList contactGroups = null;
         private ContactList contactList = null;
@@ -182,6 +183,20 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// Indicates whether emoticons from remote contacts are automatically retrieved
+        /// </summary>
+        public bool AutoRequestEmoticons
+        {
+            get
+            {
+                return autoRequestEmoticons;
+            }
+            set
+            {
+                autoRequestEmoticons = value;
+            }
+        }
 
         public bool AutoSynchronize
         {

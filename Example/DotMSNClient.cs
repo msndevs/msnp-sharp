@@ -99,6 +99,7 @@ namespace MSNPSharpClient
             messenger.Nameserver.NudgeReceived += new EventHandler<NudgeArrivedEventArgs>(Nameserver_NudgeReceived);
             messenger.Nameserver.TypingMessageReceived += new EventHandler<TypingArrivedEventArgs>(Nameserver_TypingMessageReceived);
             messenger.Nameserver.TextMessageReceived += new EventHandler<TextMessageArrivedEventArgs>(Nameserver_TextMessageReceived);
+            messenger.Nameserver.EmoticonReceived +=new EventHandler<EmoticonArrivedEventArgs>(Nameserver_EmoticonReceived);
 
             // Listen for the data transfer events (i.e. file transfer invitation, activity invitation)
             messenger.P2PHandler.InvitationReceived += new EventHandler<P2PSessionEventArgs>(p2pHandler_InvitationReceived);
@@ -598,6 +599,11 @@ namespace MSNPSharpClient
         }
 
         void Nameserver_NudgeReceived(object sender, NudgeArrivedEventArgs e)
+        {
+            MessageManager_MessageArrived(sender, e);
+        }
+
+        void Nameserver_EmoticonReceived(object sender, EmoticonArrivedEventArgs e)
         {
             MessageManager_MessageArrived(sender, e);
         }
