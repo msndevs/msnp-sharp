@@ -67,6 +67,7 @@ namespace MSNPSharp.P2P
 
         #region Members
 
+        private SDGBridge sdgBridge;
         private SLPHandler slpHandler;
         private NSMessageHandler nsMessageHandler = null;
         private P2PMessagePool slpMessagePool = new P2PMessagePool();
@@ -79,10 +80,24 @@ namespace MSNPSharp.P2P
         protected internal P2PHandler(NSMessageHandler nsHandler)
         {
             this.nsMessageHandler = nsHandler;
-            this.slpHandler = new SLPHandler(nsHandler);
+            this.sdgBridge = new SDGBridge(nsHandler);
+            this.slpHandler = new SLPHandler(nsHandler);            
         }
 
         #endregion
+
+        #region Properties
+
+        public SDGBridge SDGBridge
+        {
+            get
+            {
+                return sdgBridge;
+            }
+        }
+
+        #endregion
+
 
         #region Public
 
