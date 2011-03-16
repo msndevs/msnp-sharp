@@ -125,10 +125,8 @@ namespace MSNPSharp
         private IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, 0);
         private IPEndPoint externalEndPoint = null;
         private SocketMessageProcessor messageProcessor = null;
-        private long hopCount = 0;
-
-        private SDGBridge sdgBridge = null;
         private P2PHandler p2pHandler = null;
+        private long hopCount = 0;
 
         private ContactGroupList contactGroups = null;
         private ContactList contactList = null;
@@ -161,7 +159,6 @@ namespace MSNPSharp
             whatsUpService = new WhatsUpService(this);
             dirService = new MSNDirectoryService(this);
 
-            sdgBridge = new SDGBridge(this);
             p2pHandler = new P2PHandler(this);
         }
 
@@ -445,11 +442,11 @@ namespace MSNPSharp
             }
         }
 
-        public SDGBridge SDGBridge
+        internal SDGBridge SDGBridge
         {
             get
             {
-                return sdgBridge;
+                return p2pHandler.SDGBridge;
             }
         }
 
