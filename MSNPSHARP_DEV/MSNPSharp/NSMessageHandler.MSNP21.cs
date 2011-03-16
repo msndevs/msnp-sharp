@@ -44,6 +44,7 @@ namespace MSNPSharp
 {
     using MSNPSharp.Core;
     using MSNPSharp.P2P;
+    using MSNPSharp.Apps;
 
     partial class NSMessageHandler
     {
@@ -62,6 +63,7 @@ namespace MSNPSharp
         /// </summary>
         public event EventHandler<ContactStatusChangedEventArgs> ContactOffline;
 
+
         /// <summary>
         /// Occurs when a user is typing.
         /// </summary>
@@ -74,6 +76,12 @@ namespace MSNPSharp
         /// Occurs when we receive a text message from a user.
         /// </summary>
         public event EventHandler<TextMessageArrivedEventArgs> TextMessageReceived;
+
+
+        /// <summary>
+        /// Fired when a contact sends a emoticon definition.
+        /// </summary>
+        public event EventHandler<EmoticonDefinitionEventArgs> EmoticonDefinitionReceived;
 
         /// <summary>
         /// Occurs when we receive a emoticon from a user.
@@ -160,10 +168,59 @@ namespace MSNPSharp
                 "TEXT MESSAGE: " + e.Sender.ToString() + (e.Sender == e.OriginalSender ? String.Empty : ";via=" + e.OriginalSender.ToString()) + "\r\n" + e.TextMessage.ToDebugString());
         }
 
+
         protected virtual void OnEmoticonReceived(EmoticonArrivedEventArgs e)
         {
             if (EmoticonReceived != null)
                 EmoticonReceived(this, e);
+        }
+
+        protected virtual void OnEmoticonDefinitionReceived(EmoticonDefinitionEventArgs e)
+        {
+            if (!autoRequestEmoticons)
+                return;
+
+            MSNObject existing = MSNObjectCatalog.GetInstance().Get(e.Emoticon.CalculateChecksum());
+            if (existing == null)
+            {
+                e.Sender.Emoticons[e.Emoticon.Sha] = e.Emoticon;
+
+                // create a session and send the invitation
+                ObjectTransfer emoticonTransfer = P2PHandler.RequestMsnObject(e.Sender, e.Emoticon);
+                emoticonTransfer.TransferAborted += (emoticonTransfer_TransferAborted);
+                emoticonTransfer.TransferFinished += (emoticonTransfer_TransferFinished);
+
+                MSNObjectCatalog.GetInstance().Add(e.Emoticon);
+
+                if (EmoticonDefinitionReceived != null)
+                    EmoticonDefinitionReceived(this, e);
+            }
+            else
+            {
+                if (EmoticonDefinitionReceived != null)
+                    EmoticonDefinitionReceived(this, e);
+
+                //If exists, fire the event.
+                OnEmoticonReceived(new EmoticonArrivedEventArgs(e.Sender, existing as Emoticon, null));
+            }
+        }
+
+        private void emoticonTransfer_TransferAborted(object objectTransfer, ContactEventArgs e)
+        {
+            ObjectTransfer session = objectTransfer as ObjectTransfer;
+            session.TransferAborted -= (emoticonTransfer_TransferAborted);
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Emoticon aborted", GetType().Name);
+        }
+
+        private void emoticonTransfer_TransferFinished(object objectTransfer, EventArgs e)
+        {
+            ObjectTransfer session = objectTransfer as ObjectTransfer;
+            session.TransferFinished -= (emoticonTransfer_TransferFinished);
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Emoticon received", GetType().Name);
+
+            OnEmoticonReceived(new EmoticonArrivedEventArgs(session.Remote, session.Object as Emoticon, null));
         }
 
         protected virtual void OnMultipartyCreated(MultipartyCreatedEventArgs e)
@@ -497,7 +554,7 @@ namespace MSNPSharp
             mmMessage.ContentKeyVersion = "2.0";
 
             mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "CustomEmoticon";
-            mmMessage.ContentHeaders[MIMEHeaderStrings.Content_Type] = "text/x-mms-animemoticon";
+            mmMessage.ContentHeaders[MIMEHeaderStrings.Content_Type] = icontype == EmoticonType.AnimEmoticon ? "text/x-mms-animemoticon" : "text/x-mms-emoticon";
             mmMessage.InnerBody = emoticonMessage.GetBytes();
 
             NSMessage sdgPayload = new NSMessage("SDG");
@@ -1410,6 +1467,19 @@ namespace MSNPSharp
                     txtMessage.ParseHeader(strDic);
 
                     OnTextMessageReceived(new TextMessageArrivedEventArgs(sender, txtMessage, by));
+                }
+                else if ("customemoticon" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
+                {
+                    EmoticonMessage emoticonMessage = new EmoticonMessage();
+                    emoticonMessage.EmoticonType = mmMessage.ContentHeaders[MIMEHeaderStrings.Content_Type] == "text/x-mms-animemoticon" ?
+                        EmoticonType.AnimEmoticon : EmoticonType.StaticEmoticon;
+
+                    emoticonMessage.ParseBytes(mmMessage.InnerBody);
+
+                    foreach (Emoticon emoticon in emoticonMessage.Emoticons)
+                    {
+                        OnEmoticonDefinitionReceived(new EmoticonDefinitionEventArgs(sender, emoticon));
+                    }
                 }
                 else if ("signal/p2p" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
                 {

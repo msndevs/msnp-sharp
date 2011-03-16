@@ -42,10 +42,12 @@ namespace MSNPSharp
     /// <summary>
     /// A message that defines a list of emoticons used in the next textmessage.
     /// </summary>
-    [Serializable()]
+    [Serializable]
     public class EmoticonMessage : NetworkMessage
     {
         private EmoticonType emoticontype = EmoticonType.StaticEmoticon;
+        private List<Emoticon> emoticons;
+
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -70,14 +72,6 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Type of emoticons.
-        /// </summary>
-        public EmoticonType EmoticonType
-        {
-            get { return emoticontype; }
-        }
-
-        /// <summary>
         /// Constructor with multiple emoticons supplied.
         /// </summary>
         /// <param name="emoticons"></param>
@@ -89,8 +83,19 @@ namespace MSNPSharp
         }
 
         /// <summary>
+        /// Type of emoticons.
         /// </summary>
-        private List<Emoticon> emoticons;
+        public EmoticonType EmoticonType
+        {
+            get
+            {
+                return emoticontype;
+            }
+            internal set
+            {
+                emoticontype = value;
+            }
+        }
 
         /// <summary>
         /// The emoticon that is defined in this message
@@ -146,7 +151,6 @@ namespace MSNPSharp
             return System.Text.Encoding.UTF8.GetBytes(builder.ToString());
         }
 
-
         /// <summary>
         /// </summary>
         /// <returns></returns>
@@ -154,6 +158,5 @@ namespace MSNPSharp
         {
             return System.Text.Encoding.UTF8.GetString(GetBytes());
         }
-
     }
 };
