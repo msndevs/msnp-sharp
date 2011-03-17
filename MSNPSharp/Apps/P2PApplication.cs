@@ -533,7 +533,25 @@ namespace MSNPSharp.Apps
             }
         }
 
-        #region CreateInstance
+        #region IsRegistered/CreateInstance
+
+        internal static bool IsRegistered(Guid eufGuid, uint appId)
+        {
+            if (eufGuid != Guid.Empty && p2pAppCache.ContainsKey(eufGuid))
+            {
+                if (appId != 0)
+                {
+                    foreach (P2PApp app in p2pAppCache[eufGuid])
+                    {
+                        if (appId == app.AppId)
+                            return true;
+                    }
+                }
+                return true;
+            }
+
+            return false;
+        }
 
         /// <summary>
         /// Creates a new P2PApplication instance with the parameters provided.
@@ -757,6 +775,7 @@ namespace MSNPSharp.Apps
 
             return Guid.Empty;
         }
+
         #endregion
 
         #endregion

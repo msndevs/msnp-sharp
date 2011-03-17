@@ -178,7 +178,7 @@ namespace MSNPSharp.P2P
             return true;
         }
 
-        private void SendSLPStatus(P2PBridge bridge, P2PMessage msg, Contact dest, Guid destGuid, int code, string phrase)
+        internal void SendSLPStatus(P2PBridge bridge, P2PMessage msg, Contact dest, Guid destGuid, int code, string phrase)
         {
             string target = dest.Account.ToLowerInvariant();
 
@@ -196,6 +196,11 @@ namespace MSNPSharp.P2P
                 slp.CallId = msgSLP.CallId;
                 slp.Source = msgSLP.Target;
                 slp.ContentType = msgSLP.ContentType;
+                if (msgSLP.BodyValues.ContainsKey("SessionID"))
+                {
+                    slp.BodyValues["SessionID"] = msgSLP.BodyValues["SessionID"];
+                }
+
             }
             else
                 slp.ContentType = "null";
