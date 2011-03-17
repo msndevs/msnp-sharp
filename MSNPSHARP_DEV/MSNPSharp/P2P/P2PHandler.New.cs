@@ -197,15 +197,24 @@ namespace MSNPSharp.P2P
                 (slp as SLPRequestMessage).Method == "INVITE" &&
                 slp.ContentType == "application/x-msnmsgr-sessionreqbody")
             {
-                session = new P2PSession(slp as SLPRequestMessage, p2pMessage, nsMessageHandler, bridge);
+                uint appId = slp.BodyValues.ContainsKey("AppID") ? uint.Parse(slp.BodyValues["AppID"].Value) : 0;
+                Guid eufGuid = slp.BodyValues.ContainsKey("EUF-GUID") ? new Guid(slp.BodyValues["EUF-GUID"].Value) : Guid.Empty;
 
-                session.Closed += P2PSessionClosed;
+                if (P2PApplication.IsRegistered(eufGuid, appId))
+                {
+                    session = new P2PSession(slp as SLPRequestMessage, p2pMessage, nsMessageHandler, bridge);
+                    session.Closed += P2PSessionClosed;
 
-                if (session.Version == P2PVersion.P2PV2)
-                    p2pV2Sessions.Add(session);
-                else
-                    p2pV1Sessions.Add(session);
+                    if (session.Version == P2PVersion.P2PV2)
+                        p2pV2Sessions.Add(session);
+                    else
+                        p2pV1Sessions.Add(session);
 
+                    return;
+                }
+
+                // Not registered application. Decline it without create a new session...
+                slpHandler.SendSLPStatus(bridge, p2pMessage, source, sourceGuid, 603, "Decline");
                 return;
             }
             
