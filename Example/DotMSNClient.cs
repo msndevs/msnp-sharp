@@ -80,6 +80,10 @@ namespace MSNPSharpClient
             Settings.SerializationType = MSNPSharp.IO.MclSerialization.Compression | MSNPSharp.IO.MclSerialization.Cryptography;
 #endif
 
+            // The following line is very IMPOTANT.
+            // Keep the messenger sending PNG to the server in a proper frequency, or it will be kicked offline.
+            this.tmrKeepOnLine.Tick += new EventHandler(tmrKeepOnLine_Tick);
+
             // If you want to use it in an environment that does not have write permission, set NoSave to true.
             //Settings.NoSave = true;
 

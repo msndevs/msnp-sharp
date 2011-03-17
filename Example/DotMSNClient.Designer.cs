@@ -218,7 +218,6 @@ namespace MSNPSharpClient
             // tmrKeepOnLine
             // 
             this.tmrKeepOnLine.Interval = 1000;
-            this.tmrKeepOnLine.Tick += new System.EventHandler(this.tmrKeepOnLine_Tick);
             // 
             // tmrNews
             // 
