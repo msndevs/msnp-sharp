@@ -118,7 +118,6 @@ namespace MSNPSharp.P2P
         private SLPRequestMessage invitation = null;
         private P2PBridge p2pBridge = null;
         private P2PApplication p2pApplication = null;
-        internal ushort dataPacketNumber = 0;
 
         private P2PVersion version = P2PVersion.P2PV1;
         private P2PSessionStatus status = P2PSessionStatus.Closed;
@@ -445,8 +444,8 @@ namespace MSNPSharp.P2P
             }
             else
             {
-
-                P2PSession.SendDirectInvite(NSMessageHandler, NSMessageHandler.SDGBridge, this);
+                if (Remote.DirectBridge == null)
+                    P2PSession.SendDirectInvite(NSMessageHandler, NSMessageHandler.SDGBridge, this);
 
 
                 // Get id from bridge....
@@ -561,9 +560,7 @@ namespace MSNPSharp.P2P
                 {
                     p2pMessage.V2Header.OperationCode = (byte)OperationCode.RAK;
                     p2pMessage.V2Header.TFCombination = TFCombination.First;
-                    p2pMessage.V2Header.PackageNumber = dataPacketNumber;
-
-                    //dataPacketNumber++;
+                    p2pMessage.V2Header.PackageNumber = ++Bridge.packageNumber;
                 }
 
                 p2pMessage.InnerMessage = slpMessage;
@@ -609,9 +606,7 @@ namespace MSNPSharp.P2P
                 {
                     p2pMessage.V2Header.OperationCode = (byte)OperationCode.RAK;
                     p2pMessage.V2Header.TFCombination = TFCombination.First;
-                    p2pMessage.V2Header.PackageNumber = dataPacketNumber;
-
-                    //dataPacketNumber++;
+                    p2pMessage.V2Header.PackageNumber = ++p2pBridge.packageNumber;
                 }
 
                 p2pMessage.InnerMessage = slpMessage;
@@ -817,8 +812,7 @@ namespace MSNPSharp.P2P
             if (Version == P2PVersion.P2PV2)
             {
                 p2pMessage.V2Header.TFCombination = TFCombination.First;
-                p2pMessage.V2Header.PackageNumber = dataPacketNumber;
-                //dataPacketNumber++;
+                p2pMessage.V2Header.PackageNumber = ++Bridge.packageNumber;
             }
             else if (Version == P2PVersion.P2PV1)
             {
@@ -967,15 +961,6 @@ namespace MSNPSharp.P2P
             localIdentifier++;
             if (localIdentifier == localBaseIdentifier)
                 localIdentifier++;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        public ushort IncreaseDataPacketNumber()
-        {
-            return ++dataPacketNumber;
         }
 
         /// <summary>

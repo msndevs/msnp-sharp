@@ -209,7 +209,7 @@ namespace MSNPSharp.Apps
 
             if (Sending)
             {
-                ushort packNum = base.P2PSession.IncreaseDataPacketNumber();
+                ushort packNum = ++base.P2PSession.Bridge.packageNumber;
 
                 // Data prep
                 P2PDataMessage prepData = new P2PDataMessage(P2PVersion);
@@ -221,7 +221,6 @@ namespace MSNPSharp.Apps
                 }
 
                 SendMessage(prepData);
-                Thread.CurrentThread.Join(900);
 
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                     "Data prep sent. Sending whole data...", GetType().Name);

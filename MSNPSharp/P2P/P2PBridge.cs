@@ -102,6 +102,7 @@ namespace MSNPSharp.P2P
         private static uint bridgeCount = 0;
         protected internal uint syncIdentifier = 0;
         protected internal uint localTrackerId = 0;
+        protected internal ushort packageNumber = 0;
 
         protected uint bridgeID = ++bridgeCount;
         protected int queueSize = 0;
@@ -284,6 +285,10 @@ namespace MSNPSharp.P2P
             if (p2pMessage.Version == P2PVersion.P2PV1 && p2pMessage.V1Header.AckSessionId == 0)
             {
                 p2pMessage.V1Header.AckSessionId = (uint)new Random().Next(50000, int.MaxValue);
+            }
+            if (p2pMessage.Version == P2PVersion.P2PV2 && p2pMessage.V2Header.PackageNumber == 0)
+            {
+                p2pMessage.V2Header.PackageNumber = packageNumber;
             }
 
             P2PMessage[] msgs = p2pMessage.SplitMessage(MaxDataSize);
