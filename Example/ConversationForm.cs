@@ -16,7 +16,6 @@ namespace MSNPSharpClient
     using MSNPSharp.Apps;
     using MSNPSharp.P2P;
     using MSNPSharp.Core;
-    using MSNPSharp.Utilities;
 
     /// <summary>
     /// Summary description for ConversationForm.

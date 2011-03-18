@@ -84,20 +84,9 @@ namespace MSNPSharp
         public event EventHandler<EmoticonDefinitionEventArgs> EmoticonDefinitionReceived;
 
         /// <summary>
-        /// Occurs when we receive a emoticon from a user.
-        /// </summary>
-        public event EventHandler<EmoticonArrivedEventArgs> EmoticonReceived;
-
-        /// <summary>
         /// Fired when a contact sends a wink definition.
         /// </summary>
         public event EventHandler<WinkEventArgs> WinkDefinitionReceived;
-
-        /// <summary>
-        /// Occurs when we receive a wink from a user.
-        /// </summary>
-        public event EventHandler<WinkEventArgs> WinkReceived;
-
 
         /// <summary>
         /// Occurs when a multiparty chat created (locally or remotely).
@@ -178,111 +167,16 @@ namespace MSNPSharp
                 "TEXT MESSAGE: " + e.Sender.ToString() + (e.Sender == e.OriginalSender ? String.Empty : ";via=" + e.OriginalSender.ToString()) + "\r\n" + e.TextMessage.ToDebugString());
         }
 
-
-        protected virtual void OnEmoticonReceived(EmoticonArrivedEventArgs e)
-        {
-            if (EmoticonReceived != null)
-                EmoticonReceived(this, e);
-        }
-
         protected virtual void OnEmoticonDefinitionReceived(EmoticonDefinitionEventArgs e)
         {
-            if (!autoRequestEmoticons)
-                return;
-
-            MSNObject existing = MSNObjectCatalog.GetInstance().Get(e.Emoticon.CalculateChecksum());
-            if (existing == null)
-            {
-                e.Sender.Emoticons[e.Emoticon.Sha] = e.Emoticon;
-
-                // create a session and send the invitation
-                ObjectTransfer emoticonTransfer = P2PHandler.RequestMsnObject(e.Sender, e.Emoticon);
-                emoticonTransfer.TransferAborted += (emoticonTransfer_TransferAborted);
-                emoticonTransfer.TransferFinished += (emoticonTransfer_TransferFinished);
-
-                MSNObjectCatalog.GetInstance().Add(e.Emoticon);
-
-                if (EmoticonDefinitionReceived != null)
-                    EmoticonDefinitionReceived(this, e);
-            }
-            else
-            {
-                if (EmoticonDefinitionReceived != null)
-                    EmoticonDefinitionReceived(this, e);
-
-                //If exists, fire the event.
-                OnEmoticonReceived(new EmoticonArrivedEventArgs(e.Sender, existing as Emoticon, null));
-            }
-        }
-
-        private void emoticonTransfer_TransferAborted(object objectTransfer, ContactEventArgs e)
-        {
-            ObjectTransfer session = objectTransfer as ObjectTransfer;
-            session.TransferAborted -= (emoticonTransfer_TransferAborted);
-
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Emoticon aborted", GetType().Name);
-        }
-
-        private void emoticonTransfer_TransferFinished(object objectTransfer, EventArgs e)
-        {
-            ObjectTransfer session = objectTransfer as ObjectTransfer;
-            session.TransferFinished -= (emoticonTransfer_TransferFinished);
-
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Emoticon received", GetType().Name);
-
-            OnEmoticonReceived(new EmoticonArrivedEventArgs(session.Remote, session.Object as Emoticon, null));
-        }
-
-        protected virtual void OnWinkReceived(WinkEventArgs e)
-        {
-            if (WinkReceived != null)
-                WinkReceived(this, e);
+            if (EmoticonDefinitionReceived != null)
+                EmoticonDefinitionReceived(this, e);
         }
 
         protected virtual void OnWinkDefinitionReceived(WinkEventArgs e)
         {
-            if (!autoRequestEmoticons)
-                return;
-
-            MSNObject existing = MSNObjectCatalog.GetInstance().Get(e.Wink.CalculateChecksum());
-            if (existing == null)
-            {
-                // create a session and send the invitation
-                ObjectTransfer winkTransfer = P2PHandler.RequestMsnObject(e.Sender, e.Wink);
-                winkTransfer.TransferAborted += (winkTransfer_TransferAborted);
-                winkTransfer.TransferFinished += (winkTransfer_TransferFinished);
-
-                MSNObjectCatalog.GetInstance().Add(e.Wink);
-
-                if (WinkDefinitionReceived != null)
-                    WinkDefinitionReceived(this, e);
-            }
-            else
-            {
-                if (WinkDefinitionReceived != null)
-                    WinkDefinitionReceived(this, e);
-
-                //If exists, fire the event.
-                OnWinkReceived(e);
-            }
-        }
-
-        private void winkTransfer_TransferAborted(object objectTransfer, ContactEventArgs e)
-        {
-            ObjectTransfer session = objectTransfer as ObjectTransfer;
-            session.TransferAborted -= (winkTransfer_TransferAborted);
-
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Wink aborted", GetType().Name);
-        }
-
-        private void winkTransfer_TransferFinished(object objectTransfer, EventArgs e)
-        {
-            ObjectTransfer session = objectTransfer as ObjectTransfer;
-            session.TransferFinished -= (winkTransfer_TransferFinished);
-
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Wink received", GetType().Name);
-
-            OnWinkReceived(new WinkEventArgs(session.Remote, session.Object as Wink));
+            if (WinkDefinitionReceived != null)
+                WinkDefinitionReceived(this, e);
         }
 
         protected virtual void OnMultipartyCreated(MultipartyCreatedEventArgs e)
@@ -652,6 +546,158 @@ namespace MSNPSharp
             if (endPointID == MachineGuid && messageProcessor.Connected)
                 messageProcessor.Disconnect();
         }
+
+        #endregion
+
+        #region SetPresenceStatus
+
+        /// <summary>
+        /// Set the status of the contact list owner (the client).
+        /// </summary>
+        /// <remarks>You can only set the status _after_ SignedIn event. Otherwise you won't receive online notifications from other clients or the connection is closed by the server.</remarks>
+        internal void SetPresenceStatus(
+            PresenceStatus newStatus,
+            ClientCapabilities newLocalIMCaps, ClientCapabilitiesEx newLocalIMCapsex,
+            ClientCapabilities newLocalPECaps, ClientCapabilitiesEx newLocalPECapsex,
+            string newEPName,
+            PersonalMessage newPSM,
+            bool forcePEservice)
+        {
+            if (IsSignedIn == false)
+                throw new MSNPSharpException("Can't set status. You must wait for the SignedIn event before you can set an initial status.");
+
+            if (newStatus == PresenceStatus.Offline)
+            {
+                SignoutFrom(MachineGuid);
+                return;
+            }
+
+            bool SETALL = (Owner.Status == PresenceStatus.Offline);
+
+            if (SETALL || forcePEservice ||
+                newStatus != Owner.Status ||
+                newLocalIMCaps != Owner.LocalEndPointIMCapabilities ||
+                newLocalIMCapsex != Owner.LocalEndPointIMCapabilitiesEx ||
+                newLocalPECaps != Owner.LocalEndPointPECapabilities ||
+                newLocalPECapsex != Owner.LocalEndPointPECapabilitiesEx ||
+                newEPName != Owner.EpName)
+            {
+                XmlDocument xmlDoc = new XmlDocument();
+                XmlElement userElement = xmlDoc.CreateElement("user");
+
+                // s.IM (Status, CurrentMedia)
+                if (SETALL || forcePEservice ||
+                    newStatus != Owner.Status)
+                {
+                    XmlElement service = xmlDoc.CreateElement("s");
+                    service.SetAttribute("n", ServiceShortNames.IM.ToString());
+                    service.InnerXml =
+                        "<Status>" + ParseStatus(newStatus) + "</Status>" +
+                        "<CurrentMedia>" + MSNHttpUtility.XmlEncode(newPSM.CurrentMedia) + "</CurrentMedia>";
+
+                    userElement.AppendChild(service);
+                }
+
+                // s.PE (UserTileLocation, FriendlyName, PSM, Scene, ColorScheme)
+                if (SETALL ||
+                    forcePEservice)
+                {
+                    XmlElement service = xmlDoc.CreateElement("s");
+                    service.SetAttribute("n", ServiceShortNames.PE.ToString());
+                    service.InnerXml = newPSM.Payload;
+                    userElement.AppendChild(service);
+
+                    // Don't set owner.PersonalMessage here. It is replaced (with a new reference) when NFY PUT received.
+                }
+
+                // sep.IM (Capabilities)
+                if (SETALL ||
+                    newLocalIMCaps != Owner.LocalEndPointIMCapabilities ||
+                    newLocalIMCapsex != Owner.LocalEndPointIMCapabilitiesEx)
+                {
+                    ClientCapabilities localIMCaps = SETALL ? ClientCapabilities.DefaultIM : newLocalIMCaps;
+                    ClientCapabilitiesEx localIMCapsEx = SETALL ? ClientCapabilitiesEx.DefaultIM : newLocalIMCapsex;
+                    if (BotMode)
+                    {
+                        localIMCaps |= ClientCapabilities.IsBot;
+                    }
+
+                    XmlElement sep = xmlDoc.CreateElement("sep");
+                    sep.SetAttribute("n", ServiceShortNames.IM.ToString());
+                    XmlElement Capabilities = xmlDoc.CreateElement("Capabilities");
+                    Capabilities.InnerText = ((long)localIMCaps).ToString() + ":" + ((long)localIMCapsEx).ToString();
+                    sep.AppendChild(Capabilities);
+                    userElement.AppendChild(sep);
+                }
+
+                // sep.PE (Capabilities)
+                if (SETALL ||
+                    newLocalPECaps != Owner.LocalEndPointPECapabilities ||
+                    newLocalPECapsex != Owner.LocalEndPointPECapabilitiesEx)
+                {
+                    ClientCapabilities localPECaps = SETALL ? ClientCapabilities.DefaultPE : newLocalPECaps;
+                    ClientCapabilitiesEx localPECapsEx = SETALL ? ClientCapabilitiesEx.DefaultPE : newLocalPECapsex;
+
+                    XmlElement sep = xmlDoc.CreateElement("sep");
+                    sep.SetAttribute("n", ServiceShortNames.PE.ToString());
+                    XmlElement VER = xmlDoc.CreateElement("VER");
+                    VER.InnerText = Credentials.ClientInfo.MessengerClientName + ":" + Credentials.ClientInfo.MessengerClientBuildVer;
+                    sep.AppendChild(VER);
+                    XmlElement TYP = xmlDoc.CreateElement("TYP");
+                    TYP.InnerText = "1";
+                    sep.AppendChild(TYP);
+                    XmlElement Capabilities = xmlDoc.CreateElement("Capabilities");
+                    Capabilities.InnerText = ((long)localPECaps).ToString() + ":" + ((long)localPECapsEx).ToString();
+                    sep.AppendChild(Capabilities);
+                    userElement.AppendChild(sep);
+                }
+
+                // sep.PD (EpName, State)
+                if (SETALL ||
+                    newEPName != Owner.EpName ||
+                    newStatus != Owner.Status)
+                {
+                    XmlElement sep = xmlDoc.CreateElement("sep");
+                    sep.SetAttribute("n", ServiceShortNames.PD.ToString());
+                    XmlElement ClientType = xmlDoc.CreateElement("ClientType");
+                    ClientType.InnerText = "1";
+                    sep.AppendChild(ClientType);
+                    XmlElement EpName = xmlDoc.CreateElement("EpName");
+                    EpName.InnerText = MSNHttpUtility.XmlEncode(newEPName);
+                    sep.AppendChild(EpName);
+                    XmlElement Idle = xmlDoc.CreateElement("Idle");
+                    Idle.InnerText = ((newStatus == PresenceStatus.Idle) ? "true" : "false");
+                    sep.AppendChild(Idle);
+                    XmlElement State = xmlDoc.CreateElement("State");
+                    State.InnerText = ParseStatus(newStatus);
+                    sep.AppendChild(State);
+                    userElement.AppendChild(sep);
+                }
+
+                if (userElement.HasChildNodes)
+                {
+                    string xml = userElement.OuterXml;
+                    string me = ((int)Owner.ClientType).ToString() + ":" + Owner.Account;
+
+                    MultiMimeMessage mmMessage = new MultiMimeMessage(me, me);
+                    mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = NSMessageHandler.MachineGuid.ToString("B").ToLowerInvariant();
+
+                    mmMessage.Stream = 1;
+                    mmMessage.ReliabilityHeaders[MIMEReliabilityHeaders.Flags] = "ACK";
+
+                    mmMessage.ContentKey = MIMEContentHeaders.Publication;
+                    mmMessage.ContentHeaders[MIMEContentHeaders.URI] = "/user";
+                    mmMessage.ContentHeaders[MIMEContentHeaders.ContentType] = "application/user+xml";
+
+                    mmMessage.InnerBody = System.Text.Encoding.UTF8.GetBytes(xml);
+
+                    NSMessage nsMessage = new NSMessage("PUT");
+                    nsMessage.InnerMessage = mmMessage;
+                    MessageProcessor.SendMessage(nsMessage);
+                }
+            }
+        }
+
 
         #endregion
 

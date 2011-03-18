@@ -17,7 +17,6 @@ namespace MSNPSharpClient
     using MSNPSharp.Core;
     using MSNPSharp.P2P;
     using MSNPSharp.MSNWS.MSNABSharingService;
-    using MSNPSharp.Utilities;
 
     /// <summary>
     /// MSNPSharp Client example.
@@ -100,12 +99,11 @@ namespace MSNPSharpClient
             messenger.Nameserver.ServerErrorReceived += new EventHandler<MSNErrorEventArgs>(Nameserver_ServerErrorReceived);
 
             // Receive messages send by contacts.
-            messenger.Nameserver.NudgeReceived += new EventHandler<NudgeArrivedEventArgs>(Nameserver_NudgeReceived);
-            messenger.Nameserver.TypingMessageReceived += new EventHandler<TypingArrivedEventArgs>(Nameserver_TypingMessageReceived);
-            messenger.Nameserver.TextMessageReceived += new EventHandler<TextMessageArrivedEventArgs>(Nameserver_TextMessageReceived);
-            
-            messenger.Nameserver.EmoticonReceived +=new EventHandler<EmoticonArrivedEventArgs>(Nameserver_EmoticonReceived);
-            messenger.Nameserver.WinkReceived += new EventHandler<WinkEventArgs>(Nameserver_WinkReceived);
+            messenger.MessageManager.NudgeReceived += new EventHandler<NudgeArrivedEventArgs>(Nameserver_NudgeReceived);
+            messenger.MessageManager.TypingMessageReceived += new EventHandler<TypingArrivedEventArgs>(Nameserver_TypingMessageReceived);
+            messenger.MessageManager.TextMessageReceived += new EventHandler<TextMessageArrivedEventArgs>(Nameserver_TextMessageReceived);
+            messenger.MessageManager.EmoticonReceived += new EventHandler<EmoticonArrivedEventArgs>(Nameserver_EmoticonReceived);
+            messenger.MessageManager.WinkReceived += new EventHandler<WinkEventArgs>(Nameserver_WinkReceived);
 
 
             // Listen for the data transfer events (i.e. file transfer invitation, activity invitation)

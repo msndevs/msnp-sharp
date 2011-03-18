@@ -41,7 +41,6 @@ namespace MSNPSharp
     using MSNPSharp.P2P;
     using MSNPSharp.Apps;
     using MSNPSharp.Core;
-    using MSNPSharp.Utilities;
 
     /// <summary>
     /// Provides an easy interface for the client programmer.
@@ -60,7 +59,7 @@ namespace MSNPSharp
         private NSMessageHandler nsMessageHandler = null;
         private ConnectivitySettings connectivitySettings = null;
         private Credentials credentials = new Credentials();
-        private MessageManager messageManager = null;
+        
 
         #endregion
 
@@ -74,7 +73,7 @@ namespace MSNPSharp
             connectivitySettings = new ConnectivitySettings();
             nsMessageProcessor = new NSMessageProcessor(connectivitySettings);
             nsMessageHandler = new NSMessageHandler();
-            messageManager = new MessageManager(nsMessageHandler);
+            
         }
 
         #endregion
@@ -88,7 +87,7 @@ namespace MSNPSharp
         {
             get
             {
-                return messageManager;
+                return nsMessageHandler.MessageManager;
             }
         }
 

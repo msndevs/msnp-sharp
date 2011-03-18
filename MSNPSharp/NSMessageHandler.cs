@@ -123,15 +123,15 @@ namespace MSNPSharp
 
         private Credentials credentials = new Credentials(MsnProtocol.MSNP21);
         private IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, 0);
-        private IPEndPoint externalEndPoint = null;
-        private SocketMessageProcessor messageProcessor = null;
-        private P2PHandler p2pHandler = null;
+        private IPEndPoint externalEndPoint;
+        private SocketMessageProcessor messageProcessor;
+        private P2PHandler p2pHandler;
         private long hopCount = 0;
-        private bool autoRequestEmoticons = true;
 
-        private ContactGroupList contactGroups = null;
-        private ContactList contactList = null;
-        private ContactManager manager = null;
+        private ContactGroupList contactGroups;
+        private ContactList contactList;
+        private ContactManager manager;
+        private MessageManager messageManager;
         private bool autoSynchronize = true;
         private bool botMode = false;
         private int canSendPing = 1;
@@ -139,11 +139,11 @@ namespace MSNPSharp
         private bool isSignedIn = false;
         private MSNTicket msnticket = MSNTicket.Empty;
 
-        private ContactService contactService = null;
-        private OIMService oimService = null;
-        private MSNStorageService storageService = null;
-        private WhatsUpService whatsUpService = null;
-        private MSNDirectoryService dirService = null;
+        private ContactService contactService;
+        private OIMService oimService;
+        private MSNStorageService storageService;
+        private WhatsUpService whatsUpService;
+        private MSNDirectoryService dirService;
 
         private List<Regex> censorWords = new List<Regex>(0);
         private Dictionary<int, Contact> multiparties = new Dictionary<int, Contact>(); //cliType=TemporaryGroup
@@ -153,6 +153,7 @@ namespace MSNPSharp
             contactGroups = new ContactGroupList(this);
             contactList = new ContactList(this);
             manager = new ContactManager(this);
+            messageManager = new MessageManager(this);
 
             contactService = new ContactService(this);
             oimService = new OIMService(this);
@@ -180,21 +181,6 @@ namespace MSNPSharp
             {
                 botMode = value;
                 AutoSynchronize = !value;
-            }
-        }
-
-        /// <summary>
-        /// Indicates whether emoticons from remote contacts are automatically retrieved
-        /// </summary>
-        public bool AutoRequestEmoticons
-        {
-            get
-            {
-                return autoRequestEmoticons;
-            }
-            set
-            {
-                autoRequestEmoticons = value;
             }
         }
 
@@ -439,6 +425,15 @@ namespace MSNPSharp
                 return manager;
             }
         }
+
+        internal MessageManager MessageManager
+        {
+            get
+            {
+                return messageManager;
+            }
+        }
+
         /// <summary>
         /// The handler that handles all incoming P2P framework messages.
         /// </summary>
@@ -558,158 +553,6 @@ namespace MSNPSharp
                 Owner.LocalEndPointPECapabilities, Owner.LocalEndPointPECapabilitiesEx,
                 Owner.EpName, pm, true);
         }
-
-        #endregion
-
-        #region SetPresenceStatus
-
-        /// <summary>
-        /// Set the status of the contact list owner (the client).
-        /// </summary>
-        /// <remarks>You can only set the status _after_ SignedIn event. Otherwise you won't receive online notifications from other clients or the connection is closed by the server.</remarks>
-        internal void SetPresenceStatus(
-            PresenceStatus newStatus,
-            ClientCapabilities newLocalIMCaps, ClientCapabilitiesEx newLocalIMCapsex,
-            ClientCapabilities newLocalPECaps, ClientCapabilitiesEx newLocalPECapsex,
-            string newEPName,
-            PersonalMessage newPSM,
-            bool forcePEservice)
-        {
-            if (IsSignedIn == false)
-                throw new MSNPSharpException("Can't set status. You must wait for the SignedIn event before you can set an initial status.");
-
-            if (newStatus == PresenceStatus.Offline)
-            {
-                SignoutFrom(MachineGuid);
-                return;
-            }
-
-            bool SETALL = (Owner.Status == PresenceStatus.Offline);
-
-            if (SETALL || forcePEservice ||
-                newStatus != Owner.Status ||
-                newLocalIMCaps != Owner.LocalEndPointIMCapabilities ||
-                newLocalIMCapsex != Owner.LocalEndPointIMCapabilitiesEx ||
-                newLocalPECaps != Owner.LocalEndPointPECapabilities ||
-                newLocalPECapsex != Owner.LocalEndPointPECapabilitiesEx ||
-                newEPName != Owner.EpName)
-            {
-                XmlDocument xmlDoc = new XmlDocument();
-                XmlElement userElement = xmlDoc.CreateElement("user");
-
-                // s.IM (Status, CurrentMedia)
-                if (SETALL || forcePEservice ||
-                    newStatus != Owner.Status)
-                {
-                    XmlElement service = xmlDoc.CreateElement("s");
-                    service.SetAttribute("n", ServiceShortNames.IM.ToString());
-                    service.InnerXml =
-                        "<Status>" + ParseStatus(newStatus) + "</Status>" +
-                        "<CurrentMedia>" + MSNHttpUtility.XmlEncode(newPSM.CurrentMedia) + "</CurrentMedia>";
-                    
-                    userElement.AppendChild(service);
-                }
-
-                // s.PE (UserTileLocation, FriendlyName, PSM, Scene, ColorScheme)
-                if (SETALL ||
-                    forcePEservice)
-                {
-                    XmlElement service = xmlDoc.CreateElement("s");
-                    service.SetAttribute("n", ServiceShortNames.PE.ToString());
-                    service.InnerXml = newPSM.Payload;
-                    userElement.AppendChild(service);
-
-                    // Don't set owner.PersonalMessage here. It is replaced (with a new reference) when NFY PUT received.
-                }
-
-                // sep.IM (Capabilities)
-                if (SETALL ||
-                    newLocalIMCaps != Owner.LocalEndPointIMCapabilities ||
-                    newLocalIMCapsex != Owner.LocalEndPointIMCapabilitiesEx)
-                {
-                    ClientCapabilities localIMCaps = SETALL ? ClientCapabilities.DefaultIM : newLocalIMCaps;
-                    ClientCapabilitiesEx localIMCapsEx = SETALL ? ClientCapabilitiesEx.DefaultIM : newLocalIMCapsex;
-                    if (BotMode)
-                    {
-                        localIMCaps |= ClientCapabilities.IsBot;
-                    }
-
-                    XmlElement sep = xmlDoc.CreateElement("sep");
-                    sep.SetAttribute("n", ServiceShortNames.IM.ToString());
-                    XmlElement Capabilities = xmlDoc.CreateElement("Capabilities");
-                    Capabilities.InnerText = ((long)localIMCaps).ToString() + ":" + ((long)localIMCapsEx).ToString();
-                    sep.AppendChild(Capabilities);
-                    userElement.AppendChild(sep);
-                }
-
-                // sep.PE (Capabilities)
-                if (SETALL ||
-                    newLocalPECaps != Owner.LocalEndPointPECapabilities ||
-                    newLocalPECapsex != Owner.LocalEndPointPECapabilitiesEx)
-                {
-                    ClientCapabilities localPECaps = SETALL ? ClientCapabilities.DefaultPE : newLocalPECaps;
-                    ClientCapabilitiesEx localPECapsEx = SETALL ? ClientCapabilitiesEx.DefaultPE : newLocalPECapsex;
-
-                    XmlElement sep = xmlDoc.CreateElement("sep");
-                    sep.SetAttribute("n", ServiceShortNames.PE.ToString());
-                    XmlElement VER = xmlDoc.CreateElement("VER");
-                    VER.InnerText = Credentials.ClientInfo.MessengerClientName + ":" + Credentials.ClientInfo.MessengerClientBuildVer;
-                    sep.AppendChild(VER);
-                    XmlElement TYP = xmlDoc.CreateElement("TYP");
-                    TYP.InnerText = "1";
-                    sep.AppendChild(TYP);
-                    XmlElement Capabilities = xmlDoc.CreateElement("Capabilities");
-                    Capabilities.InnerText = ((long)localPECaps).ToString() + ":" + ((long)localPECapsEx).ToString();
-                    sep.AppendChild(Capabilities);
-                    userElement.AppendChild(sep);
-                }
-
-                // sep.PD (EpName, State)
-                if (SETALL ||
-                    newEPName != Owner.EpName ||
-                    newStatus != Owner.Status)
-                {
-                    XmlElement sep = xmlDoc.CreateElement("sep");
-                    sep.SetAttribute("n", ServiceShortNames.PD.ToString());
-                    XmlElement ClientType = xmlDoc.CreateElement("ClientType");
-                    ClientType.InnerText = "1";
-                    sep.AppendChild(ClientType);
-                    XmlElement EpName = xmlDoc.CreateElement("EpName");
-                    EpName.InnerText = MSNHttpUtility.XmlEncode(newEPName);
-                    sep.AppendChild(EpName);
-                    XmlElement Idle = xmlDoc.CreateElement("Idle");
-                    Idle.InnerText = ((newStatus == PresenceStatus.Idle) ? "true" : "false");
-                    sep.AppendChild(Idle);
-                    XmlElement State = xmlDoc.CreateElement("State");
-                    State.InnerText = ParseStatus(newStatus);
-                    sep.AppendChild(State);
-                    userElement.AppendChild(sep);
-                }
-
-                if (userElement.HasChildNodes)
-                {
-                    string xml = userElement.OuterXml;
-                    string me = ((int)Owner.ClientType).ToString() + ":" + Owner.Account;
-
-                    MultiMimeMessage mmMessage = new MultiMimeMessage(me, me);
-                    mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = NSMessageHandler.MachineGuid.ToString("B").ToLowerInvariant();
-
-                    mmMessage.Stream = 1;
-                    mmMessage.ReliabilityHeaders[MIMEReliabilityHeaders.Flags] = "ACK";
-
-                    mmMessage.ContentKey = MIMEContentHeaders.Publication;
-                    mmMessage.ContentHeaders[MIMEContentHeaders.URI] = "/user";
-                    mmMessage.ContentHeaders[MIMEContentHeaders.ContentType] = "application/user+xml";
-
-                    mmMessage.InnerBody = System.Text.Encoding.UTF8.GetBytes(xml);
-
-                    NSMessage nsMessage = new NSMessage("PUT");
-                    nsMessage.InnerMessage = mmMessage;
-                    MessageProcessor.SendMessage(nsMessage);
-                }
-            }
-        }
-
 
         #endregion
 

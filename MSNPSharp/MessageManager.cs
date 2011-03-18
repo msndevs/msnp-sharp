@@ -35,8 +35,12 @@ using System.Collections.Generic;
 using System.Text;
 using System.Diagnostics;
 
-namespace MSNPSharp.Utilities
+namespace MSNPSharp
 {
+    using MSNPSharp;
+    using MSNPSharp.P2P;
+    using MSNPSharp.Apps;
+
     public class MessageManager : IDisposable
     {
         #region Events
@@ -45,11 +49,18 @@ namespace MSNPSharp.Utilities
         public event EventHandler<NudgeArrivedEventArgs> NudgeReceived;
         public event EventHandler<TextMessageArrivedEventArgs> TextMessageReceived;
 
+        public event EventHandler<EmoticonDefinitionEventArgs> EmoticonDefinitionReceived;
+        public event EventHandler<WinkEventArgs> WinkDefinitionReceived;
+
+        public event EventHandler<EmoticonArrivedEventArgs> EmoticonReceived;
+        public event EventHandler<WinkEventArgs> WinkReceived;
+
         #endregion
 
         #region Fields and Properties
 
         private NSMessageHandler _nsHandler;
+        private bool autoRequestObjects = true;
 
         /// <summary>
         /// The <see cref="NSMessageHandler"/> instance this manager connected to.
@@ -59,6 +70,21 @@ namespace MSNPSharp.Utilities
             get
             {
                 return _nsHandler;
+            }
+        }
+
+        /// <summary>
+        /// Indicates whether emoticons and winks from remote contacts are automatically retrieved
+        /// </summary>
+        public bool AutoRequestObjects
+        {
+            get
+            {
+                return autoRequestObjects;
+            }
+            set
+            {
+                autoRequestObjects = value;
             }
         }
 
@@ -91,35 +117,149 @@ namespace MSNPSharp.Utilities
 
         private void AttachNSEvents()
         {
-            _nsHandler.TypingMessageReceived += (_nsHandler_TypingMessageReceived);
-            _nsHandler.NudgeReceived += (_nsHandler_NudgeReceived);
-            _nsHandler.TextMessageReceived += (_nsHandler_TextMessageReceived);
+            _nsHandler.TypingMessageReceived += (OnTypingMessageReceived);
+            _nsHandler.NudgeReceived += (OnNudgeReceived);
+            _nsHandler.TextMessageReceived += (OnTextMessageReceived);
+
+            _nsHandler.EmoticonDefinitionReceived += (OnEmoticonDefinitionReceived);
+            _nsHandler.WinkDefinitionReceived += (OnWinkDefinitionReceived);
         }
 
         private void DetachNSEvents()
         {
-            _nsHandler.TypingMessageReceived -= (_nsHandler_TypingMessageReceived);
-            _nsHandler.NudgeReceived -= (_nsHandler_NudgeReceived);
-            _nsHandler.TextMessageReceived -= (_nsHandler_TextMessageReceived);
+            _nsHandler.TypingMessageReceived -= (OnTypingMessageReceived);
+            _nsHandler.NudgeReceived -= (OnNudgeReceived);
+            _nsHandler.TextMessageReceived -= (OnTextMessageReceived);
+
+            _nsHandler.EmoticonDefinitionReceived -= (OnEmoticonDefinitionReceived);
+            _nsHandler.WinkDefinitionReceived -= (OnWinkDefinitionReceived);
         }
 
-        private void _nsHandler_TypingMessageReceived(object sender, TypingArrivedEventArgs e)
+        protected virtual void OnTypingMessageReceived(object sender, TypingArrivedEventArgs e)
         {
             if (TypingMessageReceived != null)
                 TypingMessageReceived(this, e);
         }
 
-        private void _nsHandler_NudgeReceived(object sender, NudgeArrivedEventArgs e)
+        protected virtual void OnNudgeReceived(object sender, NudgeArrivedEventArgs e)
         {
             if (NudgeReceived != null)
                 NudgeReceived(this, e);
         }
 
-        private void _nsHandler_TextMessageReceived(object sender, TextMessageArrivedEventArgs e)
+        protected virtual void OnTextMessageReceived(object sender, TextMessageArrivedEventArgs e)
         {
             if (TextMessageReceived != null)
                 TextMessageReceived(this, e);
         }
+
+
+        protected virtual void OnEmoticonReceived(object sender, EmoticonArrivedEventArgs e)
+        {
+            if (EmoticonReceived != null)
+                EmoticonReceived(this, e);
+        }
+
+        protected virtual void OnEmoticonDefinitionReceived(object sender, EmoticonDefinitionEventArgs e)
+        {
+            if (!autoRequestObjects)
+                return;
+
+            MSNObject existing = MSNObjectCatalog.GetInstance().Get(e.Emoticon.CalculateChecksum());
+            if (existing == null)
+            {
+                e.Sender.Emoticons[e.Emoticon.Sha] = e.Emoticon;
+
+                // create a session and send the invitation
+                ObjectTransfer emoticonTransfer = _nsHandler.P2PHandler.RequestMsnObject(e.Sender, e.Emoticon);
+                emoticonTransfer.TransferAborted += (emoticonTransfer_TransferAborted);
+                emoticonTransfer.TransferFinished += (emoticonTransfer_TransferFinished);
+
+                MSNObjectCatalog.GetInstance().Add(e.Emoticon);
+
+                if (EmoticonDefinitionReceived != null)
+                    EmoticonDefinitionReceived(this, e);
+            }
+            else
+            {
+                if (EmoticonDefinitionReceived != null)
+                    EmoticonDefinitionReceived(this, e);
+
+                //If exists, fire the event.
+                OnEmoticonReceived(this, new EmoticonArrivedEventArgs(e.Sender, existing as Emoticon, null));
+            }
+        }
+
+        private void emoticonTransfer_TransferAborted(object objectTransfer, ContactEventArgs e)
+        {
+            ObjectTransfer session = objectTransfer as ObjectTransfer;
+            session.TransferAborted -= (emoticonTransfer_TransferAborted);
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Emoticon aborted", GetType().Name);
+        }
+
+        private void emoticonTransfer_TransferFinished(object objectTransfer, EventArgs e)
+        {
+            ObjectTransfer session = objectTransfer as ObjectTransfer;
+            session.TransferFinished -= (emoticonTransfer_TransferFinished);
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Emoticon received", GetType().Name);
+
+            OnEmoticonReceived(this, new EmoticonArrivedEventArgs(session.Remote, session.Object as Emoticon, null));
+        }
+
+        protected virtual void OnWinkReceived(object sender, WinkEventArgs e)
+        {
+            if (WinkReceived != null)
+                WinkReceived(this, e);
+        }
+
+        protected virtual void OnWinkDefinitionReceived(object sender, WinkEventArgs e)
+        {
+            if (!autoRequestObjects)
+                return;
+
+            MSNObject existing = MSNObjectCatalog.GetInstance().Get(e.Wink.CalculateChecksum());
+            if (existing == null)
+            {
+                // create a session and send the invitation
+                ObjectTransfer winkTransfer = _nsHandler.P2PHandler.RequestMsnObject(e.Sender, e.Wink);
+                winkTransfer.TransferAborted += (winkTransfer_TransferAborted);
+                winkTransfer.TransferFinished += (winkTransfer_TransferFinished);
+
+                MSNObjectCatalog.GetInstance().Add(e.Wink);
+
+                if (WinkDefinitionReceived != null)
+                    WinkDefinitionReceived(this, e);
+            }
+            else
+            {
+                if (WinkDefinitionReceived != null)
+                    WinkDefinitionReceived(this, new WinkEventArgs(e.Sender, existing as Wink));
+
+                //If exists, fire the event.
+                OnWinkReceived(this, new WinkEventArgs(e.Sender, existing as Wink));
+            }
+        }
+
+        private void winkTransfer_TransferAborted(object objectTransfer, ContactEventArgs e)
+        {
+            ObjectTransfer session = objectTransfer as ObjectTransfer;
+            session.TransferAborted -= (winkTransfer_TransferAborted);
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Wink aborted", GetType().Name);
+        }
+
+        private void winkTransfer_TransferFinished(object objectTransfer, EventArgs e)
+        {
+            ObjectTransfer session = objectTransfer as ObjectTransfer;
+            session.TransferFinished -= (winkTransfer_TransferFinished);
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Wink received", GetType().Name);
+
+            OnWinkReceived(this, new WinkEventArgs(session.Remote, session.Object as Wink));
+        }
+
 
         #endregion
 
