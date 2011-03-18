@@ -290,6 +290,8 @@ namespace MSNPSharp.P2P
             lock (ackHandlersV2)
                 ackHandlersV2.Clear();
 
+            sdgBridge.Dispose();
+            slpHandler.Dispose();
         }
 
         #endregion

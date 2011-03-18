@@ -108,7 +108,7 @@ namespace MSNPSharp
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + nsMessage.ToDebugString() + "\r\n", GetType().Name);
 
             // convert to bytes and send it over the socket
-            SendSocketData(nsMessage.GetBytes());
+            SendSocketData(nsMessage.GetBytes(), transactionID);
         }
 
         public override void Disconnect()

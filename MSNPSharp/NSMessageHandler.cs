@@ -412,6 +412,7 @@ namespace MSNPSharp
                 {
                     messageProcessor.ConnectionEstablished -= OnProcessorConnectCallback;
                     messageProcessor.ConnectionClosed -= OnProcessorDisconnectCallback;
+                    messageProcessor.SendCompleted -= OnProcessorSendCompletedCallback;
                 }
 
                 messageProcessor = value as SocketMessageProcessor;
@@ -422,6 +423,8 @@ namespace MSNPSharp
                     messageProcessor.ConnectionEstablished += OnProcessorConnectCallback;
                     // and make sure we respond on closing
                     messageProcessor.ConnectionClosed += OnProcessorDisconnectCallback;
+                    // track transid
+                    messageProcessor.SendCompleted += OnProcessorSendCompletedCallback;
                 }
             }
         }
@@ -790,6 +793,11 @@ namespace MSNPSharp
 
             Clear();
             SendInitialMessage();
+        }
+
+        protected virtual void OnProcessorSendCompletedCallback(object sender, ObjectEventArgs e)
+        {
+            SDGBridge.FireSendCompleted((int)e.Object);
         }
 
         /// <summary>
