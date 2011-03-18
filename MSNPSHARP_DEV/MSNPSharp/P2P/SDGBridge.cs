@@ -41,7 +41,6 @@ namespace MSNPSharp.P2P
     public class SDGBridge : P2PBridge
     {
         private NSMessageHandler nsHandler;
-        internal int pipeNo = 0;
 
         public override bool IsOpen
         {
@@ -107,11 +106,7 @@ namespace MSNPSharp.P2P
                 mmMessage.ContentHeaders[MIMEHeaderStrings.Content_Transfer_Encoding] = "binary";
                 mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type] = "Data";
 
-                if (pipeNo != 0)
-                {
-                    mmMessage.ContentHeaders["Pipe"] = pipeNo.ToString();
-                }
-
+                mmMessage.ContentHeaders["Pipe"] = packageNumber.ToString();
                 mmMessage.ContentHeaders["Bridging-Offsets"] = "0"; //msg.Header.HeaderLength.ToString();
                 mmMessage.InnerBody = msg.GetBytes(true);
             }

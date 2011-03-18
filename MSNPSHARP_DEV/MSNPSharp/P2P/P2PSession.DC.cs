@@ -171,6 +171,10 @@ namespace MSNPSharp.P2P
             P2PBridge p2pBridge,
             P2PSession p2pSession)
         {
+            // Skip if we're currently using a TCPBridge.
+            if (p2pSession != null && p2pSession.Remote.DirectBridge != null && p2pSession.Remote.DirectBridge.IsOpen)
+                return;
+
             int netId;
             string connectionType = ConnectionType(nsMessageHandler, out netId);
             Contact remote = p2pSession.Remote;

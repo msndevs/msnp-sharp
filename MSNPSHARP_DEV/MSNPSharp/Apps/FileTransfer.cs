@@ -321,12 +321,14 @@ namespace MSNPSharp.Apps
 
                 _dataStream.Seek(0, SeekOrigin.Begin);
                 _sendingData = true;
+                packNum = ++base.P2PSession.Bridge.packageNumber;
 
                 if (P2PSession.Bridge.Ready(P2PSession))
                     SendChunk();
             }
         }
 
+        private ushort packNum = 0;
         private void SendChunk()
         {
             if (!_sendingData)
@@ -347,8 +349,6 @@ namespace MSNPSharp.Apps
                 }
                 else if (P2PVersion == P2PVersion.P2PV2)
                 {
-                    P2PSession.dataPacketNumber++;
-
                     p2pChunk.V2Header.TFCombination = TFCombination.First;
                 }
             }
@@ -366,7 +366,7 @@ namespace MSNPSharp.Apps
             }
             else if (P2PVersion == P2PVersion.P2PV2)
             {
-                p2pChunk.V2Header.PackageNumber = P2PSession.dataPacketNumber;
+                p2pChunk.V2Header.PackageNumber = packNum;
                 p2pChunk.V2Header.TFCombination |= TFCombination.FileTransfer;
 
                 P2PSession.CorrectLocalIdentifier((int)p2pChunk.Header.MessageSize);
