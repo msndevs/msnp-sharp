@@ -317,8 +317,9 @@ namespace MSNPSharp.Apps
 
             if (Sending)
             {
-                P2PSession.SendDirectInvite(this.NSMessageHandler, P2PSession.Bridge, P2PSession);
-
+                if (P2PSession.SendDirectInvite(this.NSMessageHandler, P2PSession))
+                    System.Threading.Thread.CurrentThread.Join(2000);
+                    
                 _dataStream.Seek(0, SeekOrigin.Begin);
                 _sendingData = true;
                 packNum = ++base.P2PSession.Bridge.packageNumber;
