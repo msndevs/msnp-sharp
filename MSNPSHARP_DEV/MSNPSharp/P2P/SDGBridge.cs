@@ -73,7 +73,7 @@ namespace MSNPSharp.P2P
         }
 
         public SDGBridge(NSMessageHandler nsHandler)
-            : base(5)
+            : base(0)
         {
             this.nsHandler = nsHandler;
         }
