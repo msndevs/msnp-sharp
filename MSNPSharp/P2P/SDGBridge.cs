@@ -55,7 +55,7 @@ namespace MSNPSharp.P2P
         {
             get
             {
-                return 5000;
+                return 1000;
             }
         }
 
@@ -74,7 +74,7 @@ namespace MSNPSharp.P2P
         }
 
         public SDGBridge(NSMessageHandler nsHandler)
-            : base(0)
+            : base(5)
         {
             this.nsHandler = nsHandler;
         }

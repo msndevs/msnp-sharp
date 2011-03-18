@@ -188,7 +188,7 @@ namespace MSNPSharp.P2P
                     return;
 
                 // Session Data
-                if (session.ProcessP2PData(bridge, p2pMessage))
+                if (slp == null && session.ProcessP2PData(bridge, p2pMessage))
                     return;
             }
 
