@@ -166,14 +166,13 @@ namespace MSNPSharp.P2P
             return connectionType;
         }
 
-        internal static void SendDirectInvite(
+        internal static bool SendDirectInvite(
             NSMessageHandler nsMessageHandler,
-            P2PBridge p2pBridge,
             P2PSession p2pSession)
         {
             // Skip if we're currently using a TCPBridge.
             if (p2pSession != null && p2pSession.Remote.DirectBridge != null && p2pSession.Remote.DirectBridge.IsOpen)
-                return;
+                return false;
 
             int netId;
             string connectionType = ConnectionType(nsMessageHandler, out netId);
@@ -216,14 +215,9 @@ namespace MSNPSharp.P2P
                 p2pMessage.V1Header.Flags = P2PFlag.MSNSLPInfo;
             }
 
-            p2pBridge.Send(null, remote, p2pSession.RemoteContactEndPointID, p2pMessage, null);
-
-            // Wait a bit, otherwise SLP message queued when called p2pBridge.StopSending(this);
             p2pSession.SetupDCTimer();
-            Thread.CurrentThread.Join(900);
-
-            if (!(p2pBridge is SDGBridge))
-                p2pBridge.StopSending(p2pSession);
+            nsMessageHandler.SDGBridge.Send(null, remote, p2pSession.RemoteContactEndPointID, p2pMessage, null);
+            return true;
         }
 
         private static void ProcessDCReqInvite(SLPMessage message, NSMessageHandler ns, P2PSession startupSession)

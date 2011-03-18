@@ -444,9 +444,8 @@ namespace MSNPSharp.P2P
             }
             else
             {
-                if (Remote.DirectBridge == null)
-                    P2PSession.SendDirectInvite(NSMessageHandler, NSMessageHandler.SDGBridge, this);
-
+                if (P2PSession.SendDirectInvite(NSMessageHandler, this))
+                    System.Threading.Thread.CurrentThread.Join(2000);
 
                 // Get id from bridge....
                 {
@@ -509,9 +508,9 @@ namespace MSNPSharp.P2P
 
                 Send(WrapSLPMessage(slpMessage), delegate(P2PMessage ack)
                 {
-                    if (sendDCInvite)
-                        SendDirectInvite(nsMessageHandler, p2pBridge, this);
-
+                    if (sendDCInvite && SendDirectInvite(nsMessageHandler, this))
+                        System.Threading.Thread.CurrentThread.Join(2000);
+                        
                     OnActive(EventArgs.Empty);
 
                     if (p2pApplication != null)
