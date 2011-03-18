@@ -170,7 +170,68 @@ namespace MSNPSharp.P2P
                 return;
             }
 
-            // 5) FIND SESSION: Search session by SessionId/ExpectedIdentifier
+            // 5) FIRST SLP MESSAGE: Create applications/sessions based on invitation
+            if (slp != null && slp is SLPRequestMessage &&
+                (slp as SLPRequestMessage).Method == "INVITE" &&
+                slp.ContentType == "application/x-msnmsgr-sessionreqbody")
+            {
+                uint appId = slp.BodyValues.ContainsKey("AppID") ? uint.Parse(slp.BodyValues["AppID"].Value) : 0;
+                Guid eufGuid = slp.BodyValues.ContainsKey("EUF-GUID") ? new Guid(slp.BodyValues["EUF-GUID"].Value) : Guid.Empty;
+                P2PVersion ver = slp.ToEndPoint == Guid.Empty ? P2PVersion.P2PV1 : P2PVersion.P2PV2;
+
+                if (P2PApplication.IsRegistered(eufGuid, appId))
+                {
+                    bool sessionExists = false;
+                    P2PSession newSession = null;
+
+                    if (ver == P2PVersion.P2PV2)
+                    {
+                        foreach (P2PSession s in p2pV2Sessions)
+                        {
+                            if (s.Invitation.CallId == slp.CallId)
+                            {
+                                newSession = s;
+                                sessionExists = true;
+                                break;
+                            }
+                        }
+
+                        if (sessionExists == false)
+                        {
+                            newSession = new P2PSession(slp as SLPRequestMessage, p2pMessage, nsMessageHandler, bridge);
+                            newSession.Closed += P2PSessionClosed;
+                            p2pV2Sessions.Add(newSession);
+                        }
+                    }
+                    else
+                    {
+                        foreach (P2PSession s in p2pV1Sessions)
+                        {
+                            if (s.Invitation.CallId == slp.CallId)
+                            {
+                                newSession = s;
+                                sessionExists = true;
+                                break;
+                            }
+                        }
+
+                        if (sessionExists == false)
+                        {
+                            newSession = new P2PSession(slp as SLPRequestMessage, p2pMessage, nsMessageHandler, bridge);
+                            newSession.Closed += P2PSessionClosed;
+                            p2pV1Sessions.Add(newSession);
+                        }
+                    }
+
+                    return;
+                }
+
+                // Not registered application. Decline it without create a new session...
+                slpHandler.SendSLPStatus(bridge, p2pMessage, source, sourceGuid, 603, "Decline");
+                return;
+            }
+
+            // 6) FIND SESSION: Search session by SessionId/ExpectedIdentifier
             P2PSession session = FindSession(p2pMessage, slp);
             if (session != null)
             {
@@ -192,31 +253,7 @@ namespace MSNPSharp.P2P
                     return;
             }
 
-            // 6) FIRST SLP MESSAGE: Create applications/sessions based on invitation
-            if (slp != null && slp is SLPRequestMessage &&
-                (slp as SLPRequestMessage).Method == "INVITE" &&
-                slp.ContentType == "application/x-msnmsgr-sessionreqbody")
-            {
-                uint appId = slp.BodyValues.ContainsKey("AppID") ? uint.Parse(slp.BodyValues["AppID"].Value) : 0;
-                Guid eufGuid = slp.BodyValues.ContainsKey("EUF-GUID") ? new Guid(slp.BodyValues["EUF-GUID"].Value) : Guid.Empty;
 
-                if (P2PApplication.IsRegistered(eufGuid, appId))
-                {
-                    session = new P2PSession(slp as SLPRequestMessage, p2pMessage, nsMessageHandler, bridge);
-                    session.Closed += P2PSessionClosed;
-
-                    if (session.Version == P2PVersion.P2PV2)
-                        p2pV2Sessions.Add(session);
-                    else
-                        p2pV1Sessions.Add(session);
-
-                    return;
-                }
-
-                // Not registered application. Decline it without create a new session...
-                slpHandler.SendSLPStatus(bridge, p2pMessage, source, sourceGuid, 603, "Decline");
-                return;
-            }
             
             if (!requireAck)
             {

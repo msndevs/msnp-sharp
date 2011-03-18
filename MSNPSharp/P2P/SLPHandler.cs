@@ -82,21 +82,6 @@ namespace MSNPSharp.P2P
 
                     return true;
                 }
-                else if (slpRequest.ContentType == "application/x-msnmsgr-sessionreqbody" &&
-                    slpRequest.Method == "INVITE")
-                {
-                    SLPStatusMessage slpMessage = new SLPStatusMessage(session.RemoteContactEPIDString, 500, "Internal Error");
-                    slpMessage.Target = session.RemoteContactEPIDString;
-                    slpMessage.Source = session.LocalContactEPIDString;
-                    slpMessage.Branch = session.Invitation.Branch;
-                    slpMessage.CallId = session.Invitation.CallId;
-                    slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
-                    slpMessage.BodyValues["SessionID"] = session.SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
-
-                    P2PMessage errorMessage = session.WrapSLPMessage(slpMessage);
-                    bridge.Send(null, session.Remote, session.RemoteContactEndPointID, errorMessage, null);
-                    return true;
-                }
                 else
                 {
                     if (slpRequest.ContentType == "application/x-msnmsgr-transreqbody" ||
