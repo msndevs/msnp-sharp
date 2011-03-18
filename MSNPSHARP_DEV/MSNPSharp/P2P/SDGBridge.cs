@@ -41,6 +41,7 @@ namespace MSNPSharp.P2P
     public class SDGBridge : P2PBridge
     {
         private NSMessageHandler nsHandler;
+        private Dictionary<int, P2PMessageSessionEventArgs> p2pAckMessages = new Dictionary<int, P2PMessageSessionEventArgs>();
 
         public override bool IsOpen
         {
@@ -72,8 +73,15 @@ namespace MSNPSharp.P2P
             }
         }
 
+        public override void Dispose()
+        {
+            p2pAckMessages.Clear();
+
+            base.Dispose();
+        }
+
         public SDGBridge(NSMessageHandler nsHandler)
-            : base(0)
+            : base(8)
         {
             this.nsHandler = nsHandler;
         }
@@ -114,10 +122,22 @@ namespace MSNPSharp.P2P
             NSMessageProcessor nsmp = (NSMessageProcessor)nsHandler.MessageProcessor;
             int transId = nsmp.IncreaseTransactionID();
 
+            p2pAckMessages[transId] = new P2PMessageSessionEventArgs(msg, session);
+
             NSMessage sdgPayload = new NSMessage("SDG");
             sdgPayload.TransactionID = transId;
             sdgPayload.InnerMessage = mmMessage;
             nsmp.SendMessage(sdgPayload, sdgPayload.TransactionID);
+        }
+
+        internal void FireSendCompleted(int transid)
+        {
+            if (p2pAckMessages.ContainsKey(transid))
+            {
+                P2PMessageSessionEventArgs p2pe = p2pAckMessages[transid];
+                p2pAckMessages.Remove(transid);
+                OnBridgeSent(p2pe);
+            }
         }
     }
 };
