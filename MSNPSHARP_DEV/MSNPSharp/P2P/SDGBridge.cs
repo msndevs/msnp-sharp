@@ -55,7 +55,7 @@ namespace MSNPSharp.P2P
         {
             get
             {
-                return 1000;
+                return 1024;
             }
         }
 

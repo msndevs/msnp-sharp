@@ -78,7 +78,7 @@ namespace MSNPSharp.P2P
         {
             get
             {
-                return 1352;
+                return 1024;
             }
         }
 
