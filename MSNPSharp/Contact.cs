@@ -246,7 +246,7 @@ namespace MSNPSharp
 
             if (NSMessageHandler != null)
             {
-                NSMessageHandler.Manager.Add(this);
+                NSMessageHandler.ContactManager.Add(this);
             }
 
             displayImage = DisplayImage.CreateDefaultImage(Account);
@@ -1321,7 +1321,7 @@ namespace MSNPSharp
             if (NSMessageHandler == null)
                 return;
 
-            NSMessageHandler.Manager.SyncProperties(this);
+            NSMessageHandler.ContactManager.SyncProperties(this);
         }
 
         #region Protected

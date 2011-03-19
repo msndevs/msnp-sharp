@@ -130,14 +130,14 @@ namespace MSNPSharp
 
         private ContactGroupList contactGroups;
         private ContactList contactList;
-        private ContactManager manager;
+        private ContactManager contactManager;
         private MessageManager messageManager;
         private bool autoSynchronize = true;
         private bool botMode = false;
         private int canSendPing = 1;
 
         private bool isSignedIn = false;
-        private MSNTicket msnticket = MSNTicket.Empty;
+        private MSNTicket msnTicket = MSNTicket.Empty;
 
         private ContactService contactService;
         private OIMService oimService;
@@ -152,7 +152,7 @@ namespace MSNPSharp
         {
             contactGroups = new ContactGroupList(this);
             contactList = new ContactList(this);
-            manager = new ContactManager(this);
+            contactManager = new ContactManager(this);
             messageManager = new MessageManager(this);
 
             contactService = new ContactService(this);
@@ -418,11 +418,11 @@ namespace MSNPSharp
         /// <summary>
         /// The synchronizer of sibling contacts.
         /// </summary>
-        internal ContactManager Manager
+        internal ContactManager ContactManager
         {
             get
             {
-                return manager;
+                return contactManager;
             }
         }
 
@@ -467,11 +467,11 @@ namespace MSNPSharp
         {
             get
             {
-                return msnticket;
+                return msnTicket;
             }
             set
             {
-                msnticket = value;
+                msnTicket = value;
             }
         }
 
@@ -758,7 +758,7 @@ namespace MSNPSharp
                 if (Owner == null)
                 {
                     // set the owner's name and CID
-                    ContactList.SetOwner(new Owner(WebServiceConstants.MessengerIndividualAddressBookId, message.CommandValues[1].ToString(), msnticket.OwnerCID, this));
+                    ContactList.SetOwner(new Owner(WebServiceConstants.MessengerIndividualAddressBookId, message.CommandValues[1].ToString(), msnTicket.OwnerCID, this));
                     OnOwnerVerified(EventArgs.Empty);
 
                     DirectoryService.Get(Owner.CID,
@@ -1451,7 +1451,7 @@ namespace MSNPSharp
             p2pHandler.Dispose();
 
             // 2. Cancel web services. MSNTicket must be here.
-            msnticket = MSNTicket.Empty;
+            msnTicket = MSNTicket.Empty;
             ContactService.Clear();
             StorageService.Clear();
             OIMService.Clear();
@@ -1471,7 +1471,7 @@ namespace MSNPSharp
             ContactGroups.Clear();
 
             //5. Reset contact manager.
-            Manager.Reset();
+            ContactManager.Reset();
 
             //6. Reset censor words
             CensorWords.Clear();
