@@ -415,7 +415,7 @@ namespace MSNPSharp.P2P
             {
                 if (p2pApplication.AutoAccept)
                 {
-                    Accept(false);
+                    Accept();
                 }
                 else
                 {
@@ -444,16 +444,12 @@ namespace MSNPSharp.P2P
             }
             else
             {
-                if (P2PSession.SendDirectInvite(NSMessageHandler, this))
-                    System.Threading.Thread.CurrentThread.Join(2000);
-
                 // Get id from bridge....
                 {
                     MigrateToOptimalBridge();
                     localBaseIdentifier = p2pBridge.localTrackerId;
                     localIdentifier = localBaseIdentifier;
                 }
-
 
                 P2PMessage p2pMessage = WrapSLPMessage(invitation);
 
@@ -485,8 +481,7 @@ namespace MSNPSharp.P2P
         /// <summary>
         /// Accepts the received invitation.
         /// </summary>
-        /// <param name="sendDCInvite"></param>
-        public void Accept(bool sendDCInvite)
+        public void Accept()
         {
             if (status != P2PSessionStatus.WaitingForLocal)
             {
@@ -508,9 +503,6 @@ namespace MSNPSharp.P2P
 
                 Send(WrapSLPMessage(slpMessage), delegate(P2PMessage ack)
                 {
-                    if (sendDCInvite && SendDirectInvite(nsMessageHandler, this))
-                        System.Threading.Thread.CurrentThread.Join(2000);
-                        
                     OnActive(EventArgs.Empty);
 
                     if (p2pApplication != null)
