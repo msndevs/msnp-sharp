@@ -1120,6 +1120,7 @@ namespace MSNPSharp
         public const string MessageType = MIMEHeaderStrings.Message_Type;
 
         public const string MSIMFormat = MIMEHeaderStrings.X_MMS_IM_Format;
+        public const string ContentTransferEncoding = MIMEHeaderStrings.Content_Transfer_Encoding;
     }
 
     /// <summary>
@@ -1150,6 +1151,11 @@ namespace MSNPSharp
         public const string Stream = MIMEHeaderStrings.Stream;
         public const string Segment = MIMEHeaderStrings.Segment;
 		public const string Flags = MIMEHeaderStrings.Flags;
+    }
+
+    public class MIMEContentTransferEncoding
+    {
+        public const string Binary = "binary";
     }
 
     #region P2PFlag

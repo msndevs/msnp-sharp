@@ -261,7 +261,31 @@ namespace MSNPSharp.Core
 
         public override string ToString()
         {
-            return Encoding.UTF8.GetString(GetBytes());
+            string contentEncoding = string.Empty;
+            string debugString = string.Empty;
+
+            if (ContentHeaders.ContainsKey(MIMEContentHeaders.ContentTransferEncoding) && InnerBody != null)
+            {
+                contentEncoding = ContentHeaders[MIMEContentHeaders.ContentTransferEncoding].Value;
+            }
+
+            byte[] readableBinaries = GetBytes();
+            switch (contentEncoding)
+            {
+                case MIMEContentTransferEncoding.Binary:
+                    int payLoadLength = 0;
+                    if (InnerBody != null)
+                        payLoadLength = InnerBody.Length;
+
+                    byte[] headers = new byte[readableBinaries.Length - payLoadLength];
+                    Array.Copy(readableBinaries, headers, headers.Length);
+                    debugString = Encoding.UTF8.GetString(headers) + "\r\nBinary Data: {Length: " + payLoadLength + "}";
+                    break;
+                default:
+                    debugString = Encoding.UTF8.GetString(readableBinaries);
+                    break;
+            }
+            return debugString;
         }
     }
 };

@@ -110,9 +110,9 @@ namespace MSNPSharp.P2P
             }
             else
             {
-                mmMessage.ContentHeaders[MIMEHeaderStrings.Content_Type] = "application/x-msnmsgrp2p";
-                mmMessage.ContentHeaders[MIMEHeaderStrings.Content_Transfer_Encoding] = "binary";
-                mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type] = "Data";
+                mmMessage.ContentHeaders[MIMEContentHeaders.ContentType] = "application/x-msnmsgrp2p";
+                mmMessage.ContentHeaders[MIMEContentHeaders.ContentTransferEncoding] = "binary";
+                mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "Data";
 
                 mmMessage.ContentHeaders["Pipe"] = packageNumber.ToString();
                 mmMessage.ContentHeaders["Bridging-Offsets"] = "0"; //msg.Header.HeaderLength.ToString();
