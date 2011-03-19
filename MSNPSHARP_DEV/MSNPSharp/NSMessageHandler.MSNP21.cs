@@ -510,7 +510,7 @@ namespace MSNPSharp
             mmMessage.ContentKeyVersion = "2.0";
 
             mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "CustomEmoticon";
-            mmMessage.ContentHeaders[MIMEHeaderStrings.Content_Type] = icontype == EmoticonType.AnimEmoticon ? "text/x-mms-animemoticon" : "text/x-mms-emoticon";
+            mmMessage.ContentHeaders[MIMEContentHeaders.ContentType] = icontype == EmoticonType.AnimEmoticon ? "text/x-mms-animemoticon" : "text/x-mms-emoticon";
             mmMessage.InnerBody = emoticonMessage.GetBytes();
 
             NSMessage sdgPayload = new NSMessage("SDG");
@@ -787,7 +787,7 @@ namespace MSNPSharp
 
             MultiMimeMessage mmm = new MultiMimeMessage(networkMessage.InnerBody);
 
-            if (!(mmm.ContentHeaders.ContainsKey(MIMEHeaderStrings.Content_Type)))
+            if (!(mmm.ContentHeaders.ContainsKey(MIMEContentHeaders.ContentType)))
                 return;
 
             IMAddressInfoType fromAccountAddressType;
@@ -875,7 +875,7 @@ namespace MSNPSharp
 
             if (command == "PUT")
             {
-                switch (mmm.ContentHeaders[MIMEHeaderStrings.Content_Type].Value)
+                switch (mmm.ContentHeaders[MIMEContentHeaders.ContentType].Value)
                 {
                     #region user xml
                     case "application/user+xml":
@@ -1267,7 +1267,7 @@ namespace MSNPSharp
             }
             else if (command == "DEL")
             {
-                switch (mmm.ContentHeaders[MIMEHeaderStrings.Content_Type].Value)
+                switch (mmm.ContentHeaders[MIMEContentHeaders.ContentType].Value)
                 {
                     #region user xml
                     case "application/user+xml":
@@ -1554,17 +1554,17 @@ namespace MSNPSharp
                 by = sender;
             }
 
-            if (mmMessage.ContentHeaders.ContainsKey(MIMEHeaderStrings.Message_Type))
+            if (mmMessage.ContentHeaders.ContainsKey(MIMEContentHeaders.MessageType))
             {
-                if ("nudge" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
+                if ("nudge" == mmMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
                 {
                     OnNudgeReceived(new NudgeArrivedEventArgs(sender, by));
                 }
-                else if ("control/typing" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
+                else if ("control/typing" == mmMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
                 {
                     OnTypingMessageReceived(new TypingArrivedEventArgs(sender, by));
                 }
-                else if ("text" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
+                else if ("text" == mmMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
                 {
                     TextMessage txtMessage = new TextMessage(Encoding.UTF8.GetString(mmMessage.InnerBody));
                     StrDictionary strDic = new StrDictionary();
@@ -1576,10 +1576,10 @@ namespace MSNPSharp
 
                     OnTextMessageReceived(new TextMessageArrivedEventArgs(sender, txtMessage, by));
                 }
-                else if ("customemoticon" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
+                else if ("customemoticon" == mmMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
                 {
                     EmoticonMessage emoticonMessage = new EmoticonMessage();
-                    emoticonMessage.EmoticonType = mmMessage.ContentHeaders[MIMEHeaderStrings.Content_Type] == "text/x-mms-animemoticon" ?
+                    emoticonMessage.EmoticonType = mmMessage.ContentHeaders[MIMEContentHeaders.ContentType] == "text/x-mms-animemoticon" ?
                         EmoticonType.AnimEmoticon : EmoticonType.StaticEmoticon;
 
                     emoticonMessage.ParseBytes(mmMessage.InnerBody);
@@ -1589,14 +1589,14 @@ namespace MSNPSharp
                         OnEmoticonDefinitionReceived(new EmoticonDefinitionEventArgs(sender, emoticon));
                     }
                 }
-                else if ("wink" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
+                else if ("wink" == mmMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
                 {
                     Wink wink = new Wink();
                     wink.SetContext(Encoding.UTF8.GetString(mmMessage.InnerBody));
 
                     OnWinkDefinitionReceived(new WinkEventArgs(sender, wink));
                 }
-                else if ("signal/p2p" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
+                else if ("signal/p2p" == mmMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
                 {
                     SLPMessage slpMessage = SLPMessage.Parse(mmMessage.InnerBody);
                     if (slpMessage != null)
@@ -1609,7 +1609,7 @@ namespace MSNPSharp
                         }
                     }
                 }
-                else if ("data" == mmMessage.ContentHeaders[MIMEHeaderStrings.Message_Type].ToString().ToLowerInvariant())
+                else if ("data" == mmMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
                 {
                     P2PVersion toVer = mmMessage.To.HasAttribute(MIMERoutingHeaders.EPID) ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
                     Guid ep = (toVer == P2PVersion.P2PV1) ? Guid.Empty : new Guid(mmMessage.From[MIMERoutingHeaders.EPID]);

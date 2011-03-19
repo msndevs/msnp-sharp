@@ -263,11 +263,11 @@ namespace MSNPSharp.P2P
         {
             get
             {
-                return mimeHeaders[MIMEHeaderStrings.Content_Type];
+                return mimeHeaders[MIMEContentHeaders.ContentType];
             }
             set
             {
-                mimeHeaders[MIMEHeaderStrings.Content_Type] = value;
+                mimeHeaders[MIMEContentHeaders.ContentType] = value;
             }
         }
 

@@ -1061,7 +1061,7 @@ namespace MSNPSharp
         protected virtual void OnMSGReceived(NSMessage message)
         {
             MimeMessage mimeMessage = message.InnerMessage as MimeMessage;
-            string mime = mimeMessage.MimeHeader[MIMEHeaderStrings.Content_Type].ToString();
+            string mime = mimeMessage.MimeHeader[MIMEContentHeaders.ContentType].ToString();
 
             if (mime.IndexOf("text/x-msmsgsprofile") >= 0)
             {
@@ -1493,7 +1493,7 @@ namespace MSNPSharp
             MimeMessage mimeMessage = new MimeMessage();
             mimeMessage.CreateFromParentMessage(message);
 
-            string mime = mimeMessage.MimeHeader[MIMEHeaderStrings.Content_Type].ToString();
+            string mime = mimeMessage.MimeHeader[MIMEContentHeaders.ContentType].ToString();
 
             if (mime.IndexOf("text/x-msmsgsprofile") >= 0)
             {

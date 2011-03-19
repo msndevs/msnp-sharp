@@ -2273,6 +2273,11 @@ namespace MSNPSharp.IO
                     {
                         contact = NSMessageHandler.ContactList.GetContactWithCreate(account, type);
                         contactList = NSMessageHandler.ContactList;
+                        if (contact == null)
+                        {
+                            updatedContact = null;
+                            return ReturnState.UpdateError;
+                        }
                     }
                     else
                     {

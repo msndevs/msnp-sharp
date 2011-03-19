@@ -169,7 +169,7 @@ namespace MSNPSharp.Core
         {
             MimeHeader["P2P-Dest"] = destString;
             MimeHeader["P2P-Src"] = srcString;
-            MimeHeader[MIMEHeaderStrings.Content_Type] = "application/x-msnmsgrp2p";
+            MimeHeader[MIMEContentHeaders.ContentType] = "application/x-msnmsgrp2p";
 
             InnerMessage = payLoad;
         }
