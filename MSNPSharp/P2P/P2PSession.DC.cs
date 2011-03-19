@@ -166,28 +166,24 @@ namespace MSNPSharp.P2P
             return connectionType;
         }
 
-        internal static bool SendDirectInvite(
-            NSMessageHandler nsMessageHandler,
-            P2PSession p2pSession)
+        internal bool SendDirectInvite()
         {
             // Skip if we're currently using a TCPBridge.
-            if (p2pSession != null && p2pSession.Remote.DirectBridge != null && p2pSession.Remote.DirectBridge.IsOpen)
+            if (Remote.DirectBridge != null && Remote.DirectBridge.IsOpen)
                 return false;
 
             int netId;
             string connectionType = ConnectionType(nsMessageHandler, out netId);
-            Contact remote = p2pSession.Remote;
-            P2PVersion ver = p2pSession.Version;
-            P2PMessage p2pMessage = new P2PMessage(ver);
+            P2PMessage p2pMessage = new P2PMessage(Version);
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
-                String.Format("Connection type set to {0} for session {1}", connectionType, p2pSession.SessionId.ToString()));
+                String.Format("Connection type set to {0} for session {1}", connectionType, SessionId.ToString()));
 
             // Create the message
-            SLPRequestMessage slpMessage = new SLPRequestMessage(p2pSession.RemoteContactEPIDString, MSNSLPRequestMethod.INVITE);
-            slpMessage.Source = p2pSession.LocalContactEPIDString;
+            SLPRequestMessage slpMessage = new SLPRequestMessage(RemoteContactEPIDString, MSNSLPRequestMethod.INVITE);
+            slpMessage.Source = LocalContactEPIDString;
             slpMessage.CSeq = 0;
-            slpMessage.CallId = p2pSession.Invitation.CallId;
+            slpMessage.CallId = Invitation.CallId;
             slpMessage.MaxForwards = 0;
             slpMessage.ContentType = "application/x-msnmsgr-transreqbody";
 
@@ -201,22 +197,29 @@ namespace MSNPSharp.P2P
             slpMessage.BodyValues["Nat-Trav-Msg-Type"] = "WLX-Nat-Trav-Msg-Direct-Connect-Req";
 
             // We support Hashed-Nonce ( 2 way handshake )
-            remote.GenerateNewDCKeys();
-            slpMessage.BodyValues["Hashed-Nonce"] = remote.dcLocalHashedNonce.ToString("B").ToUpper(CultureInfo.InvariantCulture);
+            Remote.GenerateNewDCKeys();
+            slpMessage.BodyValues["Hashed-Nonce"] = Remote.dcLocalHashedNonce.ToString("B").ToUpper(CultureInfo.InvariantCulture);
 
             p2pMessage.InnerMessage = slpMessage;
 
-            if (ver == P2PVersion.P2PV2)
+            if (p2pMessage.Version == P2PVersion.P2PV2)
             {
                 p2pMessage.V2Header.TFCombination = TFCombination.First;
             }
-            else if (ver == P2PVersion.P2PV1)
+            else if (p2pMessage.Version == P2PVersion.P2PV1)
             {
                 p2pMessage.V1Header.Flags = P2PFlag.MSNSLPInfo;
             }
 
-            p2pSession.SetupDCTimer();
-            nsMessageHandler.SDGBridge.Send(null, remote, p2pSession.RemoteContactEndPointID, p2pMessage, null);
+            // These 3 step is very important...
+            // 1- Stop sending for this session on sdgbridge until we receive a response to the direct invite or the timeout expires
+            nsMessageHandler.SDGBridge.StopSending(this);
+            // 2- Setup a dc timer.
+            SetupDCTimer();
+            // 3- Don't pass p2psession to the sdg bridge. Because, sdgbridge stopped this session.
+            nsMessageHandler.SDGBridge.Send(null /*must be null to bypass queueing*/,
+                Remote, RemoteContactEndPointID, p2pMessage, null);
+
             return true;
         }
 

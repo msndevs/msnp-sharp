@@ -360,13 +360,12 @@ namespace MSNPSharp.Apps
         /// <summary>
         /// Accepts the P2P session.
         /// </summary>
-        /// <param name="sendDCInvite"></param>
-        public virtual void Accept(bool sendDCInvite)
+        public virtual void Accept()
         {
             if (WarnIfP2PSessionDisposed("accept"))
                 return;
 
-            p2pSession.Accept(sendDCInvite);
+            p2pSession.Accept();
         }
 
         /// <summary>

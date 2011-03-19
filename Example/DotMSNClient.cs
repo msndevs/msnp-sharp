@@ -1236,7 +1236,7 @@ namespace MSNPSharpClient
                     "Activity invitation",
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
-                    e.P2PSession.Accept(false);
+                    e.P2PSession.Accept();
                 }
             }
             else if (e.P2PSession.Application is P2PApplication)
@@ -1248,7 +1248,7 @@ namespace MSNPSharpClient
                     "Activity invitation",
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
-                    e.P2PSession.Accept(false);
+                    e.P2PSession.Accept();
                 }
             }
         }
