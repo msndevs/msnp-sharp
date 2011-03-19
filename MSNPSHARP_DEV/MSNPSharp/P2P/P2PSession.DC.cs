@@ -120,7 +120,13 @@ namespace MSNPSharp.P2P
             }
 
             if (p2pBridge != null)
+            {
                 p2pBridge.ResumeSending(this);
+
+                if (Application != null && p2pBridge.Ready(this))
+                    Application.BridgeIsReady();
+
+            }
         }
 
         private static string ConnectionType(NSMessageHandler nsMessageHandler, out int netId)

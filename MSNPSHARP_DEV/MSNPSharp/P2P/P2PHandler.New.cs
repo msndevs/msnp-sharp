@@ -445,6 +445,8 @@ namespace MSNPSharp.P2P
                     // SYN
                     bridge.Send(null, source, sourceGuid, ack, delegate(P2PMessage sync)
                     {
+                        bridge.SyncId = sync.Header.AckIdentifier;
+
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
                             String.Format("SYNC completed for: {0}", bridge), GetType().Name);
                     });
