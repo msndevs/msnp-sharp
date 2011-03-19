@@ -274,12 +274,19 @@ namespace MSNPSharp.Core
             {
                 case MIMEContentTransferEncoding.Binary:
                     int payLoadLength = 0;
-                    if (InnerBody != null)
-                        payLoadLength = InnerBody.Length;
-
+                    payLoadLength = InnerBody.Length;
                     byte[] headers = new byte[readableBinaries.Length - payLoadLength];
-                    Array.Copy(readableBinaries, headers, headers.Length);
-                    debugString = Encoding.UTF8.GetString(headers) + "\r\nBinary Data: {Length: " + payLoadLength + "}";
+
+                    if (InnerBody != null && InnerMessage == null)
+                    {
+                        Array.Copy(readableBinaries, headers, headers.Length);
+                        debugString = Encoding.UTF8.GetString(headers) + "\r\nUnknown Binary Data: {Length: " + payLoadLength + "}";
+                    }
+
+                    if (InnerBody != null && InnerMessage != null)
+                    {
+                        debugString = Encoding.UTF8.GetString(headers) + "\r\n" + InnerMessage.ToString();
+                    }
                     break;
                 default:
                     debugString = Encoding.UTF8.GetString(readableBinaries);
