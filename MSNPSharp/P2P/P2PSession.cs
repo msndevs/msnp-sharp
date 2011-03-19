@@ -455,14 +455,12 @@ namespace MSNPSharp.P2P
 
                 if (version == P2PVersion.P2PV2)
                 {
-                    if (p2pBridge.Synced == false)
-                    {
-                        p2pMessage.V2Header.OperationCode = (byte)(OperationCode.SYN | OperationCode.RAK);
-                        p2pMessage.V2Header.AppendPeerInfoTLV();
+                    p2pMessage.V2Header.OperationCode = (byte)(OperationCode.SYN | OperationCode.RAK);
+                    p2pMessage.V2Header.AppendPeerInfoTLV();
 
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
-                        String.Format("{0} invitation sending with SYN+RAK op...", SessionId), GetType().Name);
-                    }
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                    String.Format("{0} invitation sending with SYN+RAK op...", SessionId), GetType().Name);
+
                 }
 
                 p2pMessage.InnerMessage = invitation;
@@ -842,7 +840,6 @@ namespace MSNPSharp.P2P
             if (p2pBridge != null)
             {
                 p2pBridge.BridgeOpened -= BridgeOpened;
-                p2pBridge.BridgeSynced -= BridgeSynced;
                 p2pBridge.BridgeClosed -= BridgeClosed;
                 p2pBridge.BridgeSent -= BridgeSent;
 
@@ -854,7 +851,6 @@ namespace MSNPSharp.P2P
             if (p2pBridge != null)
             {
                 p2pBridge.BridgeOpened += BridgeOpened;
-                p2pBridge.BridgeSynced += BridgeSynced;
                 p2pBridge.BridgeClosed += BridgeClosed;
                 p2pBridge.BridgeSent += BridgeSent;
 
@@ -868,15 +864,6 @@ namespace MSNPSharp.P2P
 
         private void BridgeOpened(object sender, EventArgs args)
         {
-            if (p2pBridge.Ready(this) && (p2pApplication != null))
-                p2pApplication.BridgeIsReady();
-        }
-
-        private void BridgeSynced(object sender, EventArgs args)
-        {
-            localBaseIdentifier = p2pBridge.SyncId;
-            localIdentifier = localBaseIdentifier;
-
             if (p2pBridge.Ready(this) && (p2pApplication != null))
                 p2pApplication.BridgeIsReady();
         }
