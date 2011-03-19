@@ -86,7 +86,7 @@ namespace MSNPSharp.P2P
             this.nsHandler = nsHandler;
         }
 
-        protected override void SendOnePacket(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage msg)
+        protected override void SendOnePacket(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage p2pMessage)
         {
             string to = ((int)remote.ClientType).ToString() + ":" + remote.Account;
             string from = ((int)nsHandler.Owner.ClientType).ToString() + ":" + nsHandler.Owner.Account;
@@ -99,14 +99,15 @@ namespace MSNPSharp.P2P
             mmMessage.RoutingHeaders[MIMERoutingHeaders.Options] = "0";
             mmMessage.ContentKeyVersion = "2.0";
 
-            SLPMessage slp = msg.IsSLPData ? msg.InnerMessage as SLPMessage : null;
-            if (slp != null &&
-                ((slp.ContentType == "application/x-msnmsgr-transreqbody" ||
-                  slp.ContentType == "application/x-msnmsgr-transrespbody" ||
-                  slp.ContentType == "application/x-msnmsgr-transdestaddrupdate")))
+            SLPMessage slpMessage = p2pMessage.IsSLPData ? p2pMessage.InnerMessage as SLPMessage : null;
+            if (slpMessage != null &&
+                ((slpMessage.ContentType == "application/x-msnmsgr-transreqbody" ||
+                  slpMessage.ContentType == "application/x-msnmsgr-transrespbody" ||
+                  slpMessage.ContentType == "application/x-msnmsgr-transdestaddrupdate")))
             {
                 mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "Signal/P2P";
-                mmMessage.InnerBody = slp.GetBytes(false);
+                mmMessage.InnerBody = slpMessage.GetBytes(false);
+                mmMessage.InnerMessage = slpMessage;
             }
             else
             {
@@ -116,13 +117,14 @@ namespace MSNPSharp.P2P
 
                 mmMessage.ContentHeaders["Pipe"] = packageNumber.ToString();
                 mmMessage.ContentHeaders["Bridging-Offsets"] = "0"; //msg.Header.HeaderLength.ToString();
-                mmMessage.InnerBody = msg.GetBytes(true);
+                mmMessage.InnerBody = p2pMessage.GetBytes(true);
+                mmMessage.InnerMessage = p2pMessage;
             }
 
             NSMessageProcessor nsmp = (NSMessageProcessor)nsHandler.MessageProcessor;
             int transId = nsmp.IncreaseTransactionID();
 
-            p2pAckMessages[transId] = new P2PMessageSessionEventArgs(msg, session);
+            p2pAckMessages[transId] = new P2PMessageSessionEventArgs(p2pMessage, session);
 
             NSMessage sdgPayload = new NSMessage("SDG");
             sdgPayload.TransactionID = transId;
