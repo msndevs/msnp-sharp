@@ -1089,6 +1089,7 @@ namespace MSNPSharp
         public const string FaceBookGatewayAccount = "fb";
 
         public const string WindowsLiveGateway = "wl";
+        public const string LinkedInGateway = "li";
     }
 
     /// <summary>

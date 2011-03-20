@@ -245,16 +245,19 @@ namespace MSNPSharp
             bool fromMyself = false;
             bool sentToMe = false;
 
+            ContactList senderContactSourceContactList = senderGateway == null ? nsMessageHandler.ContactList : senderGateway.ContactList;
+            ContactList receiverContactSourceContactList = receiverGateway == null ? nsMessageHandler.ContactList : receiverGateway.ContactList;
+
             if (sender == null)
             {
                 fromMyself = (senderAccount == nsMessageHandler.Owner.Account && senderAccountAddressType == IMAddressInfoType.WindowsLive);
-                sender = fromMyself ? nsMessageHandler.Owner : nsMessageHandler.ContactList.GetContactWithCreate(senderAccount, senderAccountAddressType);
+                sender = fromMyself ? nsMessageHandler.Owner : senderContactSourceContactList.GetContactWithCreate(senderAccount, senderAccountAddressType);
             }
 
             if (receiver == null)
             {
                 sentToMe = (receiverAccount == nsMessageHandler.Owner.Account && receiverAccountAddressType == IMAddressInfoType.WindowsLive);
-                receiver = sentToMe ? nsMessageHandler.Owner : nsMessageHandler.ContactList.GetContactWithCreate(receiverAccount, receiverAccountAddressType);
+                receiver = sentToMe ? nsMessageHandler.Owner : receiverContactSourceContactList.GetContactWithCreate(receiverAccount, receiverAccountAddressType);
             }
 
             RoutingInfo routingInfo = new RoutingInfo(sender, senderGateway, receiver, receiverGateway, nsMessageHandler);
