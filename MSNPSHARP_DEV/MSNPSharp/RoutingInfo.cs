@@ -40,16 +40,22 @@ namespace MSNPSharp
 	
 	internal class RoutingInfo
 	{
-		/*
-		private string senderAccount = string.Empty;
-		
-		public string SenderAccount
-		{
-			get{ return senderAccount;}
-			private set{ senderAccount = value; }
-		}
-		*/
-		
+        private Guid senderEndPointID = Guid.Empty;
+
+        public Guid SenderEndPointID
+        {
+            get { return senderEndPointID; }
+            private set { senderEndPointID = value; }
+        }
+
+        private Guid receiverEndPointID = Guid.Empty;
+
+        public Guid ReceiverEndPointID
+        {
+            get { return receiverEndPointID; }
+            private set { receiverEndPointID = value; }
+        }
+
 
 		private Contact sender = null;
 		
@@ -68,33 +74,6 @@ namespace MSNPSharp
 			private set{ senderGateway = value; }
 		}
 		
-		/*
-		private string senderGatewayAccount = string.Empty;
-		
-		public string SenderGatewayAccount
-		{
-			get{ return senderGatewayAccount;}
-			private set{ senderGatewayAccount = value; }
-		}
-		*/
-		
-		/*
-		private string receiverAccount = string.Empty;
-		
-		public string ReceiverAccount
-		{
-			get{ return receiverAccount;}
-			private set{ receiverAccount = value; }
-		}
-		
-		private string receiverGatewayAccount = string.Empty;
-		
-		public string ReceiverGatewayAccount
-		{
-			get{ return receiverGatewayAccount;}
-			private set{ receiverGatewayAccount = value; }
-		}
-		*/
 		
 		private Contact receiver = null;
 		
@@ -134,6 +113,47 @@ namespace MSNPSharp
 			
 			this.NSMessageHandler = nsMessageHandler;
 		}
+
+        private static Contact GetGatewayFromAccountString(string accountString, NSMessageHandler nsMessageHandler)
+        {
+            IMAddressInfoType gatewayAddressType = IMAddressInfoType.None;
+            string gatewayAccount = string.Empty;
+            IMAddressInfoType ignoreAddressType = IMAddressInfoType.None;
+            string ignoreAccount = string.Empty;
+
+            Contact.ParseFullAccount(accountString,
+                out gatewayAddressType, out gatewayAccount,
+                out ignoreAddressType, out ignoreAccount);
+
+            Contact gateWay = GetGateway(gatewayAccount, gatewayAddressType, nsMessageHandler);
+            return gateWay;
+        }
+
+        private static Contact GetGateway(string gatewayAccount, IMAddressInfoType gatewayType, NSMessageHandler nsMessageHandler)
+        {
+            Contact gateWay = null;
+
+            if (gatewayType == IMAddressInfoType.Circle)
+            {
+                gateWay = nsMessageHandler.ContactList.GetCircle(gatewayAccount);
+            }
+            else if (gatewayType == IMAddressInfoType.TemporaryGroup)
+            {
+                gateWay = nsMessageHandler.GetMultiparty(gatewayAccount);
+            }
+            else
+            {
+                gateWay = nsMessageHandler.ContactList.GetContact(gatewayAccount, gatewayType);
+            }
+
+            return gateWay;
+        }
+        private static Guid GetEPID(MimeValue mimeAccountValue)
+        {
+            if (mimeAccountValue.HasAttribute("epid"))
+                return new Guid(mimeAccountValue["epid"]);
+            return Guid.Empty;
+        }
 		
 		internal static RoutingInfo FromMultiMimeMessage(MultiMimeMessage multiMimeMessage, NSMessageHandler nsMessageHandler)
 		{
@@ -162,67 +182,42 @@ namespace MSNPSharp
             }
 
             Contact senderGateway = null;
+            if (multiMimeMessage.From.HasAttribute("via"))
+                senderGateway = GetGatewayFromAccountString(multiMimeMessage.From["via"], nsMessageHandler);
+
+            if (multiMimeMessage.RoutingHeaders.ContainsKey(MIMERoutingHeaders.Via) && senderGateway == null) //The gateway is sender gateway
+            {
+                senderGateway = GetGatewayFromAccountString(multiMimeMessage.RoutingHeaders[MIMERoutingHeaders.Via], nsMessageHandler);
+            }
             Contact sender = null;
-			
-			Contact receiverGateway = null;
+
+            Contact receiverGateway = null;
+            if (multiMimeMessage.To.HasAttribute("via"))
+                receiverGateway = GetGatewayFromAccountString(multiMimeMessage.To["via"], nsMessageHandler);
+            
 			Contact receiver = null;
 			
             bool fromMyself = false;
-
-            if (multiMimeMessage.RoutingHeaders.ContainsKey(MIMEHeaderStrings.Via) ||
-                senderGatewayAccountAddressType != IMAddressInfoType.None ||
-                receiverGatewayAccountAddressType != IMAddressInfoType.None)
-            {
-                string gatewayAccountString = multiMimeMessage.RoutingHeaders.ContainsKey(MIMEHeaderStrings.Via)
-                    ? multiMimeMessage.RoutingHeaders[MIMEHeaderStrings.Via].Value
-                    :
-                    (senderGatewayAccountAddressType != IMAddressInfoType.None ?
-                    (((int)senderGatewayAccountAddressType).ToString() + ":" + senderGatewayAccount)
-                    :
-                    (((int)receiverGatewayAccountAddressType).ToString() + ":" + receiverGatewayAccount));
-
-                IMAddressInfoType gatewayAddressType;
-                string gatewayAccount;
-                IMAddressInfoType ignoreAddressType;
-                string ignoreAccount;
-
-                Contact.ParseFullAccount(gatewayAccountString,
-                    out gatewayAddressType, out gatewayAccount,
-                    out ignoreAddressType, out ignoreAccount);
-
-                if (gatewayAddressType == IMAddressInfoType.Circle)
-                {
-                    senderGateway = nsMessageHandler.ContactList.GetCircle(gatewayAccount);
-                    if (senderGateway != null)
-                    {
-                        sender = senderGateway.ContactList.GetContact(senderAccount, senderAccountAddressType);
-                    }
-                }
-                else if (gatewayAddressType == IMAddressInfoType.TemporaryGroup)
-                {
-                    senderGateway = nsMessageHandler.GetMultiparty(gatewayAccount);
-                    if (senderGateway != null)
-                    {
-                        sender = senderGateway.ContactList.GetContact(senderAccount, senderAccountAddressType);
-                    }
-                }
-                else
-                {
-                    senderGateway = nsMessageHandler.ContactList.GetContact(gatewayAccount, gatewayAddressType);
-                    if (senderGateway != null)
-                    {
-                        sender = senderGateway.ContactList.GetContactWithCreate(senderAccount, senderAccountAddressType);
-                    }
-                }
-            }
+            bool sentToMe = false;
 			
 			if (sender == null)
             {
                 fromMyself = (senderAccount == nsMessageHandler.Owner.Account && senderAccountAddressType == IMAddressInfoType.WindowsLive);
                 sender = fromMyself ? nsMessageHandler.Owner : nsMessageHandler.ContactList.GetContactWithCreate(senderAccount, senderAccountAddressType);
             }
+
+            if (receiver == null)
+            {
+                sentToMe = (receiverAccount == nsMessageHandler.Owner.Account && receiverAccountAddressType == IMAddressInfoType.WindowsLive);
+                receiver = sentToMe ? nsMessageHandler.Owner : nsMessageHandler.ContactList.GetContactWithCreate(receiverAccount, receiverAccountAddressType);
+            }
 			
-			return new RoutingInfo(sender, senderGateway, receiver, receiverGateway, nsMessageHandler);
+			RoutingInfo routingInfo = new RoutingInfo(sender, senderGateway, receiver, receiverGateway, nsMessageHandler);
+            routingInfo.SenderEndPointID = GetEPID(multiMimeMessage.From);
+            routingInfo.ReceiverEndPointID = GetEPID(multiMimeMessage.To);
+
+
+            return routingInfo;
 		}
 	}
 }
