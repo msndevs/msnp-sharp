@@ -167,15 +167,6 @@ namespace MSNPSharp
         [NonSerialized]
         private ContactList contactList = null;
 
-        [NonSerialized]
-        private Dictionary<string, Contact> gateways = new Dictionary<string, Contact>();
-
-        public Dictionary<string, Contact> Gateways
-        {
-            get { return gateways; }
-            internal set { gateways = value; }
-        }
-
         public ContactList ContactList
         {
             get
