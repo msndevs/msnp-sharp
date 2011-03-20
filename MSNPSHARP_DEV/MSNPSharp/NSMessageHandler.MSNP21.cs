@@ -785,6 +785,15 @@ namespace MSNPSharp
                             //This is an initial NFY
                         }
 
+                        if (multiMimeMessage.ContentHeaders[MIMEHeaderStrings.NotifType].Value == "Sync")
+                        {
+                            //Sync the contact in contact list with the contact in gateway.
+                            // TODO: Set the NSMessagehandler.ContactList contact to the gateway
+                            // TODO: triger the ContactOnline event for the gateway contact.
+
+                            //Just wait for my fix.
+                        }
+
                         XmlDocument xmlDoc = new XmlDocument();
                         xmlDoc.LoadXml(Encoding.UTF8.GetString(multiMimeMessage.InnerBody));
 
