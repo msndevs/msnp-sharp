@@ -36,83 +36,128 @@ using System.Diagnostics;
 
 namespace MSNPSharp
 {
-	using MSNPSharp.Core;
-	
-	internal class RoutingInfo
-	{
+    using MSNPSharp.Core;
+
+    internal class RoutingInfo
+    {
         private Guid senderEndPointID = Guid.Empty;
 
         public Guid SenderEndPointID
         {
-            get { return senderEndPointID; }
-            private set { senderEndPointID = value; }
+            get
+            {
+                return senderEndPointID;
+            }
+            private set
+            {
+                senderEndPointID = value;
+            }
         }
 
         private Guid receiverEndPointID = Guid.Empty;
 
         public Guid ReceiverEndPointID
         {
-            get { return receiverEndPointID; }
-            private set { receiverEndPointID = value; }
+            get
+            {
+                return receiverEndPointID;
+            }
+            private set
+            {
+                receiverEndPointID = value;
+            }
         }
 
 
-		private Contact sender = null;
-		
-		public Contact Sender
-		{
-			get{ return sender;}
-			private set{ sender = value; }
-		}
-		
-		
-		private Contact senderGateway = null;
-		
-		public Contact SenderGateway
-		{
-			get{ return senderGateway;}
-			private set{ senderGateway = value; }
-		}
-		
-		
-		private Contact receiver = null;
-		
-		public Contact Receiver
-		{
-			get{ return receiver;}
-			private set{ receiver = value; }
-		}
-		
-		private Contact receiverGateway = null;
-		
-		public Contact ReceiverGateway
-		{
-			get{ return receiverGateway;}
-			private set{ receiverGateway = value; }
-		}
-		
-		public bool FromOwner
-		{
-			get{ return Sender == this.NSMessageHandler.Owner; }
-		}
-		
-		private NSMessageHandler nsMessageHandler = null;
-		protected NSMessageHandler NSMessageHandler
-		{
-			get{ return nsMessageHandler; }
-			set{ nsMessageHandler = value; }
-		}
-		
-		protected RoutingInfo(Contact sender,  Contact senderGateway, Contact receiver, Contact receiverGateway, NSMessageHandler nsMessageHandler)
-		{
-			Sender = sender;
-			SenderGateway = senderGateway;
-			
-			Receiver = receiver;
-			ReceiverGateway = receiverGateway;
-			
-			this.NSMessageHandler = nsMessageHandler;
-		}
+        private Contact sender = null;
+
+        public Contact Sender
+        {
+            get
+            {
+                return sender;
+            }
+            private set
+            {
+                sender = value;
+            }
+        }
+
+
+        private Contact senderGateway = null;
+
+        public Contact SenderGateway
+        {
+            get
+            {
+                return senderGateway;
+            }
+            private set
+            {
+                senderGateway = value;
+            }
+        }
+
+
+        private Contact receiver = null;
+
+        public Contact Receiver
+        {
+            get
+            {
+                return receiver;
+            }
+            private set
+            {
+                receiver = value;
+            }
+        }
+
+        private Contact receiverGateway = null;
+
+        public Contact ReceiverGateway
+        {
+            get
+            {
+                return receiverGateway;
+            }
+            private set
+            {
+                receiverGateway = value;
+            }
+        }
+
+        public bool FromOwner
+        {
+            get
+            {
+                return Sender == this.NSMessageHandler.Owner;
+            }
+        }
+
+        private NSMessageHandler nsMessageHandler = null;
+        protected NSMessageHandler NSMessageHandler
+        {
+            get
+            {
+                return nsMessageHandler;
+            }
+            set
+            {
+                nsMessageHandler = value;
+            }
+        }
+
+        protected RoutingInfo(Contact sender, Contact senderGateway, Contact receiver, Contact receiverGateway, NSMessageHandler nsMessageHandler)
+        {
+            Sender = sender;
+            SenderGateway = senderGateway;
+
+            Receiver = receiver;
+            ReceiverGateway = receiverGateway;
+
+            this.NSMessageHandler = nsMessageHandler;
+        }
 
         private static Contact GetGatewayFromAccountString(string accountString, NSMessageHandler nsMessageHandler)
         {
@@ -154,10 +199,10 @@ namespace MSNPSharp
                 return new Guid(mimeAccountValue["epid"]);
             return Guid.Empty;
         }
-		
-		internal static RoutingInfo FromMultiMimeMessage(MultiMimeMessage multiMimeMessage, NSMessageHandler nsMessageHandler)
-		{
-			IMAddressInfoType senderAccountAddressType;
+
+        internal static RoutingInfo FromMultiMimeMessage(MultiMimeMessage multiMimeMessage, NSMessageHandler nsMessageHandler)
+        {
+            IMAddressInfoType senderAccountAddressType;
             string senderAccount = string.Empty;
             IMAddressInfoType senderGatewayAccountAddressType;
             string senderGatewayAccount = string.Empty;
@@ -194,13 +239,13 @@ namespace MSNPSharp
             Contact receiverGateway = null;
             if (multiMimeMessage.To.HasAttribute("via"))
                 receiverGateway = GetGatewayFromAccountString(multiMimeMessage.To["via"], nsMessageHandler);
-            
-			Contact receiver = null;
-			
+
+            Contact receiver = null;
+
             bool fromMyself = false;
             bool sentToMe = false;
-			
-			if (sender == null)
+
+            if (sender == null)
             {
                 fromMyself = (senderAccount == nsMessageHandler.Owner.Account && senderAccountAddressType == IMAddressInfoType.WindowsLive);
                 sender = fromMyself ? nsMessageHandler.Owner : nsMessageHandler.ContactList.GetContactWithCreate(senderAccount, senderAccountAddressType);
@@ -211,14 +256,13 @@ namespace MSNPSharp
                 sentToMe = (receiverAccount == nsMessageHandler.Owner.Account && receiverAccountAddressType == IMAddressInfoType.WindowsLive);
                 receiver = sentToMe ? nsMessageHandler.Owner : nsMessageHandler.ContactList.GetContactWithCreate(receiverAccount, receiverAccountAddressType);
             }
-			
-			RoutingInfo routingInfo = new RoutingInfo(sender, senderGateway, receiver, receiverGateway, nsMessageHandler);
+
+            RoutingInfo routingInfo = new RoutingInfo(sender, senderGateway, receiver, receiverGateway, nsMessageHandler);
             routingInfo.SenderEndPointID = GetEPID(multiMimeMessage.From);
             routingInfo.ReceiverEndPointID = GetEPID(multiMimeMessage.To);
 
 
             return routingInfo;
-		}
-	}
-}
-
+        }
+    }
+};
