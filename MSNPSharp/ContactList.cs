@@ -282,6 +282,33 @@ namespace MSNPSharp
             }
         }
 
+        /// <summary>
+        /// All external networks like facebook.
+        /// </summary>
+        public ContactList.ListEnumerator ExternalNetworks
+        {
+            get
+            {
+                return new ContactList.ListEnumerator(base[IMAddressInfoType.RemoteNetwork].GetEnumerator(), RoleLists.None);
+            }
+        }
+
+        /// <summary>
+        /// Facebook contacts.
+        /// </summary>
+        public ContactList.ListEnumerator Facebook
+        {
+            get
+            {
+                Contact fbNetwork = GetContact(RemoteNetworkGateways.FaceBookGatewayAccount, IMAddressInfoType.RemoteNetwork);
+
+                if (fbNetwork != null && fbNetwork.ContactList != null)
+                    return fbNetwork.ContactList.All;
+
+                return null;
+            }
+        }
+
         #endregion
 
         #region Properties
