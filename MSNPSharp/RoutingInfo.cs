@@ -264,6 +264,11 @@ namespace MSNPSharp
             routingInfo.SenderEndPointID = GetEPID(multiMimeMessage.From);
             routingInfo.ReceiverEndPointID = GetEPID(multiMimeMessage.To);
 
+            if (senderGateway != null)
+                sender.Gateways[senderGateway.Hash] = senderGateway;
+
+            if (receiverGateway != null)
+                receiver.Gateways[receiverGateway.Hash] = receiverGateway;
 
             return routingInfo;
         }
