@@ -528,20 +528,21 @@ namespace MSNPSharp
         /// </summary>
         public void Reset()
         {
-            if (Owner != null)
-            {
-                Owner.Emoticons.Clear();
-                Owner.EndPointData.Clear();
-                Owner.LocalEndPointIMCapabilities = ClientCapabilities.None;
-                Owner.LocalEndPointIMCapabilitiesEx = ClientCapabilitiesEx.None;
-                Owner.LocalEndPointPECapabilities = ClientCapabilities.None;
-                Owner.LocalEndPointPECapabilitiesEx = ClientCapabilitiesEx.None;
-            }
-
-            owner = null;
-
             lock (SyncRoot)
             {
+                if (Owner != null)
+                {
+                    Owner.Emoticons.Clear();
+                    Owner.EndPointData.Clear();
+                    Owner.LocalEndPointIMCapabilities = ClientCapabilities.None;
+                    Owner.LocalEndPointIMCapabilitiesEx = ClientCapabilitiesEx.None;
+                    Owner.LocalEndPointPECapabilities = ClientCapabilities.None;
+                    Owner.LocalEndPointPECapabilitiesEx = ClientCapabilitiesEx.None;
+                }
+
+                owner = null;
+
+
                 foreach (IMAddressInfoType addressType in addressTypes)
                 {
                     base[addressType] = new Dictionary<string, Contact>();
