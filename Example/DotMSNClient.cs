@@ -186,6 +186,7 @@ namespace MSNPSharpClient
             // Show always (0/0)
             public const string FavoritesNodeKey = "__10F";
             public const string CircleNodeKey = "__20C";
+            public const string FacebookNodeKey = "__25F";
             // Sort by status (0)
             public const string MobileNodeKey = "__30M";
             public const string OnlineNodeKey = "__32N";
@@ -1530,6 +1531,7 @@ namespace MSNPSharpClient
         {
             TreeNode favoritesNode = null; // (0/0)
             TreeNode circlesNode = null; // (0/0)
+            TreeNode fbNode = null; // (0/0)
 
             if (treeViewFavoriteList.Nodes.ContainsKey(ImageIndexes.FavoritesNodeKey))
             {
@@ -1553,11 +1555,25 @@ namespace MSNPSharpClient
                 circlesNode.Tag = ImageIndexes.CircleNodeKey;
             }
 
+
+            if (treeViewFavoriteList.Nodes.ContainsKey(ImageIndexes.FacebookNodeKey))
+            {
+                fbNode = treeViewFavoriteList.Nodes[ImageIndexes.FacebookNodeKey];
+            }
+            else
+            {
+                fbNode = treeViewFavoriteList.Nodes.Add(ImageIndexes.FacebookNodeKey, "Facebook", ImageIndexes.Closed, ImageIndexes.Closed);
+                fbNode.NodeFont = PARENT_NODE_FONT;
+                fbNode.Tag = ImageIndexes.FacebookNodeKey;
+            }
+            
+
             if (contactToUpdate == null)
             {
                 // Initial sort
                 favoritesNode.Nodes.Clear();
                 circlesNode.Nodes.Clear();
+                fbNode.Nodes.Clear();
 
                 foreach (Contact circle in Messenger.CircleList.Values)
                 {
@@ -1613,6 +1629,22 @@ namespace MSNPSharpClient
                             newnode.ImageIndex = newnode.SelectedImageIndex = ImageIndexes.GetStatusIndex(c.Status);
                             newnode.Tag = c;
                         }
+                    }
+                }
+
+                Contact fbNetwork = Messenger.ContactList.GetContact(RemoteNetworkGateways.FaceBookGatewayAccount, IMAddressInfoType.RemoteNetwork);
+
+                if (fbNetwork != null && fbNetwork.ContactList != null)
+                {
+                    foreach (Contact fbContact in fbNetwork.ContactList.All)
+                    {
+                        string text = fbContact.Name;
+
+
+                        TreeNode newnode = fbNode.Nodes.Add(fbContact.Hash, text);
+                        newnode.NodeFont = fbContact.AppearOffline ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
+                        newnode.ImageIndex = newnode.SelectedImageIndex = ImageIndexes.GetStatusIndex(fbContact.Status);
+                        newnode.Tag = fbContact;
                     }
                 }
             }
