@@ -59,6 +59,14 @@ namespace MSNPSharp.P2P
             }
         }
 
+        public override bool Synced
+        {
+            get
+            {
+                return false;
+            }
+        }
+
         public override bool SuitableFor(P2PSession session)
         {
             return true;

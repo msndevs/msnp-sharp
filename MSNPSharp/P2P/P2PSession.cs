@@ -461,7 +461,7 @@ namespace MSNPSharp.P2P
                         p2pMessage.V2Header.AppendPeerInfoTLV();
 
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
-                        String.Format("{0} invitation sending with SYN+RAK op...", SessionId), GetType().Name);
+                            String.Format("{0} invitation sending with SYN+RAK op...", SessionId), GetType().Name);
                     }
                 }
 
