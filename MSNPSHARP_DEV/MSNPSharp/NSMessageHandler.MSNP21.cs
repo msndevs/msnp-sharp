@@ -1640,8 +1640,10 @@ namespace MSNPSharp
 
                     foreach (P2PMessage m in p2pDatas)
                     {
-                        P2PHandler.ProcessP2PMessage(by.DirectBridge != null ? by.DirectBridge : SDGBridge,
-                            sender, ep, m);
+                        P2PBridge p2pBridge = (by.DirectBridge != null && by.DirectBridge.IsOpen)
+                            ? by.DirectBridge : SDGBridge;
+
+                        P2PHandler.ProcessP2PMessage(p2pBridge, sender, ep, m);
                     }
                 }
             }
