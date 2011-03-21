@@ -189,7 +189,19 @@ namespace MSNPSharp
         private int transactionID = 0;
 
         [NonSerialized]
-        internal Contact ViaContact = null;
+        private Contact viaContact = null;
+
+        public Contact ViaContact
+        {
+            get
+            {
+                return viaContact;
+            }
+            internal set
+            {
+                viaContact = value;
+            }
+        }
 
         /// <summary>
         /// For temporary groups
