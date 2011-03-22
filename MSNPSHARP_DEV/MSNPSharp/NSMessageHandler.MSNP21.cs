@@ -883,15 +883,20 @@ namespace MSNPSharp
                     #region user xml
                     case "application/user+xml":
                         {
-
                             if (multiMimeMessage.ContentHeaders[MIMEHeaderStrings.NotifType].Value == "Sync")
                             {
+                                if (viaHeaderContact != null && viaHeaderContact.ClientType == IMAddressInfoType.Circle)
+                                {
+                                    JoinMultiparty(viaHeaderContact);
+                                }
+
                                 //Sync the contact in contact list with the contact in gateway.
                                 // TODO: Set the NSMessagehandler.ContactList contact to the gateway
                                 // TODO: triger the ContactOnline event for the gateway contact.
 
                                 //Just wait for my fix.
                             }
+
                             if (multiMimeMessage.InnerBody == null || multiMimeMessage.InnerBody.Length == 0)
                                 return;  //No xml content.
 
@@ -1131,12 +1136,6 @@ namespace MSNPSharp
 
                                         // The contact goes online
                                         OnContactOnline(new ContactStatusChangedEventArgs(circle, oldStatus, newStatus));
-
-                                        if (circle.AppearOnline && circle.OnForwardList &&
-                                            (oldStatus == PresenceStatus.Offline || oldStatus == PresenceStatus.Hidden))
-                                        {
-                                            //JoinMultiparty(circle);
-                                        }
                                     }
                                     return;
                                 }
