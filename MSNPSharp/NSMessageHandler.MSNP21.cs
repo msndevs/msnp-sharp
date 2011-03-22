@@ -432,10 +432,13 @@ namespace MSNPSharp
             {
                 mmMessage.RoutingHeaders[MIMERoutingHeaders.To][MIMERoutingHeaders.Path] = "IM";
             }
-
-            if (!remoteContact.Online)
+            else if (remoteContact.Online)
             {
-                //mmMessage.RoutingHeaders[MIMERoutingHeaders.ServiceChannel] = "IM/Offline";
+                mmMessage.RoutingHeaders[MIMERoutingHeaders.ServiceChannel] = "IM/Online";
+            }
+            else
+            {
+                mmMessage.RoutingHeaders[MIMERoutingHeaders.ServiceChannel] = "IM/Offline";
             }
 
             if (remoteContact.ViaContact != null)
