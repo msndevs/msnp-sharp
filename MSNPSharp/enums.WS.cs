@@ -244,31 +244,26 @@ namespace MSNPSharp
         /// <summary>
         /// The value is: MSN.IM.MPOP
         /// </summary>
-        [Obsolete("",true)]
         public const string MSN_IM_MPOP = "MSN.IM.MPOP";
 
         /// <summary>
         /// The value is: MSN.IM.BLP
         /// </summary>
-        [Obsolete("",true)]
         public const string MSN_IM_BLP = "MSN.IM.BLP";
 
         /// <summary>
         /// The value is: MSN.IM.GTC
         /// </summary>
-        [Obsolete("", true)]
         public const string MSN_IM_GTC = "MSN.IM.GTC";
 
         /// <summary>
         /// The value is: MSN.IM.RoamLiveProperties
         /// </summary>
-        [Obsolete("", true)]
         public const string MSN_IM_RoamLiveProperties = "MSN.IM.RoamLiveProperties";
 
         /// <summary>
         /// The value is: MSN.IM.MBEA
         /// </summary>
-        [Obsolete("", true)]
         public const string MSN_IM_MBEA = "MSN.IM.MBEA";
 
         /// <summary>

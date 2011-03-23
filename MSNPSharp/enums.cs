@@ -192,6 +192,27 @@ namespace MSNPSharp
     }
 
     /// <summary>
+    /// Whether the contact list owner has Multiple Points of Presence Support (MPOP) that is owner connect from multiple places.
+    /// </summary>
+    public enum MPOP
+    {
+        /// <summary>
+        /// Unspecified
+        /// </summary>
+        Unspecified,
+
+        /// <summary>
+        /// When the same user sign in at another place, sign the owner out.
+        /// </summary>
+        AutoLogoff,
+
+        /// <summary>
+        /// When the same user sign in at another place, keep the owner sign in.
+        /// </summary>
+        KeepOnline
+    }
+
+    /// <summary>
     /// The functions a (remote) client supports.
     /// </summary>
     [Flags]
