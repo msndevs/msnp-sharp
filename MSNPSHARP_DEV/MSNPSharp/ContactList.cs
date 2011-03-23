@@ -133,6 +133,11 @@ namespace MSNPSharp
             {
                 return this;
             }
+
+            public ContactList.ListEnumerator FilterByRoles(RoleLists roles)
+            {
+                return new ContactList.ListEnumerator(baseEnum, roles);
+            }
         }
 
         public class EmailListEnumerator : ContactList.ListEnumerator
@@ -306,6 +311,14 @@ namespace MSNPSharp
                     return fbNetwork.ContactList.All;
 
                 return null;
+            }
+        }
+
+        public ContactList.ListEnumerator WindowsLive
+        {
+            get
+            {
+                return new ContactList.ListEnumerator(base[IMAddressInfoType.WindowsLive].GetEnumerator(), RoleLists.None);
             }
         }
 
@@ -555,20 +568,21 @@ namespace MSNPSharp
         /// </summary>
         public void Reset()
         {
-            if (Owner != null)
-            {
-                Owner.Emoticons.Clear();
-                Owner.EndPointData.Clear();
-                Owner.LocalEndPointIMCapabilities = ClientCapabilities.None;
-                Owner.LocalEndPointIMCapabilitiesEx = ClientCapabilitiesEx.None;
-                Owner.LocalEndPointPECapabilities = ClientCapabilities.None;
-                Owner.LocalEndPointPECapabilitiesEx = ClientCapabilitiesEx.None;
-            }
-
-            owner = null;
-
             lock (SyncRoot)
             {
+                if (Owner != null)
+                {
+                    Owner.Emoticons.Clear();
+                    Owner.EndPointData.Clear();
+                    Owner.LocalEndPointIMCapabilities = ClientCapabilities.None;
+                    Owner.LocalEndPointIMCapabilitiesEx = ClientCapabilitiesEx.None;
+                    Owner.LocalEndPointPECapabilities = ClientCapabilities.None;
+                    Owner.LocalEndPointPECapabilitiesEx = ClientCapabilitiesEx.None;
+                }
+
+                owner = null;
+
+
                 foreach (IMAddressInfoType addressType in addressTypes)
                 {
                     base[addressType] = new Dictionary<string, Contact>();

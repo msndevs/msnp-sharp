@@ -1089,6 +1089,7 @@ namespace MSNPSharp
         public const string FaceBookGatewayAccount = "fb";
 
         public const string WindowsLiveGateway = "wl";
+        public const string LinkedInGateway = "li";
     }
 
     /// <summary>
@@ -1134,6 +1135,7 @@ namespace MSNPSharp
         public const string EPID = MIMEHeaderStrings.EPID;
         public const string Path = MIMEHeaderStrings.Path;
         public const string Options = MIMEHeaderStrings.Options;
+        public const string Via = MIMEHeaderStrings.Via;
 
         /// <summary>
         /// The service that this message should sent through. 
