@@ -182,7 +182,9 @@ namespace MSNPSharp.P2P
         /// </summary>
         public virtual void Dispose()
         {
-            sendQueues.Clear();
+            lock (SendQueues)
+                SendQueues.Clear();
+
             sendingQueues.Clear();
             stoppedSessions.Clear();
 
@@ -319,10 +321,11 @@ namespace MSNPSharp.P2P
         /// </summary>
         protected virtual void ProcessSendQueues()
         {
-            foreach (KeyValuePair<P2PSession, P2PSendQueue> pair in sendQueues)
+            lock (SendQueues)  // lock at the queue level, since it might be modified.
             {
-                lock (pair.Key)
+                foreach (KeyValuePair<P2PSession, P2PSendQueue> pair in SendQueues)
                 {
+
                     while (Ready(pair.Key) && (pair.Value.Count > 0))
                     {
                         P2PSendItem item = pair.Value.Dequeue();
@@ -335,21 +338,21 @@ namespace MSNPSharp.P2P
                         SendOnePacket(pair.Key, item.Remote, item.RemoteGuid, item.P2PMessage);
                     }
                 }
-            }
 
-            bool moreQueued = false;
-            foreach (KeyValuePair<P2PSession, P2PSendQueue> pair in sendQueues)
-            {
-                if (pair.Value.Count > 0)
+                bool moreQueued = false;
+                foreach (KeyValuePair<P2PSession, P2PSendQueue> pair in sendQueues)
                 {
-                    moreQueued = true;
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                        String.Format("Queue holds {0} messages for session {1}", pair.Value.Count, pair.Key.SessionId), GetType().Name);
+                    if (pair.Value.Count > 0)
+                    {
+                        moreQueued = true;
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                            String.Format("Queue holds {0} messages for session {1}", pair.Value.Count, pair.Key.SessionId), GetType().Name);
+                    }
                 }
-            }
 
-            if (!moreQueued)
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Queues are all empty", GetType().Name);
+                if (!moreQueued)
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Queues are all empty", GetType().Name);
+            }
         }
 
         protected abstract void SendOnePacket(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage msg);
@@ -411,15 +414,18 @@ namespace MSNPSharp.P2P
                 sendingQueues.Remove(session);
             }
 
-            if (sendQueues.ContainsKey(session))
+            lock (SendQueues)
             {
-                if (newBridge != null)
+                if (SendQueues.ContainsKey(session))
                 {
-                    while (sendQueues[session].Count > 0)
-                        newQueue.Enqueue(sendQueues[session].Dequeue());
-                }
+                    if (newBridge != null)
+                    {
+                        while (SendQueues[session].Count > 0)
+                            newQueue.Enqueue(SendQueues[session].Dequeue());
+                    }
 
-                sendQueues.Remove(session);
+                    SendQueues.Remove(session);
+                }
             }
 
             if (stoppedSessions.Contains(session))
