@@ -445,7 +445,6 @@ namespace MSNPSharp
             if (NSMessageHandler.AutoSynchronize)
             {
                 AddressBook.InitializeMyProperties();
-                NSMessageHandler.ContactList.Owner.SetMPOP((AddressBook.MyProperties[AnnotationNames.MSN_IM_MPOP] == "1") ? MPOP.KeepOnline : MPOP.AutoLogoff);
             }
 
             Deltas.Profile = NSMessageHandler.StorageService.GetProfile();
@@ -1454,66 +1453,6 @@ namespace MSNPSharp
 
             RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, ABContactUpdateObject, request));
 
-        }
-
-        internal void UpdateMe()
-        {
-            if (NSMessageHandler.AutoSynchronize)
-            {
-                AddressBook.InitializeMyProperties();
-                UpdateGeneralDialogSettings();
-            }
-        }
-
-        private void UpdateGeneralDialogSettings()
-        {
-            Owner owner = NSMessageHandler.ContactList.Owner;
-
-            if (owner == null)
-                throw new InvalidOperationException("This is not a valid Messenger contact.");
-
-            MPOP oldMPOP = AddressBook.MyProperties[AnnotationNames.MSN_IM_MPOP] == "1" ? MPOP.KeepOnline : MPOP.AutoLogoff;
-
-            List<Annotation> annos = new List<Annotation>();
-
-
-            if (oldMPOP != owner.MPOPMode)
-            {
-                Annotation anno = new Annotation();
-                anno.Name = AnnotationNames.MSN_IM_MPOP;
-                anno.Value = owner.MPOPMode == MPOP.KeepOnline ? "1" : "0";
-                annos.Add(anno);
-            }
-
-
-            if (annos.Count > 0 && NSMessageHandler.MSNTicket != MSNTicket.Empty)
-            {
-                MsnServiceState ABContactUpdateObject = new MsnServiceState(PartnerScenario.GeneralDialogApply, "ABContactUpdate", true); // In msnp17 this is "GeneralDialogApply"
-                ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABContactUpdateObject);
-                abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
-                {
-                    OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
-
-                    if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
-                        return;
-
-                    if (!e.Cancelled && e.Error == null)
-                    {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "UpdateGeneralDialogSetting completed.", GetType().Name);
-                        AddressBook.MyProperties[AnnotationNames.MSN_IM_MPOP] = owner.MPOPMode == MPOP.KeepOnline ? "1" : "0";
-                    }
-                };
-
-                ABContactUpdateRequestType request = new ABContactUpdateRequestType();
-                request.abId = WebServiceConstants.MessengerIndividualAddressBookId;
-                request.contacts = new ContactType[] { new ContactType() };
-                request.contacts[0].contactInfo = new contactInfoType();
-                request.contacts[0].contactInfo.contactType = MessengerContactType.Me;
-                request.contacts[0].contactInfo.annotations = annos.ToArray();
-                request.contacts[0].propertiesChanged = PropertyString.Annotation;
-
-                RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, ABContactUpdateObject, request));
-            }
         }
 
         #endregion

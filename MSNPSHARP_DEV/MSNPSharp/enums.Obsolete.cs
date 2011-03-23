@@ -56,6 +56,26 @@ namespace MSNPSharp
     {
     }
 
+    [Obsolete(@"Obsoleted in MSNP21, default is enabled and cannot be disabled.", true)]
+    public enum MPOP
+    {
+        /// <summary>
+        /// Unspecified
+        /// </summary>
+        Unspecified,
+
+        /// <summary>
+        /// When the same user sign in at another place, sign the owner out.
+        /// </summary>
+        AutoLogoff,
+
+        /// <summary>
+        /// When the same user sign in at another place, keep the owner sign in.
+        /// </summary>
+        KeepOnline
+    }
+
+
     /// <summary>
     /// Defines the privacy mode of the owner of the contactlist
     /// <list type="bullet">

@@ -53,7 +53,6 @@ namespace MSNPSharp
         public event EventHandler<EventArgs> ProfileReceived;        
 
         private string epName = Environment.MachineName;
-        private MPOP mpopMode = MPOP.Unspecified;
         private bool passportVerified;
 
         public Owner(string abId, string account, long cid, NSMessageHandler handler)
@@ -472,39 +471,15 @@ namespace MSNPSharp
             }
         }
 
-        internal void SetMPOP(MPOP mpop)
-        {
-            mpopMode = mpop;
-        }
-
         /// <summary>
         /// Reaction when sign in at another place.
         /// </summary>
-        public MPOP MPOPMode
+        [Obsolete(@"Obsoleted in MSNP21, default is enabled and cannot be disabled.", true)]
+        public object MPOPMode
         {
             get
             {
-                if (mpopMode == MPOP.Unspecified)
-                {
-                    if (NSMessageHandler != null)
-                    {
-                        if (NSMessageHandler.ContactService.AddressBook != null)
-                        {
-                            if (NSMessageHandler.ContactService.AddressBook.MyProperties.ContainsKey(AnnotationNames.MSN_IM_MPOP))
-                                mpopMode = NSMessageHandler.ContactService.AddressBook.MyProperties[AnnotationNames.MSN_IM_MPOP] == "1" ? MPOP.KeepOnline : MPOP.AutoLogoff;
-
-                        }
-                    }
-                }
-                return mpopMode;
-            }
-            set
-            {
-                if (NSMessageHandler != null)
-                {
-                    mpopMode = value;
-                    NSMessageHandler.ContactService.UpdateMe();
-                }
+                return MPOP.KeepOnline;
             }
         }
 

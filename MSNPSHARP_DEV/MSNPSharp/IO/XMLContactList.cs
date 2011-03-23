@@ -2459,7 +2459,7 @@ namespace MSNPSharp.IO
                         {
                             if (!String.IsNullOrEmpty(netInfo.DomainTag) && 
                                 netInfo.DomainTag != WebServiceConstants.NullDomainTag &&
-                                netInfo.SourceId.ToLowerInvariant() != RemoteNetworkGateways.WindowsLiveGateway)
+                                netInfo.SourceId.ToLowerInvariant() == RemoteNetworkGateways.FaceBookGatewayAccount)
                             {
                                 Contact networkContact = NSMessageHandler.ContactList.GetContactWithCreate(netInfo.SourceId, IMAddressInfoType.RemoteNetwork);
                                 networkContact.Lists |= RoleLists.Forward;
@@ -2704,21 +2704,6 @@ namespace MSNPSharp.IO
         {
             lock (SyncObject)
             {
-                if (!MyProperties.ContainsKey(AnnotationNames.MSN_IM_MBEA))
-                    MyProperties[AnnotationNames.MSN_IM_MBEA] = "0";
-
-                if (!MyProperties.ContainsKey(AnnotationNames.MSN_IM_GTC))
-                    MyProperties[AnnotationNames.MSN_IM_GTC] = "1";
-
-                if (!MyProperties.ContainsKey(AnnotationNames.MSN_IM_BLP))
-                    MyProperties[AnnotationNames.MSN_IM_BLP] = "0";
-
-                if (!MyProperties.ContainsKey(AnnotationNames.MSN_IM_MPOP))
-                    MyProperties[AnnotationNames.MSN_IM_MPOP] = "1";
-
-                if (!MyProperties.ContainsKey(AnnotationNames.MSN_IM_RoamLiveProperties))
-                    MyProperties[AnnotationNames.MSN_IM_RoamLiveProperties] = "1";
-
                 if (!MyProperties.ContainsKey(AnnotationNames.Live_Profile_Expression_LastChanged))
                     MyProperties[AnnotationNames.Live_Profile_Expression_LastChanged] = XmlConvert.ToString(DateTime.MinValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
             }
