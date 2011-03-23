@@ -189,17 +189,22 @@ namespace MSNPSharp
         private int transactionID = 0;
 
         [NonSerialized]
-        private Contact viaContact = null;
+        private Contact gatewayContact = null;
 
-        public Contact ViaContact
+        //This design has protential flaws:
+        //A contact might have multiple message gateways, however, our implementation for
+        //contact with same account in different gateways(i.e. Circles) is use the contact 
+        //referenced from NSMessageHandler.ContactList, that means, in our design, a contact 
+        //can only have one gateway in a certain period of time.
+        public Contact MessageGateway
         {
             get
             {
-                return viaContact;
+                return gatewayContact;
             }
             internal set
             {
-                viaContact = value;
+                gatewayContact = value;
             }
         }
 
