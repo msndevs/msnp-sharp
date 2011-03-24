@@ -1162,12 +1162,12 @@ namespace MSNPSharp
                                 routingInfo.Sender.SetStatus(newStatus);
 
                                 // The contact changed status
-                                OnContactStatusChanged(new ContactStatusChangedEventArgs(routingInfo.Sender, oldStatus, newStatus));
+                                OnContactStatusChanged(new ContactStatusChangedEventArgs(routingInfo.Sender, routingInfo.MessageGateway, oldStatus, newStatus));
 
                                 if (newStatus == PresenceStatus.Online)
-                                    OnContactOnline(new ContactStatusChangedEventArgs(routingInfo.Sender, oldStatus, newStatus));
+                                    OnContactOnline(new ContactStatusChangedEventArgs(routingInfo.Sender, routingInfo.MessageGateway, oldStatus, newStatus));
                                 else
-                                    OnContactOffline(new ContactStatusChangedEventArgs(routingInfo.Sender, oldStatus, newStatus));
+                                    OnContactOffline(new ContactStatusChangedEventArgs(routingInfo.Sender, routingInfo.MessageGateway, oldStatus, newStatus));
                             }
                         }
                     }
@@ -1341,10 +1341,10 @@ namespace MSNPSharp
                                     goesOfflineGroup.SetStatus(newStatus);
 
                                     // the contact changed status
-                                    OnContactStatusChanged(new ContactStatusChangedEventArgs(goesOfflineGroup, oldStatus, newStatus));
+                                    OnContactStatusChanged(new ContactStatusChangedEventArgs(goesOfflineGroup, routingInfo.MessageGateway, oldStatus, newStatus));
 
                                     // the contact goes offline
-                                    OnContactOffline(new ContactStatusChangedEventArgs(goesOfflineGroup, oldStatus, newStatus));
+                                    OnContactOffline(new ContactStatusChangedEventArgs(goesOfflineGroup, routingInfo.MessageGateway, oldStatus, newStatus));
 
                                 }
                             }

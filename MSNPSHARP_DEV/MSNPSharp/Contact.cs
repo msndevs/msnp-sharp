@@ -70,6 +70,7 @@ namespace MSNPSharp
         private bool mobileDevice = false;
         private bool mobileAccess = false;
         private bool isMessengerUser = false;
+        private bool isHiddenContact = false;
 
         private PresenceStatus status = PresenceStatus.Offline;
         private IMAddressInfoType clientType = IMAddressInfoType.WindowsLive;
@@ -191,11 +192,6 @@ namespace MSNPSharp
         [NonSerialized]
         private Contact gatewayContact = null;
 
-        //This design has protential flaws:
-        //A contact might have multiple message gateways, however, our implementation for
-        //contact with same account in different gateways(i.e. Circles) is use the contact 
-        //referenced from NSMessageHandler.ContactList, that means, in our design, a contact 
-        //can only have one gateway in a certain period of time.
         public Contact MessageGateway
         {
             get
@@ -269,6 +265,12 @@ namespace MSNPSharp
             displayImage = DisplayImage.CreateDefaultImage(Account);
             sceneImage = SceneImage.CreateDefaultImage(Account);
             personalMessage = new PersonalMessage();
+
+            if (Account == RemoteNetworkGateways.FaceBookGatewayAccount ||
+                Account == RemoteNetworkGateways.LinkedInGateway)
+            {
+                IsHiddenContact = true;
+            }
         }
 
         protected internal void SetCircleInfo(CircleInverseInfoType circleInfo, ContactType me)
@@ -850,6 +852,19 @@ namespace MSNPSharp
                         }
                     }
                 }
+            }
+        }
+
+        public bool IsHiddenContact
+        {
+            get
+            {
+                return isHiddenContact;
+            }
+
+            private set
+            {
+                isHiddenContact = value;
             }
         }
 
