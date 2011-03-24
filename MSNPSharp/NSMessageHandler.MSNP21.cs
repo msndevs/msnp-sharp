@@ -365,10 +365,10 @@ namespace MSNPSharp
                 mmMessage.RoutingHeaders[MIMERoutingHeaders.To][MIMERoutingHeaders.Path] = "IM";
             }
 
-            if (remoteContact.MessageGateway != null)
+            if (remoteContact.Via != null)
             {
                 mmMessage.RoutingHeaders[MIMERoutingHeaders.To]["via"] =
-                    ((int)remoteContact.MessageGateway.ClientType).ToString() + ":" + remoteContact.MessageGateway.Account;
+                    ((int)remoteContact.Via.ClientType).ToString() + ":" + remoteContact.Via.Account;
             }
 
             mmMessage.ContentKeyVersion = "2.0";
@@ -398,10 +398,10 @@ namespace MSNPSharp
                 mmMessage.RoutingHeaders[MIMERoutingHeaders.To][MIMERoutingHeaders.Path] = "IM";
             }
 
-            if (remoteContact.MessageGateway != null)
+            if (remoteContact.Via != null)
             {
                 mmMessage.RoutingHeaders[MIMERoutingHeaders.To]["via"] =
-                    ((int)remoteContact.MessageGateway.ClientType).ToString() + ":" + remoteContact.MessageGateway.Account;
+                    ((int)remoteContact.Via.ClientType).ToString() + ":" + remoteContact.Via.Account;
             }
 
             mmMessage.ContentKeyVersion = "2.0";
@@ -441,10 +441,10 @@ namespace MSNPSharp
                 mmMessage.RoutingHeaders[MIMERoutingHeaders.ServiceChannel] = "IM/Offline";
             }
 
-            if (remoteContact.MessageGateway != null)
+            if (remoteContact.Via != null)
             {
                 mmMessage.RoutingHeaders[MIMERoutingHeaders.To]["via"] =
-                    ((int)remoteContact.MessageGateway.ClientType).ToString() + ":" + remoteContact.MessageGateway.Account;
+                    ((int)remoteContact.Via.ClientType).ToString() + ":" + remoteContact.Via.Account;
             }
 
 
@@ -733,7 +733,7 @@ namespace MSNPSharp
                 {
                     Contact group = new Contact(tempGroup[1].ToLowerInvariant(), IMAddressInfoType.TemporaryGroup, this);
                     group.TransactionID = message.TransactionID;
-                    group.ContactList = new ContactList(new Guid(tempGroup[1].ToLowerInvariant().Split('@')[0]), Owner, this);
+                    group.ContactList = new ContactList(new Guid(tempGroup[1].ToLowerInvariant().Split('@')[0]), null, group, this);
 
                     multiparties[message.TransactionID] = group;
 
@@ -1085,7 +1085,7 @@ namespace MSNPSharp
 
                                 group = new Contact(routingInfo.Sender.Account, IMAddressInfoType.TemporaryGroup, this);
                                 group.TransactionID = transId;
-                                group.ContactList = new ContactList(new Guid(routingInfo.Sender.Account.Split('@')[0]), Owner, this);
+                                group.ContactList = new ContactList(new Guid(routingInfo.Sender.Account.Split('@')[0]), null, group, this);
 
                                 lock (multiparties)
                                     multiparties[transId] = group;

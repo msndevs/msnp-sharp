@@ -1917,22 +1917,22 @@ namespace MSNPSharpClient
                 if (contactToUpdate.IsHiddenContact)
                     return;
 
-                if (contactToUpdate.MessageGateway != null)
+                if (contactToUpdate.Via != null)
                 {
                     
                     #region Circle Members
 		
-                    if (contactToUpdate.MessageGateway.ClientType == IMAddressInfoType.Circle)
+                    if (contactToUpdate.Via.ClientType == IMAddressInfoType.Circle)
                     {
-                        UpdateCircleMember(contactToUpdate.MessageGateway, contactToUpdate);
+                        UpdateCircleMember(contactToUpdate.Via, contactToUpdate);
                     } 
 	                #endregion
 
                     #region Facebook members
 
-                    if (contactToUpdate.MessageGateway.ClientType == IMAddressInfoType.RemoteNetwork)
+                    if (contactToUpdate.Via.ClientType == IMAddressInfoType.RemoteNetwork)
                     {
-                        Contact fbNetwork = Messenger.ContactList.GetContact(contactToUpdate.MessageGateway.Account, contactToUpdate.MessageGateway.ClientType);
+                        Contact fbNetwork = Messenger.ContactList.GetContact(contactToUpdate.Via.Account, contactToUpdate.Via.ClientType);
 
                         if (fbNetwork != null && fbNetwork.ContactList != null)
                         {

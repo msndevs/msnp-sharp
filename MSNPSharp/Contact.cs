@@ -192,7 +192,7 @@ namespace MSNPSharp
         [NonSerialized]
         private Contact gatewayContact = null;
 
-        public Contact MessageGateway
+        public Contact Via
         {
             get
             {
@@ -286,7 +286,7 @@ namespace MSNPSharp
             SetName(circleInfo.Content.Info.DisplayName);
             SetNickName(Name);
 
-            contactList = new ContactList(AddressBookId, new Owner(AddressBookId, me.contactInfo.passportName, me.contactInfo.CID, NSMessageHandler), NSMessageHandler);
+            contactList = new ContactList(AddressBookId, new Owner(AddressBookId, me.contactInfo.passportName, me.contactInfo.CID, NSMessageHandler), this, NSMessageHandler);
             Lists = RoleLists.Allow | RoleLists.Forward;
         }
 
