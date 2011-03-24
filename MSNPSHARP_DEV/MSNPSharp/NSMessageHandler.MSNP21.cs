@@ -1469,87 +1469,113 @@ namespace MSNPSharp
 
             if (multiMimeMessage.ContentHeaders.ContainsKey(MIMEContentHeaders.MessageType))
             {
-                if ("nudge" == multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
+                switch (multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
                 {
-                    OnNudgeReceived(new NudgeArrivedEventArgs(sender, by));
-                }
-                else if ("control/typing" == multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
-                {
-                    OnTypingMessageReceived(new TypingArrivedEventArgs(sender, by));
-                }
-                else if ("text" == multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
-                {
-                    TextMessage txtMessage = new TextMessage(Encoding.UTF8.GetString(multiMimeMessage.InnerBody));
-                    StrDictionary strDic = new StrDictionary();
-                    foreach (string key in multiMimeMessage.ContentHeaders.Keys)
-                    {
-                        strDic.Add(key, multiMimeMessage.ContentHeaders[key].ToString());
-                    }
-                    txtMessage.ParseHeader(strDic);
-
-                    OnTextMessageReceived(new TextMessageArrivedEventArgs(sender, txtMessage, by));
-                }
-                else if ("customemoticon" == multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
-                {
-                    EmoticonMessage emoticonMessage = new EmoticonMessage();
-                    emoticonMessage.EmoticonType = multiMimeMessage.ContentHeaders[MIMEContentHeaders.ContentType] == "text/x-mms-animemoticon" ?
-                        EmoticonType.AnimEmoticon : EmoticonType.StaticEmoticon;
-
-                    emoticonMessage.ParseBytes(multiMimeMessage.InnerBody);
-
-                    foreach (Emoticon emoticon in emoticonMessage.Emoticons)
-                    {
-                        OnEmoticonDefinitionReceived(new EmoticonDefinitionEventArgs(sender, emoticon));
-                    }
-                }
-                else if ("wink" == multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
-                {
-                    Wink wink = new Wink();
-                    wink.SetContext(Encoding.UTF8.GetString(multiMimeMessage.InnerBody));
-
-                    OnWinkDefinitionReceived(new WinkEventArgs(sender, wink));
-                }
-                else if ("signal/p2p" == multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
-                {
-                    SLPMessage slpMessage = SLPMessage.Parse(multiMimeMessage.InnerBody);
-                    if (slpMessage != null)
-                    {
-                        if (slpMessage.ContentType == "application/x-msnmsgr-transreqbody" ||
-                            slpMessage.ContentType == "application/x-msnmsgr-transrespbody" ||
-                            slpMessage.ContentType == "application/x-msnmsgr-transdestaddrupdate")
+                    default:
                         {
-                            P2PSession.ProcessDirectInvite(slpMessage, this, null);
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                                "!!![OnSDGReceived]!!! UNHANDLED MESSAGE TYPE: " + multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString() +
+                                "\r\n" + multiMimeMessage.ToDebugString());
                         }
-                    }
-                }
-                else if ("data" == multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
-                {
-                    P2PVersion toVer = multiMimeMessage.To.HasAttribute(MIMERoutingHeaders.EPID) ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
-                    Guid ep = (toVer == P2PVersion.P2PV1) ? Guid.Empty : new Guid(multiMimeMessage.From[MIMERoutingHeaders.EPID]);
-                    string[] offsets = multiMimeMessage.ContentHeaders.ContainsKey("Bridging-Offsets") ?
-                        multiMimeMessage.ContentHeaders["Bridging-Offsets"].ToString().Split(',') :
-                        new string[] { "0" };
-                    List<long> offsetList = new List<long>();
-                    foreach (string os in offsets)
-                    {
-                        offsetList.Add(long.Parse(os));
-                    }
+                        break;
 
-                    P2PMessage p2pData = new P2PMessage(toVer);
-                    P2PMessage[] p2pDatas = p2pData.CreateFromOffsets(offsetList.ToArray(), multiMimeMessage.InnerBody);
+                    case "nudge":
+                        {
+                            OnNudgeReceived(new NudgeArrivedEventArgs(sender, by));
+                        }
+                        break;
 
-                    if (multiMimeMessage.ContentHeaders.ContainsKey("Pipe"))
-                    {
-                        SDGBridge.packageNumber = ushort.Parse(multiMimeMessage.ContentHeaders["Pipe"]);
-                    }
+                    case "control/typing":
+                        {
+                            OnTypingMessageReceived(new TypingArrivedEventArgs(sender, by));
+                        }
+                        break;
 
-                    foreach (P2PMessage m in p2pDatas)
-                    {
-                        P2PBridge p2pBridge = (by.DirectBridge != null && by.DirectBridge.IsOpen)
-                            ? by.DirectBridge : SDGBridge;
+                    case "text":
+                        {
+                            TextMessage txtMessage = new TextMessage(Encoding.UTF8.GetString(multiMimeMessage.InnerBody));
+                            StrDictionary strDic = new StrDictionary();
+                            foreach (string key in multiMimeMessage.ContentHeaders.Keys)
+                            {
+                                strDic.Add(key, multiMimeMessage.ContentHeaders[key].ToString());
+                            }
+                            txtMessage.ParseHeader(strDic);
 
-                        P2PHandler.ProcessP2PMessage(p2pBridge, sender, ep, m);
-                    }
+                            OnTextMessageReceived(new TextMessageArrivedEventArgs(sender, txtMessage, by));
+                        }
+                        break;
+
+
+                    case "customemoticon":
+                        {
+                            EmoticonMessage emoticonMessage = new EmoticonMessage();
+                            emoticonMessage.EmoticonType = multiMimeMessage.ContentHeaders[MIMEContentHeaders.ContentType] == "text/x-mms-animemoticon" ?
+                                EmoticonType.AnimEmoticon : EmoticonType.StaticEmoticon;
+
+                            emoticonMessage.ParseBytes(multiMimeMessage.InnerBody);
+
+                            foreach (Emoticon emoticon in emoticonMessage.Emoticons)
+                            {
+                                OnEmoticonDefinitionReceived(new EmoticonDefinitionEventArgs(sender, emoticon));
+                            }
+                        }
+                        break;
+
+
+                    case "wink":
+                        {
+                            Wink wink = new Wink();
+                            wink.SetContext(Encoding.UTF8.GetString(multiMimeMessage.InnerBody));
+
+                            OnWinkDefinitionReceived(new WinkEventArgs(sender, wink));
+                        }
+                        break;
+
+                    case "signal/p2p":
+                        {
+                            SLPMessage slpMessage = SLPMessage.Parse(multiMimeMessage.InnerBody);
+                            if (slpMessage != null)
+                            {
+                                if (slpMessage.ContentType == "application/x-msnmsgr-transreqbody" ||
+                                    slpMessage.ContentType == "application/x-msnmsgr-transrespbody" ||
+                                    slpMessage.ContentType == "application/x-msnmsgr-transdestaddrupdate")
+                                {
+                                    P2PSession.ProcessDirectInvite(slpMessage, this, null);
+                                }
+                            }
+                        }
+                        break;
+
+                    case "data":
+                        {
+                            P2PVersion toVer = multiMimeMessage.To.HasAttribute(MIMERoutingHeaders.EPID) ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
+                            Guid ep = (toVer == P2PVersion.P2PV1) ? Guid.Empty : new Guid(multiMimeMessage.From[MIMERoutingHeaders.EPID]);
+                            string[] offsets = multiMimeMessage.ContentHeaders.ContainsKey("Bridging-Offsets") ?
+                                multiMimeMessage.ContentHeaders["Bridging-Offsets"].ToString().Split(',') :
+                                new string[] { "0" };
+                            List<long> offsetList = new List<long>();
+                            foreach (string os in offsets)
+                            {
+                                offsetList.Add(long.Parse(os));
+                            }
+
+                            P2PMessage p2pData = new P2PMessage(toVer);
+                            P2PMessage[] p2pDatas = p2pData.CreateFromOffsets(offsetList.ToArray(), multiMimeMessage.InnerBody);
+
+                            if (multiMimeMessage.ContentHeaders.ContainsKey("Pipe"))
+                            {
+                                SDGBridge.packageNumber = ushort.Parse(multiMimeMessage.ContentHeaders["Pipe"]);
+                            }
+
+                            foreach (P2PMessage m in p2pDatas)
+                            {
+                                P2PBridge p2pBridge = (by.DirectBridge != null && by.DirectBridge.IsOpen)
+                                    ? by.DirectBridge : SDGBridge;
+
+                                P2PHandler.ProcessP2PMessage(p2pBridge, sender, ep, m);
+                            }
+                        }
+                        break;
                 }
             }
         }
