@@ -1262,9 +1262,9 @@ namespace MSNPSharp
                         Contact circle = null;
                         Contact group = null;
 
-                        if (routingInfo.Sender.ClientType == IMAddressInfoType.Circle)
+                        if (routingInfo.SenderType == IMAddressInfoType.Circle)
                         {
-                            circle = ContactList.GetCircle(routingInfo.Sender.Account);
+                            circle = ContactList.GetCircle(routingInfo.SenderAccount);
 
                             if (circle == null)
                             {
@@ -1274,9 +1274,9 @@ namespace MSNPSharp
                                 return;
                             }
                         }
-                        else if (routingInfo.Sender.ClientType == IMAddressInfoType.TemporaryGroup)
+                        else if (routingInfo.SenderType == IMAddressInfoType.TemporaryGroup)
                         {
-                            group = GetMultiparty(routingInfo.Sender.Account);
+                            group = GetMultiparty(routingInfo.SenderAccount);
 
                             if (group == null)
                             {
