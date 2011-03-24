@@ -1426,7 +1426,17 @@ namespace MSNPSharp
             if (networkMessage.InnerBody == null || networkMessage.InnerBody.Length == 0)
                 return;
 
-            MultiMimeMessage mmMessage = new MultiMimeMessage(networkMessage.InnerBody);
+            MultiMimeMessage multiMimeMessage = new MultiMimeMessage(networkMessage.InnerBody);
+
+
+            RoutingInfo routingInfo = RoutingInfo.FromMultiMimeMessage(multiMimeMessage, this);
+            if (routingInfo == null)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnNFYReceived] Get Rounting Info Error.");
+                return;
+            }
+
+
 
             IMAddressInfoType fromAccountAddressType;
             string fromAccount;
@@ -1438,16 +1448,16 @@ namespace MSNPSharp
             IMAddressInfoType toViaAccountAddressType;
             string toViaAccount;
 
-            if ((false == Contact.ParseFullAccount(mmMessage.From.ToString(),
+            if ((false == Contact.ParseFullAccount(multiMimeMessage.From.ToString(),
                 out fromAccountAddressType, out fromAccount,
                 out fromViaAccountAddressType, out fromViaAccount))
                 ||
-                (false == Contact.ParseFullAccount(mmMessage.To.ToString(),
+                (false == Contact.ParseFullAccount(multiMimeMessage.To.ToString(),
                 out toAccountAddressType, out toAccount,
                 out toViaAccountAddressType, out toViaAccount)))
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                    "[OnSDGReceived] Cannot parse from or to: " + mmMessage.From.ToString() + "|" + mmMessage.To.ToString());
+                    "[OnSDGReceived] Cannot parse from or to: " + multiMimeMessage.From.ToString() + "|" + multiMimeMessage.To.ToString());
 
                 return;
             }
@@ -1455,14 +1465,14 @@ namespace MSNPSharp
             Contact sender = null; // via=fb, circle or temporary group
             Contact by = null; // invidiual sender, 1 on 1 chat
 
-            if (toAccountAddressType == IMAddressInfoType.Circle)
+            if (routingInfo.ReceiverType == IMAddressInfoType.Circle)
             {
-                sender = ContactList.GetCircle(toAccount);
+                sender = ContactList.GetCircle(routingInfo.ReceiverAccount);
 
                 if (sender == null)
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                        "[OnSDGReceived] Error: Cannot find circle: " + mmMessage.To.ToString());
+                        "[OnSDGReceived] Error: Cannot find circle: " + multiMimeMessage.To.ToString());
 
                     return;
                 }
@@ -1472,14 +1482,14 @@ namespace MSNPSharp
                     by = sender.ContactList.GetContactWithCreate(fromAccount, fromAccountAddressType);
                 }
             }
-            else if (toAccountAddressType == IMAddressInfoType.TemporaryGroup)
+            else if (routingInfo.ReceiverType == IMAddressInfoType.TemporaryGroup)
             {
-                sender = GetMultiparty(toAccount);
+                sender = GetMultiparty(routingInfo.ReceiverAccount);
 
                 if (sender == null)
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                        "[OnSDGReceived] Error: Cannot find temp group: " + mmMessage.To.ToString());
+                        "[OnSDGReceived] Error: Cannot find temp group: " + multiMimeMessage.To.ToString());
 
                     return;
                 }
@@ -1507,51 +1517,51 @@ namespace MSNPSharp
                 by = sender;
             }
 
-            if (mmMessage.ContentHeaders.ContainsKey(MIMEContentHeaders.MessageType))
+            if (multiMimeMessage.ContentHeaders.ContainsKey(MIMEContentHeaders.MessageType))
             {
-                if ("nudge" == mmMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
+                if ("nudge" == multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
                 {
                     OnNudgeReceived(new NudgeArrivedEventArgs(sender, by));
                 }
-                else if ("control/typing" == mmMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
+                else if ("control/typing" == multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
                 {
                     OnTypingMessageReceived(new TypingArrivedEventArgs(sender, by));
                 }
-                else if ("text" == mmMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
+                else if ("text" == multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
                 {
-                    TextMessage txtMessage = new TextMessage(Encoding.UTF8.GetString(mmMessage.InnerBody));
+                    TextMessage txtMessage = new TextMessage(Encoding.UTF8.GetString(multiMimeMessage.InnerBody));
                     StrDictionary strDic = new StrDictionary();
-                    foreach (string key in mmMessage.ContentHeaders.Keys)
+                    foreach (string key in multiMimeMessage.ContentHeaders.Keys)
                     {
-                        strDic.Add(key, mmMessage.ContentHeaders[key].ToString());
+                        strDic.Add(key, multiMimeMessage.ContentHeaders[key].ToString());
                     }
                     txtMessage.ParseHeader(strDic);
 
                     OnTextMessageReceived(new TextMessageArrivedEventArgs(sender, txtMessage, by));
                 }
-                else if ("customemoticon" == mmMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
+                else if ("customemoticon" == multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
                 {
                     EmoticonMessage emoticonMessage = new EmoticonMessage();
-                    emoticonMessage.EmoticonType = mmMessage.ContentHeaders[MIMEContentHeaders.ContentType] == "text/x-mms-animemoticon" ?
+                    emoticonMessage.EmoticonType = multiMimeMessage.ContentHeaders[MIMEContentHeaders.ContentType] == "text/x-mms-animemoticon" ?
                         EmoticonType.AnimEmoticon : EmoticonType.StaticEmoticon;
 
-                    emoticonMessage.ParseBytes(mmMessage.InnerBody);
+                    emoticonMessage.ParseBytes(multiMimeMessage.InnerBody);
 
                     foreach (Emoticon emoticon in emoticonMessage.Emoticons)
                     {
                         OnEmoticonDefinitionReceived(new EmoticonDefinitionEventArgs(sender, emoticon));
                     }
                 }
-                else if ("wink" == mmMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
+                else if ("wink" == multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
                 {
                     Wink wink = new Wink();
-                    wink.SetContext(Encoding.UTF8.GetString(mmMessage.InnerBody));
+                    wink.SetContext(Encoding.UTF8.GetString(multiMimeMessage.InnerBody));
 
                     OnWinkDefinitionReceived(new WinkEventArgs(sender, wink));
                 }
-                else if ("signal/p2p" == mmMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
+                else if ("signal/p2p" == multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
                 {
-                    SLPMessage slpMessage = SLPMessage.Parse(mmMessage.InnerBody);
+                    SLPMessage slpMessage = SLPMessage.Parse(multiMimeMessage.InnerBody);
                     if (slpMessage != null)
                     {
                         if (slpMessage.ContentType == "application/x-msnmsgr-transreqbody" ||
@@ -1562,12 +1572,12 @@ namespace MSNPSharp
                         }
                     }
                 }
-                else if ("data" == mmMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
+                else if ("data" == multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
                 {
-                    P2PVersion toVer = mmMessage.To.HasAttribute(MIMERoutingHeaders.EPID) ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
-                    Guid ep = (toVer == P2PVersion.P2PV1) ? Guid.Empty : new Guid(mmMessage.From[MIMERoutingHeaders.EPID]);
-                    string[] offsets = mmMessage.ContentHeaders.ContainsKey("Bridging-Offsets") ?
-                        mmMessage.ContentHeaders["Bridging-Offsets"].ToString().Split(',') :
+                    P2PVersion toVer = multiMimeMessage.To.HasAttribute(MIMERoutingHeaders.EPID) ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
+                    Guid ep = (toVer == P2PVersion.P2PV1) ? Guid.Empty : new Guid(multiMimeMessage.From[MIMERoutingHeaders.EPID]);
+                    string[] offsets = multiMimeMessage.ContentHeaders.ContainsKey("Bridging-Offsets") ?
+                        multiMimeMessage.ContentHeaders["Bridging-Offsets"].ToString().Split(',') :
                         new string[] { "0" };
                     List<long> offsetList = new List<long>();
                     foreach (string os in offsets)
@@ -1576,11 +1586,11 @@ namespace MSNPSharp
                     }
 
                     P2PMessage p2pData = new P2PMessage(toVer);
-                    P2PMessage[] p2pDatas = p2pData.CreateFromOffsets(offsetList.ToArray(), mmMessage.InnerBody);
+                    P2PMessage[] p2pDatas = p2pData.CreateFromOffsets(offsetList.ToArray(), multiMimeMessage.InnerBody);
 
-                    if (mmMessage.ContentHeaders.ContainsKey("Pipe"))
+                    if (multiMimeMessage.ContentHeaders.ContainsKey("Pipe"))
                     {
-                        SDGBridge.packageNumber = ushort.Parse(mmMessage.ContentHeaders["Pipe"]);
+                        SDGBridge.packageNumber = ushort.Parse(multiMimeMessage.ContentHeaders["Pipe"]);
                     }
 
                     foreach (P2PMessage m in p2pDatas)
