@@ -187,9 +187,6 @@ namespace MSNPSharp
         internal CircleInverseInfoType circleInfo = null;
 
         [NonSerialized]
-        private int transactionID = 0;
-
-        [NonSerialized]
         private Contact gatewayContact = null;
 
         public Contact Via
@@ -201,21 +198,6 @@ namespace MSNPSharp
             internal set
             {
                 gatewayContact = value;
-            }
-        }
-
-        /// <summary>
-        /// For temporary groups
-        /// </summary>
-        public int TransactionID
-        {
-            get
-            {
-                return transactionID;
-            }
-            internal set
-            {
-                transactionID = value;
             }
         }
 

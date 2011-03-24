@@ -146,7 +146,7 @@ namespace MSNPSharp
         private MSNDirectoryService dirService;
 
         private List<Regex> censorWords = new List<Regex>(0);
-        private Dictionary<int, Contact> multiparties = new Dictionary<int, Contact>(); //cliType=TemporaryGroup
+        private Dictionary<int, MultipartyObject> multiParties = new Dictionary<int, MultipartyObject>();
 
         protected internal NSMessageHandler()
         {
@@ -1477,8 +1477,8 @@ namespace MSNPSharp
             CensorWords.Clear();
 
             //7. Clear multiparties
-            lock (multiparties)
-                multiparties.Clear();
+            lock (multiParties)
+                multiParties.Clear();
         }
 
         protected virtual NetworkMessage ParseTextPayloadMessage(NSMessage message)
