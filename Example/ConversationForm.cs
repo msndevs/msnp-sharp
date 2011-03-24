@@ -696,8 +696,6 @@ namespace MSNPSharpClient
             remoteContact.DisplayImageChanged -= Contact_DisplayImageChanged;
             remoteContact.DisplayImageContextChanged -= Contact_DisplayImageConextChanged;
 
-            _messenger.Nameserver.MultipartyCreated -= Nameserver_MultipartyCreated;
-
             if (remoteContact.ClientType == IMAddressInfoType.TemporaryGroup)
             {
                 _messenger.Nameserver.LeaveMultiparty(remoteContact);
@@ -856,9 +854,6 @@ namespace MSNPSharpClient
 
             remoteContact.DisplayImageChanged += new EventHandler<DisplayImageChangedEventArgs>(Contact_DisplayImageChanged);
             remoteContact.DisplayImageContextChanged += new EventHandler<DisplayImageChangedEventArgs>(Contact_DisplayImageConextChanged);
-
-            _messenger.Nameserver.MultipartyCreated += Nameserver_MultipartyCreated;
-
 
             // request the image, if not already available
             if (remoteContact.Status != PresenceStatus.Offline)
@@ -1168,15 +1163,9 @@ namespace MSNPSharpClient
             multipartyMenu.Focus();
         }
 
-        int myTempGroupID = 0;
         private List<Contact> multipartyContacts = new List<Contact>();
         private void multipartyMenu_Click(object sender, EventArgs args)
         {
-            if (myTempGroupID == 0)
-            {
-                myTempGroupID = _messenger.Nameserver.CreateMultiparty();
-            }
-
             ToolStripItem item = (ToolStripItem)sender;
             if (_messenger.ContactList.HasContact(item.ToolTipText, IMAddressInfoType.WindowsLive))
             {
@@ -1186,12 +1175,27 @@ namespace MSNPSharpClient
                 if (remoteContact.ClientType == IMAddressInfoType.TemporaryGroup)
                 {
                     _messenger.Nameserver.InviteContactToMultiparty(c, remoteContact);
+
+                    multipartyContacts.Clear();
                 }
                 else
                 {
                     // Not created yet
+
+                    // Invite original contact
+                    if (!multipartyContacts.Contains(remoteContact))
+                        multipartyContacts.Add(remoteContact);
+
+                    // Invite selected
                     if (!multipartyContacts.Contains(c))
                         multipartyContacts.Add(c);
+
+                    _messenger.Nameserver.CreateMultiparty(multipartyContacts,
+                        delegate(object s, MultipartyCreatedEventArgs e)
+                        {
+                            // This is Multiparty now
+                            remoteContact = e.Group;
+                        });
                 }
             }
             else
@@ -1199,31 +1203,6 @@ namespace MSNPSharpClient
                 DisplaySystemMessage("Cannot find PassportMember: " + item.ToolTipText);
             }
         }
-        
-        private void Nameserver_MultipartyCreated(object sender, MultipartyCreatedEventArgs e)
-        {
-            if (myTempGroupID == e.Group.TransactionID)
-            {
-                // Invite original contact
-                _messenger.Nameserver.InviteContactToMultiparty(remoteContact, e.Group);
-
-                // Invite pending
-                foreach (Contact c in multipartyContacts)
-                {
-                    if (!e.Group.ContactList.HasContact(c.Account, c.ClientType))
-                    {
-                        _messenger.Nameserver.InviteContactToMultiparty(c, e.Group);
-                    }
-                }
-
-                // This is Multiparty now
-                remoteContact = e.Group;
-
-                // Done...
-                multipartyContacts.Clear();
-            }
-        }
-
 
     }
 };

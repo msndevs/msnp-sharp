@@ -209,13 +209,70 @@ namespace MSNPSharp
 
         #region CreateMultiparty
 
-        public int CreateMultiparty()
+        internal class MultipartyObject
         {
+            public event EventHandler<MultipartyCreatedEventArgs> MultipartyCreated;
+
+            public int TransactionID;
+            public List<Contact> InviteQueue;
+            public Contact MultiParty;
+
+            public MultipartyObject(int transId, List<Contact> inviteQueue, Contact multiParty,
+                EventHandler<MultipartyCreatedEventArgs> onCreated)
+            {
+                TransactionID = transId;
+                InviteQueue = inviteQueue;
+                MultiParty = multiParty;
+
+                if (onCreated != null)
+                    MultipartyCreated += onCreated;
+            }
+
+            internal void OnMultipartyCreated(object sender, MultipartyCreatedEventArgs e)
+            {
+                if (MultipartyCreated != null)
+                    MultipartyCreated(sender, e);
+            }
+        };
+
+        /// <summary>
+        /// Creates a new multiparty (Group chat)
+        /// </summary>
+        /// <param name="inviteQueue">Contacts to be invited (don't add yourself)</param>
+        /// <param name="onCreated">The handler to be executed when multiparty created (must be provided)</param>
+        /// <exception cref="ArgumentNullException">inviteQueue or event handler is null</exception>
+        /// <exception cref="InvalidOperationException">At least 2 contacts is required except you and contacts must support multiparty</exception>
+        /// <returns></returns>
+        public int CreateMultiparty(List<Contact> inviteQueue, EventHandler<MultipartyCreatedEventArgs> onCreated)
+        {
+            if (inviteQueue == null || inviteQueue.Count == 0)
+                throw new ArgumentNullException("inviteQueue");
+
+            if (onCreated == null)
+                throw new ArgumentNullException("onCreated");
+
+            List<Contact> newQueue = new List<Contact>();
+
+            foreach (Contact c in inviteQueue)
+            {
+                if (c != null &&
+                    !c.IsSibling(Owner) &&
+                    !newQueue.Contains(c) &&
+                    c.SupportsMultiparty)
+                {
+                    newQueue.Add(c);
+                }
+            }
+
+            if (newQueue.Count < 2)
+                throw new InvalidOperationException("At least 2 contacts is required except you and contacts must support multiparty.");
+
+
             NSMessageProcessor nsmp = (NSMessageProcessor)MessageProcessor;
             int transId = nsmp.IncreaseTransactionID();
 
-            lock (multiparties)
-                multiparties[transId] = null;
+            lock (multiParties)
+                multiParties[transId] = new MultipartyObject(transId, newQueue, null, onCreated);
 
             string to = ((int)IMAddressInfoType.TemporaryGroup).ToString() + ":" + Guid.Empty.ToString("D").ToLowerInvariant() + "@" + Contact.DefaultHostDomain;
             string from = ((int)Owner.ClientType).ToString() + ":" + Owner.Account;
@@ -243,11 +300,28 @@ namespace MSNPSharp
         {
             if (!String.IsNullOrEmpty(tempGroupAddress))
             {
-                lock (multiparties)
+                lock (multiParties)
                 {
-                    foreach (Contact group in multiparties.Values)
+                    foreach (MultipartyObject group in multiParties.Values)
                     {
-                        if (group != null && group.Account == tempGroupAddress)
+                        if (group.MultiParty != null && group.MultiParty.Account == tempGroupAddress)
+                            return group.MultiParty;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        internal MultipartyObject GetMultipartyObject(string tempGroupAddress)
+        {
+            if (!String.IsNullOrEmpty(tempGroupAddress))
+            {
+                lock (multiParties)
+                {
+                    foreach (MultipartyObject group in multiParties.Values)
+                    {
+                        if (group.MultiParty != null && group.MultiParty.Account == tempGroupAddress)
                             return group;
                     }
                 }
@@ -300,13 +374,13 @@ namespace MSNPSharp
             delPayload.InnerMessage = mmMessage;
             MessageProcessor.SendMessage(delPayload);
 
-            lock (multiparties)
+            lock (multiParties)
             {
-                foreach (Contact g in multiparties.Values)
+                foreach (MultipartyObject g in multiParties.Values)
                 {
-                    if (g != null && g.Account == group.Account)
+                    if (g.MultiParty != null && g.MultiParty.Account == group.Account)
                     {
-                        multiparties.Remove(g.TransactionID);
+                        multiParties.Remove(g.TransactionID);
                         break;
                     }
                 }
@@ -715,12 +789,12 @@ namespace MSNPSharp
         protected virtual void OnPUTReceived(NSMessage message)
         {
             bool ok = message.CommandValues.Count > 0 && message.CommandValues[0].ToString() == "OK";
-            if (multiparties.ContainsKey(message.TransactionID))
+            if (multiParties.ContainsKey(message.TransactionID))
             {
                 if (ok == false || message.InnerBody == null || message.InnerBody.Length == 0)
                 {
-                    lock (multiparties)
-                        multiparties.Remove(message.TransactionID);
+                    lock (multiParties)
+                        multiParties.Remove(message.TransactionID);
 
                     return;
                 }
@@ -732,13 +806,22 @@ namespace MSNPSharp
                 if (addressType == IMAddressInfoType.TemporaryGroup)
                 {
                     Contact group = new Contact(tempGroup[1].ToLowerInvariant(), IMAddressInfoType.TemporaryGroup, this);
-                    group.TransactionID = message.TransactionID;
                     group.ContactList = new ContactList(new Guid(tempGroup[1].ToLowerInvariant().Split('@')[0]), null, group, this);
 
-                    multiparties[message.TransactionID] = group;
+                    MultipartyObject mpo = multiParties[message.TransactionID];
+                    mpo.TransactionID = message.TransactionID;
+                    mpo.MultiParty = group;
 
                     JoinMultiparty(group);
 
+                    List<Contact> copy = new List<Contact>(mpo.InviteQueue);
+
+                    foreach (Contact c in copy)
+                    {
+                        InviteContactToMultiparty(c, group);
+                    }
+
+                    mpo.OnMultipartyCreated(this, new MultipartyCreatedEventArgs(group));
                     OnMultipartyCreated(new MultipartyCreatedEventArgs(group));
 
                     group.SetStatus(PresenceStatus.Online);
@@ -747,8 +830,8 @@ namespace MSNPSharp
                 }
                 else
                 {
-                    lock (multiparties)
-                        multiparties.Remove(message.TransactionID);
+                    lock (multiParties)
+                        multiParties.Remove(message.TransactionID);
                 }
             }
         }
@@ -1078,23 +1161,30 @@ namespace MSNPSharp
                         }
                         else if (routingInfo.SenderType == IMAddressInfoType.TemporaryGroup)
                         {
-                            Contact group = GetMultiparty(routingInfo.SenderAccount);
+                            MultipartyObject mpo = GetMultipartyObject(routingInfo.SenderAccount);
+                            Contact group = null;
 
-                            if (group == null)
+                            if (mpo == null)
                             {
+                                // Created remotely.
                                 NSMessageProcessor nsmp = (NSMessageProcessor)MessageProcessor;
                                 int transId = nsmp.IncreaseTransactionID();
 
                                 group = new Contact(routingInfo.SenderAccount, IMAddressInfoType.TemporaryGroup, this);
-                                group.TransactionID = transId;
                                 group.ContactList = new ContactList(new Guid(routingInfo.SenderAccount.Split('@')[0]), null, group, this);
 
-                                lock (multiparties)
-                                    multiparties[transId] = group;
+                                mpo = new MultipartyObject(transId, new List<Contact>(), group, null);
+
+                                lock (multiParties)
+                                    multiParties[transId] = mpo;
 
                                 OnMultipartyCreated(new MultipartyCreatedEventArgs(group));
 
                                 group.SetStatus(PresenceStatus.Online);
+                            }
+                            else
+                            {
+                                group = mpo.MultiParty;
                             }
 
                             if (multiMimeMessage.InnerBody == null || multiMimeMessage.InnerBody.Length == 0)
@@ -1138,6 +1228,9 @@ namespace MSNPSharp
                                 {
                                     Contact contact = group.ContactList.GetContactWithCreate(memberAccount, addressType);
                                     OnJoinedGroupChat(new GroupChatParticipationEventArgs(contact, group));
+
+                                    if (mpo.InviteQueue.Contains(contact))
+                                        mpo.InviteQueue.Remove(contact);
                                 }
                             }
                         }
