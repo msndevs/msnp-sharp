@@ -343,6 +343,12 @@ namespace MSNPSharp.Core
         {
             try
             {
+                if (socket == null)
+                {
+                    OnDisconnected();
+                    return;
+                }
+
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "End Connect Callback", GetType().Name);
 
                 ((ProxySocket)socket).EndConnect(ar);
@@ -625,6 +631,7 @@ namespace MSNPSharp.Core
                 }
 
                 socket = null;
+
                 // We don't need to call OnDisconnect here since EndReceiveCallback will be call automatically later on. (This is not valid if disconnected remotelly)
                 // We need to call OnDisconnect after EndReceiveCallback if disconnected locally.
             }

@@ -1618,12 +1618,12 @@ namespace MSNPSharpClient
 
                 #endregion
 
-                #region Contact groups
+                #region Contacts
 
                 ContactGroup favGroup = messenger.ContactGroups.FavoriteGroup;
                 if (favGroup != null)
                 {
-                    foreach (Contact c in messenger.ContactList.WindowsLive.FilterByRoles(RoleLists.Forward))
+                    foreach (Contact c in messenger.ContactList.Forward)
                     {
                         if (c.HasGroup(favGroup))
                         {
@@ -1801,6 +1801,7 @@ namespace MSNPSharpClient
             TreeNode circlesNode = treeViewFavoriteList.Nodes[ImageIndexes.CircleNodeKey];
             TreeNode circleNode = circlesNode.Nodes[circle.Hash];
             circleNode.ImageIndex = circleNode.SelectedImageIndex = ImageIndexes.GetCircleStatusImageIndex(circle.Status);
+            circleNode.Text = GetCircleDisplayName(circle, circle.ContactList[IMAddressInfoType.None].Count);
 
             string text2 = circleMember.Name;
             text2 += " - " + circleMember.PersonalMessage.Message;
@@ -1882,6 +1883,9 @@ namespace MSNPSharpClient
 
                 foreach (Contact contact in messenger.ContactList.All)
                 {
+                    if (contact.IsHiddenContact)
+                        continue;
+
                     string text = contact.Name;
                     if (contact.PersonalMessage != null && !String.IsNullOrEmpty(contact.PersonalMessage.Message))
                     {
@@ -1913,9 +1917,6 @@ namespace MSNPSharpClient
                 if (contactToUpdate.IsHiddenContact)
                     return;
 
-                //if (contactToUpdate.ClientType == IMAddressInfoType.Circle)
-                //    via = contactToUpdate;
-                //else if (contactToUpdate.ClientType == IMAddressInfoType.RemoteNetwork)
                 if (contactToUpdate.MessageGateway != null)
                 {
                     
