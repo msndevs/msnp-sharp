@@ -52,6 +52,7 @@ namespace MSNPSharp
 
         private Guid addressBookId = Guid.Empty;
         private Owner owner = null;
+        private Contact gateway;
 
         public ContactList(NSMessageHandler handler)
             : this(WebServiceConstants.MessengerIndividualAddressBookId, null, handler)
@@ -64,9 +65,15 @@ namespace MSNPSharp
         }
 
         public ContactList(Guid abId, Owner owner, NSMessageHandler handler)
+            : this(abId, owner, null, handler)
+        {
+        }
+
+        public ContactList(Guid abId, Owner owner, Contact gateway, NSMessageHandler handler)
         {
             Reset();
 
+            this.gateway = gateway;
             this.addressBookId = abId;
             this.nsMessageHandler = handler;
             this.owner = owner;
@@ -663,11 +670,12 @@ namespace MSNPSharp
             else if (type == IMAddressInfoType.RemoteNetwork)
             {
                 tmpContact = new Contact(AddressBookId, account, type, 0, nsMessageHandler);
-                tmpContact.ContactList = new ContactList(nsMessageHandler);
+                tmpContact.ContactList = new ContactList(AddressBookId, null, tmpContact, nsMessageHandler);
             }
             else
             {
                 tmpContact = new Contact(AddressBookId, account, type, 0, nsMessageHandler);
+                tmpContact.Via = this.gateway;
             }
 
             lock (SyncRoot)

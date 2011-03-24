@@ -420,7 +420,7 @@ namespace MSNPSharp
             {
                 if (NSMessageHandler != null)
                 {
-                    ContactList.Owner.PhoneNumbers[ContactPhoneTypes.ContactPhoneBusiness] = value;
+                    PhoneNumbers[ContactPhoneTypes.ContactPhoneBusiness] = value;
                 }
             }
         }
@@ -435,7 +435,7 @@ namespace MSNPSharp
             {
                 if (NSMessageHandler != null)
                 {
-                    ContactList.Owner.PhoneNumbers[ContactPhoneTypes.ContactPhonePersonal] = value;
+                    PhoneNumbers[ContactPhoneTypes.ContactPhonePersonal] = value;
                 }
             }
         }

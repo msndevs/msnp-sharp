@@ -1000,7 +1000,6 @@ namespace MSNPSharp
                     else
                     {
                         receiver = receiverGateway.ContactList.GetContactWithCreate(receiverAccount, receiverAccountAddressType);
-                        receiver.MessageGateway = receiverGateway;
                     }
                 }
                 else
@@ -1008,14 +1007,6 @@ namespace MSNPSharp
                     receiver = GetGateway(receiverAccount, receiverAccountAddressType, nsMessageHandler);
                 }
             }
-
-            if (sender != null)
-            {
-                sender.MessageGateway = senderGateway;
-            }
-
-            if (receiver != null)
-                receiver.MessageGateway = receiverGateway;
 
             RoutingInfo routingInfo = new RoutingInfo(sender, senderGateway, receiver, receiverGateway, nsMessageHandler);
             routingInfo.SenderEndPointID = GetEPID(multiMimeMessage.From);

@@ -109,14 +109,14 @@ namespace MSNPSharp
             this.via = via;
 
             if (via == null && contact != null)
-                via = contact.MessageGateway;
+                via = contact.Via;
         }
 
         public ContactStatusChangedEventArgs(Contact contact, PresenceStatus oldStatus, PresenceStatus newStatus)
             : base(oldStatus, newStatus)
         {
             this.contact = contact;
-            this.via = contact.MessageGateway;
+            this.via = contact.Via;
         }
     }
 
