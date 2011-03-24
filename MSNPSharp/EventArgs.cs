@@ -107,13 +107,16 @@ namespace MSNPSharp
         {
             this.contact = contact;
             this.via = via;
+
+            if (via == null && contact != null)
+                via = contact.MessageGateway;
         }
 
         public ContactStatusChangedEventArgs(Contact contact, PresenceStatus oldStatus, PresenceStatus newStatus)
             : base(oldStatus, newStatus)
         {
             this.contact = contact;
-            this.via = null;
+            this.via = contact.MessageGateway;
         }
     }
 
