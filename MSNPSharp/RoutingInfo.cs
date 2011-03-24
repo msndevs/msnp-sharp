@@ -68,6 +68,26 @@ namespace MSNPSharp
             }
         }
 
+        private string senderAccount = string.Empty;
+
+        public string SenderAccount
+        {
+            get
+            {
+                return senderAccount;
+            }
+        }
+
+        private IMAddressInfoType senderType = IMAddressInfoType.None;
+
+        public IMAddressInfoType SenderType
+        {
+            get
+            {
+                return senderType;
+            }
+        }
+
 
         private Contact sender = null;
 
@@ -1000,6 +1020,8 @@ namespace MSNPSharp
             RoutingInfo routingInfo = new RoutingInfo(sender, senderGateway, receiver, receiverGateway, nsMessageHandler);
             routingInfo.SenderEndPointID = GetEPID(multiMimeMessage.From);
             routingInfo.ReceiverEndPointID = GetEPID(multiMimeMessage.To);
+            routingInfo.senderAccount = senderAccount;
+            routingInfo.senderType = senderAccountAddressType;
             return routingInfo;
         }
     }
