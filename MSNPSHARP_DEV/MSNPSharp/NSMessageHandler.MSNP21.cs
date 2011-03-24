@@ -1428,92 +1428,42 @@ namespace MSNPSharp
 
             MultiMimeMessage multiMimeMessage = new MultiMimeMessage(networkMessage.InnerBody);
 
-
             RoutingInfo routingInfo = RoutingInfo.FromMultiMimeMessage(multiMimeMessage, this);
             if (routingInfo == null)
             {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnNFYReceived] Get Rounting Info Error.");
-                return;
-            }
-
-
-
-            IMAddressInfoType fromAccountAddressType;
-            string fromAccount;
-            IMAddressInfoType fromViaAccountAddressType;
-            string fromViaAccount;
-
-            IMAddressInfoType toAccountAddressType;
-            string toAccount;
-            IMAddressInfoType toViaAccountAddressType;
-            string toViaAccount;
-
-            if ((false == Contact.ParseFullAccount(multiMimeMessage.From.ToString(),
-                out fromAccountAddressType, out fromAccount,
-                out fromViaAccountAddressType, out fromViaAccount))
-                ||
-                (false == Contact.ParseFullAccount(multiMimeMessage.To.ToString(),
-                out toAccountAddressType, out toAccount,
-                out toViaAccountAddressType, out toViaAccount)))
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                    "[OnSDGReceived] Cannot parse from or to: " + multiMimeMessage.From.ToString() + "|" + multiMimeMessage.To.ToString());
-
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[OnSDGReceived] Get Rounting Info Error.");
                 return;
             }
 
             Contact sender = null; // via=fb, circle or temporary group
             Contact by = null; // invidiual sender, 1 on 1 chat
 
-            if (routingInfo.ReceiverType == IMAddressInfoType.Circle)
+            if (routingInfo.ReceiverType == IMAddressInfoType.Circle ||
+                routingInfo.ReceiverType == IMAddressInfoType.TemporaryGroup)
             {
-                sender = ContactList.GetCircle(routingInfo.ReceiverAccount);
+                sender = routingInfo.Receiver;
 
                 if (sender == null)
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                        "[OnSDGReceived] Error: Cannot find circle: " + multiMimeMessage.To.ToString());
+                        "[OnSDGReceived] Error: Cannot find group: " + multiMimeMessage.To.ToString());
 
                     return;
                 }
 
-                if (sender.ContactList != null)
-                {
-                    by = sender.ContactList.GetContactWithCreate(fromAccount, fromAccountAddressType);
-                }
-            }
-            else if (routingInfo.ReceiverType == IMAddressInfoType.TemporaryGroup)
-            {
-                sender = GetMultiparty(routingInfo.ReceiverAccount);
-
-                if (sender == null)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                        "[OnSDGReceived] Error: Cannot find temp group: " + multiMimeMessage.To.ToString());
-
-                    return;
-                }
-
-                if (sender.ContactList != null)
-                {
-                    by = sender.ContactList.GetContactWithCreate(fromAccount, fromAccountAddressType);
-                }
+                by = routingInfo.Sender;
             }
 
             // External Network
-            if (by == null && fromViaAccountAddressType != IMAddressInfoType.None && !String.IsNullOrEmpty(fromViaAccount))
+            if (by == null && routingInfo.SenderGateway != null)
             {
-                by = ContactList.GetContact(fromViaAccount, fromViaAccountAddressType);
-
-                if (by != null && by.ContactList != null)
-                {
-                    sender = by.ContactList.GetContactWithCreate(fromAccount, fromAccountAddressType);
-                }
+                by = routingInfo.SenderGateway;
+                sender = routingInfo.Sender;
             }
 
             if (by == null)
             {
-                sender = ContactList.GetContactWithCreate(fromAccount, fromAccountAddressType);
+                sender = routingInfo.Sender;
                 by = sender;
             }
 
