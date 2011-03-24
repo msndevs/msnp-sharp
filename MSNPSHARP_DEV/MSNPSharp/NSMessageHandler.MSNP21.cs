@@ -1011,9 +1011,9 @@ namespace MSNPSharp
                 #region circles xml
                 case "application/circles+xml":
                     {
-                        if (routingInfo.Sender.ClientType == IMAddressInfoType.Circle)
+                        if (routingInfo.SenderType == IMAddressInfoType.Circle)
                         {
-                            Contact circle = ContactList.GetCircle(routingInfo.Sender.Account);
+                            Contact circle = ContactList.GetCircle(routingInfo.SenderAccount);
 
                             if (circle == null)
                             {
@@ -1076,18 +1076,18 @@ namespace MSNPSharp
                                 }
                             }
                         }
-                        else if (routingInfo.Sender.ClientType == IMAddressInfoType.TemporaryGroup)
+                        else if (routingInfo.SenderType == IMAddressInfoType.TemporaryGroup)
                         {
-                            Contact group = GetMultiparty(routingInfo.Sender.Account);
+                            Contact group = GetMultiparty(routingInfo.SenderAccount);
 
                             if (group == null)
                             {
                                 NSMessageProcessor nsmp = (NSMessageProcessor)MessageProcessor;
                                 int transId = nsmp.IncreaseTransactionID();
 
-                                group = new Contact(routingInfo.Sender.Account, IMAddressInfoType.TemporaryGroup, this);
+                                group = new Contact(routingInfo.SenderAccount, IMAddressInfoType.TemporaryGroup, this);
                                 group.TransactionID = transId;
-                                group.ContactList = new ContactList(new Guid(routingInfo.Sender.Account.Split('@')[0]), null, group, this);
+                                group.ContactList = new ContactList(new Guid(routingInfo.SenderAccount.Split('@')[0]), null, group, this);
 
                                 lock (multiparties)
                                     multiparties[transId] = group;
