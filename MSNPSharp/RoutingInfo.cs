@@ -47,8 +47,10 @@ namespace MSNPSharp
         private Contact senderGateway;
         private NSMessageHandler nsMessageHandler;
 
-        private Contact receiver;
+        private string receiverAccount = String.Empty;
         private Guid receiverEndPointID = Guid.Empty;
+        private IMAddressInfoType receiverType = IMAddressInfoType.None;
+        private Contact receiver;
         private Contact receiverGateway;
 
         public bool FromOwner
@@ -56,6 +58,14 @@ namespace MSNPSharp
             get
             {
                 return Sender == this.NSMessageHandler.Owner;
+            }
+        }
+
+        public bool ToOwner
+        {
+            get
+            {
+                return Receiver == this.NSMessageHandler.Owner;
             }
         }
 
@@ -108,6 +118,22 @@ namespace MSNPSharp
             private set
             {
                 senderEndPointID = value;
+            }
+        }
+
+        public string ReceiverAccount
+        {
+            get
+            {
+                return receiverAccount;
+            }
+        }
+
+        public IMAddressInfoType ReceiverType
+        {
+            get
+            {
+                return receiverType;
             }
         }
 
@@ -300,6 +326,8 @@ namespace MSNPSharp
             routingInfo.ReceiverEndPointID = GetEPID(multiMimeMessage.To);
             routingInfo.senderAccount = senderAccount;
             routingInfo.senderType = senderAccountAddressType;
+            routingInfo.receiverAccount = receiverAccount;
+            routingInfo.receiverType = receiverAccountAddressType;
             return routingInfo;
         }
     }
