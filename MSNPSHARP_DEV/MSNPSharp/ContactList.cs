@@ -195,7 +195,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.ListEnumerator(base[IMAddressInfoType.None].GetEnumerator(), RoleLists.None);
+                return new ContactList.ListEnumerator(new Dictionary<string, Contact>(base[IMAddressInfoType.None]).GetEnumerator(), RoleLists.None);
             }
         }
 
@@ -206,7 +206,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.ListEnumerator(base[IMAddressInfoType.None].GetEnumerator(), RoleLists.Forward);
+                return new ContactList.ListEnumerator(new Dictionary<string, Contact>(base[IMAddressInfoType.None]).GetEnumerator(), RoleLists.Forward);
             }
         }
 
@@ -217,7 +217,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.ListEnumerator(base[IMAddressInfoType.None].GetEnumerator(), RoleLists.Allow);
+                return new ContactList.ListEnumerator(new Dictionary<string, Contact>(base[IMAddressInfoType.None]).GetEnumerator(), RoleLists.Allow);
             }
         }
 
@@ -228,7 +228,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.ListEnumerator(base[IMAddressInfoType.None].GetEnumerator(), RoleLists.Block);
+                return new ContactList.ListEnumerator(new Dictionary<string, Contact>(base[IMAddressInfoType.None]).GetEnumerator(), RoleLists.Block);
             }
         }
 
@@ -239,7 +239,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.ListEnumerator(base[IMAddressInfoType.None].GetEnumerator(), RoleLists.Hide);
+                return new ContactList.ListEnumerator(new Dictionary<string, Contact>(base[IMAddressInfoType.None]).GetEnumerator(), RoleLists.Hide);
             }
         }
 
@@ -250,7 +250,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.ListEnumerator(base[IMAddressInfoType.None].GetEnumerator(), RoleLists.Reverse);
+                return new ContactList.ListEnumerator(new Dictionary<string, Contact>(base[IMAddressInfoType.None]).GetEnumerator(), RoleLists.Reverse);
             }
         }
 
@@ -261,7 +261,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.ListEnumerator(base[IMAddressInfoType.None].GetEnumerator(), RoleLists.Pending);
+                return new ContactList.ListEnumerator(new Dictionary<string, Contact>(base[IMAddressInfoType.None]).GetEnumerator(), RoleLists.Pending);
             }
         }
 
@@ -272,7 +272,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.EmailListEnumerator(base[IMAddressInfoType.None].GetEnumerator());
+                return new ContactList.EmailListEnumerator(new Dictionary<string, Contact>(base[IMAddressInfoType.None]).GetEnumerator());
             }
         }
 
@@ -283,7 +283,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.CircleListEnumerator(base[IMAddressInfoType.Circle].GetEnumerator(), RoleLists.None);
+                return new ContactList.CircleListEnumerator(new Dictionary<string, Contact>(base[IMAddressInfoType.Circle]).GetEnumerator(), RoleLists.None);
             }
         }
 
@@ -294,7 +294,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.ListEnumerator(base[IMAddressInfoType.RemoteNetwork].GetEnumerator(), RoleLists.None);
+                return new ContactList.ListEnumerator(new Dictionary<string, Contact>(base[IMAddressInfoType.RemoteNetwork]).GetEnumerator(), RoleLists.None);
             }
         }
 
@@ -318,7 +318,7 @@ namespace MSNPSharp
         {
             get
             {
-                return new ContactList.ListEnumerator(base[IMAddressInfoType.WindowsLive].GetEnumerator(), RoleLists.None);
+                return new ContactList.ListEnumerator(new Dictionary<string, Contact>(base[IMAddressInfoType.WindowsLive]).GetEnumerator(), RoleLists.None);
             }
         }
 
