@@ -148,15 +148,6 @@ namespace MSNPSharp
             }
         }
 
-        private Contact messageGateway = null;
-
-        public Contact MessageGateway
-        {
-            get { return messageGateway; }
-            private set { messageGateway = value; }
-        }
-
-
         protected RoutingInfo(Contact sender, Contact senderGateway, Contact receiver, Contact receiverGateway, NSMessageHandler nsMessageHandler)
         {
             Sender = sender;
@@ -933,8 +924,6 @@ namespace MSNPSharp
             IMAddressInfoType receiverGatewayAccountAddressType;
             string receiverGatewayAccount = string.Empty;
 
-            Contact messageGateway = null;
-
             if ((false == Contact.ParseFullAccount(multiMimeMessage.From.ToString(),
                 out senderAccountAddressType, out senderAccount,
                 out senderGatewayAccountAddressType, out senderGatewayAccount))
@@ -953,9 +942,9 @@ namespace MSNPSharp
             if (multiMimeMessage.From.HasAttribute("via"))
                 senderGateway = GetGatewayFromAccountString(multiMimeMessage.From["via"], nsMessageHandler);
 
-            if (multiMimeMessage.RoutingHeaders.ContainsKey(MIMERoutingHeaders.Via) && messageGateway == null) //The gateway is sender gateway
+            if (multiMimeMessage.RoutingHeaders.ContainsKey(MIMERoutingHeaders.Via) && senderGateway == null) //The gateway is sender gateway
             {
-                messageGateway = GetGatewayFromAccountString(multiMimeMessage.RoutingHeaders[MIMERoutingHeaders.Via], nsMessageHandler);
+                senderGateway = GetGatewayFromAccountString(multiMimeMessage.RoutingHeaders[MIMERoutingHeaders.Via], nsMessageHandler);
             }
             Contact sender = null;
 
@@ -1011,9 +1000,6 @@ namespace MSNPSharp
             RoutingInfo routingInfo = new RoutingInfo(sender, senderGateway, receiver, receiverGateway, nsMessageHandler);
             routingInfo.SenderEndPointID = GetEPID(multiMimeMessage.From);
             routingInfo.ReceiverEndPointID = GetEPID(multiMimeMessage.To);
-
-            routingInfo.MessageGateway = messageGateway;
-
             return routingInfo;
         }
     }

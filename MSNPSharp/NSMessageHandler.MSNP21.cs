@@ -741,6 +741,8 @@ namespace MSNPSharp
 
                     OnMultipartyCreated(new MultipartyCreatedEventArgs(group));
 
+                    group.SetStatus(PresenceStatus.Online);
+
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "MultipartyCreated: " + group.Account);
                 }
                 else
@@ -782,9 +784,9 @@ namespace MSNPSharp
 
                         if (multiMimeMessage.ContentHeaders[MIMEHeaderStrings.NotifType].Value == "Sync")
                         {
-                            if (routingInfo.MessageGateway != null && routingInfo.MessageGateway.ClientType == IMAddressInfoType.Circle)
+                            if (routingInfo.SenderGateway != null && routingInfo.SenderGateway.ClientType == IMAddressInfoType.Circle)
                             {
-                                JoinMultiparty(routingInfo.MessageGateway);
+                                JoinMultiparty(routingInfo.SenderGateway);
                             }
 
                             //Sync the contact in contact list with the contact in gateway.
@@ -837,8 +839,8 @@ namespace MSNPSharp
                                                         PresenceStatus newStatus = ParseStatus(node.InnerText);
                                                         routingInfo.Sender.SetStatus(newStatus);
 
-                                                        OnContactStatusChanged(new ContactStatusChangedEventArgs(routingInfo.Sender, routingInfo.MessageGateway, oldStatus, newStatus));
-                                                        OnContactOnline(new ContactStatusChangedEventArgs(routingInfo.Sender, routingInfo.MessageGateway, oldStatus, newStatus));
+                                                        OnContactStatusChanged(new ContactStatusChangedEventArgs(routingInfo.Sender, routingInfo.SenderGateway, oldStatus, newStatus));
+                                                        OnContactOnline(new ContactStatusChangedEventArgs(routingInfo.Sender, routingInfo.SenderGateway, oldStatus, newStatus));
 
                                                         break;
 
@@ -1091,6 +1093,8 @@ namespace MSNPSharp
                                     multiparties[transId] = group;
 
                                 OnMultipartyCreated(new MultipartyCreatedEventArgs(group));
+
+                                group.SetStatus(PresenceStatus.Online);
                             }
 
                             if (multiMimeMessage.InnerBody == null || multiMimeMessage.InnerBody.Length == 0)
@@ -1162,12 +1166,12 @@ namespace MSNPSharp
                                 routingInfo.Sender.SetStatus(newStatus);
 
                                 // The contact changed status
-                                OnContactStatusChanged(new ContactStatusChangedEventArgs(routingInfo.Sender, routingInfo.MessageGateway, oldStatus, newStatus));
+                                OnContactStatusChanged(new ContactStatusChangedEventArgs(routingInfo.Sender, routingInfo.SenderGateway, oldStatus, newStatus));
 
                                 if (newStatus == PresenceStatus.Online)
-                                    OnContactOnline(new ContactStatusChangedEventArgs(routingInfo.Sender, routingInfo.MessageGateway, oldStatus, newStatus));
+                                    OnContactOnline(new ContactStatusChangedEventArgs(routingInfo.Sender, routingInfo.SenderGateway, oldStatus, newStatus));
                                 else
-                                    OnContactOffline(new ContactStatusChangedEventArgs(routingInfo.Sender, routingInfo.MessageGateway, oldStatus, newStatus));
+                                    OnContactOffline(new ContactStatusChangedEventArgs(routingInfo.Sender, routingInfo.SenderGateway, oldStatus, newStatus));
                             }
                         }
                     }
@@ -1239,8 +1243,8 @@ namespace MSNPSharp
                                             PresenceStatus newStatus = PresenceStatus.Offline;
                                             routingInfo.Sender.SetStatus(newStatus);
 
-                                            OnContactStatusChanged(new ContactStatusChangedEventArgs(routingInfo.Sender, routingInfo.MessageGateway, oldStatus, newStatus));
-                                            OnContactOffline(new ContactStatusChangedEventArgs(routingInfo.Sender, routingInfo.MessageGateway, oldStatus, newStatus));
+                                            OnContactStatusChanged(new ContactStatusChangedEventArgs(routingInfo.Sender, routingInfo.SenderGateway, oldStatus, newStatus));
+                                            OnContactOffline(new ContactStatusChangedEventArgs(routingInfo.Sender, routingInfo.SenderGateway, oldStatus, newStatus));
                                             break;
                                         }
                                 }
@@ -1341,10 +1345,10 @@ namespace MSNPSharp
                                     goesOfflineGroup.SetStatus(newStatus);
 
                                     // the contact changed status
-                                    OnContactStatusChanged(new ContactStatusChangedEventArgs(goesOfflineGroup, routingInfo.MessageGateway, oldStatus, newStatus));
+                                    OnContactStatusChanged(new ContactStatusChangedEventArgs(goesOfflineGroup, routingInfo.SenderGateway, oldStatus, newStatus));
 
                                     // the contact goes offline
-                                    OnContactOffline(new ContactStatusChangedEventArgs(goesOfflineGroup, routingInfo.MessageGateway, oldStatus, newStatus));
+                                    OnContactOffline(new ContactStatusChangedEventArgs(goesOfflineGroup, routingInfo.SenderGateway, oldStatus, newStatus));
 
                                 }
                             }
