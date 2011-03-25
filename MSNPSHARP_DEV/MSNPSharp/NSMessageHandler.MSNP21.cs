@@ -242,7 +242,7 @@ namespace MSNPSharp
         /// <param name="onCreated">The handler to be executed when multiparty created (must be provided)</param>
         /// <exception cref="ArgumentNullException">inviteQueue or event handler is null</exception>
         /// <exception cref="InvalidOperationException">At least 2 contacts is required except you and contacts must support multiparty</exception>
-        /// <returns></returns>
+        /// <returns>Transaction ID</returns>
         public int CreateMultiparty(List<Contact> inviteQueue, EventHandler<MultipartyCreatedEventArgs> onCreated)
         {
             if (inviteQueue == null || inviteQueue.Count == 0)
