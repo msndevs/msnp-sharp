@@ -857,7 +857,7 @@ namespace MSNPSharp
 
         #region OnNFYReceived
 
-        private void ProcessNFYPUTMessage(MultiMimeMessage multiMimeMessage, RoutingInfo routingInfo)
+        private void OnNFYPUTReceived(MultiMimeMessage multiMimeMessage, RoutingInfo routingInfo)
         {
             switch (multiMimeMessage.ContentHeaders[MIMEContentHeaders.ContentType].Value)
             {
@@ -1273,7 +1273,7 @@ namespace MSNPSharp
             }
         }
 
-        private void ProcessNFYDELMessage(MultiMimeMessage multiMimeMessage, RoutingInfo routingInfo)
+        private void OnNFYDELReceived(MultiMimeMessage multiMimeMessage, RoutingInfo routingInfo)
         {
             switch (multiMimeMessage.ContentHeaders[MIMEContentHeaders.ContentType].Value)
             {
@@ -1493,17 +1493,19 @@ namespace MSNPSharp
 
             if (command == "PUT")
             {
-                ProcessNFYPUTMessage(multiMimeMessage, routingInfo);
+                OnNFYPUTReceived(multiMimeMessage, routingInfo);
             }
             else if (command == "DEL")
             {
-                ProcessNFYDELMessage(multiMimeMessage, routingInfo);
+                OnNFYDELReceived(multiMimeMessage, routingInfo);
             }
         }
 
         #endregion
 
         #region OnSDGReceived
+
+        //This is actually another OnMSGxxx
 
         /// <summary>
         /// Called when a SDG command has been received.
@@ -1520,6 +1522,8 @@ namespace MSNPSharp
                 return;
 
             MultiMimeMessage multiMimeMessage = new MultiMimeMessage(networkMessage.InnerBody);
+
+            #region Get the Routing Info
 
             RoutingInfo routingInfo = RoutingInfo.FromMultiMimeMessage(multiMimeMessage, this);
             if (routingInfo == null)
@@ -1558,7 +1562,9 @@ namespace MSNPSharp
             {
                 sender = routingInfo.Sender;
                 by = sender;
-            }
+            } 
+
+            #endregion
 
             if (multiMimeMessage.ContentHeaders.ContainsKey(MIMEContentHeaders.MessageType))
             {
@@ -1567,111 +1573,124 @@ namespace MSNPSharp
                     default:
                         {
                             Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                                "!!![OnSDGReceived]!!! UNHANDLED MESSAGE TYPE: " + multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString() +
-                                "\r\n" + multiMimeMessage.ToDebugString());
+                                "[OnSDGReceived] UNHANDLED MESSAGE TYPE: \r\n" + multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString() +
+                                "\r\n\r\nMessage Body: \r\n\r\n" + multiMimeMessage.ToDebugString());
                         }
                         break;
 
                     case "nudge":
-                        {
-                            OnNudgeReceived(new NudgeArrivedEventArgs(sender, by));
-                        }
+                        OnNudgeReceived(new NudgeArrivedEventArgs(sender, by));
                         break;
 
                     case "control/typing":
-                        {
-                            OnTypingMessageReceived(new TypingArrivedEventArgs(sender, by));
-                        }
+                        OnTypingMessageReceived(new TypingArrivedEventArgs(sender, by));
                         break;
 
                     case "text":
-                        {
-                            TextMessage txtMessage = new TextMessage(Encoding.UTF8.GetString(multiMimeMessage.InnerBody));
-                            StrDictionary strDic = new StrDictionary();
-                            foreach (string key in multiMimeMessage.ContentHeaders.Keys)
-                            {
-                                strDic.Add(key, multiMimeMessage.ContentHeaders[key].ToString());
-                            }
-                            txtMessage.ParseHeader(strDic);
-
-                            OnTextMessageReceived(new TextMessageArrivedEventArgs(sender, txtMessage, by));
-                        }
+                        OnSDGTextMessageReceived(multiMimeMessage, sender, by);
                         break;
-
 
                     case "customemoticon":
-                        {
-                            EmoticonMessage emoticonMessage = new EmoticonMessage();
-                            emoticonMessage.EmoticonType = multiMimeMessage.ContentHeaders[MIMEContentHeaders.ContentType] == "text/x-mms-animemoticon" ?
-                                EmoticonType.AnimEmoticon : EmoticonType.StaticEmoticon;
-
-                            emoticonMessage.ParseBytes(multiMimeMessage.InnerBody);
-
-                            foreach (Emoticon emoticon in emoticonMessage.Emoticons)
-                            {
-                                OnEmoticonDefinitionReceived(new EmoticonDefinitionEventArgs(sender, emoticon));
-                            }
-                        }
+                        OnSDGCustomEmoticonReceived(multiMimeMessage, sender, by);
                         break;
 
-
                     case "wink":
-                        {
-                            Wink wink = new Wink();
-                            wink.SetContext(Encoding.UTF8.GetString(multiMimeMessage.InnerBody));
-
-                            OnWinkDefinitionReceived(new WinkEventArgs(sender, wink));
-                        }
+                        OnSDGWinkReceived(multiMimeMessage, sender, by);
                         break;
 
                     case "signal/p2p":
-                        {
-                            SLPMessage slpMessage = SLPMessage.Parse(multiMimeMessage.InnerBody);
-                            if (slpMessage != null)
-                            {
-                                if (slpMessage.ContentType == "application/x-msnmsgr-transreqbody" ||
-                                    slpMessage.ContentType == "application/x-msnmsgr-transrespbody" ||
-                                    slpMessage.ContentType == "application/x-msnmsgr-transdestaddrupdate")
-                                {
-                                    P2PSession.ProcessDirectInvite(slpMessage, this, null);
-                                }
-                            }
-                        }
+                        OnSDGP2PSignalReceived(multiMimeMessage, sender, by);
                         break;
-
                     case "data":
-                        {
-                            P2PVersion toVer = multiMimeMessage.To.HasAttribute(MIMERoutingHeaders.EPID) ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
-                            Guid ep = (toVer == P2PVersion.P2PV1) ? Guid.Empty : new Guid(multiMimeMessage.From[MIMERoutingHeaders.EPID]);
-                            string[] offsets = multiMimeMessage.ContentHeaders.ContainsKey("Bridging-Offsets") ?
-                                multiMimeMessage.ContentHeaders["Bridging-Offsets"].ToString().Split(',') :
-                                new string[] { "0" };
-                            List<long> offsetList = new List<long>();
-                            foreach (string os in offsets)
-                            {
-                                offsetList.Add(long.Parse(os));
-                            }
-
-                            P2PMessage p2pData = new P2PMessage(toVer);
-                            P2PMessage[] p2pDatas = p2pData.CreateFromOffsets(offsetList.ToArray(), multiMimeMessage.InnerBody);
-
-                            if (multiMimeMessage.ContentHeaders.ContainsKey("Pipe"))
-                            {
-                                SDGBridge.packageNumber = ushort.Parse(multiMimeMessage.ContentHeaders["Pipe"]);
-                            }
-
-                            foreach (P2PMessage m in p2pDatas)
-                            {
-                                P2PBridge p2pBridge = (by.DirectBridge != null && by.DirectBridge.IsOpen)
-                                    ? by.DirectBridge : SDGBridge;
-
-                                P2PHandler.ProcessP2PMessage(p2pBridge, sender, ep, m);
-                            }
-                        }
+                        OnSDGDataMessageReceived(multiMimeMessage, sender, by);
                         break;
                 }
             }
         }
+
+        #region Process SDG Messages
+        //Note: Don't make these function protected.
+
+        private void OnSDGWinkReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact by)
+        {
+            Wink wink = new Wink();
+            wink.SetContext(Encoding.UTF8.GetString(multiMimeMessage.InnerBody));
+
+            OnWinkDefinitionReceived(new WinkEventArgs(sender, wink));
+        }
+
+        private void OnSDGCustomEmoticonReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact by)
+        {
+            EmoticonMessage emoticonMessage = new EmoticonMessage();
+            emoticonMessage.EmoticonType = multiMimeMessage.ContentHeaders[MIMEContentHeaders.ContentType] == "text/x-mms-animemoticon" ?
+                EmoticonType.AnimEmoticon : EmoticonType.StaticEmoticon;
+
+            emoticonMessage.ParseBytes(multiMimeMessage.InnerBody);
+
+            foreach (Emoticon emoticon in emoticonMessage.Emoticons)
+            {
+                OnEmoticonDefinitionReceived(new EmoticonDefinitionEventArgs(sender, emoticon));
+            }
+        }
+
+        private void OnSDGTextMessageReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact by)
+        {
+            TextMessage txtMessage = new TextMessage(Encoding.UTF8.GetString(multiMimeMessage.InnerBody));
+            StrDictionary strDic = new StrDictionary();
+            foreach (string key in multiMimeMessage.ContentHeaders.Keys)
+            {
+                strDic.Add(key, multiMimeMessage.ContentHeaders[key].ToString());
+            }
+            txtMessage.ParseHeader(strDic);
+
+            OnTextMessageReceived(new TextMessageArrivedEventArgs(sender, txtMessage, by));
+        }
+
+        private void OnSDGP2PSignalReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact by)
+        {
+            SLPMessage slpMessage = SLPMessage.Parse(multiMimeMessage.InnerBody);
+            if (slpMessage != null)
+            {
+                if (slpMessage.ContentType == "application/x-msnmsgr-transreqbody" ||
+                    slpMessage.ContentType == "application/x-msnmsgr-transrespbody" ||
+                    slpMessage.ContentType == "application/x-msnmsgr-transdestaddrupdate")
+                {
+                    P2PSession.ProcessDirectInvite(slpMessage, this, null);
+                }
+            }
+        }
+
+        private void OnSDGDataMessageReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact by)
+        {
+            P2PVersion toVer = multiMimeMessage.To.HasAttribute(MIMERoutingHeaders.EPID) ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
+            Guid ep = (toVer == P2PVersion.P2PV1) ? Guid.Empty : new Guid(multiMimeMessage.From[MIMERoutingHeaders.EPID]);
+            string[] offsets = multiMimeMessage.ContentHeaders.ContainsKey("Bridging-Offsets") ?
+                multiMimeMessage.ContentHeaders["Bridging-Offsets"].ToString().Split(',') :
+                new string[] { "0" };
+            List<long> offsetList = new List<long>();
+            foreach (string os in offsets)
+            {
+                offsetList.Add(long.Parse(os));
+            }
+
+            P2PMessage p2pData = new P2PMessage(toVer);
+            P2PMessage[] p2pDatas = p2pData.CreateFromOffsets(offsetList.ToArray(), multiMimeMessage.InnerBody);
+
+            if (multiMimeMessage.ContentHeaders.ContainsKey("Pipe"))
+            {
+                SDGBridge.packageNumber = ushort.Parse(multiMimeMessage.ContentHeaders["Pipe"]);
+            }
+
+            foreach (P2PMessage m in p2pDatas)
+            {
+                P2PBridge p2pBridge = (by.DirectBridge != null && by.DirectBridge.IsOpen)
+                    ? by.DirectBridge : SDGBridge;
+
+                P2PHandler.ProcessP2PMessage(p2pBridge, sender, ep, m);
+            }
+        }
+
+        #endregion
 
         #endregion
 
