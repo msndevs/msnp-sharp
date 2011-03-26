@@ -663,12 +663,19 @@ namespace MSNPSharpClient
         void ContactService_ContactRemoved(object sender, ListMutateEventArgs e)
         {
             Trace.WriteLine(e.Contact.Hash + " removed from the " + e.AffectedList + " role list.");
+            if (toolStripSortByStatus.Checked)
+                SortByStatus(e.Contact, e.Contact.Via);
+            else
+                SortByGroup(e.Contact, e.Contact.Via);
         }
 
         void ContactService_ContactAdded(object sender, ListMutateEventArgs e)
         {
             Trace.WriteLine(e.Contact.Hash + " added to the " + e.AffectedList + " role list.");
-
+            if (toolStripSortByStatus.Checked)
+                SortByStatus(e.Contact, e.Contact.Via);
+            else
+                SortByGroup(e.Contact, e.Contact.Via);
         }
 
         void ContactService_ReverseRemoved(object sender, ContactEventArgs e)
@@ -1820,6 +1827,11 @@ namespace MSNPSharpClient
             newnode.Tag = circleMember;
         }
 
+        private void SortByStatus(Contact contact, Contact via)
+        {
+            SortByStatus(new ContactStatusChangedEventArgs(contact, via, contact.Status, contact.Status));
+        }
+        
         private void SortByStatus(ContactStatusChangedEventArgs e)
         {
             Contact contactToUpdate = (e != null) ? e.Contact : null;
@@ -2082,6 +2094,11 @@ namespace MSNPSharpClient
             }
         }
 
+        private void SortByGroup(Contact contact, Contact via)
+        {
+            SortByGroup(new ContactStatusChangedEventArgs(contact, via, contact.Status, contact.Status));
+        }
+        
         private void SortByGroup(ContactStatusChangedEventArgs e)
         {
             Contact contactToUpdate = (e != null) ? e.Contact : null;
