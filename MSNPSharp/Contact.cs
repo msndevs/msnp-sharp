@@ -1711,8 +1711,29 @@ namespace MSNPSharp
         {
             return type.ToString() + ":" + account.ToLowerInvariant();
         }
+        
+        internal static bool IsSpecialGatewayType(IMAddressInfoType type)
+        {
+            if (type == IMAddressInfoType.Circle || type == IMAddressInfoType.TemporaryGroup)
+                return true;
 
-        public static bool ParseFullAccount(
+            if (type == IMAddressInfoType.RemoteNetwork)
+                return true;
+
+            return false;
+        }
+        
+        internal static bool ParseFullAccount(
+            string fullAccount,
+            out IMAddressInfoType accountAddressType, 
+            out string account)
+        {
+            IMAddressInfoType viaAccountAddressType = IMAddressInfoType.None;
+            string viaAccount = string.Empty;
+            return ParseFullAccount(fullAccount, out accountAddressType, out account, out viaAccountAddressType, out viaAccount);
+        }
+
+        internal static bool ParseFullAccount(
             string fullAccount,
             out IMAddressInfoType accountAddressType, out string account,
             out IMAddressInfoType viaAccountAddressType, out string viaAccount)
