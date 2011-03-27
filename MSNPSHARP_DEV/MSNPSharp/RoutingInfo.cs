@@ -237,17 +237,6 @@ namespace MSNPSharp
             return Guid.Empty;
         }
 
-        private static bool IsSpecialGatewayType(string account, IMAddressInfoType type)
-        {
-            if (type == IMAddressInfoType.Circle || type == IMAddressInfoType.TemporaryGroup)
-                return true;
-
-            if (type == IMAddressInfoType.RemoteNetwork && account != RemoteNetworkGateways.WindowsLiveGateway)
-                return true;
-
-            return false;
-        }
-
         internal static RoutingInfo FromMultiMimeMessage(MultiMimeMessage multiMimeMessage, NSMessageHandler nsMessageHandler)
         {
             IMAddressInfoType senderAccountAddressType;
@@ -291,7 +280,7 @@ namespace MSNPSharp
 
             bool fromMyself = (senderAccount == nsMessageHandler.Owner.Account && senderAccountAddressType == IMAddressInfoType.WindowsLive);
 
-            if (!IsSpecialGatewayType(senderAccount, senderAccountAddressType))
+            if (!Contact.IsSpecialGatewayType(senderAccountAddressType))
             {
                 if (senderGateway == null)
                     sender = fromMyself ? nsMessageHandler.Owner : nsMessageHandler.ContactList.GetContactWithCreate(senderAccount, senderAccountAddressType);
@@ -307,7 +296,7 @@ namespace MSNPSharp
 
             bool sentToMe = (receiverAccount == nsMessageHandler.Owner.Account && receiverAccountAddressType == IMAddressInfoType.WindowsLive);
 
-            if (!IsSpecialGatewayType(receiverAccount, receiverAccountAddressType))
+            if (!Contact.IsSpecialGatewayType(receiverAccountAddressType))
             {
                 if (receiverGateway == null)
                     receiver = sentToMe ? nsMessageHandler.Owner : nsMessageHandler.ContactList.GetContactWithCreate(receiverAccount, receiverAccountAddressType);

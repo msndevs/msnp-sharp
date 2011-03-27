@@ -101,6 +101,10 @@ namespace MSNPSharp
         /// Occurs when a contact left the group chat.
         /// </summary>
         public event EventHandler<GroupChatParticipationEventArgs> LeftGroupChat;
+        /// <summary>
+        /// Occurs after the user on another end point closed the IM window.
+        /// </summary>
+        public event EventHandler<CloseIMWindowEventArgs> RemoteEndPointCloseIMWindow;
 
         /// <summary>
         /// Fires the <see cref="ContactStatusChanged"/> event.
@@ -201,6 +205,26 @@ namespace MSNPSharp
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                e.Contact + " left group chat " + e.Via.ToString(), GetType().Name);
+        }
+        
+        protected virtual void OnRemoteEndPointCloseIMWindow(CloseIMWindowEventArgs e)
+        {
+            if(RemoteEndPointCloseIMWindow != null)
+                RemoteEndPointCloseIMWindow(this, e);
+            
+            if(e.Sender != null && e.SenderEndPoint != null)
+            {
+                string partiesString = string.Empty;
+                foreach(Contact party in e.Parties)
+                {
+                    partiesString += party.ToString() + "\r\n";
+                }
+                
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                                  "User at End Point: " + e.SenderEndPoint.ToString() + " has closed the IM window.\r\n" +
+                                  "Parties in the conversation: \r\n" + 
+                                  partiesString);
+            }
         }
 
         #endregion
@@ -1570,46 +1594,87 @@ namespace MSNPSharp
             {
                 switch (multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
                 {
-                    default:
-                        {
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                                "[OnSDGReceived] UNHANDLED MESSAGE TYPE: \r\n" + multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString() +
-                                "\r\n\r\nMessage Body: \r\n\r\n" + multiMimeMessage.ToDebugString());
-                        }
-                        break;
+                default:
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                        "[OnSDGReceived] UNHANDLED MESSAGE TYPE: \r\n" + multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString() +
+                        "\r\n\r\nMessage Body: \r\n\r\n" + multiMimeMessage.ToDebugString());
+                    break;
 
-                    case "nudge":
-                        OnNudgeReceived(new NudgeArrivedEventArgs(sender, by));
-                        break;
+                case "nudge":
+                    OnNudgeReceived(new NudgeArrivedEventArgs(sender, by));
+                    break;
 
-                    case "control/typing":
-                        OnTypingMessageReceived(new TypingArrivedEventArgs(sender, by));
-                        break;
+                case "control/typing":
+                    OnTypingMessageReceived(new TypingArrivedEventArgs(sender, by));
+                    break;
 
-                    case "text":
-                        OnSDGTextMessageReceived(multiMimeMessage, sender, by);
-                        break;
+                case "text":
+                    OnSDGTextMessageReceived(multiMimeMessage, sender, by);
+                    break;
 
-                    case "customemoticon":
-                        OnSDGCustomEmoticonReceived(multiMimeMessage, sender, by);
-                        break;
+                case "customemoticon":
+                    OnSDGCustomEmoticonReceived(multiMimeMessage, sender, by);
+                    break;
 
-                    case "wink":
-                        OnSDGWinkReceived(multiMimeMessage, sender, by);
-                        break;
+                case "wink":
+                    OnSDGWinkReceived(multiMimeMessage, sender, by);
+                    break;
 
-                    case "signal/p2p":
-                        OnSDGP2PSignalReceived(multiMimeMessage, sender, by);
-                        break;
-                    case "data":
-                        OnSDGDataMessageReceived(multiMimeMessage, sender, by);
-                        break;
+                case "signal/p2p":
+                    OnSDGP2PSignalReceived(multiMimeMessage, sender, by);
+                    break;
+                case "signal/closeimwindow":
+                    OnSDGCloseIMWindowReceived(multiMimeMessage, routingInfo);
+                    break;
+                case "data":
+                    OnSDGDataMessageReceived(multiMimeMessage, sender, by);
+                    break;
                 }
             }
         }
 
         #region Process SDG Messages
         //Note: Don't make these function protected.
+        
+        private void OnSDGCloseIMWindowReceived(MultiMimeMessage multiMimeMessage, RoutingInfo routingInfo)
+        {
+            string partiesString = Encoding.UTF8.GetString(multiMimeMessage.InnerBody);
+            if(string.IsNullOrEmpty(partiesString))
+                return;
+            string[] parties = partiesString.Split(new char[]{'/'}, StringSplitOptions.RemoveEmptyEntries);
+            IMAddressInfoType addressInfo = IMAddressInfoType.None;
+            string account = string.Empty;
+            
+            List<Contact> partiesList = new List<Contact>(0);
+            
+            for(int i = 0; i < parties.Length; i++)
+            {
+                Contact.ParseFullAccount(parties[i], out addressInfo, out account);
+
+                Contact party = ContactList.GetContact(account, addressInfo);
+                if(party != null)
+                    partiesList.Add(party);
+            }
+            
+            EndPointData senderEndPoint = null;
+            EndPointData receiverEndPoint = null;
+            
+            if(routingInfo.Sender != null)
+            {
+                if(routingInfo.Sender.EndPointData.ContainsKey(routingInfo.SenderEndPointID))
+                    senderEndPoint = routingInfo.Sender.EndPointData[routingInfo.SenderEndPointID];
+            }
+            
+            if(routingInfo.Receiver != null)
+            {
+                if(routingInfo.Receiver.EndPointData.ContainsKey(routingInfo.ReceiverEndPointID))
+                    receiverEndPoint = routingInfo.Receiver.EndPointData[routingInfo.ReceiverEndPointID];
+            }
+            
+            OnRemoteEndPointCloseIMWindow(new CloseIMWindowEventArgs(routingInfo.Sender, senderEndPoint, 
+                                                                     routingInfo.Receiver, receiverEndPoint, 
+                                                                     partiesList.ToArray()));
+        }
 
         private void OnSDGWinkReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact by)
         {

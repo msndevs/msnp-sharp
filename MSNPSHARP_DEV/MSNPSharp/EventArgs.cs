@@ -871,4 +871,76 @@ namespace MSNPSharp
             this.isDefault = isDefault;
         }
     }
+    
+    public class CloseIMWindowEventArgs : EventArgs
+    {
+        private Contact sender = null;
+        private EndPointData senderEndPoint = null;
+        
+        private Contact receiver = null;
+        private EndPointData receiverEndPoint = null;
+        
+        private Contact[] parties = null;
+
+        public Contact[] Parties {
+            get {
+                return this.parties;
+            }
+        
+            private set {
+                parties = value;
+            }
+        }
+        
+        public Contact Receiver {
+            get {
+                return this.receiver;
+            }
+            private set {
+                receiver = value;
+            }
+        }
+
+        public EndPointData ReceiverEndPoint {
+            get {
+                return this.receiverEndPoint;
+            }
+            private set {
+                receiverEndPoint = value;
+            }
+        }
+
+        public Contact Sender {
+            get {
+                return this.sender;
+            }
+            private set {
+                sender = value;
+            }
+        }
+
+        public EndPointData SenderEndPoint {
+            get {
+                return this.senderEndPoint;
+            }
+            private set {
+                senderEndPoint = value;
+            }
+        }
+        
+        public CloseIMWindowEventArgs(Contact sender, EndPointData senderEndPoint,
+                                      Contact receiver, EndPointData receiverEndPoint,
+                                      Contact[] parties)
+            : base()
+        {
+            Sender = sender;
+            SenderEndPoint = senderEndPoint;
+            
+            Receiver = receiver;
+            ReceiverEndPoint = receiverEndPoint;
+            
+            Parties = parties;
+        }
+        
+    }
 };
