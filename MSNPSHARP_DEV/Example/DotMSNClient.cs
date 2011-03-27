@@ -27,6 +27,7 @@ namespace MSNPSharpClient
         private Messenger messenger = new Messenger();
         private List<ConversationForm> convforms = new List<ConversationForm>(0);
         private TraceForm traceform = new TraceForm();
+        private bool syncContactListCompleted = false;
 
         public List<ConversationForm> ConversationForms
         {
@@ -353,6 +354,7 @@ namespace MSNPSharpClient
                 return;
             }
 
+            syncContactListCompleted = true;
             lblNews.Text = "Getting your friends' news...";
             messenger.WhatsUpService.GetWhatsUp(200);
         }
@@ -663,6 +665,10 @@ namespace MSNPSharpClient
         void ContactService_ContactRemoved(object sender, ListMutateEventArgs e)
         {
             Trace.WriteLine(e.Contact.Hash + " removed from the " + e.AffectedList + " role list.");
+
+            if (!syncContactListCompleted)  //This add/remove was caused by initial contact list sync, don't process it.
+                return;
+
             if (toolStripSortByStatus.Checked)
                 SortByStatus(e.Contact, e.Contact.Via);
             else
@@ -672,6 +678,10 @@ namespace MSNPSharpClient
         void ContactService_ContactAdded(object sender, ListMutateEventArgs e)
         {
             Trace.WriteLine(e.Contact.Hash + " added to the " + e.AffectedList + " role list.");
+
+            if (!syncContactListCompleted)  //This add/remove was caused by initial contact list sync, don't process it.
+                return;
+
             if (toolStripSortByStatus.Checked)
                 SortByStatus(e.Contact, e.Contact.Via);
             else
@@ -1082,6 +1092,7 @@ namespace MSNPSharpClient
 
         private void ResetAll()
         {
+            syncContactListCompleted = false;
             tmrKeepOnLine.Enabled = false;
             tmrNews.Enabled = false;
 
