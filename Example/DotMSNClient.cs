@@ -141,6 +141,14 @@ namespace MSNPSharpClient
             messenger.ContactService.CircleMemberLeft += new EventHandler<CircleMemberEventArgs>(ContactService_CircleMemberLeft);
             #endregion
 
+            #region MPOP related events
+
+            // This event will be fired after a chat window has been closed on a different login end point.
+            // You will get this notification to decide whether to close the local chat window as well.
+            messenger.Nameserver.RemoteEndPointCloseIMWindow += new EventHandler<CloseIMWindowEventArgs>(Nameserver_RemoteEndPointCloseIMWindow);
+            
+            #endregion
+
 
             #region Offline Message Operation events
 
@@ -167,7 +175,6 @@ namespace MSNPSharpClient
 
             #endregion
         }
-
         
 
         public static class ImageIndexes
@@ -625,6 +632,22 @@ namespace MSNPSharpClient
         void Nameserver_WinkReceived(object sender, WinkEventArgs e)
         {
             MessageManager_MessageArrived(sender, e);
+        }
+
+        void Nameserver_RemoteEndPointCloseIMWindow(object sender, CloseIMWindowEventArgs e)
+        {
+            if (e.Sender != null && e.SenderEndPoint != null)
+            {
+                string partiesString = string.Empty;
+                foreach (Contact party in e.Parties)
+                {
+                    partiesString += party.ToString() + "\r\n";
+                }
+
+                Trace.WriteLine("[Output by Client] User at End Point: " + e.SenderEndPoint.ToString() + " has closed the IM window.\r\n" +
+                                "Parties in the conversation: \r\n" +
+                                partiesString);
+            }
         }
 
         void MessageManager_MessageArrived(object sender, MessageArrivedEventArgs e)
