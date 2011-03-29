@@ -84,6 +84,15 @@ namespace MSNPSharp.P2P
 
         private Contact remote = null;
         private Guid remoteEpId = Guid.Empty;
+
+        public Guid RemoteEpId
+        {
+            get
+            {
+                return remoteEpId;
+            }
+        }
+
         public override Contact Remote
         {
             get
@@ -101,6 +110,17 @@ namespace MSNPSharp.P2P
 
                 return null;
             }
+        }
+
+
+        public override bool SuitableFor(P2PSession session)
+        {
+            if (base.SuitableFor(session) && session.RemoteContactEndPointID == RemoteEpId)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         public IPEndPoint RemoteEndPoint
