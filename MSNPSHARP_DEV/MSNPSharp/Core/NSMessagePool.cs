@@ -193,16 +193,17 @@ namespace MSNPSharp.Core
 
                         switch (cmd3)
                         {
-                            case "SDG": // SDG
-                            case "NFY": // NFY
-                            case "PUT": // PUT
-                            case "DEL": // DEL
+                            case "SDG": // SDG SendDataGram
+                            case "NFY": // NFY Notify PUT/DEL
+                            case "PUT": // PUT Put
+                            case "DEL": // DEL Delete
 
-                            case "ADL": // ADL Add List command
-                            case "RML": // RML Remove List command
-                            case "MSG": // MSG payload command
+                            case "ADL": // ADL Add List
+                            case "RML": // RML Remove List
 
-                            case "NOT": // NOT notification command
+                            case "MSG": // MSG Message
+                            case "NOT": // NOT Notification
+
                             case "GCF": // GCF privacy settings
                             case "GET": // GET                            
                             case "IPG": // IPG pager command                            
