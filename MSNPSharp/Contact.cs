@@ -457,15 +457,6 @@ namespace MSNPSharp
             }
         }
 
-        [Obsolete("Please use Account instead.", false)]
-        public string Mail
-        {
-            get
-            {
-                return account;
-            }
-        }
-
         /// <summary>
         /// The display name of contact.
         /// </summary>
@@ -588,15 +579,14 @@ namespace MSNPSharp
             {
                 if (EndPointData.Count > 0)
                 {
-                    Guid randGuid = SelectRandomEPID();
-                    EndPointData epData = EndPointData[randGuid];
-                    ClientCapabilities msnc = (epData.IMCapabilities & ClientCapabilities.AppVersionMask);
+                    Guid ep = SelectBestEndPointId();
 
-                    if (msnc > ClientCapabilities.None)
+                    if (EndPointData.ContainsKey(ep))
                     {
-                        return (msnc < ClientCapabilities.AppVersion90) ? P2PVersion.P2PV1 : P2PVersion.P2PV2;
+                        return EndPointData[ep].P2PVersionSupported;
                     }
                 }
+
                 return P2PVersion.None;
             }
         }
@@ -1696,15 +1686,19 @@ namespace MSNPSharp
             return conflictLists;
         }
 
-        internal Guid SelectRandomEPID()
+        internal Guid SelectBestEndPointId()
         {
-            foreach (Guid epId in EndPointData.Keys)
+            Guid ret = Guid.Empty;
+
+            foreach (EndPointData ep in EndPointData.Values)
             {
-                if (epId != Guid.Empty)
-                    return epId;
+                ret = ep.Id;
+
+                if (ep.Id != Guid.Empty && ep.P2PVersionSupported != P2PVersion.None)
+                    return ep.Id;
             }
 
-            return Guid.Empty;
+            return ret;
         }
 
         internal static string MakeHash(string account, IMAddressInfoType type)

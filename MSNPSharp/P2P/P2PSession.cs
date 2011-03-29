@@ -326,7 +326,7 @@ namespace MSNPSharp.P2P
             localContact = app.Local;
             remoteContact = app.Remote;
             localContactEndPointID = NSMessageHandler.MachineGuid;
-            remoteContactEndPointID = app.Remote.SelectRandomEPID();
+            remoteContactEndPointID = app.Remote.SelectBestEndPointId();
 
             nsMessageHandler = app.Local.NSMessageHandler;
             sessionId = (uint)random.Next(50000, int.MaxValue);

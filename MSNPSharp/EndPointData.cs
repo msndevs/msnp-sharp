@@ -134,6 +134,19 @@ namespace MSNPSharp
             }
         }
 
+        public P2PVersion P2PVersionSupported
+        {
+            get
+            {
+                if (PECapabilitiesEx != ClientCapabilitiesEx.None)
+                {
+                    return (Id == Guid.Empty) ? P2PVersion.P2PV1 : P2PVersion.P2PV2;
+                }
+
+                return P2PVersion.None;
+            }
+        }
+
         #endregion
 
         protected EndPointData()

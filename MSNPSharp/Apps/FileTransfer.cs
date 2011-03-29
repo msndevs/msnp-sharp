@@ -245,7 +245,7 @@ namespace MSNPSharp.Apps
         /// <param name="data"></param>
         /// <param name="filename"></param>
         public FileTransfer(Contact remote, Stream data, string filename)
-            : base(remote.P2PVersionSupported, remote, remote.SelectRandomEPID())
+            : base(remote.P2PVersionSupported, remote, remote.SelectBestEndPointId())
         {
             _context = new FTContext(filename, (ulong)data.Length);
             _dataStream = data;

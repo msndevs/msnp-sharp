@@ -291,7 +291,7 @@ namespace MSNPSharp.P2P
                 else
                 {
                     // Let's listen
-                    remote.DirectBridge = ListenForDirectConnection(remote, ns, ver, startupSession, ipAddress, port, myPlainNonce, remoteNonce, hashed);
+                    remote.DirectBridge = ListenForDirectConnection(remote, remoteGuid, ns, ver, startupSession, ipAddress, port, myPlainNonce, remoteNonce, hashed);
 
                     slpMessage.BodyValues["Listening"] = "true";
                     slpMessage.BodyValues["Capabilities-Flags"] = "1";
@@ -378,7 +378,7 @@ namespace MSNPSharp.P2P
                     // We must connect to the remote client
                     ConnectivitySettings settings = new ConnectivitySettings();
                     settings.EndPoints = selectedPoint;
-                    remote.DirectBridge = CreateDirectConnection(remote, ver, settings, replyGuid, remoteNonce, hashed, ns, startupSession);
+                    remote.DirectBridge = CreateDirectConnection(remote, remoteGuid, ver, settings, replyGuid, remoteNonce, hashed, ns, startupSession);
 
                     bool needConnectingEndpointInfo;
                     if (bodyValues.ContainsKey("NeedConnectingEndpointInfo") &&
@@ -433,6 +433,7 @@ namespace MSNPSharp.P2P
 
         private static TCPv1Bridge ListenForDirectConnection(
             Contact remote,
+            Guid remoteGuid,
             NSMessageHandler nsMessageHandler,
             P2PVersion ver,
             P2PSession startupSession,
@@ -450,7 +451,7 @@ namespace MSNPSharp.P2P
                 cs.LocalPort = nsMessageHandler.ConnectivitySettings.LocalPort;
             }
 
-            TCPv1Bridge tcpBridge = new TCPv1Bridge(cs, ver, replyGuid, remoteNonce, hashed, startupSession, nsMessageHandler, remote);
+            TCPv1Bridge tcpBridge = new TCPv1Bridge(cs, ver, replyGuid, remoteNonce, hashed, startupSession, nsMessageHandler, remote, remoteGuid);
 
             tcpBridge.Listen(IPAddress.Parse(cs.LocalHost), cs.LocalPort);
 
@@ -459,11 +460,11 @@ namespace MSNPSharp.P2P
             return tcpBridge;
         }
 
-        private static TCPv1Bridge CreateDirectConnection(Contact remote, P2PVersion ver, ConnectivitySettings cs, Guid replyGuid, Guid remoteNonce, bool hashed, NSMessageHandler nsMessageHandler, P2PSession startupSession)
+        private static TCPv1Bridge CreateDirectConnection(Contact remote, Guid remoteGuid, P2PVersion ver, ConnectivitySettings cs, Guid replyGuid, Guid remoteNonce, bool hashed, NSMessageHandler nsMessageHandler, P2PSession startupSession)
         {
             IPEndPoint ipep = cs.EndPoints[0];
 
-            TCPv1Bridge tcpBridge = new TCPv1Bridge(cs, ver, replyGuid, remoteNonce, hashed, startupSession, nsMessageHandler, remote);
+            TCPv1Bridge tcpBridge = new TCPv1Bridge(cs, ver, replyGuid, remoteNonce, hashed, startupSession, nsMessageHandler, remote, remoteGuid);
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Trying to setup direct connection with remote host " + ipep.Address + ":" + ipep.Port.ToString(CultureInfo.InvariantCulture));
 
