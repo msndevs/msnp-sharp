@@ -191,6 +191,10 @@ namespace MSNPSharp.Core
                             (byte)bufferStream.ReadByte() 
                         });
 
+                        int errorCode3;
+                        if (int.TryParse(cmd3, out errorCode3) && errorCode3.ToString().Length == 3)
+                            cmd3 = "000";
+
                         switch (cmd3)
                         {
                             case "SDG": // SDG SendDataGram
@@ -209,41 +213,41 @@ namespace MSNPSharp.Core
                             case "IPG": // IPG pager command                            
                             case "FSL": // FSL
 
-                            case "201": // 201
-                            case "203": // 203
-                            case "204": // 204 Invalid contact network in ADL/RML
-                            case "205": // 205
-                            case "210": // 210
-                            case "234": // 234
-                            case "241": // 241 Invalid membership for ADL/RML
-                            case "508": // 508
-                            case "509": // 509 UpsFailure, when sending mobile message
-                            case "511": // 511
-                            case "591": // 591
-                            case "731": // 731
-                            case "801": // 801
-                            case "933": // 933
+                            case "000": // Assume all error codes payload
                                 {
                                     bufferStream.Seek(-3, SeekOrigin.End);
 
                                     // calculate the length by reading backwards from the end
-                                    remainingBuffer = 0;
                                     int size = 0;
+                                    int payloadSize = 0;
+                                    bool hasSize = false;
 
                                     for (int i = 0; ((size = bufferStream.ReadByte()) > 0) && size >= '0' && size <= '9'; i++)
                                     {
-                                        remainingBuffer += (int)((size - '0') * Math.Pow(10, i));
+                                        payloadSize += (int)((size - '0') * Math.Pow(10, i));
                                         bufferStream.Seek(-2, SeekOrigin.Current);
+                                        hasSize = true;
                                     }
 
-                                    // move to the end of the stream before we are going to write
-                                    bufferStream.Seek(0, SeekOrigin.End);
-
-                                    if (remainingBuffer == 0)
+                                    if (hasSize)
                                     {
-                                        EnqueueCurrentBuffer();
-                                        CreateNewBuffer();
+                                        remainingBuffer = payloadSize;
+
+                                        // move to the end of the stream before we are going to write
+                                        bufferStream.Seek(0, SeekOrigin.End);
+
+                                        if (remainingBuffer == 0)
+                                        {
+                                            EnqueueCurrentBuffer();
+                                            CreateNewBuffer();
+                                        }
                                     }
+                                    else
+                                    {
+                                        bufferStream.Position = 0;
+                                        goto default;
+                                    }
+
                                 }
                                 break;
 

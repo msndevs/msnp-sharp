@@ -1839,11 +1839,6 @@ namespace MSNPSharpClient
 
         private void UpdateCircleMember(Contact circle, Contact circleMember)
         {
-            TreeNode circlesNode = treeViewFavoriteList.Nodes[ImageIndexes.CircleNodeKey];
-            TreeNode circleNode = circlesNode.Nodes[circle.Hash];
-            circleNode.ImageIndex = circleNode.SelectedImageIndex = ImageIndexes.GetCircleStatusImageIndex(circle.Status);
-            circleNode.Text = GetCircleDisplayName(circle, circle.ContactList[IMAddressInfoType.None].Count);
-
             string text2 = circleMember.Name;
             text2 += " - " + circleMember.PersonalMessage.Message;
 
@@ -1852,13 +1847,23 @@ namespace MSNPSharpClient
                 text2 += " (" + circleMember.Account + ")";
             }
 
+            TreeNode circlesNode = treeViewFavoriteList.Nodes[ImageIndexes.CircleNodeKey];
+            TreeNode circleNode = circlesNode.Nodes.ContainsKey(circle.Hash) ?
+                circlesNode.Nodes[circle.Hash] : circlesNode.Nodes.Add(circle.Hash, circle.Name);
+
+            circleNode.ImageIndex = circleNode.SelectedImageIndex = ImageIndexes.GetCircleStatusImageIndex(circle.Status);
+            circleNode.Text = GetCircleDisplayName(circle, circle.ContactList[IMAddressInfoType.None].Count);
+
             TreeNode newnode = circleNode.Nodes.ContainsKey(circleMember.Hash) ?
                 circleNode.Nodes[circleMember.Hash] : circleNode.Nodes.Add(circleMember.Hash, text2);
 
-            newnode.Text = text2;
+            
             newnode.ImageIndex = newnode.SelectedImageIndex = ImageIndexes.GetContactStatusImageIndex(circleMember.Status);
             newnode.NodeFont = circleMember.AppearOffline ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
             newnode.Tag = circleMember;
+
+            if (newnode.Text != text2)
+                newnode.Text = text2;
         }
 
         private void SortByStatus(Contact contact, Contact via)
