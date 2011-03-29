@@ -209,6 +209,20 @@ namespace MSNPSharp.Core
                             case "IPG": // IPG pager command                            
                             case "FSL": // FSL
 
+                            case "201": // 201
+                            case "203": // 203
+                            case "204": // 204 Invalid contact network in ADL/RML
+                            case "205": // 205
+                            case "210": // 210
+                            case "234": // 234
+                            case "241": // 241 Invalid membership for ADL/RML
+                            case "508": // 508
+                            case "509": // 509 UpsFailure, when sending mobile message
+                            case "511": // 511
+                            case "591": // 591
+                            case "731": // 731
+                            case "801": // 801
+                            case "933": // 933
                             case "000": // Assume all error codes payload, comes from case default...
                                 {
                                     bufferStream.Seek(-3, SeekOrigin.End);
