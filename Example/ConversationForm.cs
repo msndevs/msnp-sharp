@@ -874,7 +874,8 @@ namespace MSNPSharpClient
 
         private void RequestDisplayImage(Contact remoteContact, DisplayImage updateImage)
         {
-            if (remoteContact.ClientType == IMAddressInfoType.WindowsLive &&
+            if (remoteContact.P2PVersionSupported != P2PVersion.None && 
+                remoteContact.ClientType == IMAddressInfoType.WindowsLive &&
                 updateImage != remoteContact.UserTileLocation)
             {
                 if (updateImage == null)
