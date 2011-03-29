@@ -1223,7 +1223,8 @@ namespace MSNPSharpClient
             else
             {
                 // when the MSN server sends an error code we want to be notified.
-                MessageBox.Show(e.MSNError.ToString(), "Server error received");
+                MessageBox.Show("Error code: " + e.MSNError.ToString() + " (" + ((int)e.MSNError) + ")" +
+                    "\r\n\r\nDescription: " + e.Description, "Server error received");
                 SetStatus("Server error received");
             }
         }
