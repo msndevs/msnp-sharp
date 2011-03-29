@@ -1635,10 +1635,20 @@ namespace MSNPSharp
                 if (nsMessage.Command[0] >= '0' && nsMessage.Command[0] <= '9' && processed == false)
                 {
                     MSNError msnError = 0;
+                    string description = string.Empty;
                     try
                     {
                         int errorCode = int.Parse(nsMessage.Command, System.Globalization.CultureInfo.InvariantCulture);
                         msnError = (MSNError)errorCode;
+
+                        if (nsMessage.InnerBody != null && nsMessage.InnerBody.Length > 0)
+                        {
+                            description = Encoding.UTF8.GetString(nsMessage.InnerBody);
+                        }
+                        else
+                        {
+                            description = msnError.ToString();
+                        }
                     }
                     catch (Exception fe)
                     {
@@ -1649,7 +1659,7 @@ namespace MSNPSharp
                         "A server error occurred\r\nError Code: " + nsMessage.Command
                         + "\r\nError Description: " + msnError.ToString());
 
-                    OnServerErrorReceived(new MSNErrorEventArgs(msnError));
+                    OnServerErrorReceived(new MSNErrorEventArgs(msnError, description));
                 }
                 else
                 {

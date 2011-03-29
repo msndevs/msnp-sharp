@@ -494,9 +494,19 @@ namespace MSNPSharp
     [Serializable()]
     public class MSNErrorEventArgs : EventArgs
     {
-        /// <summary>
-        /// </summary>
         private MSNError msnError;
+        private string description = string.Empty;
+
+        /// <summary>
+        /// The error description
+        /// </summary>
+        public string Description
+        {
+            get
+            {
+                return description;
+            }
+        }
 
         /// <summary>
         /// The error that occurred
@@ -507,19 +517,15 @@ namespace MSNPSharp
             {
                 return msnError;
             }
-            set
-            {
-                msnError = value;
-            }
         }
 
         /// <summary>
-        /// Constructory.
+        /// Constructor.
         /// </summary>
-        /// <param name="msnError"></param>
-        public MSNErrorEventArgs(MSNError msnError)
+        public MSNErrorEventArgs(MSNError msnError, string description)
         {
             this.msnError = msnError;
+            this.description = description;
         }
     }
 
