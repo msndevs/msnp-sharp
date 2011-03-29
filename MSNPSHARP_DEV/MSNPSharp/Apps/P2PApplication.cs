@@ -156,6 +156,9 @@ namespace MSNPSharp.Apps
 
         protected P2PApplication(P2PVersion ver, Contact remote, Guid remoteEP)
         {
+            if (ver == P2PVersion.None)
+                throw new InvalidOperationException(remote.ToString() + " doesn't support P2P");
+
             this.version = ver;
 
             this.local = remote.NSMessageHandler.Owner;
