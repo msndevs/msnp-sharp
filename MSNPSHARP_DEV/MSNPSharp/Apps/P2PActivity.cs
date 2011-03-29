@@ -95,7 +95,7 @@ namespace MSNPSharp.Apps
         /// <param name="activityName"></param>
         /// <param name="activityData"></param>
         public P2PActivity(Contact remote, uint applicationID, string activityName, string activityData)
-            : base(remote.P2PVersionSupported, remote, remote.SelectRandomEPID())
+            : base(remote.P2PVersionSupported, remote, remote.SelectBestEndPointId())
         {
             this.applicationId = applicationID;
             this.activityName = activityName;

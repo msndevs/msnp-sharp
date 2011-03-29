@@ -132,7 +132,7 @@ namespace MSNPSharp.Apps
         /// We are receiver
         /// </summary>
         public ObjectTransfer(MSNObject obj, Contact remote)
-            : base(remote.P2PVersionSupported, remote, remote.SelectRandomEPID())
+            : base(remote.P2PVersionSupported, remote, remote.SelectBestEndPointId())
         {
             msnObject = obj;
 

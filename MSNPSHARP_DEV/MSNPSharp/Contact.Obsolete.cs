@@ -47,13 +47,21 @@ namespace MSNPSharp
 
     partial class Contact
     {
+        [Obsolete("Please use Account instead.", false)]
+        public string Mail
+        {
+            get
+            {
+                return account;
+            }
+        }
 
         [Obsolete("Please use EndPointData instead.", true)]
         public Guid MachineGuid
         {
             get
             {
-                return SelectRandomEPID();
+                return SelectBestEndPointId();
             }
         }
 

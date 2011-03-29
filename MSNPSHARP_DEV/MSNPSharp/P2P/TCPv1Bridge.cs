@@ -83,6 +83,7 @@ namespace MSNPSharp.P2P
         }
 
         private Contact remote = null;
+        private Guid remoteEpId = Guid.Empty;
         public override Contact Remote
         {
             get
@@ -129,12 +130,13 @@ namespace MSNPSharp.P2P
             Guid replyNonce, Guid remoteNonce, bool isNeedHash,
             P2PSession p2pSession,
             NSMessageHandler ns,
-            Contact remote)
+            Contact remote, Guid remoteEpId)
             : base(0)
         {
             this.startupSession = p2pSession;
             this.nsMessageHandler = ns;
             this.remote = remote;
+            this.remoteEpId = remoteEpId;
 
             directConnection = new P2PDirectProcessor(connectivitySettings, p2pVersion, replyNonce, remoteNonce, isNeedHash, p2pSession, nsMessageHandler);
             directConnection.HandshakeCompleted += new EventHandler<EventArgs>(directConnection_HandshakeCompleted);
@@ -211,7 +213,7 @@ namespace MSNPSharp.P2P
 
         private void directConnection_P2PMessageReceived(object sender, P2PMessageEventArgs e)
         {
-            nsMessageHandler.P2PHandler.ProcessP2PMessage(this, Remote, Remote.SelectRandomEPID(), e.P2PMessage);
+            nsMessageHandler.P2PHandler.ProcessP2PMessage(this, Remote, remoteEpId, e.P2PMessage);
         }
 
         protected override void SendOnePacket(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage msg)
