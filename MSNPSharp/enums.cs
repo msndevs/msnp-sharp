@@ -972,9 +972,9 @@ namespace MSNPSharp
         public const string EPID = "epid";
         public const string Path = "path";
         public const string ServiceChannel = "Service-Channel";
-		
-		public const string Options = "Options";
-		public const string Flags = "Flags";
+
+        public const string Options = "Options";
+        public const string Flags = "Flags";
 
         internal const string KeyParam = ";";
 
@@ -1081,7 +1081,7 @@ namespace MSNPSharp
     /// <summary>
     /// The special account of remote network's gateways, i.e. FaceBook and LinkedIn 
     /// </summary>
-    public class RemoteNetworkGateways
+    public static class RemoteNetworkGateways
     {
         /// <summary>
         /// FaceBook Gateway account. 
@@ -1095,7 +1095,7 @@ namespace MSNPSharp
     /// <summary>
     /// The keys for MIME Content Headers. 
     /// </summary>
-    public class MIMEContentHeaders
+    public static class MIMEContentHeaders
     {
         /// <summary>
         /// The key string for Content-Length header 
@@ -1127,7 +1127,7 @@ namespace MSNPSharp
     /// <summary>
     /// The keys for MIME Reouting Header of MultiMimeMessage. 
     /// </summary>
-    public class MIMERoutingHeaders
+    public static class MIMERoutingHeaders
     {
         public const string Routing = MIMEHeaderStrings.Routing;
         public const string From = MIMEHeaderStrings.From;
@@ -1147,17 +1147,35 @@ namespace MSNPSharp
     /// <summary>
     /// Keys for MIME header, reliability parts. 
     /// </summary>
-    public class MIMEReliabilityHeaders
+    public static class MIMEReliabilityHeaders
     {
         public const string Reliability = MIMEHeaderStrings.Reliability;
         public const string Stream = MIMEHeaderStrings.Stream;
         public const string Segment = MIMEHeaderStrings.Segment;
-		public const string Flags = MIMEHeaderStrings.Flags;
+        public const string Flags = MIMEHeaderStrings.Flags;
     }
 
-    public class MIMEContentTransferEncoding
+    public static class MIMEContentTransferEncoding
     {
         public const string Binary = "binary";
+    }
+
+
+    public static class MessageTypes
+    {
+        public const string Text = "Text";
+        public const string Nudge = "Nudge";
+        public const string Wink = "Wink";
+        public const string CustomEmoticon = "CustomEmoticon";
+        public const string ControlTyping = "Control/Typing";
+        public const string Data = "Data";
+        public const string SignalP2P = "Signal/P2P";
+        public const string SignalCloseIMWindow = "Signal/CloseIMWindow";
+
+        public const string SignalMarkIMWindowRead = "Signal/MarkIMWindowRead";
+        public const string SignalTurn = "Signal/Turn";
+        public const string SignalAudioMeta = "Signal/AudioMeta";
+        public const string SignalAudioTunnel = "Signal/AudioTunnel";
     }
 
     #region P2PFlag

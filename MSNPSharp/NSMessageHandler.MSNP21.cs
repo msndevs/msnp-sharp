@@ -206,23 +206,23 @@ namespace MSNPSharp
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                e.Contact + " left group chat " + e.Via.ToString(), GetType().Name);
         }
-        
+
         protected virtual void OnRemoteEndPointCloseIMWindow(CloseIMWindowEventArgs e)
         {
-            if(RemoteEndPointCloseIMWindow != null)
+            if (RemoteEndPointCloseIMWindow != null)
                 RemoteEndPointCloseIMWindow(this, e);
-            
-            if(e.Sender != null && e.SenderEndPoint != null)
+
+            if (e.Sender != null && e.SenderEndPoint != null)
             {
                 string partiesString = string.Empty;
-                foreach(Contact party in e.Parties)
+                foreach (Contact party in e.Parties)
                 {
                     partiesString += party.ToString() + "\r\n";
                 }
-                
+
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                                   "User at End Point: " + e.SenderEndPoint.ToString() + " has closed the IM window.\r\n" +
-                                  "Parties in the conversation: \r\n" + 
+                                  "Parties in the conversation: \r\n" +
                                   partiesString);
             }
         }
@@ -471,7 +471,7 @@ namespace MSNPSharp
 
             mmMessage.ContentKeyVersion = "2.0";
 
-            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "Control/Typing";
+            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = MessageTypes.ControlTyping;
             mmMessage.InnerBody = new byte[0];
 
             NSMessage sdgPayload = new NSMessage("SDG");
@@ -504,7 +504,7 @@ namespace MSNPSharp
 
             mmMessage.ContentKeyVersion = "2.0";
 
-            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "Nudge";
+            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = MessageTypes.Nudge;
             mmMessage.InnerBody = Encoding.ASCII.GetBytes("\r\n");
 
             NSMessage sdgPayload = new NSMessage("SDG");
@@ -548,7 +548,7 @@ namespace MSNPSharp
 
             mmMessage.ContentKeyVersion = "2.0";
 
-            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "Text";
+            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = MessageTypes.Text;
             mmMessage.ContentHeaders[MIMEHeaderStrings.X_MMS_IM_Format] = textMessage.GetStyleString();
             mmMessage.InnerBody = Encoding.UTF8.GetBytes(textMessage.Text);
 
@@ -584,7 +584,7 @@ namespace MSNPSharp
             mmMessage.RoutingHeaders[MIMERoutingHeaders.ServiceChannel] = "IM/Mobile";
 
             mmMessage.ContentKeyVersion = "2.0";
-            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "Text";
+            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = MessageTypes.Text;
             mmMessage.ContentHeaders[MIMEContentHeaders.MSIMFormat] = txtMsg.GetStyleString();
 
             mmMessage.InnerBody = Encoding.UTF8.GetBytes(txtMsg.Text);
@@ -610,7 +610,7 @@ namespace MSNPSharp
 
             mmMessage.ContentKeyVersion = "2.0";
 
-            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "CustomEmoticon";
+            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = MessageTypes.CustomEmoticon;
             mmMessage.ContentHeaders[MIMEContentHeaders.ContentType] = icontype == EmoticonType.AnimEmoticon ? "text/x-mms-animemoticon" : "text/x-mms-emoticon";
             mmMessage.InnerBody = emoticonMessage.GetBytes();
 
@@ -1586,93 +1586,95 @@ namespace MSNPSharp
             {
                 sender = routingInfo.Sender;
                 by = sender;
-            } 
+            }
 
             #endregion
 
             if (multiMimeMessage.ContentHeaders.ContainsKey(MIMEContentHeaders.MessageType))
             {
-                switch (multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString().ToLowerInvariant())
+                switch (multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString())
                 {
-                default:
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                        "[OnSDGReceived] UNHANDLED MESSAGE TYPE: \r\n" + multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString() +
-                        "\r\n\r\nMessage Body: \r\n\r\n" + multiMimeMessage.ToDebugString());
-                    break;
+                    default:
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                            "[OnSDGReceived] UNHANDLED MESSAGE TYPE: \r\n" + multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString() +
+                            "\r\n\r\nMessage Body: \r\n\r\n" + multiMimeMessage.ToDebugString());
+                        break;
 
-                case "nudge":
-                    OnNudgeReceived(new NudgeArrivedEventArgs(sender, by));
-                    break;
+                    case MessageTypes.Nudge:
+                        OnNudgeReceived(new NudgeArrivedEventArgs(sender, by));
+                        break;
 
-                case "control/typing":
-                    OnTypingMessageReceived(new TypingArrivedEventArgs(sender, by));
-                    break;
+                    case MessageTypes.ControlTyping:
+                        OnTypingMessageReceived(new TypingArrivedEventArgs(sender, by));
+                        break;
 
-                case "text":
-                    OnSDGTextMessageReceived(multiMimeMessage, sender, by);
-                    break;
+                    case MessageTypes.Text:
+                        OnSDGTextMessageReceived(multiMimeMessage, sender, by);
+                        break;
 
-                case "customemoticon":
-                    OnSDGCustomEmoticonReceived(multiMimeMessage, sender, by);
-                    break;
+                    case MessageTypes.CustomEmoticon:
+                        OnSDGCustomEmoticonReceived(multiMimeMessage, sender, by);
+                        break;
 
-                case "wink":
-                    OnSDGWinkReceived(multiMimeMessage, sender, by);
-                    break;
+                    case MessageTypes.Wink:
+                        OnSDGWinkReceived(multiMimeMessage, sender, by);
+                        break;
 
-                case "signal/p2p":
-                    OnSDGP2PSignalReceived(multiMimeMessage, sender, by);
-                    break;
-                case "signal/closeimwindow":
-                    OnSDGCloseIMWindowReceived(multiMimeMessage, routingInfo);
-                    break;
-                case "data":
-                    OnSDGDataMessageReceived(multiMimeMessage, sender, by);
-                    break;
+                    case MessageTypes.SignalP2P:
+                        OnSDGP2PSignalReceived(multiMimeMessage, sender, by);
+                        break;
+
+                    case MessageTypes.SignalCloseIMWindow:
+                        OnSDGCloseIMWindowReceived(multiMimeMessage, routingInfo);
+                        break;
+
+                    case MessageTypes.Data:
+                        OnSDGDataMessageReceived(multiMimeMessage, sender, by);
+                        break;
                 }
             }
         }
 
         #region Process SDG Messages
         //Note: Don't make these function protected.
-        
+
         private void OnSDGCloseIMWindowReceived(MultiMimeMessage multiMimeMessage, RoutingInfo routingInfo)
         {
             string partiesString = Encoding.UTF8.GetString(multiMimeMessage.InnerBody);
-            if(string.IsNullOrEmpty(partiesString))
+            if (string.IsNullOrEmpty(partiesString))
                 return;
-            string[] parties = partiesString.Split(new char[]{'/'}, StringSplitOptions.RemoveEmptyEntries);
+            string[] parties = partiesString.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
             IMAddressInfoType addressInfo = IMAddressInfoType.None;
             string account = string.Empty;
-            
+
             List<Contact> partiesList = new List<Contact>(0);
-            
-            for(int i = 0; i < parties.Length; i++)
+
+            for (int i = 0; i < parties.Length; i++)
             {
                 Contact.ParseFullAccount(parties[i], out addressInfo, out account);
 
                 Contact party = ContactList.GetContact(account, addressInfo);
-                if(party != null)
+                if (party != null)
                     partiesList.Add(party);
             }
-            
+
             EndPointData senderEndPoint = null;
             EndPointData receiverEndPoint = null;
-            
-            if(routingInfo.Sender != null)
+
+            if (routingInfo.Sender != null)
             {
-                if(routingInfo.Sender.EndPointData.ContainsKey(routingInfo.SenderEndPointID))
+                if (routingInfo.Sender.EndPointData.ContainsKey(routingInfo.SenderEndPointID))
                     senderEndPoint = routingInfo.Sender.EndPointData[routingInfo.SenderEndPointID];
             }
-            
-            if(routingInfo.Receiver != null)
+
+            if (routingInfo.Receiver != null)
             {
-                if(routingInfo.Receiver.EndPointData.ContainsKey(routingInfo.ReceiverEndPointID))
+                if (routingInfo.Receiver.EndPointData.ContainsKey(routingInfo.ReceiverEndPointID))
                     receiverEndPoint = routingInfo.Receiver.EndPointData[routingInfo.ReceiverEndPointID];
             }
-            
-            OnRemoteEndPointCloseIMWindow(new CloseIMWindowEventArgs(routingInfo.Sender, senderEndPoint, 
-                                                                     routingInfo.Receiver, receiverEndPoint, 
+
+            OnRemoteEndPointCloseIMWindow(new CloseIMWindowEventArgs(routingInfo.Sender, senderEndPoint,
+                                                                     routingInfo.Receiver, receiverEndPoint,
                                                                      partiesList.ToArray()));
         }
 

@@ -113,7 +113,7 @@ namespace MSNPSharp.P2P
                   slpMessage.ContentType == "application/x-msnmsgr-transrespbody" ||
                   slpMessage.ContentType == "application/x-msnmsgr-transdestaddrupdate")))
             {
-                mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "Signal/P2P";
+                mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = MessageTypes.SignalP2P;
                 mmMessage.InnerBody = slpMessage.GetBytes(false);
                 mmMessage.InnerMessage = slpMessage;
             }
@@ -121,7 +121,7 @@ namespace MSNPSharp.P2P
             {
                 mmMessage.ContentHeaders[MIMEContentHeaders.ContentType] = "application/x-msnmsgrp2p";
                 mmMessage.ContentHeaders[MIMEContentHeaders.ContentTransferEncoding] = "binary";
-                mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = "Data";
+                mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = MessageTypes.Data;
 
                 mmMessage.ContentHeaders["Pipe"] = packageNumber.ToString();
                 mmMessage.ContentHeaders["Bridging-Offsets"] = "0"; //msg.Header.HeaderLength.ToString();
