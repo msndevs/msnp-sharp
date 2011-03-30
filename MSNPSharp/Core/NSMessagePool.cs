@@ -193,6 +193,8 @@ namespace MSNPSharp.Core
 
                         switch (cmd3)
                         {
+                            #region Known payloads
+
                             case "SDG": // SDG SendDataGram
                             case "NFY": // NFY Notify PUT/DEL
                             case "PUT": // PUT Put
@@ -205,8 +207,8 @@ namespace MSNPSharp.Core
                             case "NOT": // NOT Notification
 
                             case "GCF": // GCF privacy settings
-                            case "GET": // GET                            
-                            case "IPG": // IPG pager command                            
+                            case "GET": // GET
+                            case "IPG": // IPG pager command
                             case "FSL": // FSL
 
                             case "201": // 201
@@ -254,26 +256,47 @@ namespace MSNPSharp.Core
                                     }
                                     else
                                     {
-                                        bufferStream.Position = 0;
-
                                         EnqueueCurrentBuffer();
                                         CreateNewBuffer();
                                     }
 
                                 }
                                 break;
+                            #endregion
 
-                            default:
+                            #region Known non-payloads
+
+                            case "CHL":
+                            case "CVR":
+                            case "OUT":
+                            case "QNG":
+                            case "QRY":
+                            case "SBS":
+                            case "USR":
+                            case "VER":
+                            case "XFR":
                                 {
-                                    int errorCode3;
-                                    if (int.TryParse(cmd3, out errorCode3) && errorCode3.ToString().Length == 3)
-                                        goto case "000";
-
-                                    // it was just a plain command start a new message
                                     EnqueueCurrentBuffer();
                                     CreateNewBuffer();
                                 }
                                 break;
+                            #endregion
+
+                            #region Unknown commands
+
+                            default:
+                                {
+                                    // If it is number, assume payload
+                                    int errorCode3;
+                                    if (int.TryParse(cmd3, out errorCode3) && errorCode3.ToString().Length == 3)
+                                        goto case "000";
+
+                                    // Otherwise; it was just a plain command, start a new message
+                                    EnqueueCurrentBuffer();
+                                    CreateNewBuffer();
+                                }
+                                break;
+                            #endregion
                         }
 
                     }
