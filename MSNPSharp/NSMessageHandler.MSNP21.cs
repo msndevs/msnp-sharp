@@ -89,10 +89,9 @@ namespace MSNPSharp
         public event EventHandler<WinkEventArgs> WinkDefinitionReceived;
 
         /// <summary>
-        /// Occurs when a multiparty chat created (locally or remotely).
-        /// Joined automatically if invited remotely.
+        /// Occurs when a multiparty chat created remotely. Owner is joined automatically by the library.
         /// </summary>
-        public event EventHandler<MultipartyCreatedEventArgs> MultipartyCreated;
+        public event EventHandler<MultipartyCreatedEventArgs> MultipartyCreatedRemotely;
         /// <summary>
         /// Occurs when a contact joined the group chat.
         /// </summary>
@@ -183,10 +182,10 @@ namespace MSNPSharp
                 WinkDefinitionReceived(this, e);
         }
 
-        protected virtual void OnMultipartyCreated(MultipartyCreatedEventArgs e)
+        protected virtual void OnMultipartyCreatedRemotely(MultipartyCreatedEventArgs e)
         {
-            if (MultipartyCreated != null)
-                MultipartyCreated(this, e);
+            if (MultipartyCreatedRemotely != null)
+                MultipartyCreatedRemotely(this, e);
         }
 
         protected virtual void OnJoinedGroupChat(GroupChatParticipationEventArgs e)
@@ -235,7 +234,7 @@ namespace MSNPSharp
 
         internal class MultipartyObject
         {
-            public event EventHandler<MultipartyCreatedEventArgs> MultipartyCreated;
+            public event EventHandler<MultipartyCreatedEventArgs> MultipartyCreatedLocally;
 
             public int TransactionID;
             public List<Contact> InviteQueue;
@@ -249,13 +248,13 @@ namespace MSNPSharp
                 MultiParty = multiParty;
 
                 if (onCreated != null)
-                    MultipartyCreated += onCreated;
+                    MultipartyCreatedLocally += onCreated;
             }
 
-            internal void OnMultipartyCreated(object sender, MultipartyCreatedEventArgs e)
+            internal void OnMultipartyCreatedLocally(object sender, MultipartyCreatedEventArgs e)
             {
-                if (MultipartyCreated != null)
-                    MultipartyCreated(sender, e);
+                if (MultipartyCreatedLocally != null)
+                    MultipartyCreatedLocally(sender, e);
             }
         };
 
@@ -400,14 +399,17 @@ namespace MSNPSharp
 
             lock (multiParties)
             {
+                int delTransId = 0;
                 foreach (MultipartyObject g in multiParties.Values)
                 {
                     if (g.MultiParty != null && g.MultiParty.Account == group.Account)
                     {
-                        multiParties.Remove(g.TransactionID);
+                        delTransId = g.TransactionID;
                         break;
                     }
                 }
+                if (delTransId != 0)
+                    multiParties.Remove(delTransId);
             }
         }
 
@@ -623,6 +625,8 @@ namespace MSNPSharp
 
         #endregion
 
+        #region PRESENCE
+
         #region SignoutFrom
 
         internal void SignoutFrom(Guid endPointID)
@@ -802,6 +806,8 @@ namespace MSNPSharp
 
         #endregion
 
+        #endregion
+
         #region COMMAND HANDLERS (PUT, DEL, NFY, SDG)
 
         #region OnPUTReceived
@@ -845,8 +851,7 @@ namespace MSNPSharp
                         InviteContactToMultiparty(c, group);
                     }
 
-                    mpo.OnMultipartyCreated(this, new MultipartyCreatedEventArgs(group));
-                    OnMultipartyCreated(new MultipartyCreatedEventArgs(group));
+                    mpo.OnMultipartyCreatedLocally(this, new MultipartyCreatedEventArgs(group));
 
                     group.SetStatus(PresenceStatus.Online);
 
@@ -1202,7 +1207,7 @@ namespace MSNPSharp
                                 lock (multiParties)
                                     multiParties[transId] = mpo;
 
-                                OnMultipartyCreated(new MultipartyCreatedEventArgs(group));
+                                OnMultipartyCreatedRemotely(new MultipartyCreatedEventArgs(group));
 
                                 group.SetStatus(PresenceStatus.Online);
                             }
@@ -1629,7 +1634,7 @@ namespace MSNPSharp
                         break;
 
                     case MessageTypes.Data:
-                        OnSDGDataMessageReceived(multiMimeMessage, sender, by);
+                        OnSDGDataMessageReceived(multiMimeMessage, sender, by, routingInfo);
                         break;
                 }
             }
@@ -1727,10 +1732,11 @@ namespace MSNPSharp
             }
         }
 
-        private void OnSDGDataMessageReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact by)
+        private void OnSDGDataMessageReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact by, RoutingInfo routingInfo)
         {
-            P2PVersion toVer = multiMimeMessage.To.HasAttribute(MIMERoutingHeaders.EPID) ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
-            Guid ep = (toVer == P2PVersion.P2PV1) ? Guid.Empty : new Guid(multiMimeMessage.From[MIMERoutingHeaders.EPID]);
+            Guid senderEPID = routingInfo.SenderEndPointID;
+            P2PVersion p2pVer = senderEPID == Guid.Empty ? P2PVersion.P2PV1 : P2PVersion.P2PV2;
+
             string[] offsets = multiMimeMessage.ContentHeaders.ContainsKey("Bridging-Offsets") ?
                 multiMimeMessage.ContentHeaders["Bridging-Offsets"].ToString().Split(',') :
                 new string[] { "0" };
@@ -1740,7 +1746,7 @@ namespace MSNPSharp
                 offsetList.Add(long.Parse(os));
             }
 
-            P2PMessage p2pData = new P2PMessage(toVer);
+            P2PMessage p2pData = new P2PMessage(p2pVer);
             P2PMessage[] p2pDatas = p2pData.CreateFromOffsets(offsetList.ToArray(), multiMimeMessage.InnerBody);
 
             if (multiMimeMessage.ContentHeaders.ContainsKey("Pipe"))
@@ -1753,7 +1759,7 @@ namespace MSNPSharp
                 P2PBridge p2pBridge = (by.DirectBridge != null && by.DirectBridge.IsOpen)
                     ? by.DirectBridge : SDGBridge;
 
-                P2PHandler.ProcessP2PMessage(p2pBridge, sender, ep, m);
+                P2PHandler.ProcessP2PMessage(p2pBridge, sender, senderEPID, m);
             }
         }
 

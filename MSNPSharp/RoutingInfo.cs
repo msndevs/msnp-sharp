@@ -45,13 +45,14 @@ namespace MSNPSharp
         private IMAddressInfoType senderType = IMAddressInfoType.None;
         private Contact sender; // Default is null, don't set = null for performance reasons.
         private Contact senderGateway;
-        private NSMessageHandler nsMessageHandler;
 
         private string receiverAccount = String.Empty;
         private Guid receiverEndPointID = Guid.Empty;
         private IMAddressInfoType receiverType = IMAddressInfoType.None;
         private Contact receiver;
         private Contact receiverGateway;
+
+        private NSMessageHandler nsMessageHandler;
 
         public bool FromOwner
         {
@@ -75,6 +76,10 @@ namespace MSNPSharp
             {
                 return senderAccount;
             }
+            private set
+            {
+                senderAccount = value;
+            }
         }
 
         public IMAddressInfoType SenderType
@@ -82,6 +87,10 @@ namespace MSNPSharp
             get
             {
                 return senderType;
+            }
+            private set
+            {
+                senderType = value;
             }
         }
 
@@ -127,6 +136,10 @@ namespace MSNPSharp
             {
                 return receiverAccount;
             }
+            private set
+            {
+                receiverAccount = value;
+            }
         }
 
         public IMAddressInfoType ReceiverType
@@ -134,6 +147,10 @@ namespace MSNPSharp
             get
             {
                 return receiverType;
+            }
+            private set
+            {
+                receiverType = value;
             }
         }
 
@@ -229,12 +246,11 @@ namespace MSNPSharp
 
             return gateWay;
         }
+
         private static Guid GetEPID(MimeValue mimeAccountValue)
         {
-            if (mimeAccountValue.HasAttribute("epid"))
-                return new Guid(mimeAccountValue["epid"]);
-
-            return Guid.Empty;
+            return mimeAccountValue.HasAttribute("epid") ?
+                new Guid(mimeAccountValue["epid"]) : Guid.Empty;
         }
 
         internal static RoutingInfo FromMultiMimeMessage(MultiMimeMessage multiMimeMessage, NSMessageHandler nsMessageHandler)
@@ -312,11 +328,13 @@ namespace MSNPSharp
 
             RoutingInfo routingInfo = new RoutingInfo(sender, senderGateway, receiver, receiverGateway, nsMessageHandler);
             routingInfo.SenderEndPointID = GetEPID(multiMimeMessage.From);
+            routingInfo.SenderAccount = senderAccount;
+            routingInfo.SenderType = senderAccountAddressType;
+
             routingInfo.ReceiverEndPointID = GetEPID(multiMimeMessage.To);
-            routingInfo.senderAccount = senderAccount;
-            routingInfo.senderType = senderAccountAddressType;
-            routingInfo.receiverAccount = receiverAccount;
-            routingInfo.receiverType = receiverAccountAddressType;
+            routingInfo.ReceiverAccount = receiverAccount;
+            routingInfo.ReceiverType = receiverAccountAddressType;
+
             return routingInfo;
         }
     }
