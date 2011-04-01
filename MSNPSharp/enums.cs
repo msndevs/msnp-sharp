@@ -975,6 +975,9 @@ namespace MSNPSharp
 
         public const string Options = "Options";
         public const string Flags = "Flags";
+        public const string Pipe = "Pipe";
+        public const string BridgingOffsets = "Bridging-Offsets";
+        
 
         internal const string KeyParam = ";";
 
@@ -1122,6 +1125,9 @@ namespace MSNPSharp
 
         public const string MSIMFormat = MIMEHeaderStrings.X_MMS_IM_Format;
         public const string ContentTransferEncoding = MIMEHeaderStrings.Content_Transfer_Encoding;
+
+        public const string Pipe = MIMEHeaderStrings.Pipe;
+        public const string BridgingOffsets = MIMEHeaderStrings.BridgingOffsets;
     }
 
     /// <summary>
