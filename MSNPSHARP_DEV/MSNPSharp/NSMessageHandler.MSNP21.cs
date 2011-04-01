@@ -1737,8 +1737,8 @@ namespace MSNPSharp
             Guid senderEPID = routingInfo.SenderEndPointID;
             P2PVersion p2pVer = senderEPID == Guid.Empty ? P2PVersion.P2PV1 : P2PVersion.P2PV2;
 
-            string[] offsets = multiMimeMessage.ContentHeaders.ContainsKey("Bridging-Offsets") ?
-                multiMimeMessage.ContentHeaders["Bridging-Offsets"].ToString().Split(',') :
+            string[] offsets = multiMimeMessage.ContentHeaders.ContainsKey(MIMEContentHeaders.BridgingOffsets) ?
+                multiMimeMessage.ContentHeaders[MIMEContentHeaders.BridgingOffsets].ToString().Split(',') :
                 new string[] { "0" };
             List<long> offsetList = new List<long>();
             foreach (string os in offsets)
@@ -1749,17 +1749,14 @@ namespace MSNPSharp
             P2PMessage p2pData = new P2PMessage(p2pVer);
             P2PMessage[] p2pDatas = p2pData.CreateFromOffsets(offsetList.ToArray(), multiMimeMessage.InnerBody);
 
-            if (multiMimeMessage.ContentHeaders.ContainsKey("Pipe"))
+            if (multiMimeMessage.ContentHeaders.ContainsKey(MIMEContentHeaders.Pipe))
             {
-                SDGBridge.packageNumber = ushort.Parse(multiMimeMessage.ContentHeaders["Pipe"]);
+                SDGBridge.packageNumber = ushort.Parse(multiMimeMessage.ContentHeaders[MIMEContentHeaders.Pipe]);
             }
 
             foreach (P2PMessage m in p2pDatas)
             {
-                P2PBridge p2pBridge = (by.DirectBridge != null && by.DirectBridge.IsOpen)
-                    ? by.DirectBridge : SDGBridge;
-
-                P2PHandler.ProcessP2PMessage(p2pBridge, sender, senderEPID, m);
+                P2PHandler.ProcessP2PMessage(SDGBridge, sender, senderEPID, m);
             }
         }
 
