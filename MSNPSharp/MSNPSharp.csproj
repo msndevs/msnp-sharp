@@ -125,6 +125,9 @@
     <Compile Include="Core\NetworkMessage.cs" />
     <Compile Include="Core\NotificationMessage.cs" />
     <Compile Include="NSMessageHandler.cs" />
+    <Compile Include="NSMessageHandler.Error.cs">
+      <DependentUpon>NSMessageHandler.cs</DependentUpon>
+    </Compile>
     <Compile Include="NSMessageHandler.MSNP21.cs">
       <DependentUpon>NSMessageHandler.cs</DependentUpon>
     </Compile>

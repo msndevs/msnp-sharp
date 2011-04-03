@@ -38,6 +38,24 @@ namespace MSNPSharp.P2P
 {
     using MSNPSharp.Core;
 
+    /// <summary>
+    /// SDG Bridge that wraps P2P messages by PipeNo and sends over nameserver.
+    /// </summary>
+    /// <remarks>
+    /// SDG bridge manages switchboards by pipe no. Pipe no indicates open switchboards and
+    /// begins with 1 and increments by 1 (per user). You can create 3 pipes for each end point.
+    /// 
+    /// Each P2PMessage is about 1KB and can be sent multiple packets in SDG bridge.
+    /// Bridging-Offsets indicates multiple fragmented p2p packets. For example:
+    /// 
+    /// Content-Length: 2404
+    /// Bridging-Offsets: 0,52,1352
+    /// 
+    /// This packets contains 3 p2p messages.
+    /// The first is 52-0=52 bytes. It is probably ACK/RAK or SYN.
+    /// The second is 1352-52=1300 bytes. It is p2p data packet.
+    /// The last is 2404-1352=1052 bytes. It can be p2p data packet or BYE packet.
+    /// </remarks>
     public class SDGBridge : P2PBridge
     {
         private NSMessageHandler nsHandler;
