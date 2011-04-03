@@ -1594,6 +1594,11 @@ namespace MSNPSharp
                 case "GCF":
                     OnGCFReceived(nsMessage);
                     break;
+
+                // Error codes
+                case "801":
+                    On801Received(nsMessage);
+                    break;
                 default:
                     isUnknownMessage = true;
                     break;
