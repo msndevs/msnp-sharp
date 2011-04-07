@@ -467,7 +467,7 @@ namespace MSNPSharp.P2P
 
                 p2pMessage.InnerMessage = invitation;
 
-                Send(p2pMessage, delegate(P2PMessage ack)
+                Send(p2pMessage, P2PBridge.DefaultSlpTimeout, delegate(P2PMessage ack)
                 {
                     remoteBaseIdentifier = ack.Header.Identifier;
                     remoteIdentifier = remoteBaseIdentifier;
@@ -501,7 +501,7 @@ namespace MSNPSharp.P2P
                 slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
                 slpMessage.BodyValues["SessionID"] = SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
-                Send(WrapSLPMessage(slpMessage), delegate(P2PMessage ack)
+                Send(WrapSLPMessage(slpMessage), P2PBridge.DefaultTimeout, delegate(P2PMessage ack)
                 {
                     OnActive(EventArgs.Empty);
 
@@ -556,10 +556,8 @@ namespace MSNPSharp.P2P
 
                 p2pMessage.InnerMessage = slpMessage;
 
-                Send(p2pMessage, delegate(P2PMessage ack)
-                {
-                    Close();
-                });
+                Send(p2pMessage);
+                Close();
             }
         }
 
@@ -602,7 +600,7 @@ namespace MSNPSharp.P2P
 
                 p2pMessage.InnerMessage = slpMessage;
 
-                Send(p2pMessage, delegate(P2PMessage ack)
+                Send(p2pMessage, P2PBridge.DefaultTimeout, delegate(P2PMessage ack)
                 {
                     OnClosed(new ContactEventArgs(Local));
                 });
@@ -777,22 +775,17 @@ namespace MSNPSharp.P2P
         /// <param name="msg"></param>
         public void Send(P2PMessage msg)
         {
-            Send(msg, null);
+            Send(msg, 0, null);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="msg"></param>
-        /// <param name="ackHandler"></param>
-        public void Send(P2PMessage msg, AckHandler ackHandler)
+        public void Send(P2PMessage msg, int ackTimeout, AckHandler ackHandler)
         {
             ResetTimeoutTimer();
 
             if (p2pBridge == null)
                 MigrateToOptimalBridge();
 
-            p2pBridge.Send(this, Remote, RemoteContactEndPointID, msg, ackHandler);
+            p2pBridge.Send(this, Remote, RemoteContactEndPointID, msg, ackTimeout, ackHandler);
         }
 
         internal P2PMessage WrapSLPMessage(SLPMessage slpMessage)

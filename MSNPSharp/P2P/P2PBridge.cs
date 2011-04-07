@@ -37,8 +37,11 @@ using System.Collections.Generic;
 
 namespace MSNPSharp.P2P
 {
-    #region P2PMessageEventArgs
+    public delegate void AckHandler(P2PMessage ack);
 
+    #region P2PMessage EventArgs
+
+    [Serializable]
     public class P2PMessageEventArgs : EventArgs
     {
         private P2PMessage p2pMessage;
@@ -56,9 +59,51 @@ namespace MSNPSharp.P2P
         }
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
+    [Serializable]
+    public class P2PAckMessageEventArgs : P2PMessageEventArgs
+    {
+        private int deleteTick = 0;
+        private AckHandler ackHandler;
+
+        public AckHandler AckHandler
+        {
+            get
+            {
+                return ackHandler;
+            }
+        }
+
+        public int DeleteTick
+        {
+            get
+            {
+                return deleteTick;
+            }
+            set
+            {
+                deleteTick = value;
+            }
+        }
+
+        public P2PAckMessageEventArgs(P2PMessage p2pMessage, AckHandler ackHandler, int timeoutSec)
+            : base(p2pMessage)
+        {
+            this.ackHandler = ackHandler;
+            this.deleteTick = timeoutSec;
+
+            if (timeoutSec != 0)
+            {
+                AddSeconds(timeoutSec);
+            }
+        }
+
+        public void AddSeconds(int secs)
+        {
+            DeleteTick = unchecked(Environment.TickCount + (secs * 1000));
+        }
+    }
+
+    [Serializable]
     public class P2PMessageSessionEventArgs : P2PMessageEventArgs
     {
         private P2PSession p2pSession;
@@ -70,11 +115,6 @@ namespace MSNPSharp.P2P
             }
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="p2pMessage"></param>
-        /// <param name="p2pSession"></param>
         public P2PMessageSessionEventArgs(P2PMessage p2pMessage, P2PSession p2pSession)
             : base(p2pMessage)
         {
@@ -89,6 +129,9 @@ namespace MSNPSharp.P2P
     /// </summary>
     public abstract class P2PBridge : IDisposable
     {
+        public const int DefaultTimeout = 10;
+        public const int DefaultSlpTimeout = 120;
+
         #region Events & Fields
 
         /// <summary>
@@ -109,6 +152,10 @@ namespace MSNPSharp.P2P
         protected Dictionary<P2PSession, P2PSendQueue> sendQueues = new Dictionary<P2PSession, P2PSendQueue>();
         protected Dictionary<P2PSession, P2PSendList> sendingQueues = new Dictionary<P2PSession, P2PSendList>();
         protected List<P2PSession> stoppedSessions = new List<P2PSession>();
+
+        private Dictionary<uint, P2PAckMessageEventArgs> ackHandlersV1 = new Dictionary<uint, P2PAckMessageEventArgs>();
+        private Dictionary<uint, P2PAckMessageEventArgs> ackHandlersV2 = new Dictionary<uint, P2PAckMessageEventArgs>();
+
 
         #endregion
 
@@ -188,6 +235,12 @@ namespace MSNPSharp.P2P
             sendingQueues.Clear();
             stoppedSessions.Clear();
 
+            lock (ackHandlersV1)
+                ackHandlersV1.Clear();
+
+            lock (ackHandlersV2)
+                ackHandlersV2.Clear();
+
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                String.Format("P2PBridge {0} disposed", this.ToString()), GetType().Name);
         }
@@ -220,20 +273,12 @@ namespace MSNPSharp.P2P
             return IsOpen && (sendingQueues[session].Count < queueSize) && (!stoppedSessions.Contains(session));
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="session"></param>
-        /// <param name="remote"></param>
-        /// <param name="remoteGuid"></param>
-        /// <param name="msg"></param>
-        /// <param name="ackHandler"></param>
-        public virtual void Send(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage msg, AckHandler ackHandler)
+        public virtual void Send(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage msg, int ackTimeout, AckHandler ackHandler)
         {
             if (remote == null)
                 throw new ArgumentNullException("remote");
 
-            P2PMessage[] msgs = SetSequenceNumberAndRegisterAck(session, remote, msg, ackHandler);
+            P2PMessage[] msgs = SetSequenceNumberAndRegisterAck(session, remote, msg, ackHandler, ackTimeout);
 
             if (session == null)
             {
@@ -270,7 +315,7 @@ namespace MSNPSharp.P2P
             ProcessSendQueues();
         }
 
-        private P2PMessage[] SetSequenceNumberAndRegisterAck(P2PSession session, Contact remote, P2PMessage p2pMessage, AckHandler ackHandler)
+        private P2PMessage[] SetSequenceNumberAndRegisterAck(P2PSession session, Contact remote, P2PMessage p2pMessage, AckHandler ackHandler, int timeout)
         {
             if (p2pMessage.Header.Identifier == 0)
             {
@@ -305,7 +350,7 @@ namespace MSNPSharp.P2P
             if (ackHandler != null)
             {
                 P2PMessage firstMessage = msgs[0];
-                remote.NSMessageHandler.P2PHandler.RegisterAckHandler(firstMessage, ackHandler);
+                RegisterAckHandler(new P2PAckMessageEventArgs(firstMessage, ackHandler, timeout));
             }
 
             if (session != null)
@@ -315,6 +360,119 @@ namespace MSNPSharp.P2P
 
             return msgs;
         }
+
+        protected virtual void RegisterAckHandler(P2PAckMessageEventArgs e)
+        {
+            if (e.P2PMessage.Version == P2PVersion.P2PV2)
+            {
+                e.P2PMessage.V2Header.OperationCode |= (byte)OperationCode.RAK;
+                ackHandlersV2[e.P2PMessage.V2Header.Identifier + e.P2PMessage.Header.MessageSize] = e;
+            }
+            else if (e.P2PMessage.Version == P2PVersion.P2PV1)
+            {
+                ackHandlersV1[e.P2PMessage.V1Header.AckSessionId] = e;
+            }
+        }
+
+        internal bool HandleACK(P2PMessage p2pMessage)
+        {
+            bool isAckOrNak = false;
+
+            if (p2pMessage.Header.IsAcknowledgement || p2pMessage.Header.IsNegativeAck)
+            {
+                P2PAckMessageEventArgs e = null;
+                uint ackNakId = 0;
+                isAckOrNak = true;
+
+                if (p2pMessage.Version == P2PVersion.P2PV1)
+                {
+                    lock (ackHandlersV1)
+                    {
+                        if (ackHandlersV1.ContainsKey(p2pMessage.Header.AckIdentifier))
+                        {
+                            ackNakId = p2pMessage.Header.AckIdentifier;
+                            e = ackHandlersV1[ackNakId];
+                            ackHandlersV1.Remove(ackNakId);
+                        }
+                    }
+                }
+                else if (p2pMessage.Version == P2PVersion.P2PV2)
+                {
+                    lock (ackHandlersV2)
+                    {
+                        if (ackHandlersV2.ContainsKey(p2pMessage.Header.AckIdentifier))
+                        {
+                            ackNakId = p2pMessage.Header.AckIdentifier;
+                            e = ackHandlersV2[ackNakId];
+                            ackHandlersV2.Remove(ackNakId);
+                        }
+                        else if (ackHandlersV2.ContainsKey(p2pMessage.V2Header.NakIdentifier))
+                        {
+                            ackNakId = p2pMessage.V2Header.NakIdentifier;
+                            e = ackHandlersV2[ackNakId];
+                            ackHandlersV2.Remove(ackNakId);
+                        }
+                    }
+                }
+
+                if (ackNakId == 0)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                        String.Format("!!!!!! No AckHandler registered for ack/nak {0}:\r\n{1}", p2pMessage.Header.AckIdentifier, p2pMessage.ToDebugString()), GetType().Name);
+                }
+                else
+                {
+                    if (e != null && e.AckHandler != null)
+                    {
+                       e.AckHandler(p2pMessage);
+                    }
+                    else
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                            String.Format("!!!!!! No AckHandler pair for ack {0}\r\n{1}", ackNakId, p2pMessage.ToDebugString()), GetType().Name);
+                    }
+                }
+            }
+
+            return isAckOrNak;
+        }
+
+        #region HandleRAK
+
+        internal bool HandleRAK(Contact source, Guid sourceGuid, P2PMessage msg)
+        {
+            bool requireAck = false;
+
+            if (msg.Header.RequireAck)
+            {
+                requireAck = true;
+
+                P2PMessage ack = msg.CreateAcknowledgement();
+                ack.Header.Identifier = localTrackerId;
+
+                if (ack.Header.RequireAck)
+                {
+                    // SYN
+                    Send(null, source, sourceGuid, ack, DefaultTimeout, delegate(P2PMessage sync)
+                    {
+                        SyncId = sync.Header.AckIdentifier;
+
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                            String.Format("SYNC completed for: {0}", this), GetType().Name);
+                    });
+                }
+                else
+                {
+                    // ACK
+                    Send(null, source, sourceGuid, ack, 0, null);
+                }
+            }
+
+            return requireAck;
+        }
+
+        #endregion
+
 
         /// <summary>
         /// 

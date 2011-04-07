@@ -224,7 +224,7 @@ namespace MSNPSharp.P2P
             SetupDCTimer();
             // 3- Don't pass p2psession to the sdg bridge. Because, sdgbridge stopped this session.
             nsMessageHandler.SDGBridge.Send(null /*must be null to bypass queueing*/,
-                Remote, RemoteContactEndPointID, p2pMessage, null);
+                Remote, RemoteContactEndPointID, p2pMessage, 0, null);
 
             return true;
         }
@@ -331,11 +331,11 @@ namespace MSNPSharp.P2P
                 if (startupSession != null)
                 {
                     startupSession.SetupDCTimer();
-                    startupSession.Bridge.Send(null, startupSession.Remote, startupSession.RemoteContactEndPointID, p2pMessage, null);
+                    startupSession.Bridge.Send(null, startupSession.Remote, startupSession.RemoteContactEndPointID, p2pMessage, 0, null);
                 }
                 else
                 {
-                    ns.SDGBridge.Send(null, remote, remoteGuid, p2pMessage, null);
+                    ns.SDGBridge.Send(null, remote, remoteGuid, p2pMessage, 0, null);
                 }
             }
             else
@@ -406,7 +406,7 @@ namespace MSNPSharp.P2P
                         P2PMessage msg = new P2PMessage(ver);
                         msg.InnerMessage = slpResponseMessage;
 
-                        ns.SDGBridge.Send(null, remote, remoteGuid, msg, null);
+                        ns.SDGBridge.Send(null, remote, remoteGuid, msg, 0, null);
                     }
 
                     return;
