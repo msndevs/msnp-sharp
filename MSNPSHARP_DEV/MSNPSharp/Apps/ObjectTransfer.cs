@@ -252,7 +252,7 @@ namespace MSNPSharp.Apps
 
                 if (P2PVersion == P2PVersion.P2PV1)
                 {
-                    SendMessage(msg, delegate(P2PMessage ack)
+                    SendMessage(msg, 0, delegate(P2PMessage ack)
                     {
                         OnTransferFinished(EventArgs.Empty);
                         // Close after remote client sends BYE.
@@ -260,11 +260,11 @@ namespace MSNPSharp.Apps
                 }
                 else
                 {
-                    SendMessage(msg, null);
+                    SendMessage(msg, 0, null);
 
                     // Register the ACKHandler
                     P2PMessage rak = new P2PMessage(P2PVersion);
-                    SendMessage(rak, delegate(P2PMessage ack)
+                    SendMessage(rak, P2PBridge.DefaultTimeout, delegate(P2PMessage ack)
                     {
                         OnTransferFinished(EventArgs.Empty);
                         // Close after remote client sends BYE.

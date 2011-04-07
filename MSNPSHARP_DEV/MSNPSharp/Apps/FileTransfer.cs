@@ -358,6 +358,7 @@ namespace MSNPSharp.Apps
             p2pChunk.WriteBytes(_dataStream, P2PSession.Bridge.MaxDataSize);
 
             AckHandler ackHandler = null;
+            int ackTimeout = 0;
 
             if (P2PVersion == P2PVersion.P2PV1)
             {
@@ -378,6 +379,7 @@ namespace MSNPSharp.Apps
                     p2pChunk.V2Header.OperationCode |= (byte)OperationCode.RAK;
                     p2pv2NextRAK = DateTime.Now.AddSeconds(8);
 
+                    ackTimeout = P2PBridge.DefaultTimeout;
                     ackHandler = delegate(P2PMessage ack)
                     {
                         _sendingData = true; // Ack received, continue sending...
@@ -393,7 +395,7 @@ namespace MSNPSharp.Apps
 
                 // This is the last chunk of data, register the ACKHandler
                 P2PMessage rak = new P2PMessage(P2PVersion);
-                SendMessage(rak, delegate(P2PMessage ack)
+                SendMessage(rak, P2PBridge.DefaultTimeout, delegate(P2PMessage ack)
                 {
                     Abort();
                     OnTransferFinished(EventArgs.Empty);
@@ -401,7 +403,7 @@ namespace MSNPSharp.Apps
             }
             else
             {
-                SendMessage(p2pChunk, ackHandler);
+                SendMessage(p2pChunk, ackTimeout, ackHandler);
             }
 
             OnProgressed(EventArgs.Empty);

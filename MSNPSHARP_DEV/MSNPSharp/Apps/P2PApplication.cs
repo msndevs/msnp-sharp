@@ -324,15 +324,13 @@ namespace MSNPSharp.Apps
         /// <param name="p2pMessage"></param>
         public void SendMessage(P2PMessage p2pMessage)
         {
-            SendMessage(p2pMessage, null);
+            SendMessage(p2pMessage, 0, null);
         }
 
         /// <summary>
         /// Sends a message with the specified <see cref="P2PMessage"/> and <see cref="AckHandler"/>.
         /// </summary>
-        /// <param name="p2pMessage"></param>
-        /// <param name="ackHandler"></param>
-        public virtual void SendMessage(P2PMessage p2pMessage, AckHandler ackHandler)
+        public virtual void SendMessage(P2PMessage p2pMessage, int ackTimeout, AckHandler ackHandler)
         {
             Debug.Assert(p2pMessage.Version == version);
 
@@ -342,7 +340,7 @@ namespace MSNPSharp.Apps
             if (p2pMessage.Version == P2PVersion.P2PV1 && (p2pMessage.V1Header.Flags & P2PFlag.Acknowledgement) != P2PFlag.Acknowledgement)
                 p2pMessage.Footer = ApplicationId;
 
-            p2pSession.Send(p2pMessage, ackHandler);
+            p2pSession.Send(p2pMessage, ackTimeout, ackHandler);
         }
 
         /// <summary>
