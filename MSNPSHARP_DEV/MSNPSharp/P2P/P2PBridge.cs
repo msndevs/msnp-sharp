@@ -273,6 +273,11 @@ namespace MSNPSharp.P2P
             return IsOpen && (sendingQueues[session].Count < queueSize) && (!stoppedSessions.Contains(session));
         }
 
+        public virtual void Send(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage msg)
+        {
+            Send(session, remote, remoteGuid, msg, 0, null);
+        }
+
         public virtual void Send(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage msg, int ackTimeout, AckHandler ackHandler)
         {
             if (remote == null)
@@ -464,7 +469,7 @@ namespace MSNPSharp.P2P
                 else
                 {
                     // ACK
-                    Send(null, source, sourceGuid, ack, 0, null);
+                    Send(null, source, sourceGuid, ack);
                 }
             }
 

@@ -203,9 +203,7 @@ namespace MSNPSharp.P2P
                 response.V2Header.TFCombination = TFCombination.First;
             }
 
-            bridge.Send(null, dest, destGuid, response, 0, null);
+            bridge.Send(null, dest, destGuid, response);
         }
-
-
     }
 };
