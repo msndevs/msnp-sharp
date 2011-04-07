@@ -32,6 +32,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.Text;
+using System.Threading;
 using System.Diagnostics;
 using System.Collections.Generic;
 
@@ -124,9 +125,6 @@ namespace MSNPSharp.P2P
 
     #endregion
 
-    /// <summary>
-    /// 
-    /// </summary>
     public abstract class P2PBridge : IDisposable
     {
         public const int DefaultTimeout = 10;
@@ -155,7 +153,10 @@ namespace MSNPSharp.P2P
 
         private Dictionary<uint, P2PAckMessageEventArgs> ackHandlersV1 = new Dictionary<uint, P2PAckMessageEventArgs>();
         private Dictionary<uint, P2PAckMessageEventArgs> ackHandlersV2 = new Dictionary<uint, P2PAckMessageEventArgs>();
-
+        private DateTime nextCleanup = DateTime.MinValue;
+        private volatile int inCleanup = 0;
+        private object syncObject;
+        const int CleanupIntervalSecs = 5;
 
         #endregion
 
@@ -209,6 +210,20 @@ namespace MSNPSharp.P2P
             }
         }
 
+
+        public object SyncObject
+        {
+            get
+            {
+                if (syncObject == null)
+                {
+                    Interlocked.CompareExchange(ref syncObject, new object(), null);
+                }
+
+                return syncObject;
+            }
+        }
+
         #endregion
 
         /// <summary>
@@ -219,6 +234,7 @@ namespace MSNPSharp.P2P
         {
             this.queueSize = queueSize;
             this.localTrackerId = (uint)new Random().Next(5000, int.MaxValue);
+            this.nextCleanup = NextCleanupTime();
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                 String.Format("P2PBridge {0} created", this.ToString()), GetType().Name);
@@ -245,11 +261,81 @@ namespace MSNPSharp.P2P
                String.Format("P2PBridge {0} disposed", this.ToString()), GetType().Name);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="session"></param>
-        /// <returns></returns>
+        private DateTime NextCleanupTime()
+        {
+            return DateTime.Now.AddMinutes(CleanupIntervalSecs);
+        }
+
+        private void RunRakCleanupIfNecessary()
+        {
+            if (nextCleanup < DateTime.Now)
+            {
+                List<P2PMessage> raks = new List<P2PMessage>();
+
+                lock (SyncObject)
+                {
+                    if (nextCleanup < DateTime.Now)
+                    {
+                        inCleanup++;
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                            String.Format("Running RAK cleanup for {0}...", this.ToString()));
+
+                        nextCleanup = NextCleanupTime();
+                        int tickcount = Environment.TickCount + 2000; // Give +2 secs change...
+
+                        List<uint> ackstodelete = new List<uint>();
+
+                        // P2Pv1
+                        foreach (KeyValuePair<uint, P2PAckMessageEventArgs> pair in ackHandlersV1)
+                        {
+                            if (pair.Value.DeleteTick != 0 && pair.Value.DeleteTick < tickcount)
+                            {
+                                ackstodelete.Add(pair.Key);
+                                raks.Add(pair.Value.P2PMessage);
+                            }
+                        }
+                        foreach (uint i in ackstodelete)
+                        {
+                            ackHandlersV1.Remove(i);
+                        }
+
+                        ackstodelete.Clear();
+
+                        // P2Pv2
+                        foreach (KeyValuePair<uint, P2PAckMessageEventArgs> pair in ackHandlersV2)
+                        {
+                            if (pair.Value.DeleteTick != 0 && pair.Value.DeleteTick < tickcount)
+                            {
+                                ackstodelete.Add(pair.Key);
+                                raks.Add(pair.Value.P2PMessage);
+                            }
+                        }
+                        foreach (uint i in ackstodelete)
+                        {
+                            ackHandlersV2.Remove(i);
+                        }
+
+                        GC.Collect();
+
+                        inCleanup = 0;
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                            String.Format("End RAK cleanup for {0}...", this.ToString()));
+                    }
+                }
+
+                if (raks.Count > 0)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                            String.Format("Unacked RAK packets for {0}...", this.ToString()));
+
+                    foreach (P2PMessage rak in raks)
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, rak.ToDebugString());
+                    }
+                }
+            }
+        }
+
         public virtual bool SuitableFor(P2PSession session)
         {
             Contact remote = Remote;
@@ -429,7 +515,7 @@ namespace MSNPSharp.P2P
                 {
                     if (e != null && e.AckHandler != null)
                     {
-                       e.AckHandler(p2pMessage);
+                        e.AckHandler(p2pMessage);
                     }
                     else
                     {
@@ -488,7 +574,6 @@ namespace MSNPSharp.P2P
             {
                 foreach (KeyValuePair<P2PSession, P2PSendQueue> pair in SendQueues)
                 {
-
                     while (Ready(pair.Key) && (pair.Value.Count > 0))
                     {
                         P2PSendItem item = pair.Value.Dequeue();
@@ -515,6 +600,8 @@ namespace MSNPSharp.P2P
 
                 if (!moreQueued)
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Queues are all empty", GetType().Name);
+
+                RunRakCleanupIfNecessary();
             }
         }
 
