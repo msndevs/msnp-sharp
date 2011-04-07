@@ -258,7 +258,7 @@ namespace MSNPSharp.P2P
                     String.Format("*******Unhandled P2P message!******* PING sent:\r\n{0}", p2pMessage.ToDebugString()), GetType().Name);
 
                 P2PMessage ping = new P2PMessage(p2pMessage.Version);
-                bridge.Send(null, source, sourceGuid, ping, 0, null);
+                bridge.Send(null, source, sourceGuid, ping);
             }
         }
 
