@@ -72,12 +72,12 @@ namespace MSNPSharp.P2P
         private List<P2PBridge> bridges = new List<P2PBridge>();
         private List<P2PSession> p2pV1Sessions = new List<P2PSession>();
         private List<P2PSession> p2pV2Sessions = new List<P2PSession>();
-       
+
         protected internal P2PHandler(NSMessageHandler nsHandler)
         {
             this.nsMessageHandler = nsHandler;
             this.sdgBridge = new SDGBridge(nsHandler);
-            this.slpHandler = new SLPHandler(nsHandler);            
+            this.slpHandler = new SLPHandler(nsHandler);
         }
 
         #endregion
@@ -177,45 +177,24 @@ namespace MSNPSharp.P2P
 
                 if (P2PApplication.IsRegistered(eufGuid, appId))
                 {
-                    bool sessionExists = false;
-                    P2PSession newSession = null;
+                    P2PSession newSession = FindSessionByCallId(slp.CallId, ver);
 
-                    if (ver == P2PVersion.P2PV2)
+                    if (newSession == null)
                     {
-                        foreach (P2PSession s in p2pV2Sessions)
-                        {
-                            if (s.Invitation.CallId == slp.CallId)
-                            {
-                                newSession = s;
-                                sessionExists = true;
-                                break;
-                            }
-                        }
+                        newSession = new P2PSession(slp as SLPRequestMessage, p2pMessage, nsMessageHandler, bridge);
+                        newSession.Closed += P2PSessionClosed;
 
-                        if (sessionExists == false)
-                        {
-                            newSession = new P2PSession(slp as SLPRequestMessage, p2pMessage, nsMessageHandler, bridge);
-                            newSession.Closed += P2PSessionClosed;
+                        if (newSession.Version == P2PVersion.P2PV2)
                             p2pV2Sessions.Add(newSession);
-                        }
+                        else
+                            p2pV1Sessions.Add(newSession);
                     }
                     else
                     {
-                        foreach (P2PSession s in p2pV1Sessions)
+                        // P2PSession exists, bridge changed...
+                        if (newSession.Bridge != bridge)
                         {
-                            if (s.Invitation.CallId == slp.CallId)
-                            {
-                                newSession = s;
-                                sessionExists = true;
-                                break;
-                            }
-                        }
-
-                        if (sessionExists == false)
-                        {
-                            newSession = new P2PSession(slp as SLPRequestMessage, p2pMessage, nsMessageHandler, bridge);
-                            newSession.Closed += P2PSessionClosed;
-                            p2pV1Sessions.Add(newSession);
+                            // BRIDGETODO
                         }
                     }
 
@@ -250,7 +229,7 @@ namespace MSNPSharp.P2P
             }
 
 
-            
+
             if (!requireAck)
             {
                 // UNHANDLED P2P MESSAGE
@@ -294,7 +273,7 @@ namespace MSNPSharp.P2P
 
         internal P2PBridge GetBridge(P2PSession session)
         {
-            
+
 
             foreach (P2PBridge existing in bridges)
                 if (existing.SuitableFor(session))
@@ -333,15 +312,66 @@ namespace MSNPSharp.P2P
 
         #region Private
 
-
-        
-
-
         #region FindSession & P2PSessionClosed
+
+        private P2PSession FindSessionByCallId(Guid callId, P2PVersion version)
+        {
+            List<P2PSession> sessions = (version == P2PVersion.P2PV2) ? p2pV2Sessions : p2pV1Sessions;
+
+            foreach (P2PSession session in sessions)
+            {
+                if (session.Invitation.CallId == callId)
+                    return session;
+            }
+
+            return null;
+        }
+
+        private P2PSession FindSessionBySessionId(uint sessionId, P2PVersion version)
+        {
+            List<P2PSession> sessions = (version == P2PVersion.P2PV2) ? p2pV2Sessions : p2pV1Sessions;
+
+            foreach (P2PSession session in sessions)
+            {
+                if (session.SessionId == sessionId)
+                    return session;
+            }
+
+            return null;
+        }
+
+        private P2PSession FindSessionByExpectedIdentifier(P2PMessage p2pMessage)
+        {
+            if (p2pMessage.Version == P2PVersion.P2PV2)
+            {
+                foreach (P2PSession session in p2pV2Sessions)
+                {
+                    uint expected = session.RemoteIdentifier;
+
+                    if (p2pMessage.Header.Identifier == expected)
+                        return session;
+                }
+            }
+            else
+            {
+                foreach (P2PSession session in p2pV1Sessions)
+                {
+                    uint expected = session.RemoteIdentifier + 1;
+                    if (expected == session.RemoteBaseIdentifier)
+                        expected++;
+
+                    if (p2pMessage.Header.Identifier == expected)
+                        return session;
+                }
+            }
+
+            return null;
+        }
 
         private P2PSession FindSession(P2PMessage msg, SLPMessage slp)
         {
-            uint sessionID = msg.Header.SessionId;
+            P2PSession p2pSession = null;
+            uint sessionID = (msg != null) ? msg.Header.SessionId : 0;
 
             if ((sessionID == 0) && (slp != null))
             {
@@ -360,70 +390,29 @@ namespace MSNPSharp.P2P
                 {
                     // We don't get a session ID in BYE requests
                     // So we need to find the session by its call ID
-                    if (msg.Version == P2PVersion.P2PV2)
-                    {
-                        foreach (P2PSession session in p2pV2Sessions)
-                        {
-                            if (session.Invitation.CallId == slp.CallId)
-                                return session;
-                        }
-                    }
-                    else
-                    {
-                        foreach (P2PSession session in p2pV1Sessions)
-                        {
-                            if (session.Invitation.CallId == slp.CallId)
-                                return session;
-                        }
-                    }
+                    P2PVersion p2pVersion = slp.FromEndPoint == Guid.Empty ? P2PVersion.P2PV1 : P2PVersion.P2PV2;
+                    p2pSession = FindSessionByCallId(slp.CallId, p2pVersion);
+
+                    if (p2pSession != null)
+                        return p2pSession;
                 }
             }
 
             // Sometimes we only have a messageID to find the session with...
             if ((sessionID == 0) && (msg.Header.Identifier != 0))
             {
-                if (msg.Version == P2PVersion.P2PV2)
-                {
-                    foreach (P2PSession session in p2pV2Sessions)
-                    {
-                        uint expected = session.RemoteIdentifier;
+                p2pSession = FindSessionByExpectedIdentifier(msg);
 
-                        if (msg.Header.Identifier == expected)
-                            return session;
-                    }
-                }
-                else
-                {
-                    foreach (P2PSession session in p2pV1Sessions)
-                    {
-                        uint expected = session.RemoteIdentifier + 1;
-                        if (expected == session.RemoteBaseIdentifier)
-                            expected++;
-
-                        if (msg.Header.Identifier == expected)
-                            return session;
-                    }
-                }
+                if (p2pSession != null)
+                    return p2pSession;
             }
 
             if (sessionID != 0)
             {
-                if (msg.Version == P2PVersion.P2PV2)
-                {
-                    foreach (P2PSession session in p2pV2Sessions)
-                    {
-                        if (session.SessionId == sessionID)
-                            return session;
-                    }
-                }
-                else
-                {
-                    foreach (P2PSession session in p2pV1Sessions)
-                    {
-                        if (session.SessionId == sessionID)
-                            return session;
-                    }
-                }
+                p2pSession = FindSessionBySessionId(sessionID, msg.Version);
+
+                if (p2pSession != null)
+                    return p2pSession;
             }
 
             return null;
