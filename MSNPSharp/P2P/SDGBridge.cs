@@ -141,7 +141,7 @@ namespace MSNPSharp.P2P
                 mmMessage.ContentHeaders[MIMEContentHeaders.ContentTransferEncoding] = "binary";
                 mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = MessageTypes.Data;
 
-                mmMessage.ContentHeaders[MIMEContentHeaders.Pipe] = PackageNo.ToString();
+                //mmMessage.ContentHeaders[MIMEContentHeaders.Pipe] = PackageNo.ToString();
                 mmMessage.ContentHeaders[MIMEContentHeaders.BridgingOffsets] = "0";
                 mmMessage.InnerBody = p2pMessage.GetBytes(true);
                 mmMessage.InnerMessage = p2pMessage;
