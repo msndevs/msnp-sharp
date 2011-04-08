@@ -852,8 +852,15 @@ namespace MSNPSharp.P2P
                 p2pBridge.BridgeClosed += BridgeClosed;
                 p2pBridge.BridgeSent += BridgeSent;
 
-                localBaseIdentifier = p2pBridge.SequenceId;
-                localIdentifier = localBaseIdentifier;
+                if (localIdentifier == 0)
+                {
+                    localBaseIdentifier = p2pBridge.SequenceId;
+                    localIdentifier = localBaseIdentifier;
+                }
+                else
+                {
+                    p2pBridge.SequenceId = localIdentifier;
+                }
 
                 if ((directNegotiationTimer != null) & (p2pBridge is TCPv1Bridge))
                     DirectNegotiationSuccessful();
