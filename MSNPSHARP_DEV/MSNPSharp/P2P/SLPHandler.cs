@@ -102,14 +102,19 @@ namespace MSNPSharp.P2P
                     if (slpStatus.ContentType == "application/x-msnmsgr-transrespbody")
                     {
                         P2PSession.ProcessDirectInvite(slpStatus, nsMessageHandler, session);
+
+                        return true;
                     }
                     else
                     {
-                        session.OnActive(EventArgs.Empty);
-                        session.Application.Start();
-                    }
+                        if (session.Application != null)
+                        {
+                            session.OnActive(EventArgs.Empty);
+                            session.Application.Start();
 
-                    return true;
+                            return true;
+                        }
+                    }
                 }
                 else if (slpStatus.Code == 603) // Decline
                 {
