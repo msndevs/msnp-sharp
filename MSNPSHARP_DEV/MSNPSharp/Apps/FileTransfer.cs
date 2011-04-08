@@ -321,7 +321,7 @@ namespace MSNPSharp.Apps
 
                 _dataStream.Seek(0, SeekOrigin.Begin);
                 _sendingData = true;
-                packNum = ++base.P2PSession.Bridge.packageNumber;
+                packNum = ++base.P2PSession.Bridge.PackageNo;
 
                 if (P2PSession.Bridge.Ready(P2PSession))
                     SendChunk();
@@ -358,7 +358,7 @@ namespace MSNPSharp.Apps
             p2pChunk.WriteBytes(_dataStream, P2PSession.Bridge.MaxDataSize);
 
             AckHandler ackHandler = null;
-            int ackTimeout = 0;
+            int ackTimeout = P2PBridge.MaxTimeout;
 
             if (P2PVersion == P2PVersion.P2PV1)
             {
@@ -369,8 +369,6 @@ namespace MSNPSharp.Apps
             {
                 p2pChunk.V2Header.PackageNumber = packNum;
                 p2pChunk.V2Header.TFCombination |= TFCombination.FileTransfer;
-
-                P2PSession.CorrectLocalIdentifier((int)p2pChunk.Header.MessageSize);
 
                 if (p2pv2NextRAK < DateTime.Now)
                 {

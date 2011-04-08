@@ -387,7 +387,7 @@ namespace MSNPSharp.P2P
             }
 
             p2pBridge = bridge;
-            localBaseIdentifier = bridge.localTrackerId;
+            localBaseIdentifier = bridge.SequenceId;
             localIdentifier = localBaseIdentifier;
             status = P2PSessionStatus.WaitingForLocal;
 
@@ -447,7 +447,7 @@ namespace MSNPSharp.P2P
                 // Get id from bridge....
                 {
                     MigrateToOptimalBridge();
-                    localBaseIdentifier = p2pBridge.localTrackerId;
+                    localBaseIdentifier = p2pBridge.SequenceId;
                     localIdentifier = localBaseIdentifier;
                 }
 
@@ -467,7 +467,7 @@ namespace MSNPSharp.P2P
 
                 p2pMessage.InnerMessage = invitation;
 
-                Send(p2pMessage, P2PBridge.DefaultSlpTimeout, delegate(P2PMessage ack)
+                Send(p2pMessage, delegate(P2PMessage ack)
                 {
                     remoteBaseIdentifier = ack.Header.Identifier;
                     remoteIdentifier = remoteBaseIdentifier;
@@ -501,7 +501,7 @@ namespace MSNPSharp.P2P
                 slpMessage.ContentType = "application/x-msnmsgr-sessionreqbody";
                 slpMessage.BodyValues["SessionID"] = SessionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
-                Send(WrapSLPMessage(slpMessage), P2PBridge.DefaultTimeout, delegate(P2PMessage ack)
+                Send(WrapSLPMessage(slpMessage), delegate(P2PMessage ack)
                 {
                     OnActive(EventArgs.Empty);
 
@@ -551,7 +551,7 @@ namespace MSNPSharp.P2P
                 {
                     p2pMessage.V2Header.OperationCode = (byte)OperationCode.RAK;
                     p2pMessage.V2Header.TFCombination = TFCombination.First;
-                    p2pMessage.V2Header.PackageNumber = ++Bridge.packageNumber;
+                    p2pMessage.V2Header.PackageNumber = ++Bridge.PackageNo;
                 }
 
                 p2pMessage.InnerMessage = slpMessage;
@@ -595,12 +595,12 @@ namespace MSNPSharp.P2P
                 {
                     p2pMessage.V2Header.OperationCode = (byte)OperationCode.RAK;
                     p2pMessage.V2Header.TFCombination = TFCombination.First;
-                    p2pMessage.V2Header.PackageNumber = ++p2pBridge.packageNumber;
+                    p2pMessage.V2Header.PackageNumber = ++p2pBridge.PackageNo;
                 }
 
                 p2pMessage.InnerMessage = slpMessage;
 
-                Send(p2pMessage, P2PBridge.DefaultTimeout, delegate(P2PMessage ack)
+                Send(p2pMessage, delegate(P2PMessage ack)
                 {
                     OnClosed(new ContactEventArgs(Local));
                 });
@@ -769,23 +769,24 @@ namespace MSNPSharp.P2P
             }
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="msg"></param>
-        public void Send(P2PMessage msg)
+        public void Send(P2PMessage p2pMessage)
         {
-            Send(msg, 0, null);
+            Send(p2pMessage, 0, null);
         }
 
-        public void Send(P2PMessage msg, int ackTimeout, AckHandler ackHandler)
+        public void Send(P2PMessage p2pMessage, AckHandler ackHandler)
+        {
+            Send(p2pMessage, P2PBridge.DefaultTimeout, ackHandler);
+        }
+
+        public void Send(P2PMessage p2pMessage, int ackTimeout, AckHandler ackHandler)
         {
             ResetTimeoutTimer();
 
             if (p2pBridge == null)
                 MigrateToOptimalBridge();
 
-            p2pBridge.Send(this, Remote, RemoteContactEndPointID, msg, ackTimeout, ackHandler);
+            p2pBridge.Send(this, Remote, RemoteContactEndPointID, p2pMessage, ackTimeout, ackHandler);
         }
 
         internal P2PMessage WrapSLPMessage(SLPMessage slpMessage)
@@ -796,7 +797,7 @@ namespace MSNPSharp.P2P
             if (Version == P2PVersion.P2PV2)
             {
                 p2pMessage.V2Header.TFCombination = TFCombination.First;
-                p2pMessage.V2Header.PackageNumber = ++Bridge.packageNumber;
+                p2pMessage.V2Header.PackageNumber = ++Bridge.PackageNo;
             }
             else if (Version == P2PVersion.P2PV1)
             {
@@ -851,7 +852,7 @@ namespace MSNPSharp.P2P
                 p2pBridge.BridgeClosed += BridgeClosed;
                 p2pBridge.BridgeSent += BridgeSent;
 
-                localBaseIdentifier = p2pBridge.localTrackerId;
+                localBaseIdentifier = p2pBridge.SequenceId;
                 localIdentifier = localBaseIdentifier;
 
                 if ((directNegotiationTimer != null) & (p2pBridge is TCPv1Bridge))
