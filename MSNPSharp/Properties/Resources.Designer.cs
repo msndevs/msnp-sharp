@@ -84,7 +84,7 @@ namespace MSNPSharp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 4.0.0.2080.
+        ///   Looks up a localized string similar to 4.0.0.2295.
         /// </summary>
         internal static string DeltasListVersion {
             get {
@@ -127,7 +127,7 @@ namespace MSNPSharp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 4.0.0.2080.
+        ///   Looks up a localized string similar to 4.0.0.2295.
         /// </summary>
         internal static string XMLContactListVersion {
             get {
