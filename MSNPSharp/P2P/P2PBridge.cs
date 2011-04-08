@@ -128,7 +128,7 @@ namespace MSNPSharp.P2P
     public abstract class P2PBridge : IDisposable
     {
         public const int DefaultTimeout = 10;
-        public const int DefaultSlpTimeout = 120;
+        public const int MaxTimeout = 180;
 
         #region Events & Fields
 
@@ -141,9 +141,10 @@ namespace MSNPSharp.P2P
         public event EventHandler<P2PMessageSessionEventArgs> BridgeSent;
 
         private static uint bridgeCount = 0;
-        protected internal uint syncIdentifier = 0;
-        protected internal uint localTrackerId = 0;
-        protected internal ushort packageNumber = 0;
+
+        private uint sequenceId = 0;
+        private uint syncId = 0;
+        private ushort packageNo = 0;
 
         protected uint bridgeID = ++bridgeCount;
         protected int queueSize = 0;
@@ -181,24 +182,48 @@ namespace MSNPSharp.P2P
         {
             get
             {
-                return (0 != syncIdentifier);
+                return (0 != SyncId);
             }
         }
 
-        protected internal virtual uint SyncId
+        public virtual uint SyncId
         {
             get
             {
-                return syncIdentifier;
+                return syncId;
             }
-            set
+            protected internal set
             {
-                syncIdentifier = value;
+                syncId = value;
 
                 if (0 != value)
                 {
                     OnBridgeSynced(EventArgs.Empty);
                 }
+            }
+        }
+
+        public virtual uint SequenceId
+        {
+            get
+            {
+                return sequenceId;
+            }
+            internal protected set
+            {
+                sequenceId = value;
+            }
+        }
+
+        public ushort PackageNo
+        {
+            get
+            {
+                return packageNo;
+            }
+            internal protected set
+            {
+                packageNo = value;
             }
         }
 
@@ -233,7 +258,7 @@ namespace MSNPSharp.P2P
         protected P2PBridge(int queueSize)
         {
             this.queueSize = queueSize;
-            this.localTrackerId = (uint)new Random().Next(5000, int.MaxValue);
+            this.sequenceId = (uint)new Random().Next(5000, int.MaxValue);
             this.nextCleanup = NextCleanupTime();
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
@@ -412,11 +437,11 @@ namespace MSNPSharp.P2P
             {
                 if (p2pMessage.Version == P2PVersion.P2PV1)
                 {
-                    p2pMessage.Header.Identifier = ++localTrackerId;
+                    p2pMessage.Header.Identifier = ++sequenceId;
                 }
                 else if (p2pMessage.Version == P2PVersion.P2PV2)
                 {
-                    p2pMessage.V2Header.Identifier = localTrackerId;
+                    p2pMessage.V2Header.Identifier = sequenceId;
                 }
             }
 
@@ -426,7 +451,7 @@ namespace MSNPSharp.P2P
             }
             if (p2pMessage.Version == P2PVersion.P2PV2 && p2pMessage.V2Header.PackageNumber == 0)
             {
-                p2pMessage.V2Header.PackageNumber = packageNumber;
+                p2pMessage.V2Header.PackageNumber = packageNo;
             }
 
             P2PMessage[] msgs = p2pMessage.SplitMessage(MaxDataSize);
@@ -435,7 +460,7 @@ namespace MSNPSharp.P2P
             {
                 // Correct local sequence no
                 P2PMessage lastMsg = msgs[msgs.Length - 1];
-                localTrackerId = lastMsg.V2Header.Identifier + lastMsg.V2Header.MessageSize;
+                SequenceId = lastMsg.V2Header.Identifier + lastMsg.V2Header.MessageSize;
             }
 
             if (ackHandler != null)
@@ -446,7 +471,7 @@ namespace MSNPSharp.P2P
 
             if (session != null)
             {
-                session.LocalIdentifier = localTrackerId;
+                session.LocalIdentifier = SequenceId;
             }
 
             return msgs;
@@ -539,7 +564,6 @@ namespace MSNPSharp.P2P
                 requireAck = true;
 
                 P2PMessage ack = msg.CreateAcknowledgement();
-                ack.Header.Identifier = localTrackerId;
 
                 if (ack.Header.RequireAck)
                 {
@@ -727,7 +751,7 @@ namespace MSNPSharp.P2P
         protected internal virtual void OnBridgeSynced(EventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                String.Format("{0} synced, sync id: {1}", this.ToString(), this.syncIdentifier), GetType().Name);
+                String.Format("{0} synced, sync id: {1}", this.ToString(), SyncId), GetType().Name);
 
             if (BridgeSynced != null)
                 BridgeSynced(this, e);
@@ -752,12 +776,6 @@ namespace MSNPSharp.P2P
         /// <param name="e"></param>
         protected virtual void OnBridgeSent(P2PMessageSessionEventArgs e)
         {
-            if (e.P2PMessage.Header.Identifier != 0)
-            {
-                this.localTrackerId = (e.P2PMessage.Version == P2PVersion.P2PV1)
-                    ? e.P2PMessage.Header.Identifier + 1 : e.P2PMessage.Header.Identifier + e.P2PMessage.Header.MessageSize;
-            }
-
             P2PSession session = e.P2PSession;
 
             if ((session != null) && sendingQueues.ContainsKey(session))

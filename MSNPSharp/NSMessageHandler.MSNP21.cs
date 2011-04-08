@@ -1751,7 +1751,7 @@ namespace MSNPSharp
 
             if (multiMimeMessage.ContentHeaders.ContainsKey(MIMEContentHeaders.Pipe))
             {
-                SDGBridge.packageNumber = ushort.Parse(multiMimeMessage.ContentHeaders[MIMEContentHeaders.Pipe]);
+                SDGBridge.PackageNo = ushort.Parse(multiMimeMessage.ContentHeaders[MIMEContentHeaders.Pipe]);
             }
 
             foreach (P2PMessage m in p2pDatas)

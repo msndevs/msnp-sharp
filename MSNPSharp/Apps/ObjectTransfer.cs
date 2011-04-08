@@ -209,7 +209,7 @@ namespace MSNPSharp.Apps
 
             if (Sending)
             {
-                ushort packNum = ++base.P2PSession.Bridge.packageNumber;
+                ushort packNum = ++base.P2PSession.Bridge.PackageNo;
 
                 // Data prep
                 P2PDataMessage prepData = new P2PDataMessage(P2PVersion);
@@ -252,7 +252,9 @@ namespace MSNPSharp.Apps
 
                 if (P2PVersion == P2PVersion.P2PV1)
                 {
-                    SendMessage(msg, 0, delegate(P2PMessage ack)
+                    // Object transfer must be finish in MaxTimeout seconds. (p2pv1)
+                    // Because ack is received after transfer finished.
+                    SendMessage(msg, P2PBridge.MaxTimeout, delegate(P2PMessage ack)
                     {
                         OnTransferFinished(EventArgs.Empty);
                         // Close after remote client sends BYE.
