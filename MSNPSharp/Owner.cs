@@ -471,18 +471,6 @@ namespace MSNPSharp
             }
         }
 
-        /// <summary>
-        /// Reaction when sign in at another place.
-        /// </summary>
-        [Obsolete(@"Obsoleted in MSNP21, default is enabled and cannot be disabled.", true)]
-        public object MPOPMode
-        {
-            get
-            {
-                return MPOP.KeepOnline;
-            }
-        }
-
         public override PresenceStatus Status
         {
             get
