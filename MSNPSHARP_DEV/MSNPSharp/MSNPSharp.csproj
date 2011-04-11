@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -51,9 +51,6 @@
     <Compile Include="ConnectivityException.cs" />
     <Compile Include="ConnectivitySettings.cs" />
     <Compile Include="Contact.cs" />
-    <Compile Include="Contact.Obsolete.cs">
-      <DependentUpon>Contact.cs</DependentUpon>
-    </Compile>
     <Compile Include="ContactGroup.cs" />
     <Compile Include="ContactGroupList.cs" />
     <Compile Include="ContactList.cs" />
@@ -80,9 +77,6 @@
     <Compile Include="EmoticonMessage.cs" />
     <Compile Include="EndPointData.cs" />
     <Compile Include="enums.cs" />
-    <Compile Include="enums.Obsolete.cs">
-      <DependentUpon>enums.cs</DependentUpon>
-    </Compile>
     <Compile Include="enums.WS.cs">
       <DependentUpon>enums.cs</DependentUpon>
     </Compile>
@@ -131,9 +125,6 @@
     <Compile Include="NSMessageHandler.MSNP21.cs">
       <DependentUpon>NSMessageHandler.cs</DependentUpon>
     </Compile>
-    <Compile Include="NSMessageHandler.Obsolete.cs">
-      <DependentUpon>NSMessageHandler.cs</DependentUpon>
-    </Compile>
     <Compile Include="Core\NSMessage.cs" />
     <Compile Include="Core\NSMessagePool.cs" />
     <Compile Include="NSMessageProcessor.cs" />
@@ -171,9 +162,6 @@
     <Compile Include="TextMessage.cs" />
     <Compile Include="UnauthorizedException.cs" />
     <Compile Include="Services\ContactService.cs" />
-    <Compile Include="Services\ContactService.Obsolete.cs">
-      <DependentUpon>ContactService.cs</DependentUpon>
-    </Compile>
     <Compile Include="Web References\MSNWS.MSNDirectoryService\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
