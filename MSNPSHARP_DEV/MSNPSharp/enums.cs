@@ -271,8 +271,11 @@ namespace MSNPSharp
         /// MSNC11 - MSN 15.0, Wave 4 (MSNP21)
         /// </summary>
         AppVersion2011 = 0xB0000000,
+        /// <summary>
+        /// MSNC12 - MSN 16.0 Cloud, Wave 5 (MSNP21)
+        /// </summary>
+        AppVersion2012 = 0xC0000000,
 
-        AppVersion____ = 0xC0000000,
         AppVersion2___ = 0xD0000000,
         AppVersion20__ = 0xE0000000,
 
