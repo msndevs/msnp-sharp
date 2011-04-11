@@ -79,7 +79,7 @@ namespace MSNPSharp
         /// </summary>
         public event EventHandler<SignedOffEventArgs> SignedOff;
 
-        
+
         /// <summary>
         /// Occurs when an answer is received after sending a ping to the MSN server via the SendPing() method.
         /// </summary>

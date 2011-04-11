@@ -270,11 +270,14 @@ namespace MSNPSharp.P2P
         /// </summary>
         public virtual void Dispose()
         {
-            lock (SendQueues)
-                SendQueues.Clear();
+            lock (sendQueues)
+                sendQueues.Clear();
 
-            sendingQueues.Clear();
-            stoppedSessions.Clear();
+            lock (sendingQueues)
+                sendingQueues.Clear();
+
+            lock (stoppedSessions)
+                stoppedSessions.Clear();
 
             lock (ackHandlersV1)
                 ackHandlersV1.Clear();
@@ -422,11 +425,16 @@ namespace MSNPSharp.P2P
                 return;
             }
 
-            if (!sendQueues.ContainsKey(session))
-                sendQueues[session] = new P2PSendQueue();
-
-            foreach (P2PMessage m in msgs)
-                sendQueues[session].Enqueue(remote, remoteGuid, m);
+            lock (sendQueues)
+            {
+                if (!sendQueues.ContainsKey(session))
+                    sendQueues[session] = new P2PSendQueue();
+            }
+            lock (sendQueues[session])
+            {
+                foreach (P2PMessage m in msgs)
+                    sendQueues[session].Enqueue(remote, remoteGuid, m);
+            }
 
             ProcessSendQueues();
         }
@@ -594,18 +602,24 @@ namespace MSNPSharp.P2P
         /// </summary>
         protected virtual void ProcessSendQueues()
         {
-            lock (SendQueues)  // lock at the queue level, since it might be modified.
+            lock (sendQueues)  // lock at the queue level, since it might be modified.
             {
-                foreach (KeyValuePair<P2PSession, P2PSendQueue> pair in SendQueues)
+                Dictionary<P2PSession, P2PSendQueue> sendQueuesCopy = new Dictionary<P2PSession, P2PSendQueue>(sendQueues);
+
+                foreach (KeyValuePair<P2PSession, P2PSendQueue> pair in sendQueuesCopy)
                 {
                     while (Ready(pair.Key) && (pair.Value.Count > 0))
                     {
                         P2PSendItem item = pair.Value.Dequeue();
 
                         if (!sendingQueues.ContainsKey(pair.Key))
-                            sendingQueues.Add(pair.Key, new P2PSendList());
+                        {
+                            lock (sendingQueues)
+                                sendingQueues.Add(pair.Key, new P2PSendList());
+                        }
 
-                        sendingQueues[pair.Key].Add(item);
+                        lock (sendingQueues[pair.Key])
+                            sendingQueues[pair.Key].Add(item);
 
                         SendOnePacket(pair.Key, item.Remote, item.RemoteGuid, item.P2PMessage);
                     }
@@ -641,7 +655,10 @@ namespace MSNPSharp.P2P
                 String.Format("P2PBridge {0} stop sending for {1}", this.ToString(), session.SessionId), GetType().Name);
 
             if (!stoppedSessions.Contains(session))
-                stoppedSessions.Add(session);
+            {
+                lock (stoppedSessions)
+                    stoppedSessions.Add(session);
+            }
             else
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Session is already in stopped list", GetType().Name);
         }
@@ -657,7 +674,9 @@ namespace MSNPSharp.P2P
 
             if (stoppedSessions.Contains(session))
             {
-                stoppedSessions.Remove(session);
+                lock (stoppedSessions)
+                    stoppedSessions.Remove(session);
+
                 ProcessSendQueues();
             }
             else
@@ -681,29 +700,36 @@ namespace MSNPSharp.P2P
             {
                 if (newBridge != null)
                 {
-                    foreach (P2PSendItem item in sendingQueues[session])
-                        newQueue.Enqueue(item);
+                    lock (sendingQueues[session])
+                    {
+                        foreach (P2PSendItem item in sendingQueues[session])
+                            newQueue.Enqueue(item);
+                    }
                 }
 
-                sendingQueues.Remove(session);
+                lock (sendingQueues)
+                    sendingQueues.Remove(session);
             }
 
-            lock (SendQueues)
+            lock (sendQueues)
             {
-                if (SendQueues.ContainsKey(session))
+                if (sendQueues.ContainsKey(session))
                 {
                     if (newBridge != null)
                     {
-                        while (SendQueues[session].Count > 0)
-                            newQueue.Enqueue(SendQueues[session].Dequeue());
+                        while (sendQueues[session].Count > 0)
+                            newQueue.Enqueue(sendQueues[session].Dequeue());
                     }
 
-                    SendQueues.Remove(session);
+                    sendQueues.Remove(session);
                 }
             }
 
             if (stoppedSessions.Contains(session))
-                stoppedSessions.Remove(session);
+            {
+                lock (stoppedSessions)
+                    stoppedSessions.Remove(session);
+            }
 
             if (newBridge != null)
                 newBridge.AddQueue(session, newQueue);
@@ -724,11 +750,17 @@ namespace MSNPSharp.P2P
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                     "A queue is already present for this session, merging the queues", GetType().Name);
 
-                while (queue.Count > 0)
-                    sendQueues[session].Enqueue(queue.Dequeue());
+                lock (sendQueues[session])
+                {
+                    while (queue.Count > 0)
+                        sendQueues[session].Enqueue(queue.Dequeue());
+                }
             }
             else
-                sendQueues[session] = queue;
+            {
+                lock (sendQueues)
+                    sendQueues[session] = queue;
+            }
 
             ProcessSendQueues();
         }
