@@ -103,7 +103,7 @@ namespace MSNPSharp.P2P
                 if (startupSession != null)
                     return startupSession.Remote;
 
-                foreach (P2PSession s in SendQueues.Keys)
+                foreach (P2PSession s in sendQueues.Keys)
                 {
                     return s.Remote;
                 }

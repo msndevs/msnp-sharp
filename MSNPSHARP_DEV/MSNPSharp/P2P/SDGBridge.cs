@@ -101,7 +101,8 @@ namespace MSNPSharp.P2P
 
         public override void Dispose()
         {
-            p2pAckMessages.Clear();
+            lock (p2pAckMessages)
+                p2pAckMessages.Clear();
 
             base.Dispose();
         }
@@ -150,7 +151,8 @@ namespace MSNPSharp.P2P
             NSMessageProcessor nsmp = (NSMessageProcessor)nsHandler.MessageProcessor;
             int transId = nsmp.IncreaseTransactionID();
 
-            p2pAckMessages[transId] = new P2PMessageSessionEventArgs(p2pMessage, session);
+            lock (p2pAckMessages)
+                p2pAckMessages[transId] = new P2PMessageSessionEventArgs(p2pMessage, session);
 
             NSMessage sdgPayload = new NSMessage("SDG");
             sdgPayload.TransactionID = transId;
@@ -163,7 +165,10 @@ namespace MSNPSharp.P2P
             if (p2pAckMessages.ContainsKey(transid))
             {
                 P2PMessageSessionEventArgs p2pe = p2pAckMessages[transid];
-                p2pAckMessages.Remove(transid);
+
+                lock (p2pAckMessages)
+                    p2pAckMessages.Remove(transid);
+
                 OnBridgeSent(p2pe);
             }
         }
