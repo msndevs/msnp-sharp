@@ -287,5 +287,15 @@ namespace MSNPSharp
         }
 
         #endregion
+
+        #region Deprecated
+
+        [Obsolete("Switchboard conversation is deprecated. http://code.google.com/p/msnp-sharp/issues/detail?id=263", true)]
+        public object GetID(Contact contact)
+        {
+            return null;
+        }
+
+        #endregion
     }
 };
