@@ -302,7 +302,7 @@ namespace MSNPSharp.Apps
         public virtual bool ValidateInvitation(SLPMessage invitation)
         {
             bool ret = invitation.ToEmailAccount.ToLowerInvariant() == local.Account.ToLowerInvariant();
-            if (ret && version == P2PVersion.P2PV2)
+            if (ret && version == P2PVersion.P2PV2 && invitation.ToEndPoint != Guid.Empty)
             {
                 ret = invitation.ToEndPoint == localEP;
             }
