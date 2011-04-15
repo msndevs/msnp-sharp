@@ -462,11 +462,16 @@ namespace MSNPSharp.P2P
 
         private static TCPv1Bridge CreateDirectConnection(Contact remote, Guid remoteGuid, P2PVersion ver, ConnectivitySettings cs, Guid replyGuid, Guid remoteNonce, bool hashed, NSMessageHandler nsMessageHandler, P2PSession startupSession)
         {
-            IPEndPoint ipep = cs.EndPoints[0];
+            string[] points = new string[cs.EndPoints.Length];
+
+            for (int i = 0; i < points.Length; i++)
+            {
+                points[i] = cs.EndPoints[i].ToString();
+            }
 
             TCPv1Bridge tcpBridge = new TCPv1Bridge(cs, ver, replyGuid, remoteNonce, hashed, startupSession, nsMessageHandler, remote, remoteGuid);
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Trying to setup direct connection with remote host " + ipep.Address + ":" + ipep.Port.ToString(CultureInfo.InvariantCulture));
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Trying to setup direct connection with remote hosts " + string.Join(",", points));
 
             tcpBridge.Connect();
 
