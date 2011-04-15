@@ -475,6 +475,8 @@ namespace MSNPSharpClient
                 currentActivity--;
         }
         
+        // We use this function to avoid using PictureBox.LoadAsync(string) when the application is running
+        // under Mono.
         private void SyncUserTile(object param)
         {
             string usertitleURL = param.ToString();
