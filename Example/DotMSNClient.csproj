@@ -206,6 +206,7 @@
       <SubType>Designer</SubType>
       <DependentUpon>TraceForm.cs</DependentUpon>
     </EmbeddedResource>
+    <Compile Include="UniversalEventArgs.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MSNPSharp\MSNPSharp.csproj">

@@ -9,6 +9,8 @@ using System.ComponentModel;
 using System.Collections.Generic;
 using System.Threading;
 using System.Xml;
+using System.Net;
+using MSNPSharp.Services;
 
 namespace MSNPSharpClient
 {
@@ -161,7 +163,6 @@ namespace MSNPSharpClient
 
             #endregion
             
-
             messenger.WhatsUpService.GetWhatsUpCompleted += new EventHandler<GetWhatsUpCompletedEventArgs>(WhatsUpService_GetWhatsUpCompleted);
 
             #region Webservice Error handler
@@ -407,13 +408,15 @@ namespace MSNPSharpClient
 
                 lblNewsLink.Text = "Get Feeds";
                 lblNewsLink.Tag = e.Response.FeedUrl;
-                tmrNews.Enabled = true;
+                
+                ShowNextNews();
             }
         }
 
         private int currentActivity = 0;
         private bool activityForward = true;
-        private void tmrNews_Tick(object sender, EventArgs e)
+        
+        private void ShowNextNews()
         {
             if (currentActivity >= activities.Count || currentActivity < 0)
             {
@@ -450,7 +453,15 @@ namespace MSNPSharpClient
                     }
                     else if (c.UserTileURL != null)
                     {
-                        pbNewsPicture.LoadAsync(c.UserTileURL.AbsoluteUri);
+                        // Everytime we call this, a new thread is created, in *nix system
+                        // this is really harmful for the performance and is easily cause deadlock
+                        // in Mac (I think Mono's threading implementation in Mac is really bad).
+                        // Calling this LoadAsync in Mono sometimes will cause ThreadInterupt exception,
+                        // which might be a bug of Mono's implementation.
+                        // pbNewsPicture.LoadAsync(c.UserTileURL.AbsoluteUri);
+                        
+                        Thread httpRequestThread = new Thread(new ParameterizedThreadStart(SyncUserTile));
+                        httpRequestThread.Start(c.UserTileURL.AbsoluteUri);
                     }
                     else
                     {
@@ -462,6 +473,66 @@ namespace MSNPSharpClient
                 currentActivity++;
             else
                 currentActivity--;
+        }
+        
+        private void SyncUserTile(object param)
+        {
+            string usertitleURL = param.ToString();
+            
+            try
+            {
+                Uri uri = new Uri(usertitleURL);
+
+                HttpWebRequest fwr = (HttpWebRequest)WebRequest.Create(uri);
+                fwr.Proxy = Messenger.ConnectivitySettings.WebProxy;
+                fwr.Timeout = 10000;
+
+                fwr.BeginGetResponse(delegate(IAsyncResult result)
+                {
+                    try
+                    {
+                        Stream stream = ((WebRequest)result.AsyncState).EndGetResponse(result).GetResponseStream();
+                        MemoryStream ms = new MemoryStream();
+                        byte[] data = new byte[8192];
+                        int read;
+                        while ((read = stream.Read(data, 0, data.Length)) > 0)
+                        {
+                            ms.Write(data, 0, read);
+                        }
+                        stream.Close();
+                        SetUserTileToPictureBox(this, new UniversalEventArgs(ms.ToArray()));
+                        
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.WriteLine("Get user tile error: " + ex.Message);
+                    }
+
+                }, fwr);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("Get UserTile error: " + ex.Message);
+            }
+        }
+        
+        private void SetUserTileToPictureBox(object sender, UniversalEventArgs e)
+        {
+            if(pbNewsPicture.InvokeRequired)
+            {
+                pbNewsPicture.Invoke(new EventHandler<UniversalEventArgs>(SetUserTileToPictureBox), new object[]{ sender, e});
+            }
+            else
+            {
+                try
+                {
+                    Image img = Image.FromStream(new MemoryStream((byte[])e.Param));
+                    pbNewsPicture.Image = img;
+                }
+                catch(Exception)
+                {
+                }
+            }
         }
 
         private void cmdPrev_Click(object sender, EventArgs e)
@@ -475,8 +546,7 @@ namespace MSNPSharpClient
                 else
                     currentActivity = activities.Count - 1;
 
-                if (tmrNews.Enabled)
-                    tmrNews_Tick(this, EventArgs.Empty);
+                ShowNextNews();
             }
         }
 
@@ -489,8 +559,7 @@ namespace MSNPSharpClient
                 if (currentActivity < activities.Count)
                     currentActivity++;
 
-                if (tmrNews.Enabled)
-                    tmrNews_Tick(this, EventArgs.Empty);
+                ShowNextNews();
             }
         }
 
@@ -1120,7 +1189,6 @@ namespace MSNPSharpClient
         {
             syncContactListCompleted = false;
             tmrKeepOnLine.Enabled = false;
-            tmrNews.Enabled = false;
 
             displayImageBox.Image = null;
             displayImageBox.SizeMode = PictureBoxSizeMode.CenterImage;
