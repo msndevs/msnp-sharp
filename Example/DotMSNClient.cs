@@ -667,7 +667,10 @@ namespace MSNPSharpClient
                     }
                 }
 
-                CreateConversationForm(e.Sender).OnMessageReceived(sender, e);
+                if (!(e is TypingArrivedEventArgs))
+                {
+                    CreateConversationForm(e.Sender).OnMessageReceived(sender, e);
+                }
             }
         }
 
