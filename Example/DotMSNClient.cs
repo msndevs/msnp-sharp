@@ -502,7 +502,7 @@ namespace MSNPSharpClient
                             ms.Write(data, 0, read);
                         }
                         stream.Close();
-                        SetUserTileToPictureBox(this, new UniversalEventArgs(ms.ToArray()));
+                        SetUserTileToPictureBox(this, new ObjectEventArgs(ms.ToArray()));
                         
                     }
                     catch (Exception ex)
@@ -518,17 +518,17 @@ namespace MSNPSharpClient
             }
         }
         
-        private void SetUserTileToPictureBox(object sender, UniversalEventArgs e)
+        private void SetUserTileToPictureBox(object sender, ObjectEventArgs e)
         {
             if(pbNewsPicture.InvokeRequired)
             {
-                pbNewsPicture.Invoke(new EventHandler<UniversalEventArgs>(SetUserTileToPictureBox), new object[]{ sender, e});
+                pbNewsPicture.Invoke(new EventHandler<ObjectEventArgs>(SetUserTileToPictureBox), new object[]{ sender, e});
             }
             else
             {
                 try
                 {
-                    Image img = Image.FromStream(new MemoryStream((byte[])e.Param));
+                    Image img = Image.FromStream(new MemoryStream((byte[])e.Object));
                     pbNewsPicture.Image = img;
                 }
                 catch(Exception)
