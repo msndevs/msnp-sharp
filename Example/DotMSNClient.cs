@@ -10,6 +10,8 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Xml;
 using System.Net;
+using System.Text;
+
 using MSNPSharp.Services;
 
 namespace MSNPSharpClient
@@ -628,12 +630,29 @@ namespace MSNPSharpClient
                 return;
             }
 
+            Messenger.Owner.CoreProfileUpdated += new EventHandler<EventArgs>(Owner_CoreProfileUpdated);
             Messenger.Owner.SceneImageChanged += new EventHandler<SceneImageChangedEventArgs>(Owner_SceneImageChanged);
             Messenger.Owner.DisplayImageChanged += new EventHandler<DisplayImageChangedEventArgs>(Owner_DisplayImageChanged);
             Messenger.Owner.PersonalMessageChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
             Messenger.Owner.ScreenNameChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
             Messenger.Owner.PlacesChanged += new EventHandler<PlaceChangedEventArgs>(Owner_PlacesChanged);
             Messenger.Owner.StatusChanged += new EventHandler<StatusChangedEventArgs>(Owner_StatusChanged);
+        }
+
+        void Owner_CoreProfileUpdated(object sender, EventArgs e)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("Owner profile updated: ");
+
+            lock (Messenger.Owner.CoreProfile)
+            {
+                foreach (KeyValuePair<string, object> kv in Messenger.Owner.CoreProfile)
+                {
+                    sb.AppendLine(kv.Key + " = " + kv.Value);
+                }
+            }
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, sb.ToString(), GetType().Name);
         }
 
         void Owner_SceneImageChanged(object sender, SceneImageChangedEventArgs e)
