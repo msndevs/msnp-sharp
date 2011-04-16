@@ -1003,8 +1003,19 @@ namespace MSNPSharp
                                                 }
 
                                             }
+                                            break;
                                         }
-                                        break;
+
+                                    case ServiceShortNames.PF:
+                                        {
+                                            // Profile Annotation, it is AB.Me.annotations/Live.Profile.Expression.LastChanged
+                                            // <user><s n="PF" ts="2011-04-16T06:00:58Z"></s></user>
+                                            if (routingInfo.FromOwner)
+                                            {
+                                                DateTime ts = WebServiceDateTimeConverter.ConvertToDateTime(service.Attributes["ts"].Value);
+                                            }
+                                            break;
+                                        }
                                 }
                             }
                         }
