@@ -361,7 +361,7 @@ namespace MSNPSharp.P2P
         {
             nsMessageHandler = ns;
             invitation = slp;
-            version = (slp.FromEndPoint == Guid.Empty || slp.ToEndPoint == Guid.Empty) ? P2PVersion.P2PV1 : P2PVersion.P2PV2;
+            version = (slp.FromEndPoint == Guid.Empty) ? P2PVersion.P2PV1 : P2PVersion.P2PV2;
 
             if (version == P2PVersion.P2PV1)
             {

@@ -185,36 +185,47 @@ namespace MSNPSharp.Core
             contentHeaders[MIMEContentHeaders.ContentLength] = InnerBody.Length.ToString();
 
             StringBuilder sb = new StringBuilder(128);
-            sb.AppendLine(MIMERoutingHeaders.Routing + MIMEHeaderStrings.KeyValueSeparator + "1.0");
+            
+            //Do not use append line, because under *nix the line break is \n but MSN need \r\n
+            //sb.AppendLine(MIMERoutingHeaders.Routing + MIMEHeaderStrings.KeyValueSeparator + "1.0");
+            sb.Append(MIMERoutingHeaders.Routing + MIMEHeaderStrings.KeyValueSeparator + "1.0");
+            sb.Append("\r\n");
+            
             foreach (string key in routingHeaders.Keys)
             {
                 if (key != MIMERoutingHeaders.Routing)
                 {
-                    sb.AppendLine(key + MIMEHeaderStrings.KeyValueSeparator + routingHeaders[key].ToString());
+                    sb.Append(key + MIMEHeaderStrings.KeyValueSeparator + routingHeaders[key].ToString());
+                    sb.Append("\r\n");
                 }
             }
-            sb.AppendLine();
+            sb.Append("\r\n");
 
-            sb.AppendLine(MIMEReliabilityHeaders.Reliability + MIMEHeaderStrings.KeyValueSeparator + "1.0");
+            sb.Append(MIMEReliabilityHeaders.Reliability + MIMEHeaderStrings.KeyValueSeparator + "1.0");
+            sb.Append("\r\n");
+            
             foreach (string key in reliabilityHeaders.Keys)
             {
                 if (key != MIMEReliabilityHeaders.Reliability)
                 {
-                    sb.AppendLine(key + MIMEHeaderStrings.KeyValueSeparator + reliabilityHeaders[key].ToString());
+                    sb.Append(key + MIMEHeaderStrings.KeyValueSeparator + reliabilityHeaders[key].ToString());
+                    sb.Append("\r\n");
                 }
             }
-            sb.AppendLine();
+            sb.Append("\r\n");
 
-            sb.AppendLine(ContentKey + MIMEHeaderStrings.KeyValueSeparator + ContentKeyVersion);
+            sb.Append(ContentKey + MIMEHeaderStrings.KeyValueSeparator + ContentKeyVersion);
+            sb.Append("\r\n");
             foreach (string key in contentHeaders.Keys)
             {
                 if (key != ContentKey)
                 {
-                    sb.AppendLine(key + MIMEHeaderStrings.KeyValueSeparator + contentHeaders[key].ToString());
+                    sb.Append(key + MIMEHeaderStrings.KeyValueSeparator + contentHeaders[key].ToString());
+                    sb.Append("\r\n");
                 }
             }
 
-            sb.AppendLine();
+            sb.Append("\r\n");
 
             return (InnerBody.Length > 0) ?
                 AppendArray(Encoding.UTF8.GetBytes(sb.ToString()), InnerBody)

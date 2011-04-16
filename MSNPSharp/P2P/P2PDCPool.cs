@@ -112,12 +112,21 @@ namespace MSNPSharp.P2P
                 }
             }
         }
-
+  
+        /// <summary>
+        /// Get the next available P2P message's data.
+        /// </summary>
+        /// <returns>
+        /// The data of message body.
+        /// </returns>      
         public override byte[] GetNextMessageData()
         {
             return (byte[])messages.Dequeue();
         }
-
+  
+        /// <summary>
+        /// Check whether there is available message. 
+        /// </summary>      
         public override bool MessageAvailable
         {
             get

@@ -353,10 +353,11 @@ namespace MSNPSharp
             {
                 if (!String.IsNullOrEmpty(node.InnerText))
                 {
+                    // REMARK: All the MSNObject must use MSNObject.GetDecodeString(string) to get the decoded conext.
                     switch (node.Name)
                     {
                         case "UserTileLocation":
-                            userTileLocation = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
+                            userTileLocation = MSNObject.GetDecodeString(node.InnerText);
                             break;
 
                         case "FriendlyName":
@@ -380,7 +381,7 @@ namespace MSNPSharp
                             break;
 
                         case "Scene":
-                            scene = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
+                            scene = MSNObject.GetDecodeString(node.InnerText);
                             break;
 
                         case "SignatureSound":
