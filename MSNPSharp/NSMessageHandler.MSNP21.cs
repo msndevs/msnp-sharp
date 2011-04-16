@@ -973,14 +973,15 @@ namespace MSNPSharp
                                             if (!String.IsNullOrEmpty(personalMessage.Payload) &&
                                                 routingInfo.Sender.PersonalMessage != personalMessage)
                                             {
-                                                routingInfo.Sender.PersonalMessage = personalMessage;
-
                                                 // FriendlyName
                                                 routingInfo.Sender.SetName(String.IsNullOrEmpty(personalMessage.FriendlyName) ? routingInfo.Sender.Account : personalMessage.FriendlyName);
 
                                                 // UserTileLocation
-                                                if (!String.IsNullOrEmpty(personalMessage.UserTileLocation))
+                                                if (!String.IsNullOrEmpty(personalMessage.UserTileLocation) && routingInfo.Sender.UserTileLocation != personalMessage.UserTileLocation)
+                                                {
                                                     routingInfo.Sender.UserTileLocation = personalMessage.UserTileLocation;
+                                                    routingInfo.Sender.FireDisplayImageContextChangedEvent(personalMessage.UserTileLocation);
+                                                }
 
                                                 // Scene
                                                 if (!String.IsNullOrEmpty(personalMessage.Scene))
@@ -1001,6 +1002,9 @@ namespace MSNPSharp
                                                         routingInfo.Sender.OnColorSchemeChanged();
                                                     }
                                                 }
+
+                                                // This must be final... 
+                                                routingInfo.Sender.PersonalMessage = personalMessage;
 
                                             }
                                             break;
