@@ -760,22 +760,7 @@ namespace MSNPSharp
                     // set the owner's name and CID
                     ContactList.SetOwner(new Owner(WebServiceConstants.MessengerIndividualAddressBookId, message.CommandValues[1].ToString(), msnTicket.OwnerCID, this));
                     OnOwnerVerified(EventArgs.Empty);
-
-                    DirectoryService.Get(Owner.CID,
-                            delegate(object sender, GetCompletedEventArgs ge)
-                            {
-                                if (ge.Error == null &&
-                                    messageProcessor != null && messageProcessor.Connected)
-                                {
-                                    foreach (AttributeType at in ge.Result.GetResult.View.Attributes)
-                                    {
-                                        if (!String.IsNullOrEmpty(at.N))
-                                        {
-                                            Owner.CoreProfile[at.N] = at.V;
-                                        }
-                                    }
-                                }
-                            });
+                    Owner.GetCoreProfile();
                 }
 
                 Owner.PassportVerified = message.CommandValues[2].Equals("1");
