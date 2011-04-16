@@ -278,8 +278,7 @@ namespace MSNPSharp.P2P
                 IPAddress ipAddress = ns.LocalEndPoint.Address;
                 int port;
 
-                P2PVersion ver = (message.FromEndPoint != Guid.Empty && message.ToEndPoint != Guid.Empty)
-                    ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
+                P2PVersion ver = (message.FromEndPoint != Guid.Empty) ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
 
                 if (Settings.DisableP2PDirectConnections ||
                     false == ipAddress.Equals(ns.ExternalEndPoint.Address) ||
@@ -372,8 +371,7 @@ namespace MSNPSharp.P2P
 
                 if (selectedPoint != null && selectedPoint.Length > 0)
                 {
-                    P2PVersion ver = (message.FromEndPoint != Guid.Empty && message.ToEndPoint != Guid.Empty)
-                        ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
+                    P2PVersion ver = (message.FromEndPoint != Guid.Empty) ? P2PVersion.P2PV2 : P2PVersion.P2PV1;
 
                     // We must connect to the remote client
                     ConnectivitySettings settings = new ConnectivitySettings();
@@ -462,11 +460,16 @@ namespace MSNPSharp.P2P
 
         private static TCPv1Bridge CreateDirectConnection(Contact remote, Guid remoteGuid, P2PVersion ver, ConnectivitySettings cs, Guid replyGuid, Guid remoteNonce, bool hashed, NSMessageHandler nsMessageHandler, P2PSession startupSession)
         {
-            IPEndPoint ipep = cs.EndPoints[0];
+            string[] points = new string[cs.EndPoints.Length];
+
+            for (int i = 0; i < points.Length; i++)
+            {
+                points[i] = cs.EndPoints[i].ToString();
+            }
 
             TCPv1Bridge tcpBridge = new TCPv1Bridge(cs, ver, replyGuid, remoteNonce, hashed, startupSession, nsMessageHandler, remote, remoteGuid);
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Trying to setup direct connection with remote host " + ipep.Address + ":" + ipep.Port.ToString(CultureInfo.InvariantCulture));
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Trying to setup direct connection with remote hosts " + string.Join(",", points));
 
             tcpBridge.Connect();
 

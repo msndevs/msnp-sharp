@@ -47,7 +47,6 @@ namespace MSNPSharpClient
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.openImageDialog = new System.Windows.Forms.OpenFileDialog();
             this.tmrKeepOnLine = new System.Windows.Forms.Timer(this.components);
-            this.tmrNews = new System.Windows.Forms.Timer(this.components);
             this.sortContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripSortByStatus = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSortBygroup = new System.Windows.Forms.ToolStripMenuItem();
@@ -219,11 +218,6 @@ namespace MSNPSharpClient
             // tmrKeepOnLine
             // 
             this.tmrKeepOnLine.Interval = 1000;
-            // 
-            // tmrNews
-            // 
-            this.tmrNews.Interval = 5000;
-            this.tmrNews.Tick += new System.EventHandler(this.tmrNews_Tick);
             // 
             // sortContextMenu
             // 
@@ -834,7 +828,6 @@ namespace MSNPSharpClient
         private OpenFileDialog openFileDialog;
         private OpenFileDialog openImageDialog;
         private System.Windows.Forms.Timer tmrKeepOnLine;
-        private System.Windows.Forms.Timer tmrNews;
         private ImageList ImageList1;
         private ContextMenuStrip userMenuStrip;
         private ToolStripMenuItem sendIMMenuItem;

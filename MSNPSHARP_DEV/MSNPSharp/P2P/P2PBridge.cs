@@ -124,10 +124,17 @@ namespace MSNPSharp.P2P
     }
 
     #endregion
-
+ 
+    /// <summary>
+    /// The base class for P2P Transport Layer. 
+    /// </summary>   
     public abstract class P2PBridge : IDisposable
     {
         public const int DefaultTimeout = 10;
+        
+        /// <summary>
+        /// The maximum time for a bridge to waiting for coneection. 
+        /// </summary>
         public const int MaxTimeout = 180;
 
         #region Events & Fields
@@ -136,7 +143,13 @@ namespace MSNPSharp.P2P
         /// Fired after this bridge was opened.
         /// </summary>
         public event EventHandler<EventArgs> BridgeOpened;
+        /// <summary>
+        /// Fired after the connect negotiation has been completed. 
+        /// </summary>
         public event EventHandler<EventArgs> BridgeSynced;
+        /// <summary>
+        /// Fired after the bridge ends its lifecycle. 
+        /// </summary>
         public event EventHandler<EventArgs> BridgeClosed;
         public event EventHandler<P2PMessageSessionEventArgs> BridgeSent;
 
@@ -162,12 +175,17 @@ namespace MSNPSharp.P2P
         #endregion
 
         #region Properties
-
+        /// <summary>
+        /// Check wether the bridge has been opened. 
+        /// </summary>
         public abstract bool IsOpen
         {
             get;
         }
-
+  
+        /// <summary>
+        /// The maximum data package szie for the bridge. 
+        /// </summary>      
         public abstract int MaxDataSize
         {
             get;
@@ -177,7 +195,11 @@ namespace MSNPSharp.P2P
         {
             get;
         }
-
+  
+        /// <summary>
+        /// Check whether the connect negotiation has been completed.
+        /// You can transfer data only after a bridge after synced. 
+        /// </summary>      
         public virtual bool Synced
         {
             get
@@ -202,7 +224,10 @@ namespace MSNPSharp.P2P
                 }
             }
         }
-
+  
+        /// <summary>
+        /// The current sequence ID for this bridge (Transport Layer). 
+        /// </summary>
         public virtual uint SequenceId
         {
             get
@@ -226,7 +251,10 @@ namespace MSNPSharp.P2P
                 packageNo = value;
             }
         }
-
+  
+        /// <summary>
+        /// The holding data queues to be sent in this bridge.
+        /// </summary>      
         public virtual Dictionary<P2PSession, P2PSendQueue> SendQueues
         {
             get
@@ -363,7 +391,16 @@ namespace MSNPSharp.P2P
                 }
             }
         }
-
+  
+        /// <summary>
+        /// Check whether the P2P session can be transfer on the bridge. 
+        /// </summary>
+        /// <param name="session">
+        /// The <see cref="P2PSession"/> needs to check.
+        /// </param>
+        /// <returns>
+        /// A <see cref="System.Boolean"/>
+        /// </returns>      
         public virtual bool SuitableFor(P2PSession session)
         {
             Contact remote = Remote;
@@ -386,12 +423,48 @@ namespace MSNPSharp.P2P
 
             return IsOpen && (sendingQueues[session].Count < queueSize) && (!stoppedSessions.Contains(session));
         }
-
+  
+        /// <summary>
+        /// Send a P2P Message to the specified P2PSession. 
+        /// </summary>
+        /// <param name="session">
+        /// The application layer, which is a <see cref="P2PSession"/>.
+        /// </param>
+        /// <param name="remote">
+        /// The receiver <see cref="Contact"/>.
+        /// </param>
+        /// <param name="remoteGuid">
+        /// A <see cref="Guid"/>
+        /// </param>
+        /// <param name="msg">
+        /// The <see cref="P2PMessage"/> to be sent.
+        /// </param>      
         public virtual void Send(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage msg)
         {
             Send(session, remote, remoteGuid, msg, 0, null);
         }
-
+  
+        /// <summary>
+        /// Send a P2P Message to the specified P2PSession. 
+        /// </summary>
+        /// <param name="session">
+        /// The application layer, which is a <see cref="P2PSession"/>
+        /// </param>
+        /// <param name="remote">
+        /// he receiver <see cref="Contact"/>
+        /// </param>
+        /// <param name="remoteGuid">
+        /// A <see cref="Guid"/>
+        /// </param>
+        /// <param name="msg">
+        /// he <see cref="P2PMessage"/> to be sent.
+        /// </param>
+        /// <param name="ackTimeout">
+        /// The maximum time to wait for an ACK. <see cref="System.Int32"/>
+        /// </param>
+        /// <param name="ackHandler">
+        /// The <see cref="AckHandler"/> to handle the ACK.
+        /// </param>      
         public virtual void Send(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage msg, int ackTimeout, AckHandler ackHandler)
         {
             if (remote == null)
