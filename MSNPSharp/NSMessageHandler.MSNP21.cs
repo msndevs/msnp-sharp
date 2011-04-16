@@ -1767,7 +1767,7 @@ namespace MSNPSharp
 
             foreach (P2PMessage m in p2pDatas)
             {
-                P2PHandler.ProcessP2PMessage(SDGBridge, sender, senderEPID, m);
+                SDGBridge.ProcessP2PMessage(sender, senderEPID, m);
             }
         }
 

@@ -61,7 +61,6 @@ namespace MSNPSharp.P2P
     {
         public event EventHandler<DestinationAddressUpdatedEventHandler> DestinationAddressUpdated;
 
-        private NSMessageHandler nsMessageHandler = null;
         private P2PSession startupSession = null;
         private P2PDirectProcessor directConnection = null;
 
@@ -151,14 +150,13 @@ namespace MSNPSharp.P2P
             P2PSession p2pSession,
             NSMessageHandler ns,
             Contact remote, Guid remoteEpId)
-            : base(0)
+            : base(0, ns)
         {
             this.startupSession = p2pSession;
-            this.nsMessageHandler = ns;
             this.remote = remote;
             this.remoteEpId = remoteEpId;
 
-            directConnection = new P2PDirectProcessor(connectivitySettings, p2pVersion, replyNonce, remoteNonce, isNeedHash, p2pSession, nsMessageHandler);
+            directConnection = new P2PDirectProcessor(connectivitySettings, p2pVersion, replyNonce, remoteNonce, isNeedHash, p2pSession, ns);
             directConnection.HandshakeCompleted += new EventHandler<EventArgs>(directConnection_HandshakeCompleted);
             directConnection.P2PMessageReceived += new EventHandler<P2PMessageEventArgs>(directConnection_P2PMessageReceived);
             directConnection.SendCompleted += new EventHandler<MSNPSharp.Core.ObjectEventArgs>(directConnection_SendCompleted);
@@ -233,7 +231,7 @@ namespace MSNPSharp.P2P
 
         private void directConnection_P2PMessageReceived(object sender, P2PMessageEventArgs e)
         {
-            nsMessageHandler.P2PHandler.ProcessP2PMessage(this, Remote, remoteEpId, e.P2PMessage);
+            ProcessP2PMessage(Remote, remoteEpId, e.P2PMessage);
         }
 
         protected override void SendOnePacket(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage msg)

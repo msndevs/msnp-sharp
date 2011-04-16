@@ -58,14 +58,13 @@ namespace MSNPSharp.P2P
     /// </remarks>
     public class SDGBridge : P2PBridge
     {
-        private NSMessageHandler nsHandler;
         private Dictionary<int, P2PMessageSessionEventArgs> p2pAckMessages = new Dictionary<int, P2PMessageSessionEventArgs>();
 
         public override bool IsOpen
         {
             get
             {
-                return ((nsHandler != null) && nsHandler.IsSignedIn);
+                return ((NSMessageHandler != null) && NSMessageHandler.IsSignedIn);
             }
         }
 
@@ -108,15 +107,14 @@ namespace MSNPSharp.P2P
         }
 
         public SDGBridge(NSMessageHandler nsHandler)
-            : base(8)
+            : base(8, nsHandler)
         {
-            this.nsHandler = nsHandler;
         }
 
         protected override void SendOnePacket(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage p2pMessage)
         {
             string to = ((int)remote.ClientType).ToString() + ":" + remote.Account;
-            string from = ((int)nsHandler.Owner.ClientType).ToString() + ":" + nsHandler.Owner.Account;
+            string from = ((int)NSMessageHandler.Owner.ClientType).ToString() + ":" + NSMessageHandler.Owner.Account;
 
             MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
             mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = NSMessageHandler.MachineGuid.ToString("B").ToLowerInvariant();
@@ -148,7 +146,7 @@ namespace MSNPSharp.P2P
                 mmMessage.InnerMessage = p2pMessage;
             }
 
-            NSMessageProcessor nsmp = (NSMessageProcessor)nsHandler.MessageProcessor;
+            NSMessageProcessor nsmp = (NSMessageProcessor)NSMessageHandler.MessageProcessor;
             int transId = nsmp.IncreaseTransactionID();
 
             lock (p2pAckMessages)

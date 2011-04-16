@@ -136,37 +136,28 @@ namespace MSNPSharp.P2P
 
         #region ProcessP2PMessage
 
-        public void ProcessP2PMessage(P2PBridge bridge, Contact source, Guid sourceGuid, P2PMessage p2pMessage)
+        public bool ProcessP2PMessage(P2PBridge bridge, Contact source, Guid sourceGuid, P2PMessage p2pMessage)
         {
-            // 1) HANDLE RAK: RAKs are session independent and mustn't be quoted on bridges.
-            bool requireAck = bridge.HandleRAK(source, sourceGuid, p2pMessage);
-
-            // 2) SLP BUFFERING: Combine splitted SLP messages
+            // 1) SLP BUFFERING: Combine splitted SLP messages
             if (slpMessagePool.BufferMessage(ref p2pMessage))
             {
                 // * Buffering: Not completed yet, we must wait next packets -OR-
                 // * Invalid packet received: Don't kill me, just ignore it...
-                return;
+                return true;
             }
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                 String.Format("Received P2PMessage from {0}\r\n{1}", bridge.ToString(), p2pMessage.ToDebugString()), GetType().Name);
 
-            // 3) CHECK SLP: Check destination, source, endpoints
+            // 2) CHECK SLP: Check destination, source, endpoints
             SLPMessage slp = p2pMessage.IsSLPData ? p2pMessage.InnerMessage as SLPMessage : null;
             if (slp != null)
             {
                 if (!slpHandler.CheckSLPMessage(bridge, source, sourceGuid, p2pMessage, slp))
-                    return;
+                    return true; // HANDLED, This SLP is not for us.
             }
 
-            // 4) HANDLE ACK: ACK/NAK to our RAK message
-            if (bridge.HandleACK(p2pMessage))
-            {
-                return;
-            }
-
-            // 5) FIRST SLP MESSAGE: Create applications/sessions based on invitation
+            // 3) FIRST SLP MESSAGE: Create applications/sessions based on invitation
             if (slp != null && slp is SLPRequestMessage &&
                 (slp as SLPRequestMessage).Method == "INVITE" &&
                 slp.ContentType == "application/x-msnmsgr-sessionreqbody")
@@ -198,15 +189,15 @@ namespace MSNPSharp.P2P
                         }
                     }
 
-                    return;
+                    return true;
                 }
 
                 // Not registered application. Decline it without create a new session...
                 slpHandler.SendSLPStatus(bridge, p2pMessage, source, sourceGuid, 603, "Decline");
-                return;
+                return true;
             }
 
-            // 6) FIND SESSION: Search session by SessionId/ExpectedIdentifier
+            // 4) FIND SESSION: Search session by SessionId/ExpectedIdentifier
             P2PSession session = FindSession(p2pMessage, slp);
             if (session != null)
             {
@@ -221,24 +212,14 @@ namespace MSNPSharp.P2P
 
                 // Session SLP
                 if (slp != null && slpHandler.HandleP2PSessionSignal(bridge, p2pMessage, slp, session))
-                    return;
+                    return true;
 
                 // Session Data
                 if (slp == null && session.ProcessP2PData(bridge, p2pMessage))
-                    return;
+                    return true;
             }
 
-
-
-            if (!requireAck)
-            {
-                // UNHANDLED P2P MESSAGE
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                    String.Format("*******Unhandled P2P message!******* PING sent:\r\n{0}", p2pMessage.ToDebugString()), GetType().Name);
-
-                P2PMessage ping = new P2PMessage(p2pMessage.Version);
-                bridge.Send(null, source, sourceGuid, ping);
-            }
+            return false;
         }
 
         #endregion

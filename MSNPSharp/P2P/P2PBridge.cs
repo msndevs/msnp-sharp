@@ -161,6 +161,8 @@ namespace MSNPSharp.P2P
 
         protected uint bridgeID = ++bridgeCount;
         protected int queueSize = 0;
+        private NSMessageHandler nsMessageHandler = null;
+
         protected Dictionary<P2PSession, P2PSendQueue> sendQueues = new Dictionary<P2PSession, P2PSendQueue>();
         protected Dictionary<P2PSession, P2PSendList> sendingQueues = new Dictionary<P2PSession, P2PSendList>();
         protected List<P2PSession> stoppedSessions = new List<P2PSession>();
@@ -263,6 +265,13 @@ namespace MSNPSharp.P2P
             }
         }
 
+        public NSMessageHandler NSMessageHandler
+        {
+            get
+            {
+                return nsMessageHandler;
+            }
+        }
 
         public object SyncObject
         {
@@ -282,12 +291,12 @@ namespace MSNPSharp.P2P
         /// <summary>
         /// P2PBridge constructor.
         /// </summary>
-        /// <param name="queueSize"></param>
-        protected P2PBridge(int queueSize)
+        protected P2PBridge(int queueSize, NSMessageHandler nsHandler)
         {
             this.queueSize = queueSize;
             this.sequenceId = (uint)new Random().Next(5000, int.MaxValue);
             this.nextCleanup = NextCleanupTime();
+            this.nsMessageHandler = nsHandler;
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                 String.Format("P2PBridge {0} created", this.ToString()), GetType().Name);
@@ -669,6 +678,39 @@ namespace MSNPSharp.P2P
 
         #endregion
 
+        #region
+
+        public void ProcessP2PMessage(Contact source, Guid sourceGuid, P2PMessage p2pMessage)
+        {
+            // HANDLE RAK: RAKs are session independent and mustn't be quoted on bridges.
+            bool requireAck = HandleRAK(source, sourceGuid, p2pMessage);
+
+            // HANDLE ACK: ACK/NAK to our RAK message
+            if (HandleACK(p2pMessage))
+            {
+                return;
+            }
+
+            // PASS TO P2PHandler
+            if (nsMessageHandler.P2PHandler.ProcessP2PMessage(this, source, sourceGuid, p2pMessage))
+            {
+                return;
+            }
+
+            if (!requireAck)
+            {
+                // UNHANDLED P2P MESSAGE
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                    String.Format("*******Unhandled P2P message ****** \r\n{0}", p2pMessage.ToDebugString()), GetType().Name);
+
+                // Keep RemoteID Synchronized, I think we must track remoteIdentifier here...
+                // Send NAK??????
+
+            }
+        }
+
+
+        #endregion
 
         /// <summary>
         /// 
