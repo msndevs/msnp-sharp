@@ -373,20 +373,16 @@ namespace MSNPSharp
         /// <param name="base64Encoded"></param>
         public virtual void SetContext(string context, bool base64Encoded)
         {
-
             if (base64Encoded)
                 context = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(context));
 
-            string xmlString = context;
-            if (context.IndexOf(" ") == -1)
-                xmlString = GetDecodeString(context);
+            string xmlString = GetDecodeString(context);
 
-            XmlReader xmlReader = XmlReader.Create(new StringReader(xmlString));
+            XmlDocument xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(xmlString);
+            XmlNode msnObjNode = xmlDoc.SelectSingleNode("//msnobj");
 
-            XmlDocument xmlDocument = new XmlDocument();
-            XmlNode node = xmlDocument.ReadNode(xmlReader);
-
-            foreach (XmlNode attr in node.Attributes)
+            foreach (XmlNode attr in msnObjNode.Attributes)
             {
                 string val = attr.Value;
                 switch (attr.Name.ToLowerInvariant())
