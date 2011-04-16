@@ -173,7 +173,7 @@ namespace MSNPSharp.P2P
             {
                 uint appId = slp.BodyValues.ContainsKey("AppID") ? uint.Parse(slp.BodyValues["AppID"].Value) : 0;
                 Guid eufGuid = slp.BodyValues.ContainsKey("EUF-GUID") ? new Guid(slp.BodyValues["EUF-GUID"].Value) : Guid.Empty;
-                P2PVersion ver = slp.FromEndPoint== Guid.Empty ? P2PVersion.P2PV1 : P2PVersion.P2PV2;
+                P2PVersion ver = slp.P2PVersion;
 
                 if (P2PApplication.IsRegistered(eufGuid, appId))
                 {
@@ -390,7 +390,7 @@ namespace MSNPSharp.P2P
                 {
                     // We don't get a session ID in BYE requests
                     // So we need to find the session by its call ID
-                    P2PVersion p2pVersion = slp.FromEndPoint == Guid.Empty ? P2PVersion.P2PV1 : P2PVersion.P2PV2;
+                    P2PVersion p2pVersion = slp.P2PVersion;
                     p2pSession = FindSessionByCallId(slp.CallId, p2pVersion);
 
                     if (p2pSession != null)

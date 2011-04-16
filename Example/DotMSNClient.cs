@@ -479,14 +479,21 @@ namespace MSNPSharpClient
         // under Mono.
         private void SyncUserTile(object param)
         {
-            string usertitleURL = param.ToString();
+            string usertileURL = param.ToString();
+            string storageTicket = "?t=" + System.Web.HttpUtility.UrlEncode(Messenger.StorageTicket);
             
             try
             {
-                Uri uri = new Uri(usertitleURL);
+                Uri uri = new Uri(usertileURL + storageTicket);
 
                 HttpWebRequest fwr = (HttpWebRequest)WebRequest.Create(uri);
-                fwr.Proxy = Messenger.ConnectivitySettings.WebProxy;
+
+                // Don't override existing system wide proxy settings.
+                if (Messenger.ConnectivitySettings.WebProxy != null)
+                {
+                    fwr.Proxy = Messenger.ConnectivitySettings.WebProxy;
+                }
+                
                 fwr.Timeout = 10000;
 
                 fwr.BeginGetResponse(delegate(IAsyncResult result)
