@@ -531,8 +531,9 @@ namespace MSNPSharpClient
                     Image img = Image.FromStream(new MemoryStream((byte[])e.Object));
                     pbNewsPicture.Image = img;
                 }
-                catch(Exception)
+                catch(Exception ex)
                 {
+                    Trace.WriteLine("Get UserTile error: " + ex.Message);
                 }
             }
         }
