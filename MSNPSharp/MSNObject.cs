@@ -378,50 +378,59 @@ namespace MSNPSharp
 
             string xmlString = GetDecodeString(context);
 
-            XmlDocument xmlDoc = new XmlDocument();
-            xmlDoc.LoadXml(xmlString);
-            XmlNode msnObjNode = xmlDoc.SelectSingleNode("//msnobj");
-
-            foreach (XmlNode attr in msnObjNode.Attributes)
+            try
             {
-                string val = attr.Value;
-                switch (attr.Name.ToLowerInvariant())
+                XmlDocument xmlDoc = new XmlDocument();
+                xmlDoc.LoadXml(xmlString);
+                XmlNode msnObjNode = xmlDoc.SelectSingleNode("//msnobj");
+
+                foreach (XmlNode attr in msnObjNode.Attributes)
                 {
-                    case "creator":
-                        this.creator = val;
-                        break;
-                    case "size":
-                        this.size = int.Parse(val, System.Globalization.CultureInfo.InvariantCulture);
-                        break;
-                    case "type":
-                        {
-                            switch (val)
-                            {
-                                case "2":
-                                    type = MSNObjectType.Emoticon;
-                                    break;
-                                case "3":
-                                    type = MSNObjectType.UserDisplay;
-                                    break;
-                                case "5":
-                                    type = MSNObjectType.Background;
-                                    break;
-                                case "8":
-                                    type = MSNObjectType.Wink;
-                                    break;
-                                case "16":
-                                    type = MSNObjectType.Scene;
-                                    break;
-                            }
+                    string val = attr.Value;
+                    switch (attr.Name.ToLowerInvariant())
+                    {
+                        case "creator":
+                            this.creator = val;
                             break;
-                        }
-                    case "location":
-                        this.location = val;
-                        break;
-                    case "sha1d":
-                        this.sha = val.Replace(' ', '+');
-                        break;
+                        case "size":
+                            this.size = int.Parse(val, System.Globalization.CultureInfo.InvariantCulture);
+                            break;
+                        case "type":
+                            {
+                                switch (val)
+                                {
+                                    case "2":
+                                        type = MSNObjectType.Emoticon;
+                                        break;
+                                    case "3":
+                                        type = MSNObjectType.UserDisplay;
+                                        break;
+                                    case "5":
+                                        type = MSNObjectType.Background;
+                                        break;
+                                    case "8":
+                                        type = MSNObjectType.Wink;
+                                        break;
+                                    case "16":
+                                        type = MSNObjectType.Scene;
+                                        break;
+                                }
+                                break;
+                            }
+                        case "location":
+                            this.location = val;
+                            break;
+                        case "sha1d":
+                            this.sha = val.Replace(' ', '+');
+                            break;
+                    }
                 }
+            }
+            catch (Exception exception)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "MSNObject Set Conext error: context " +
+                    xmlString + " is not a valid context for MSNObject.\r\n  Error description: " +
+                    ex.Message + "\r\n  Stack Trace: " + ex.StackTrace);
             }
         }
 
