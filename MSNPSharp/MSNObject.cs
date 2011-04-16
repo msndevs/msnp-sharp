@@ -358,11 +358,6 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        private static Regex contextRe = new Regex("(?<Name>[^= ]+)=\"(?<Value>[^\"]+)\"");
-
-        /// <summary>
         /// Parses a context send by the remote contact and set the corresponding class variables. Context input is assumed to be not base64 encoded.
         /// </summary>
         /// <param name="context"></param>
@@ -385,14 +380,16 @@ namespace MSNPSharp
             string xmlString = context;
             if (context.IndexOf(" ") == -1)
                 xmlString = GetDecodeString(context);
-            MatchCollection matches = contextRe.Matches(xmlString);
 
-            foreach (Match match in matches)
+            XmlReader xmlReader = XmlReader.Create(new StringReader(xmlString));
+
+            XmlDocument xmlDocument = new XmlDocument();
+            XmlNode node = xmlDocument.ReadNode(xmlReader);
+
+            foreach (XmlNode attr in node.Attributes)
             {
-                string name = match.Groups["Name"].Value.ToLower(System.Globalization.CultureInfo.InvariantCulture);
-                string val = match.Groups["Value"].Value;
-
-                switch (name)
+                string val = attr.Value;
+                switch (attr.Name.ToLowerInvariant())
                 {
                     case "creator":
                         this.creator = val;
@@ -426,7 +423,7 @@ namespace MSNPSharp
                         this.location = val;
                         break;
                     case "sha1d":
-                        this.sha = val;
+                        this.sha = val.Replace(' ', '+');
                         break;
                 }
             }
