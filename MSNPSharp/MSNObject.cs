@@ -426,7 +426,7 @@ namespace MSNPSharp
                     }
                 }
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "MSNObject Set Conext error: context " +
                     xmlString + " is not a valid context for MSNObject.\r\n  Error description: " +
