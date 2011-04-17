@@ -44,6 +44,7 @@ namespace MSNPSharp
     using MSNPSharp.P2P;
     using MSNPSharp.Core;
     using MSNPSharp.MSNWS.MSNABSharingService;
+    using System.Globalization;
 
     /// <summary>
     /// User in roster list.
@@ -236,7 +237,7 @@ namespace MSNPSharp
             cId = cid;
 
             SetName(account);
-            siblingString = ClientType.ToString() + ":" + account;
+            siblingString = ClientType.ToString(CultureInfo.InvariantCulture) + ":" + account;
             hash = MakeHash(Account, ClientType);
 
             if (NSMessageHandler != null)
@@ -1719,7 +1720,7 @@ namespace MSNPSharp
 
         internal static string MakeHash(string account, IMAddressInfoType type)
         {
-            return type.ToString() + ":" + account.ToLowerInvariant();
+            return type.ToString(CultureInfo.InvariantCulture) + ":" + account.ToLowerInvariant();
         }
         
         internal static bool IsSpecialGatewayType(IMAddressInfoType type)

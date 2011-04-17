@@ -34,6 +34,7 @@ using System;
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace MSNPSharp.Core
 {
@@ -288,7 +289,7 @@ namespace MSNPSharp.Core
                                 {
                                     // If it is number, assume payload
                                     int errorCode3;
-                                    if (int.TryParse(cmd3, out errorCode3) && errorCode3.ToString().Length == 3)
+                                    if (int.TryParse(cmd3, out errorCode3) && errorCode3.ToString(CultureInfo.InvariantCulture).Length == 3)
                                         goto case "000";
 
                                     // Otherwise; it was just a plain command, start a new message
