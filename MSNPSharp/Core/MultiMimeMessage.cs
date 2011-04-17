@@ -274,16 +274,6 @@ namespace MSNPSharp.Core
 
         }
 
-        public override void CreateFromParentMessage(NetworkMessage containerMessage)
-        {
-            base.CreateFromParentMessage(containerMessage);
-
-            if (ParentMessage.InnerBody != null)
-            {
-                ParseBytes(ParentMessage.InnerBody);
-            }
-        }
-
         public override string ToString()
         {
             string contentEncoding = string.Empty;
