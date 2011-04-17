@@ -98,6 +98,10 @@ namespace MSNPSharp.Core
             }
         }
 
+        public MultiMimeMessage()
+        {
+        }
+
         public MultiMimeMessage(string to, string from)
         {
             To = to;
@@ -270,6 +274,16 @@ namespace MSNPSharp.Core
 
         }
 
+        public override void CreateFromParentMessage(NetworkMessage containerMessage)
+        {
+            base.CreateFromParentMessage(containerMessage);
+
+            if (ParentMessage.InnerBody != null)
+            {
+                ParseBytes(ParentMessage.InnerBody);
+            }
+        }
+
         public override string ToString()
         {
             string contentEncoding = string.Empty;
@@ -291,8 +305,17 @@ namespace MSNPSharp.Core
 
                     if (InnerBody != null && InnerMessage == null)
                     {
-                        debugString = Encoding.UTF8.GetString(headers) + "\r\nUnknown Binary Data: {Length: " + payLoadLength + "}";
+                        if (ContentHeaders.ContainsKey(MIMEContentHeaders.BridgingOffsets))
+                        {
+                            debugString = Encoding.UTF8.GetString(headers) + "\r\nMulti-Package Binary Data: {Length: " + payLoadLength + "}";
+                        }
+                        else
+                        {
+                            debugString = Encoding.UTF8.GetString(headers) + "\r\nUnknown Binary Data: {Length: " + payLoadLength + "}";
+                        }
                     }
+
+
 
                     if (InnerBody != null && InnerMessage != null)
                     {

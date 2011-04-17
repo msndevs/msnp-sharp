@@ -1493,8 +1493,6 @@ namespace MSNPSharp
             return message;
         }
 
-
-
         protected virtual NetworkMessage ParseNetworkMessage(NetworkMessage message)
         {
             NSMessage nsMessage = (NSMessage)message;
@@ -1505,6 +1503,9 @@ namespace MSNPSharp
                 {
                     case "MSG":
                         ParseMSGMessage(nsMessage);
+                        break;
+                    case "SDG":
+                        ParseSDGMessage(nsMessage);
                         break;
                     default:
                         ParseTextPayloadMessage(nsMessage);

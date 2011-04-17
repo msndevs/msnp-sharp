@@ -202,11 +202,17 @@ namespace MSNPSharp
             if (ParentMessage == null)
                 return;
 
-            // we expect a MSGMessage object
-            MimeMessage MSGMessage = (MimeMessage)ParentMessage;
+            if (ParentMessage is MimeMessage)
+            {
+                MimeMessage MSGMessage = (MimeMessage)ParentMessage;
+                // parse the header from the parent message
+                ParseHeader(MSGMessage.MimeHeader);
+            }
 
-            // parse the header from the parent message
-            ParseHeader(MSGMessage.MimeHeader);
+            if (ParentMessage is MultiMimeMessage)
+            {
+                ParseHeader((ParentMessage as MultiMimeMessage).ContentHeaders);
+            }
         }
 
         /// <summary>
@@ -256,6 +262,16 @@ namespace MSNPSharp
         public override byte[] GetBytes()
         {
             return System.Text.Encoding.UTF8.GetBytes(Text);
+        }
+
+        internal void ParseHeader(MimeDictionary mimeHeader)
+        {
+            StrDictionary strDic = new StrDictionary();
+            foreach (string key in mimeHeader.Keys)
+            {
+                strDic.Add(key, mimeHeader[key].ToString());
+            }
+            ParseHeader(strDic);
         }
 
         /// <summary>

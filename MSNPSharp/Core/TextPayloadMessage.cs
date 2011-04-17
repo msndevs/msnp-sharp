@@ -76,6 +76,10 @@ namespace MSNPSharp.Core
             }
         }
 
+        public TextPayloadMessage()
+        {
+        }
+
         public TextPayloadMessage(string txt)
         {
             Text = txt;
@@ -106,6 +110,12 @@ namespace MSNPSharp.Core
         public override string ToString()
         {
             return Text.Replace("\r", "\\r").Replace("\n", "\\n\n");
+        }
+
+        public override void CreateFromParentMessage(NetworkMessage containerMessage)
+        {
+            base.CreateFromParentMessage(containerMessage);
+            Text = Encoding.UTF8.GetString(ParentMessage.InnerBody);
         }
     }
 }

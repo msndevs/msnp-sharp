@@ -39,10 +39,10 @@ namespace MSNPSharp.P2P
     using MSNPSharp.Core;
 
     /// <summary>
-    /// SDG Bridge that wraps P2P messages by PipeNo and sends over nameserver.
+    /// SDG Bridge that wraps P2P messages by Pipe Number and sends over nameserver.
     /// </summary>
     /// <remarks>
-    /// SDG bridge manages switchboards by pipe no. Pipe no indicates open switchboards and
+    /// SDG bridge manages switchboards by Pipe Number. Pipe Number indicates open switchboards and
     /// begins with 1 and increments by 1 (per user). You can create 3 pipes for each end point.
     /// 
     /// Each P2PMessage is about 1KB and can be sent multiple packets in SDG bridge.

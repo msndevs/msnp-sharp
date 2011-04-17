@@ -1549,6 +1549,53 @@ namespace MSNPSharp
 
         #region OnSDGReceived
 
+        protected virtual NetworkMessage ParseSDGMessage(NSMessage nsMessage)
+        {
+            MultiMimeMessage multiMimeMessage = new MultiMimeMessage();
+            multiMimeMessage.CreateFromParentMessage(nsMessage);
+
+            if (multiMimeMessage.ContentHeaders.ContainsKey(MIMEContentHeaders.MessageType))
+            {
+                switch (multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString())
+                {
+                    default:
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                            "[OnSDGReceived] Cannot parse this type of SDG message: \r\n" + multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString() +
+                            "\r\n\r\nMessage Body: \r\n\r\n" + multiMimeMessage.ToDebugString());
+                        break;
+
+                    case MessageTypes.Nudge:
+                    case MessageTypes.ControlTyping:
+                    case MessageTypes.Wink:
+                    case MessageTypes.SignalCloseIMWindow:
+                        // Pure Text body, nothing to parse.
+                        ParseSDGTextPayloadMessage(multiMimeMessage);
+                        break;
+
+                    case MessageTypes.Text:
+                        // Set the TextMessage as its InnerMessage.
+                        ParseSDGTextMessage(multiMimeMessage);
+                        break;
+
+                    case MessageTypes.CustomEmoticon:
+                        // Set the EmoticonMessage as its InnerMessage.
+                        ParseSDGCustomEmoticonMessage(multiMimeMessage);
+                        break;
+
+                    case MessageTypes.SignalP2P:
+                        // Add the SLPMessage as its InnerMessage.
+                        ParseSDGP2PSignalMessage(multiMimeMessage);
+                        break;
+
+                    case MessageTypes.Data:
+                        //OnSDGDataMessageReceived(multiMimeMessage, sender, by, routingInfo);
+                        break;
+                }
+            }
+
+            return nsMessage;
+        }
+
         //This is actually another OnMSGxxx
 
         /// <summary>
@@ -1561,11 +1608,13 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnSDGReceived(NSMessage message)
         {
-            NetworkMessage networkMessage = message as NetworkMessage;
-            if (networkMessage.InnerBody == null || networkMessage.InnerBody.Length == 0)
+            if (message.InnerBody == null || (message.InnerMessage is MultiMimeMessage) == false)
+            {
+                // This is not an SDG MultiMimeMessage message
                 return;
+            }
 
-            MultiMimeMessage multiMimeMessage = new MultiMimeMessage(networkMessage.InnerBody);
+            MultiMimeMessage multiMimeMessage = message.InnerMessage as MultiMimeMessage ;
 
             #region Get the Routing Info
 
@@ -1660,7 +1709,7 @@ namespace MSNPSharp
 
         private void OnSDGCloseIMWindowReceived(MultiMimeMessage multiMimeMessage, RoutingInfo routingInfo)
         {
-            string partiesString = Encoding.UTF8.GetString(multiMimeMessage.InnerBody);
+            string partiesString = (multiMimeMessage.InnerMessage as TextPayloadMessage).Text;
             if (string.IsNullOrEmpty(partiesString))
                 return;
             string[] parties = partiesString.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
@@ -1698,21 +1747,41 @@ namespace MSNPSharp
                                                                      partiesList.ToArray()));
         }
 
+        private MultiMimeMessage ParseSDGTextPayloadMessage(MultiMimeMessage multiMimeMessage)
+        {
+            TextPayloadMessage textPayloadMessage = new TextPayloadMessage();
+            textPayloadMessage.CreateFromParentMessage(multiMimeMessage);
+            return multiMimeMessage;
+        }
+
         private void OnSDGWinkReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact by)
         {
             Wink wink = new Wink();
-            wink.SetContext(Encoding.UTF8.GetString(multiMimeMessage.InnerBody));
+            wink.SetContext((multiMimeMessage.InnerMessage as TextPayloadMessage).Text);
 
             OnWinkDefinitionReceived(new WinkEventArgs(sender, wink));
         }
 
-        private void OnSDGCustomEmoticonReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact by)
+        private MultiMimeMessage ParseSDGCustomEmoticonMessage(MultiMimeMessage multiMimeMessage)
         {
             EmoticonMessage emoticonMessage = new EmoticonMessage();
+            emoticonMessage.CreateFromParentMessage(multiMimeMessage);
+
             emoticonMessage.EmoticonType = multiMimeMessage.ContentHeaders[MIMEContentHeaders.ContentType] == "text/x-mms-animemoticon" ?
                 EmoticonType.AnimEmoticon : EmoticonType.StaticEmoticon;
 
-            emoticonMessage.ParseBytes(multiMimeMessage.InnerBody);
+            return multiMimeMessage;
+        }
+
+        private void OnSDGCustomEmoticonReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact by)
+        {
+            //EmoticonMessage emoticonMessage = new EmoticonMessage();
+            //emoticonMessage.EmoticonType = multiMimeMessage.ContentHeaders[MIMEContentHeaders.ContentType] == "text/x-mms-animemoticon" ?
+            //    EmoticonType.AnimEmoticon : EmoticonType.StaticEmoticon;
+
+            //emoticonMessage.ParseBytes(multiMimeMessage.InnerBody);
+
+            EmoticonMessage emoticonMessage = multiMimeMessage.InnerMessage as EmoticonMessage;
 
             foreach (Emoticon emoticon in emoticonMessage.Emoticons)
             {
@@ -1720,22 +1789,35 @@ namespace MSNPSharp
             }
         }
 
+        private MultiMimeMessage ParseSDGTextMessage(MultiMimeMessage multiMimeMessage)
+        {
+            TextMessage txtMessage = new TextMessage();
+            txtMessage.CreateFromParentMessage(multiMimeMessage);
+
+            return multiMimeMessage;
+        }
+
         private void OnSDGTextMessageReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact by)
         {
-            TextMessage txtMessage = new TextMessage(Encoding.UTF8.GetString(multiMimeMessage.InnerBody));
-            StrDictionary strDic = new StrDictionary();
-            foreach (string key in multiMimeMessage.ContentHeaders.Keys)
-            {
-                strDic.Add(key, multiMimeMessage.ContentHeaders[key].ToString());
-            }
-            txtMessage.ParseHeader(strDic);
+
+            TextMessage txtMessage = multiMimeMessage.InnerMessage as TextMessage;
 
             OnTextMessageReceived(new TextMessageArrivedEventArgs(sender, txtMessage, by));
         }
 
-        private void OnSDGP2PSignalReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact by)
+        private MultiMimeMessage ParseSDGP2PSignalMessage(MultiMimeMessage multiMimeMessage)
         {
             SLPMessage slpMessage = SLPMessage.Parse(multiMimeMessage.InnerBody);
+            slpMessage.CreateFromParentMessage(multiMimeMessage);
+            
+            return multiMimeMessage;
+        }
+
+        private void OnSDGP2PSignalReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact by)
+        {
+            //SLPMessage slpMessage = SLPMessage.Parse(multiMimeMessage.InnerBody);
+            SLPMessage slpMessage = multiMimeMessage.InnerMessage as SLPMessage;
+
             if (slpMessage != null)
             {
                 if (slpMessage.ContentType == "application/x-msnmsgr-transreqbody" ||
@@ -1745,6 +1827,11 @@ namespace MSNPSharp
                     P2PSession.ProcessDirectInvite(slpMessage, this, null);
                 }
             }
+        }
+
+        private MultiMimeMessage ParseSDGDataMessage(MultiMimeMessage multiMimeMessage, Contact sender, Contact by)
+        {
+            return multiMimeMessage;
         }
 
         private void OnSDGDataMessageReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact by, RoutingInfo routingInfo)
