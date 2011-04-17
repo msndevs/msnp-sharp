@@ -45,8 +45,8 @@ namespace MSNPSharp.Core
         /// </summary>
         public string Text
         {
-            get 
-            { 
+            get
+            {
                 return text;
             }
 
@@ -64,9 +64,9 @@ namespace MSNPSharp.Core
         /// </summary>
         public Encoding Encoding
         {
-            get 
-            { 
-                return encoding; 
+            get
+            {
+                return encoding;
             }
 
             private set
@@ -111,11 +111,5 @@ namespace MSNPSharp.Core
         {
             return Text.Replace("\r", "\\r").Replace("\n", "\\n\n");
         }
-
-        public override void CreateFromParentMessage(NetworkMessage containerMessage)
-        {
-            base.CreateFromParentMessage(containerMessage);
-            Text = Encoding.UTF8.GetString(ParentMessage.InnerBody);
-        }
     }
-}
+};
