@@ -119,7 +119,7 @@ namespace MSNPSharp.Core
         /// <see cref="ParseBytes"/> method to parse the inner body contents of the parent message.
         /// </summary>
         /// <param name="containerMessage"></param>
-        public virtual void CreateFromParentMessage(NetworkMessage containerMessage)
+        public void CreateFromParentMessage(NetworkMessage containerMessage)
         {
             ParentMessage = containerMessage;
             ParentMessage.InnerMessage = this;

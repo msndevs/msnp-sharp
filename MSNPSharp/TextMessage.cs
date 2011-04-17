@@ -192,16 +192,17 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Parses the header in the parent message and sets the style properties.
+        /// Sets the Text property.
         /// </summary>
-        /// <param name="containerMessage"></param>
-        public override void CreateFromParentMessage(NetworkMessage containerMessage)
+        /// <param name="data"></param>
+        public override void ParseBytes(byte[] data)
         {
-            base.CreateFromParentMessage(containerMessage);
-
-            if (ParentMessage == null)
+            // set the text property for easy retrieval
+            Text = System.Text.Encoding.UTF8.GetString(data);
+            
+            if(ParentMessage == null)
                 return;
-
+            
             if (ParentMessage is MimeMessage)
             {
                 MimeMessage MSGMessage = (MimeMessage)ParentMessage;
@@ -213,16 +214,6 @@ namespace MSNPSharp
             {
                 ParseHeader((ParentMessage as MultiMimeMessage).ContentHeaders);
             }
-        }
-
-        /// <summary>
-        /// Sets the Text property.
-        /// </summary>
-        /// <param name="data"></param>
-        public override void ParseBytes(byte[] data)
-        {
-            // set the text property for easy retrieval
-            Text = System.Text.Encoding.UTF8.GetString(data);
         }
 
 
