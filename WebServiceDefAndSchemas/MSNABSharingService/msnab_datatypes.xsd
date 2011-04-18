@@ -354,6 +354,7 @@
 			<xsd:element name="MessengerMemberInfo" type="msnab:MessengerMemberInfo" minOccurs="0"/>
 			<xsd:element name="PropertiesChanged" type="xsd:anyType" minOccurs="0"/>
 			<xsd:element name="clientErrorData" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="LinkInfo" type="msnab:LinkInfoType" minOccurs="0"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	<xsd:complexType name="contactEmailType">
@@ -921,6 +922,11 @@
 		<xsd:sequence>
 			<xsd:element name="PageSize" type="xsd:int"/>
 			<xsd:element name="Direction" type="xsd:string"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="LinkInfoType">
+		<xsd:sequence>
+			<xsd:element name="PersionID" type="xsd:string"/>
 		</xsd:sequence>
 	</xsd:complexType>
 </xsd:schema>
