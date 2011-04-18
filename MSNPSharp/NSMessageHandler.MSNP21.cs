@@ -974,7 +974,11 @@ namespace MSNPSharp
                                                 routingInfo.Sender.PersonalMessage != personalMessage)
                                             {
                                                 // FriendlyName
-                                                routingInfo.Sender.SetName(String.IsNullOrEmpty(personalMessage.FriendlyName) ? routingInfo.Sender.Account : personalMessage.FriendlyName);
+                                                if (!String.IsNullOrEmpty(personalMessage.FriendlyName))
+                                                {
+                                                    //Only Windows Live Messenger Contact has friendly name.
+                                                    routingInfo.Sender.SetName(personalMessage.FriendlyName);
+                                                }
 
                                                 // UserTileLocation
                                                 if (!String.IsNullOrEmpty(personalMessage.UserTileLocation) && routingInfo.Sender.UserTileLocation != personalMessage.UserTileLocation)

@@ -360,13 +360,28 @@ namespace MSNPSharp
         /// <summary>
         /// Domain id for Windows Live addressbook in NetworkInfo.
         /// </summary>
-        public const int WLDomain = 1;
+        public const int WindowsLiveDomain = 1;
 
         /// <summary>
         /// Domain ID for facebook in NetworkInfo.
         /// </summary>
-        public const int FBDomain = 7;
+        public const int FaceBookDomain = 7;
         public const int ZUNEDomain = 3;
+
+        /// <summary>
+        /// The domain ID for MySpace.
+        /// </summary>
+        public const int MySpaceDomain = 9;
+    }
+
+    /// <summary>
+    /// The values in this class might be different from <see cref="RemoteNetworkGateways"/>
+    /// </summary>
+    public static class SourceId
+    {
+        public const string WindowsLive = "WL";
+        public const string FaceBook = "FB";
+        public const string MySpace = "MYSP";
     }
 
     /// <summary>

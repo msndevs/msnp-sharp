@@ -237,7 +237,7 @@ namespace MSNPSharp
             cId = cid;
 
             SetName(account);
-            siblingString = ClientType.ToString(CultureInfo.InvariantCulture) + ":" + account;
+            siblingString = ClientType.ToString() + ":" + account;
             hash = MakeHash(Account, ClientType);
 
             if (NSMessageHandler != null)
