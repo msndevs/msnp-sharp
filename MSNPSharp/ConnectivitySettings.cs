@@ -324,8 +324,11 @@ namespace MSNPSharp
 
         #region Private members
 
-        private string host = "messenger.hotmail.com";
-        private int port = 1863;
+        public const string DefaultHost = "messenger.hotmail.com";
+        public const int DefaultPort = 1863;
+
+        private string host = DefaultHost;
+        private int port = DefaultPort;
         private IPEndPoint[] endPoints = new IPEndPoint[0];
         private string localHost = string.Empty;
         private int localPort = 0;

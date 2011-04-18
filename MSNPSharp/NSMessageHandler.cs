@@ -126,7 +126,7 @@ namespace MSNPSharp
         private IPEndPoint externalEndPoint;
         private SocketMessageProcessor messageProcessor;
         private P2PHandler p2pHandler;
-        private long hopCount = 0;
+        private int hopCount = 0;
 
         private ContactGroupList contactGroups;
         private ContactList contactList;
@@ -657,7 +657,7 @@ namespace MSNPSharp
             MsnProtocol msnProtocol = MsnProtocol.MSNP21;
             Credentials oldcred = Credentials;
             Credentials = new Credentials(oldcred.Account, oldcred.Password, msnProtocol);
-            string base64Hop = (hopCount == 0) ? "0" : Convert.ToBase64String(Encoding.ASCII.GetBytes("Version: 1\r\nXfrCount: " + hopCount.ToString(CultureInfo.InvariantCulture)));
+            string base64Hop = (hopCount == 0 || hopCount == int.MaxValue) ? "0" : Convert.ToBase64String(Encoding.ASCII.GetBytes("Version: 1\r\nXfrCount: " + hopCount.ToString(CultureInfo.InvariantCulture)));
 
             MessageProcessor.SendMessage(new NSMessage("CVR",
                 new string[] { 
@@ -919,9 +919,9 @@ namespace MSNPSharp
         /// Called when a XFR command has been received.
         /// </summary>
         /// <remarks>
-        /// Indicates that the notification server has send us the location of a switch-board server in order to
-        /// make contact with a client, or that we must switch to a new notification server.
-        /// <code>XFR [Transaction] [SB|NS] [IP:Port] ['0'|'CKI'] [Hash|CurrentIP:CurrentPort]</code>
+        /// Indicates that the notification server has send us the location that we must switch to a new notification server.
+        /// <code>XFR 0 [NS] [*.gateway.edge.messenger.live.com:Port] [G] [D] [HopString]</code>
+        /// <code>XFR [Transaction] [NS] [IP:Port] [U] [D] [HopString]</code>
         /// </remarks>
         /// <param name="message"></param>
         protected virtual void OnXFRReceived(NSMessage message)
@@ -934,6 +934,9 @@ namespace MSNPSharp
                 // disconnect first
                 processor.Disconnect();
 
+                string[] hostAndPort = ((string)message.CommandValues[1]).Split(new char[] { ':' });
+                bool isGateway = message.CommandValues[2].ToString() == "G";
+
                 // Get hop count. Version: 1\r\nXfrCount: 2\r\n
                 if (message.CommandValues.Count >= 5)
                 {
@@ -941,16 +944,23 @@ namespace MSNPSharp
                     Match m = Regex.Match(hopString, @"(\d+)").NextMatch();
                     if (m.Success)
                     {
-                        hopCount = Convert.ToInt64(m.Value);
+                        hopCount = Convert.ToInt32(m.Value);
                     }
                 }
 
                 // set new connectivity settings
                 ConnectivitySettings newSettings = new ConnectivitySettings(processor.ConnectivitySettings);
-                string[] values = ((string)message.CommandValues[1]).Split(new char[] { ':' });
 
-                newSettings.Host = values[0];
-                newSettings.Port = int.Parse(values[1], System.Globalization.CultureInfo.InvariantCulture);
+                if (!isGateway)
+                {
+                    newSettings.Host = hostAndPort[0];
+                    newSettings.Port = int.Parse(hostAndPort[1], System.Globalization.CultureInfo.InvariantCulture);
+                }
+                else
+                {
+                    newSettings.Host = ConnectivitySettings.DefaultHost;
+                    newSettings.Port = ConnectivitySettings.DefaultPort;
+                }
 
                 processor.ConnectivitySettings = newSettings;
 
