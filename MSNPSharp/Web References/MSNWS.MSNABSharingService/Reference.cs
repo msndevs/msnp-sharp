@@ -3014,6 +3014,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string clientErrorDataField;
         
+        private LinkInfoType linkInfoField;
+        
         /// <remarks/>
         [System.Xml.Serialization.XmlArrayItemAttribute("ContactEmail", IsNullable=false)]
         public contactEmailType[] emails {
@@ -3645,6 +3647,16 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.clientErrorDataField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public LinkInfoType LinkInfo {
+            get {
+                return this.linkInfoField;
+            }
+            set {
+                this.linkInfoField = value;
             }
         }
     }
@@ -4332,6 +4344,27 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.displayNameField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.5420")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class LinkInfoType {
+        
+        private string persionIDField;
+        
+        /// <remarks/>
+        public string PersionID {
+            get {
+                return this.persionIDField;
+            }
+            set {
+                this.persionIDField = value;
             }
         }
     }
