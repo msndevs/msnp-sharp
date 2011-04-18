@@ -48,11 +48,21 @@ namespace MSNPSharp
         {
         }
 
+        /// <summary>
+        /// Gets core profile from directory service and fires <see cref="Contact.CoreProfileUpdated"/> event
+        /// after async request completed.
+        /// </summary>
+        /// <param name="cid"></param>
         public void Get(long cid)
         {
             Get(cid, null);
         }
 
+        /// <summary>
+        /// Gets core profiles from directory service and fires <see cref="Contact.CoreProfileUpdated"/> event
+        /// for each contact after async request completed.
+        /// </summary>
+        /// <param name="cids"></param>
         public void GetMany(long[] cids)
         {
             GetMany(cids, null);
@@ -75,7 +85,13 @@ namespace MSNPSharp
                         return;
 
                     if (callback != null)
+                    {
                         callback(sender, e);
+                    }
+                    else if (e.Error == null && e.Result != null && e.Result.GetResult != null)
+                    {
+                        FindContactByCidAndFireCoreProfileUpdated(cid, e.Result.GetResult.View);
+                    }
                 };
 
                 IdType id = new IdType();
@@ -112,7 +128,25 @@ namespace MSNPSharp
                         return;
 
                     if (callback != null)
+                    {
                         callback(sender, e);
+                    }
+                    else if (e.Error == null && e.Result != null && e.Result.GetManyResult != null)
+                    {
+                        GetManyResultType r = e.Result.GetManyResult;
+                        for (int i = 0; i < r.Ids.Length; i++)
+                        {
+                            IdType idType = r.Ids[i];
+                            if (idType != null && idType.Ns1 == "Cid")
+                            {
+                                long cid;
+                                if (long.TryParse(idType.V1.ToString(), out cid) && cid != 0)
+                                {
+                                    FindContactByCidAndFireCoreProfileUpdated(cid, r.Views[i]);
+                                }
+                            }
+                        }
+                    }
                 };
 
                 List<IdType> ids = new List<IdType>(cids.Length);
@@ -135,6 +169,29 @@ namespace MSNPSharp
                 request.request.Ids = ids.ToArray();
 
                 RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(dirService, MsnServiceType.Directory, getManyObject, request));
+            }
+        }
+
+
+        private void FindContactByCidAndFireCoreProfileUpdated(long cid, ViewType view)
+        {
+            Contact contact = (cid == NSMessageHandler.Owner.CID) ?
+                NSMessageHandler.Owner : NSMessageHandler.ContactList.GetContactByCID(cid);
+
+            if (contact != null)
+            {
+                lock (contact.SyncObject)
+                {
+                    foreach (AttributeType at in view.Attributes)
+                    {
+                        if (!String.IsNullOrEmpty(at.N))
+                        {
+                            contact.CoreProfile[at.N] = at.V;
+                        }
+                    }
+                }
+
+                contact.OnCoreProfileUpdated(EventArgs.Empty);
             }
         }
     }

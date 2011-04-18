@@ -358,11 +358,6 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        private static Regex contextRe = new Regex("(?<Name>[^= ]+)=\"(?<Value>[^\"]+)\"");
-
-        /// <summary>
         /// Parses a context send by the remote contact and set the corresponding class variables. Context input is assumed to be not base64 encoded.
         /// </summary>
         /// <param name="context"></param>
@@ -378,57 +373,64 @@ namespace MSNPSharp
         /// <param name="base64Encoded"></param>
         public virtual void SetContext(string context, bool base64Encoded)
         {
-
             if (base64Encoded)
                 context = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(context));
 
-            string xmlString = context;
-            if (context.IndexOf(" ") == -1)
-                xmlString = GetDecodeString(context);
-            MatchCollection matches = contextRe.Matches(xmlString);
+            string xmlString = GetDecodeString(context);
 
-            foreach (Match match in matches)
+            try
             {
-                string name = match.Groups["Name"].Value.ToLower(System.Globalization.CultureInfo.InvariantCulture);
-                string val = match.Groups["Value"].Value;
+                XmlDocument xmlDoc = new XmlDocument();
+                xmlDoc.LoadXml(xmlString);
+                XmlNode msnObjNode = xmlDoc.SelectSingleNode("//msnobj");
 
-                switch (name)
+                foreach (XmlNode attr in msnObjNode.Attributes)
                 {
-                    case "creator":
-                        this.creator = val;
-                        break;
-                    case "size":
-                        this.size = int.Parse(val, System.Globalization.CultureInfo.InvariantCulture);
-                        break;
-                    case "type":
-                        {
-                            switch (val)
-                            {
-                                case "2":
-                                    type = MSNObjectType.Emoticon;
-                                    break;
-                                case "3":
-                                    type = MSNObjectType.UserDisplay;
-                                    break;
-                                case "5":
-                                    type = MSNObjectType.Background;
-                                    break;
-                                case "8":
-                                    type = MSNObjectType.Wink;
-                                    break;
-                                case "16":
-                                    type = MSNObjectType.Scene;
-                                    break;
-                            }
+                    string val = attr.Value;
+                    switch (attr.Name.ToLowerInvariant())
+                    {
+                        case "creator":
+                            this.creator = val;
                             break;
-                        }
-                    case "location":
-                        this.location = val;
-                        break;
-                    case "sha1d":
-                        this.sha = val;
-                        break;
+                        case "size":
+                            this.size = int.Parse(val, System.Globalization.CultureInfo.InvariantCulture);
+                            break;
+                        case "type":
+                            {
+                                switch (val)
+                                {
+                                    case "2":
+                                        type = MSNObjectType.Emoticon;
+                                        break;
+                                    case "3":
+                                        type = MSNObjectType.UserDisplay;
+                                        break;
+                                    case "5":
+                                        type = MSNObjectType.Background;
+                                        break;
+                                    case "8":
+                                        type = MSNObjectType.Wink;
+                                        break;
+                                    case "16":
+                                        type = MSNObjectType.Scene;
+                                        break;
+                                }
+                                break;
+                            }
+                        case "location":
+                            this.location = val;
+                            break;
+                        case "sha1d":
+                            this.sha = val.Replace(' ', '+');
+                            break;
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "MSNObject Set Conext error: context " +
+                    xmlString + " is not a valid context for MSNObject.\r\n  Error description: " +
+                    ex.Message + "\r\n  Stack Trace: " + ex.StackTrace);
             }
         }
 

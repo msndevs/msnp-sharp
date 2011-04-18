@@ -302,6 +302,12 @@ namespace MSNPSharp
                     sender = fromMyself ? nsMessageHandler.Owner : nsMessageHandler.ContactList.GetContactWithCreate(senderAccount, senderAccountAddressType);
                 else
                 {
+                    // For facebook, we might need to use GetContact instead of GetContactWithCreate, 
+                    // that's the official client's behavior. Actually we will get all status notification from
+                    // our facebook contacts, however, WLM only display those guys who are also our windows live
+                    // contact. For now, those facebook contact doesn't add us as an WLM contact will also show up
+                    // in MSNPSharp, their name is the same with the account - all are numbers. I think it doesn't
+                    // harm so far, so keep it like this is reasonable, but might change in the future.
                     sender = senderGateway.ContactList.GetContactWithCreate(senderAccount, senderAccountAddressType);
                 }
             }

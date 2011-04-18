@@ -44,6 +44,7 @@ namespace MSNPSharp
     using MSNPSharp.P2P;
     using MSNPSharp.Core;
     using MSNPSharp.MSNWS.MSNABSharingService;
+    using System.Globalization;
 
     /// <summary>
     /// User in roster list.
@@ -278,6 +279,11 @@ namespace MSNPSharp
         /// Fired when contact places changed.
         /// </summary>
         public event EventHandler<PlaceChangedEventArgs> PlacesChanged;
+
+        /// <summary>
+        /// Fired when core profile updated via Directory Service.
+        /// </summary>
+        public event EventHandler<EventArgs> CoreProfileUpdated;
 
         /// <summary>
         /// Fired when contact's display name changed.
@@ -1356,6 +1362,17 @@ namespace MSNPSharp
                 PlacesChanged(this, e);
         }
 
+        /// <summary>
+        /// Called when the core profile updated.
+        /// </summary>
+        /// <param name="e"></param>
+        protected internal virtual void OnCoreProfileUpdated(EventArgs e)
+        {
+            if (CoreProfileUpdated != null)
+                CoreProfileUpdated(this, e);
+        }
+
+
         internal void SetChangedPlace(PlaceChangedEventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
@@ -1703,7 +1720,7 @@ namespace MSNPSharp
 
         internal static string MakeHash(string account, IMAddressInfoType type)
         {
-            return type.ToString() + ":" + account.ToLowerInvariant();
+            return type.ToString(CultureInfo.InvariantCulture) + ":" + account.ToLowerInvariant();
         }
         
         internal static bool IsSpecialGatewayType(IMAddressInfoType type)
@@ -1818,6 +1835,18 @@ namespace MSNPSharp
 
 
         #endregion
+
+        /// <summary>
+        /// Gets core profile from directory service and fires <see cref="CoreProfileUpdated"/> event
+        /// after async request completed.
+        /// </summary>
+        public void GetCoreProfile()
+        {
+            if (CID != 0 && NSMessageHandler != null && NSMessageHandler.MSNTicket != MSNTicket.Empty)
+            {
+                NSMessageHandler.DirectoryService.Get(CID);
+            }
+        }
 
         public bool HasGroup(ContactGroup group)
         {

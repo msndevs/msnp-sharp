@@ -98,6 +98,10 @@ namespace MSNPSharp.Core
             }
         }
 
+        public MultiMimeMessage()
+        {
+        }
+
         public MultiMimeMessage(string to, string from)
         {
             To = to;
@@ -147,7 +151,7 @@ namespace MSNPSharp.Core
             }
             set
             {
-                reliabilityHeaders[MIMEReliabilityHeaders.Stream] = value.ToString();
+                reliabilityHeaders[MIMEReliabilityHeaders.Stream] = value.ToString(CultureInfo.InvariantCulture);
             }
         }
 
@@ -156,11 +160,11 @@ namespace MSNPSharp.Core
             get
             {
                 return reliabilityHeaders.ContainsKey(MIMEReliabilityHeaders.Segment) ?
-                    long.Parse(reliabilityHeaders[MIMEReliabilityHeaders.Segment], System.Globalization.CultureInfo.InvariantCulture) : 0;
+                    long.Parse(reliabilityHeaders[MIMEReliabilityHeaders.Segment], CultureInfo.InvariantCulture) : 0;
             }
             set
             {
-                reliabilityHeaders[MIMEReliabilityHeaders.Segment] = value.ToString();
+                reliabilityHeaders[MIMEReliabilityHeaders.Segment] = value.ToString(CultureInfo.InvariantCulture);
             }
         }
 
@@ -182,7 +186,7 @@ namespace MSNPSharp.Core
             if (InnerBody == null)
                 InnerBody = new byte[0];
 
-            contentHeaders[MIMEContentHeaders.ContentLength] = InnerBody.Length.ToString();
+            contentHeaders[MIMEContentHeaders.ContentLength] = InnerBody.Length.ToString(CultureInfo.InvariantCulture);
 
             StringBuilder sb = new StringBuilder(128);
             
@@ -257,7 +261,7 @@ namespace MSNPSharp.Core
             if ((bodyLen > 0)
                 ||
                 (contentHeaders.ContainsKey(MIMEContentHeaders.ContentLength) &&
-                 int.TryParse(contentHeaders[MIMEContentHeaders.ContentLength], out contentLen) && contentLen > 0 &&
+                 int.TryParse(contentHeaders[MIMEContentHeaders.ContentLength], NumberStyles.Integer, CultureInfo.InvariantCulture, out contentLen) && contentLen > 0 &&
                  contentLen <= bodyLen /*don't allow buffer overflow*/))
             {
                 InnerBody = new byte[contentLen];
@@ -291,8 +295,17 @@ namespace MSNPSharp.Core
 
                     if (InnerBody != null && InnerMessage == null)
                     {
-                        debugString = Encoding.UTF8.GetString(headers) + "\r\nUnknown Binary Data: {Length: " + payLoadLength + "}";
+                        if (ContentHeaders.ContainsKey(MIMEContentHeaders.BridgingOffsets))
+                        {
+                            debugString = Encoding.UTF8.GetString(headers) + "\r\nMulti-Package Binary Data: {Length: " + payLoadLength + "}";
+                        }
+                        else
+                        {
+                            debugString = Encoding.UTF8.GetString(headers) + "\r\nUnknown Binary Data: {Length: " + payLoadLength + "}";
+                        }
                     }
+
+
 
                     if (InnerBody != null && InnerMessage != null)
                     {

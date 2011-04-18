@@ -34,41 +34,27 @@ using System;
 
 namespace MSNPSharp.Core
 {
-    using MSNPSharp;
-
+    /// <summary>
+    /// Presents a single message which is retreived from the network, or can be send to the network.
+    /// </summary>
+    /// <remarks>
+    /// A NetworkMessage can represents many kind of messages: text messages, data messages, invitation 
+    /// messages, etc. These variations are captured in the descendants of NetworkMessage.
+    /// NetworkMessage is an abstract class. It presents an abstraction which can be used when messages
+    /// are send through message processors and message handlers.
+    /// </remarks>
     public abstract class NetworkMessage
     {
-        byte[] innerBody;
-        NetworkMessage parentMessage;
-        NetworkMessage innerMessage;
+        private byte[] innerBody;
+        private NetworkMessage innerMessage;
+        private NetworkMessage parentMessage;
 
         protected NetworkMessage()
         {
         }
 
-        public virtual void CreateFromParentMessage(NetworkMessage containerMessage)
-        {
-            ParentMessage = containerMessage;
-            ParentMessage.InnerMessage = this;
-
-            if (ParentMessage.InnerBody != null)
-                ParseBytes(ParentMessage.InnerBody);
-        }
-
-        protected virtual void OnInnerMessageSet()
-        {
-            if (InnerMessage != null && InnerMessage.ParentMessage != this)
-                InnerMessage.ParentMessage = this;
-        }
-
-        protected virtual void OnParentMessageSet()
-        {
-            if (ParentMessage != null && ParentMessage.InnerMessage != this)
-                ParentMessage.InnerMessage = this;
-        }
-
         /// <summary>
-        /// The byte array contains in the message stream
+        /// The byte array contains in the message stream.
         /// </summary>
         public byte[] InnerBody
         {
@@ -98,6 +84,9 @@ namespace MSNPSharp.Core
             }
         }
 
+        /// <summary>
+        /// The parent message of this message.
+        /// </summary>
         public NetworkMessage ParentMessage
         {
             get
@@ -112,7 +101,37 @@ namespace MSNPSharp.Core
         }
 
         /// <summary>
-        /// Format the message and make it ready to send.
+        /// Parses incoming byte data send from the network.
+        /// </summary>
+        /// <param name="data">The raw message as received from the server</param>
+        public abstract void ParseBytes(byte[] data);
+
+        /// <summary>
+        /// Converts the contents of this message into a array of bytes.
+        /// This is used for transmitting the contents of this message across a socket connection.
+        /// </summary>
+        /// <returns></returns>
+        public abstract byte[] GetBytes();
+
+
+        /// <summary>
+        /// Creates the network message based on the inner contents of the parent message. It invokes the
+        /// <see cref="ParseBytes"/> method to parse the inner body contents of the parent message.
+        /// </summary>
+        /// <param name="containerMessage"></param>
+        public void CreateFromParentMessage(NetworkMessage containerMessage)
+        {
+            ParentMessage = containerMessage;
+            ParentMessage.InnerMessage = this;
+
+            if (ParentMessage.InnerBody != null)
+                ParseBytes(ParentMessage.InnerBody);
+        }
+
+        /// <summary>
+        /// Prepares the messages before it is sended. Some message objects will set properties in their 
+        /// 'parent' message object in this method. This method is automatically called for
+        /// the inner message object, if present.
         /// </summary>
         public virtual void PrepareMessage()
         {
@@ -120,17 +139,13 @@ namespace MSNPSharp.Core
                 InnerMessage.PrepareMessage();
         }
 
-        public abstract byte[] GetBytes();
-        public abstract void ParseBytes(byte[] data);
-
-        public string ToDebugString()
-        {
-            if (InnerMessage != null)
-                return ToString() + "\r\n" + InnerMessage.ToDebugString();
-            else
-                return ToString();
-        }
-
+        /// <summary>
+        /// Appends one array to the other. The second parameter, appendingArray, can be null. 
+        /// In that case the original byte array is returned and no copy is made.
+        /// </summary>
+        /// <param name="originalArray"></param>
+        /// <param name="appendingArray"></param>
+        /// <returns></returns>
         public static byte[] AppendArray(byte[] originalArray, byte[] appendingArray)
         {
             if (appendingArray != null)
@@ -144,5 +159,34 @@ namespace MSNPSharp.Core
                 return originalArray;
         }
 
+        /// <summary>
+        /// Called when the InnerMessage is set. This sets the ParentMessage property on the inner message object.
+        /// </summary>
+        protected virtual void OnInnerMessageSet()
+        {
+            if (InnerMessage != null && InnerMessage.ParentMessage != this)
+                InnerMessage.ParentMessage = this;
+        }
+
+        /// <summary>
+        /// Called when the ParentMessage is set. This sets the InnerMessage property on the parent message object.
+        /// </summary>
+        protected virtual void OnParentMessageSet()
+        {
+            if (ParentMessage != null && ParentMessage.InnerMessage != this)
+                ParentMessage.InnerMessage = this;
+        }
+
+        /// <summary>
+        /// Textual presentation.
+        /// </summary>
+        /// <returns></returns>
+        public string ToDebugString()
+        {
+            if (InnerMessage != null)
+                return ToString() + "\r\n" + InnerMessage.ToDebugString();
+            else
+                return ToString();
+        }
     }
 };

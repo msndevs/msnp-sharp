@@ -33,6 +33,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Globalization;
 
 namespace MSNPSharp
 {
@@ -229,7 +230,7 @@ namespace MSNPSharp
 
         public string GetContactKey(Contact contact)
         {
-            return contact.ClientType.ToString().ToLowerInvariant() + ":" + contact.Account.ToLowerInvariant();
+            return contact.ClientType.ToString(CultureInfo.InvariantCulture).ToLowerInvariant() + ":" + contact.Account.ToLowerInvariant();
         }
 
         public void Reset()
