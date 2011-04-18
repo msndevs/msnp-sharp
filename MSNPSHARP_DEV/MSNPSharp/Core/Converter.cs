@@ -35,6 +35,7 @@ using System.Web;
 using System.Text;
 using System.Xml;
 using System.Security.Cryptography;
+using System.Globalization;
 
 namespace MSNPSharp.Core
 {
@@ -170,7 +171,7 @@ namespace MSNPSharp.Core
 
                             break;
                         default:
-                            result.Append("%" + ((int)chr).ToString("X2"));
+                            result.Append("%" + ((int)chr).ToString("X2", CultureInfo.InvariantCulture));
                             break;
 
                     }
@@ -256,7 +257,7 @@ namespace MSNPSharp.Core
                 {
                     if ((ASCII_CLASS[chr] & (uint)UnSafe.XMLEscape) != 0)
                     {
-                        result.Append("&#x" + ((int)chr).ToString("X2") + ";");
+                        result.Append("&#x" + ((int)chr).ToString("X2", CultureInfo.InvariantCulture) + ";");
                         continue;
                     }
                 }

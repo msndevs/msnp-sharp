@@ -2204,6 +2204,59 @@ namespace MSNPSharp.IO
 
         }
 
+        private Contact CreateGatewayContact(NetworkInfoType networkInfo)
+        {
+            if (!String.IsNullOrEmpty(networkInfo.DomainTag) &&
+                    networkInfo.DomainTag != WebServiceConstants.NullDomainTag &&
+                    networkInfo.SourceId == SourceId.FaceBook &&
+                    networkInfo.DomainId == DomainIds.FaceBookDomain)
+            {
+                // Here we create the gateway from Me contact.
+                Contact gatewayContact = NSMessageHandler.ContactList.GetContactWithCreate(RemoteNetworkGateways.FaceBookGatewayAccount, IMAddressInfoType.RemoteNetwork);
+                gatewayContact.Lists |= RoleLists.Forward;
+
+
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Gateway " + gatewayContact + " added to network contacts", GetType().Name);
+
+                return gatewayContact;
+            }
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, 
+                "[Warning] Unknown Getway found, please implement this gateway:\r\n" +
+                "DomainTag: " + networkInfo.DomainTag + "\r\n" +
+                "DomainId: " + networkInfo.DomainId + "\r\n" +
+                "SourceId: " + networkInfo.SourceId + "\r\n"
+                );
+            return null;
+        }
+
+        private Contact UpdateConnectContact(ContactType contactType, NetworkInfoType networkInfo)
+        {
+            if (!String.IsNullOrEmpty(networkInfo.DomainTag) &&
+                    networkInfo.DomainTag != WebServiceConstants.NullDomainTag &&
+                    networkInfo.SourceId == SourceId.FaceBook &&
+                    networkInfo.DomainId == DomainIds.FaceBookDomain)
+            {
+                Contact connectGateway = NSMessageHandler.ContactList.GetContact(RemoteNetworkGateways.FaceBookGatewayAccount, IMAddressInfoType.RemoteNetwork);
+                if (connectGateway == null)
+                {
+                    connectGateway = CreateGatewayContact(networkInfo);
+                }
+
+                // For a connect contact, the domain tag is the account.
+                Contact contact = connectGateway.ContactList.GetContactWithCreate(networkInfo.DomainTag, IMAddressInfoType.Connect);
+                contact.SetName(networkInfo.DisplayName);
+
+                contact.Lists |= RoleLists.Forward;
+
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, contact + ":" + contact.Name + " added to connect contacts", GetType().Name);
+
+                return contact;
+            }
+
+            return null;
+        }
+
         private ReturnState UpdateContact(ContactType contactType, out Contact updatedContact)
         {
             return UpdateContact(contactType, WebServiceConstants.MessengerIndividualAddressBookId, null, out updatedContact);
@@ -2218,21 +2271,21 @@ namespace MSNPSharp.IO
                 return ReturnState.UpdateError;
             }
 
-            contactInfoType cinfo = contactType.contactInfo;
+            contactInfoType contactInfo = contactType.contactInfo;
             IMAddressInfoType type = IMAddressInfoType.WindowsLive;
-            string account = cinfo.passportName;
-            string displayName = cinfo.displayName;
+            string account = contactInfo.passportName;
+            string displayName = contactInfo.displayName;
             string nickName = GetContactNickName(contactType);
             Uri userTileURL = GetUserTileURLFromWindowsLiveNetworkInfo(contactType);
-            bool isMessengeruser = cinfo.isMessengerUser;
+            bool isMessengeruser = contactInfo.isMessengerUser;
             string lowerId = abId.ToLowerInvariant();
             ReturnState returnValue = ReturnState.ProcessNextContact;
             ContactList contactList = null;
             bool isDefaultAddressBook = (lowerId == null || lowerId == WebServiceConstants.MessengerIndividualAddressBookId);
 
-            if (cinfo.emails != null && account == null && cinfo != null)
+            if (contactInfo.emails != null && account == null && contactInfo != null)
             {
-                foreach (contactEmailType cet in cinfo.emails)
+                foreach (contactEmailType cet in contactInfo.emails)
                 {
                     if (cet.isMessengerEnabled)
                     {
@@ -2245,9 +2298,9 @@ namespace MSNPSharp.IO
                 }
             }
 
-            if (cinfo.phones != null && account == null)
+            if (contactInfo.phones != null && account == null)
             {
-                foreach (contactPhoneType cpt in cinfo.phones)
+                foreach (contactPhoneType cpt in contactInfo.phones)
                 {
                     if (cpt.isMessengerEnabled)
                     {
@@ -2263,7 +2316,7 @@ namespace MSNPSharp.IO
             if (account != null)
             {
                 account = account.ToLowerInvariant();
-                if (cinfo.contactType != MessengerContactType.Me)
+                if (contactInfo.contactType != MessengerContactType.Me)
                 {
                     #region Contacts other than owner
 
@@ -2278,6 +2331,14 @@ namespace MSNPSharp.IO
                             updatedContact = null;
                             return ReturnState.UpdateError;
                         }
+
+                        if (contactInfo.NetworkInfoList != null)
+                        {
+                            foreach (NetworkInfoType networkInfo in contactInfo.NetworkInfoList)
+                            {
+                                UpdateConnectContact(contactType, networkInfo);
+                            }
+                        }
                     }
                     else
                     {
@@ -2291,24 +2352,24 @@ namespace MSNPSharp.IO
                             return ReturnState.UpdateError;
                         }
 
-                        CirclePersonalMembershipRole membershipRole = GetCircleMemberRoleFromNetworkInfo(cinfo.NetworkInfoList);
+                        CirclePersonalMembershipRole membershipRole = GetCircleMemberRoleFromNetworkInfo(contactInfo.NetworkInfoList);
                         contact = circle.ContactList.GetContactWithCreate(account, type);
                         contactList = circle.ContactList;
                         contact.CircleRole = membershipRole;
-                        string tempName = GetCircleMemberDisplayNameFromNetworkInfo(cinfo.NetworkInfoList);
+                        string tempName = GetCircleMemberDisplayNameFromNetworkInfo(contactInfo.NetworkInfoList);
                         if (!string.IsNullOrEmpty(tempName))
                             displayName = tempName;
                     }
 
                     contact.Guid = new Guid(contactType.contactId);
-                    contact.CID = Convert.ToInt64(cinfo.CID);
-                    contact.ContactType = cinfo.contactType;
-                    contact.SetHasSpace(cinfo.hasSpace);
-                    contact.SetComment(cinfo.comment);
+                    contact.CID = Convert.ToInt64(contactInfo.CID);
+                    contact.ContactType = contactInfo.contactType;
+                    contact.SetHasSpace(contactInfo.hasSpace);
+                    contact.SetComment(contactInfo.comment);
                     contact.SetIsMessengerUser(isMessengeruser);
-                    contact.SetMobileAccess(cinfo.isMobileIMEnabled);
+                    contact.SetMobileAccess(contactInfo.isMobileIMEnabled);
                     contact.UserTileURL = userTileURL;
-                    SetContactPhones(contact, cinfo);
+                    SetContactPhones(contact, contactInfo);
 
                     if (!string.IsNullOrEmpty(nickName) && string.IsNullOrEmpty(contact.NickName))
                     {
@@ -2331,17 +2392,17 @@ namespace MSNPSharp.IO
                     }
 
 
-                    if (cinfo.groupIds != null)
+                    if (contactInfo.groupIds != null)
                     {
-                        foreach (string groupId in cinfo.groupIds)
+                        foreach (string groupId in contactInfo.groupIds)
                         {
                             contact.ContactGroups.Add(NSMessageHandler.ContactGroups[groupId]);
                         }
                     }
 
-                    if (cinfo.groupIdsDeleted != null)
+                    if (contactInfo.groupIdsDeleted != null)
                     {
-                        foreach (string groupId in cinfo.groupIdsDeleted)
+                        foreach (string groupId in contactInfo.groupIdsDeleted)
                         {
                             contact.ContactGroups.Remove(NSMessageHandler.ContactGroups[groupId]);
                         }
@@ -2352,7 +2413,7 @@ namespace MSNPSharp.IO
                     #region Filter yourself and members who alrealy left this circle.
                     bool needsDelete = false;
 
-                    RelationshipState relationshipState = GetCircleMemberRelationshipStateFromNetworkInfo(cinfo.NetworkInfoList);
+                    RelationshipState relationshipState = GetCircleMemberRelationshipStateFromNetworkInfo(contactInfo.NetworkInfoList);
                     if (((relationshipState & RelationshipState.Rejected) != RelationshipState.None ||
                         relationshipState == RelationshipState.None) &&
                         isDefaultAddressBook == false)
@@ -2361,13 +2422,13 @@ namespace MSNPSharp.IO
                         needsDelete |= true;
                     }
 
-                    if (cinfo.IsHiddenSpecified && cinfo.IsHidden)
+                    if (contactInfo.IsHiddenSpecified && contactInfo.IsHidden)
                     {
                         needsDelete |= true;
                     }
 
                     if (account == NSMessageHandler.Owner.Account.ToLowerInvariant() &&
-                        cinfo.NetworkInfoList != null &&
+                        contactInfo.NetworkInfoList != null &&
                         type == NSMessageHandler.Owner.ClientType &&
                         isDefaultAddressBook == false)
                     {
@@ -2401,7 +2462,7 @@ namespace MSNPSharp.IO
                         owner = NSMessageHandler.Owner;
                         if (owner == null)
                         {
-                            owner = new Owner(abId, cinfo.passportName, Convert.ToInt64(cinfo.CID), NSMessageHandler);
+                            owner = new Owner(abId, contactInfo.passportName, Convert.ToInt64(contactInfo.CID), NSMessageHandler);
                             NSMessageHandler.ContactList.SetOwner(owner);
                         }
                     }
@@ -2423,8 +2484,8 @@ namespace MSNPSharp.IO
                     }
 
                     owner.Guid = new Guid(contactType.contactId);
-                    owner.CID = Convert.ToInt64(cinfo.CID);
-                    owner.ContactType = cinfo.contactType;
+                    owner.CID = Convert.ToInt64(contactInfo.CID);
+                    owner.ContactType = contactInfo.contactType;
 
                     if (!string.IsNullOrEmpty(displayName) && string.IsNullOrEmpty(owner.Name))
                     {
@@ -2438,13 +2499,13 @@ namespace MSNPSharp.IO
                     }
 
                     owner.UserTileURL = userTileURL;
-                    SetContactPhones(owner, cinfo);
+                    SetContactPhones(owner, contactInfo);
 
                     #endregion
 
-                    if (null != cinfo.annotations && lowerId == WebServiceConstants.MessengerIndividualAddressBookId)
+                    if (null != contactInfo.annotations && lowerId == WebServiceConstants.MessengerIndividualAddressBookId)
                     {
-                        foreach (Annotation anno in cinfo.annotations)
+                        foreach (Annotation anno in contactInfo.annotations)
                         {
                             MyProperties[anno.Name] = anno.Value;
                         }
@@ -2453,18 +2514,17 @@ namespace MSNPSharp.IO
                     InitializeMyProperties();
 
                     // Networks...
-                    if (cinfo.NetworkInfoList != null)
+                    if (contactInfo.NetworkInfoList != null)
                     {
-                        foreach (NetworkInfoType netInfo in cinfo.NetworkInfoList)
+                        foreach (NetworkInfoType networkInfo in contactInfo.NetworkInfoList)
                         {
-                            if (!String.IsNullOrEmpty(netInfo.DomainTag) && 
-                                netInfo.DomainTag != WebServiceConstants.NullDomainTag &&
-                                netInfo.SourceId.ToLowerInvariant() == RemoteNetworkGateways.FaceBookGatewayAccount)
+                            if (!String.IsNullOrEmpty(networkInfo.DomainTag) && 
+                                networkInfo.DomainTag != WebServiceConstants.NullDomainTag &&
+                                networkInfo.SourceId == SourceId.FaceBook &&
+                                networkInfo.DomainId == DomainIds.FaceBookDomain)
                             {
-                                Contact networkContact = NSMessageHandler.ContactList.GetContactWithCreate(netInfo.SourceId, IMAddressInfoType.RemoteNetwork);
-                                networkContact.Lists |= RoleLists.Forward;
+                                Contact networkContact = CreateGatewayContact(networkInfo);
 
-                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, networkContact + " added to network contacts", GetType().Name);
                             }
                         }
                     }
@@ -2525,7 +2585,7 @@ namespace MSNPSharp.IO
         /// <returns></returns>
         private Uri GetUserTileURLFromWindowsLiveNetworkInfo(ContactType contact)
         {
-            string returnURL = GetUserTileURLByDomainIdFromNetworkInfo(contact, DomainIds.WLDomain);
+            string returnURL = GetUserTileURLByDomainIdFromNetworkInfo(contact, DomainIds.WindowsLiveDomain);
             try
             {
                 Uri urlResult = null;
@@ -2575,7 +2635,7 @@ namespace MSNPSharp.IO
         /// <returns></returns>
         private RelationshipState GetCircleMemberRelationshipStateFromNetworkInfo(NetworkInfoType[] infoList)
         {
-            return (RelationshipState)GetContactRelationshipStateFromNetworkInfo(infoList, DomainIds.WLDomain, RelationshipTypes.CircleGroup);
+            return (RelationshipState)GetContactRelationshipStateFromNetworkInfo(infoList, DomainIds.WindowsLiveDomain, RelationshipTypes.CircleGroup);
         }
 
         /// <summary>
@@ -2606,7 +2666,7 @@ namespace MSNPSharp.IO
 
         private string GetCircleMemberDisplayNameFromNetworkInfo(NetworkInfoType[] infoList)
         {
-            return GetContactDisplayNameFromNetworkInfo(infoList, DomainIds.WLDomain, RelationshipTypes.CircleGroup);
+            return GetContactDisplayNameFromNetworkInfo(infoList, DomainIds.WindowsLiveDomain, RelationshipTypes.CircleGroup);
         }
 
         private string GetContactDisplayNameFromNetworkInfo(NetworkInfoType[] infoList, int domainId, int relationshipType)
@@ -2631,7 +2691,7 @@ namespace MSNPSharp.IO
 
         private CirclePersonalMembershipRole GetCircleMemberRoleFromNetworkInfo(NetworkInfoType[] infoList)
         {
-            return (CirclePersonalMembershipRole)GetContactRelationshipRoleFromNetworkInfo(infoList, DomainIds.WLDomain, RelationshipTypes.CircleGroup);
+            return (CirclePersonalMembershipRole)GetContactRelationshipRoleFromNetworkInfo(infoList, DomainIds.WindowsLiveDomain, RelationshipTypes.CircleGroup);
         }
 
         private int GetContactRelationshipRoleFromNetworkInfo(NetworkInfoType[] infoList, int domainId, int relationshipType)
@@ -2666,7 +2726,7 @@ namespace MSNPSharp.IO
             if (contact.contactInfo.contactType != MessengerContactType.Circle)
                 return string.Empty;
 
-            return GetDomainTagFromNetworkInfo(contact.contactInfo.NetworkInfoList, DomainIds.WLDomain);
+            return GetDomainTagFromNetworkInfo(contact.contactInfo.NetworkInfoList, DomainIds.WindowsLiveDomain);
         }
 
         private string GetDomainTagFromNetworkInfo(NetworkInfoType[] infoList, int domainId)

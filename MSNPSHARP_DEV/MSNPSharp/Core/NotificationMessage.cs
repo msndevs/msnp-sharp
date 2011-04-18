@@ -271,7 +271,7 @@ namespace MSNPSharp.Core
             XmlElement root = doc.CreateElement("NOTIFICATION");
 
             if (NotificationTypeSpecified)
-                root.Attributes.Append(doc.CreateAttribute("ver")).Value = ((int)NotificationType).ToString();
+                root.Attributes.Append(doc.CreateAttribute("ver")).Value = ((int)NotificationType).ToString(CultureInfo.InvariantCulture);
 
             root.Attributes.Append(doc.CreateAttribute("id")).Value = Id.ToString();
             if (siteId > 0)
@@ -392,7 +392,7 @@ namespace MSNPSharp.Core
                 {
                     if (node.Attributes.GetNamedItem("ver") != null)
                     {
-                        NotificationType = (NotificationType)int.Parse(node.Attributes.GetNamedItem("ver").Value);
+                        NotificationType = (NotificationType)int.Parse(node.Attributes.GetNamedItem("ver").Value, CultureInfo.InvariantCulture);
                         NotificationTypeSpecified = true;
                     }
 

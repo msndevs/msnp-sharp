@@ -34,6 +34,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using System.Globalization;
 
 namespace MSNPSharp.Core
 {
@@ -227,7 +228,7 @@ namespace MSNPSharp.Core
                 if (!string.IsNullOrEmpty(str))
                     str += ";";
 
-                str += (att.Key is int) ? att.Value : String.Format("{0}={1}", att.Key, att.Value);
+                str += (att.Key is int) ? att.Value : String.Format(CultureInfo.InvariantCulture, "{0}={1}", att.Key, att.Value);
             }
 
             return str.Trim();

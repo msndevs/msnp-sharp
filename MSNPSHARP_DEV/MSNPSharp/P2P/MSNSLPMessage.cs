@@ -52,6 +52,9 @@ namespace MSNPSharp.P2P
         private MimeDictionary mimeHeaders = new MimeDictionary();
         private MimeDictionary mimeBodies = new MimeDictionary();
 
+        [NonSerialized]
+        private P2PVersion p2pVersion = P2PVersion.None;
+
         private Guid GetEndPointIDFromMailEPIDString(string mailEPID)
         {
             if (mailEPID.Contains(";"))
@@ -93,6 +96,18 @@ namespace MSNPSharp.P2P
         {
             get;
             set;
+        }
+
+        public P2PVersion P2PVersion
+        {
+            get
+            {
+                if (p2pVersion == P2PVersion.None)
+                {
+                    p2pVersion = (FromEndPoint == Guid.Empty) ? P2PVersion.P2PV1 : P2PVersion.P2PV2;
+                }
+                return p2pVersion;
+            }
         }
 
         /// <summary>

@@ -771,7 +771,19 @@ namespace MSNPSharpClient
         private void ConversationForm_Load(object sender, EventArgs e)
         {
             Text = "Conversation with " + remoteContact.Account + " - MSNPSharp";
-            Icon = (Icon)((remoteContact.ClientType == IMAddressInfoType.WindowsLive) ? Properties.Resources.msn_ico : Properties.Resources.yahoo_ico);
+
+            switch (remoteContact.ClientType)
+            {
+                case IMAddressInfoType.Yahoo:
+                    Icon = Properties.Resources.yahoo_ico;
+                    break;
+                case IMAddressInfoType.Connect:
+                    Icon = Properties.Resources.facebook_icon;
+                    break;
+                default:
+                    Icon = Properties.Resources.msn_ico;
+                    break;
+            }
 
             if (_messenger.Owner.DisplayImage.Image != null)
                 displayOwner.Image = _messenger.Owner.DisplayImage.Image;
@@ -842,15 +854,21 @@ namespace MSNPSharpClient
 
         private void ConversationForm_Shown(object sender, EventArgs e)
         {
-            if (remoteContact.ClientType == IMAddressInfoType.WindowsLive)
+            switch (remoteContact.ClientType)
             {
-                if (remoteContact.DisplayImage.Image != null)
-                    displayUser.Image = remoteContact.DisplayImage.Image;
-                else
-                    displayUser.Image = DisplayImage.DefaultImage;
+                case IMAddressInfoType.Connect:
+                    displayUser.Image = Properties.Resources.facebook_logo.Clone() as Image;
+                    break;
+                case IMAddressInfoType.Yahoo:
+                    displayUser.Image = Properties.Resources.YahooMessenger_logo.Clone() as Image;
+                    break;
+                default:
+                    if (remoteContact.DisplayImage.Image != null)
+                        displayUser.Image = remoteContact.DisplayImage.Image;
+                    else
+                        displayUser.Image = DisplayImage.DefaultImage;
+                    break;
             }
-            else
-                displayUser.Image = Properties.Resources.YahooMessenger_logo.Clone() as Image;
 
             remoteContact.DisplayImageChanged += new EventHandler<DisplayImageChangedEventArgs>(Contact_DisplayImageChanged);
             remoteContact.DisplayImageContextChanged += new EventHandler<DisplayImageChangedEventArgs>(Contact_DisplayImageConextChanged);

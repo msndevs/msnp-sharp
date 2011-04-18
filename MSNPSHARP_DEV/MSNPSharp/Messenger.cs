@@ -224,6 +224,24 @@ namespace MSNPSharp
         }
 
         /// <summary>
+        /// The ticket string to fetch msn objects from storage service.
+        /// </summary>
+        public string StorageTicket
+        {
+            get
+            {
+                string ticket = string.Empty;
+
+                if (Nameserver.MSNTicket != MSNTicket.Empty && Nameserver.MSNTicket.SSOTickets.ContainsKey(SSOTicketType.Storage))
+                {
+                    ticket = Nameserver.MSNTicket.SSOTickets[SSOTicketType.Storage].Ticket.Substring(2);
+                }
+
+                return ticket;
+            }
+        }
+
+        /// <summary>
         /// What's Up service
         /// </summary>
         public WhatsUpService WhatsUpService
