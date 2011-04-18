@@ -368,6 +368,7 @@ namespace MSNPSharp
         public const int FaceBookDomain = 7;
         public const int ZUNEDomain = 3;
 
+        public const int LinkedInDomain = 8;
         /// <summary>
         /// The domain ID for MySpace.
         /// </summary>
@@ -382,6 +383,7 @@ namespace MSNPSharp
         public const string WindowsLive = "WL";
         public const string FaceBook = "FB";
         public const string MySpace = "MYSP";
+        public const string LinkedIn = "LI";
     }
 
     /// <summary>
