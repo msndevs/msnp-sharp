@@ -196,4 +196,10 @@
   <data name="circleoffline" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\status\circleoffline.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="facebook_logo" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\facebook_logo.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="facebook_icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\facebook_icon.ico;System.Drawing.Icon, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
 </root>
