@@ -101,6 +101,7 @@
 					<xsd:element name="PassportId" type="xsd:int" minOccurs="0"/>
 					<xsd:element name="CID" type="xsd:long" minOccurs="0"/>
 					<xsd:element name="PassportChanges" type="xsd:string" minOccurs="0"/>
+					<xsd:element name="LookedupByCID" type="xsd:boolean" minOccurs="0"/>
 				</xsd:sequence>
 			</xsd:extension>
 		</xsd:complexContent>
