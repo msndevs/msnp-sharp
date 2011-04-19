@@ -277,7 +277,7 @@ namespace MSNPSharp
                 XmlNode userTileLocationNode = xdoc.CreateNode(XmlNodeType.Element, "UserTileLocation", xdoc.NamespaceURI);
                 rootNode.AppendChild(userTileLocationNode);
 
-                userTileLocationNode.InnerXml = MSNHttpUtility.XmlUnicodeEncode(UserTileLocation);
+                userTileLocationNode.InnerText = UserTileLocation;
 
                 XmlNode friendlyNameNode = xdoc.CreateNode(XmlNodeType.Element, "FriendlyName", xdoc.NamespaceURI);
                 rootNode.AppendChild(friendlyNameNode);
@@ -301,7 +301,7 @@ namespace MSNPSharp
 
                 XmlNode sceneNode = xdoc.CreateNode(XmlNodeType.Element, "Scene", xdoc.NamespaceURI);
                 rootNode.AppendChild(sceneNode);
-                sceneNode.InnerText = MSNHttpUtility.XmlUnicodeEncode(Scene);
+                sceneNode.InnerText = Scene;
 
                 XmlNode signatureSoundNode = xdoc.CreateNode(XmlNodeType.Element, "SignatureSound", xdoc.NamespaceURI);
                 rootNode.AppendChild(signatureSoundNode);
