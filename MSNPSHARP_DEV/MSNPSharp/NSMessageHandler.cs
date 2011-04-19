@@ -514,8 +514,6 @@ namespace MSNPSharp
                         Owner.LocalEndPointIMCapabilities, Owner.LocalEndPointIMCapabilitiesEx,
                         Owner.LocalEndPointPECapabilities, Owner.LocalEndPointPECapabilitiesEx,
                         Owner.EpName, pm, true);
-
-            StorageService.UpdateProfile(newName, Owner.PersonalMessage != null && Owner.PersonalMessage.Message != null ? Owner.PersonalMessage.Message : String.Empty);
         }
 
         /// <summary>
@@ -532,7 +530,6 @@ namespace MSNPSharp
                         Owner.LocalEndPointPECapabilities, Owner.LocalEndPointPECapabilitiesEx,
                         Owner.EpName, newPSM, true);
 
-            StorageService.UpdateProfile(Owner.Name, newPSM.Message);
         }
 
         /// <summary>

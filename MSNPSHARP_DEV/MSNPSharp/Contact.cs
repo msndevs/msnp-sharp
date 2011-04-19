@@ -1720,7 +1720,7 @@ namespace MSNPSharp
 
         internal static string MakeHash(string account, IMAddressInfoType type)
         {
-            return type.ToString(CultureInfo.InvariantCulture) + ":" + account.ToLowerInvariant();
+            return type.ToString() + ":" + account.ToLowerInvariant();
         }
         
         internal static bool IsSpecialGatewayType(IMAddressInfoType type)

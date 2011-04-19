@@ -78,8 +78,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="MSNPSharp_logo.ico" />
+    <Content Include="Resources\facebook_logo.png" />
     <None Include="Resources\facebook_icon.ico" />
-    <None Include="Resources\facebook_icon.png" />
     <None Include="app.config" />
     <None Include="Resources\Color_fontHS.png" />
     <None Include="Resources\app_banner.png" />

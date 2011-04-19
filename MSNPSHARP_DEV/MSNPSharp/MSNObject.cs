@@ -517,7 +517,7 @@ namespace MSNPSharp
         /// <returns></returns>
         public string CalculateChecksum()
         {
-            string checksum = "Creator" + Creator + "Size" + Size + "Type" + (int)this.ObjectType + "Location" + Location + "FriendlyAAA=SHA1D" + Sha;
+            string checksum = "Creator" + Creator + "Size" + Size + "Type" + (int)this.ObjectType + "Location" + HttpUtility.UrlEncode(Location) + "FriendlyAAA=SHA1D" + Sha;
 
             HashAlgorithm shaAlg = new SHA1Managed();
             string baseEncChecksum = Convert.ToBase64String(shaAlg.ComputeHash(Encoding.UTF8.GetBytes(checksum)));
@@ -552,7 +552,7 @@ namespace MSNPSharp
         /// <returns></returns>
         protected virtual string GetXmlString()
         {
-            return "<msnobj Creator=\"" + Creator + "\" Size=\"" + Size + "\" Type=\"" + (int)this.ObjectType + "\" Location=\"" + Location + "\" Friendly=\"AAA=\" SHA1D=\"" + Sha + "\" SHA1C=\"" + CalculateChecksum() + "\"/>";
+            return "<msnobj Creator=\"" + Creator + "\" Size=\"" + Size + "\" Type=\"" + (int)this.ObjectType + "\" Location=\"" + HttpUtility.UrlEncode(Location) + "\" Friendly=\"AAA=\" SHA1D=\"" + Sha + "\" SHA1C=\"" + CalculateChecksum() +"\"" + " />";
         }
 
         /// <summary>

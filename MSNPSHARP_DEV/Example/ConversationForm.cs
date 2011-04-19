@@ -392,7 +392,7 @@ namespace MSNPSharpClient
             this.btnCustomEmoticon.Name = "btnCustomEmoticon";
             this.btnCustomEmoticon.Size = new System.Drawing.Size(100, 23);
             this.btnCustomEmoticon.TabIndex = 3;
-            this.btnCustomEmoticon.Text = "Custom Emoticon";
+            this.btnCustomEmoticon.Text = "Custom Emoticon...";
             this.btnCustomEmoticon.UseVisualStyleBackColor = true;
             this.btnCustomEmoticon.Click += new System.EventHandler(this.bMessageSendCustomEmoticon_Click);
             // 
@@ -402,7 +402,7 @@ namespace MSNPSharpClient
             this.btnSendFiles.Name = "btnSendFiles";
             this.btnSendFiles.Size = new System.Drawing.Size(100, 23);
             this.btnSendFiles.TabIndex = 1;
-            this.btnSendFiles.Text = "Send Files";
+            this.btnSendFiles.Text = "Send Files...";
             this.btnSendFiles.UseVisualStyleBackColor = true;
             this.btnSendFiles.Click += new System.EventHandler(this.bMessageSendFiles_Click);
             // 
