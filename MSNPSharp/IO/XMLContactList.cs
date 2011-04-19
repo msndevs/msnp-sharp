@@ -2246,8 +2246,20 @@ namespace MSNPSharp.IO
                 // For a connect contact, the domain tag is the account.
                 Contact contact = connectGateway.ContactList.GetContactWithCreate(networkInfo.DomainTag, IMAddressInfoType.Connect);
                 contact.SetName(networkInfo.DisplayName);
-
                 contact.Lists |= RoleLists.Forward;
+
+                if (!string.IsNullOrEmpty(networkInfo.UserTileURL))
+                {
+                    try
+                    {
+                        Uri urlResult;
+                        if (Uri.TryCreate(networkInfo.UserTileURL, UriKind.Absolute, out urlResult))
+                            contact.UserTileURL = urlResult;
+                    }
+                    catch (Exception)
+                    {
+                    }
+                }
 
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, contact + ":" + contact.Name + " added to connect contacts", GetType().Name);
 
@@ -2608,9 +2620,7 @@ namespace MSNPSharp.IO
         /// <returns></returns>
         private string GetUserTileURLByDomainIdFromNetworkInfo(ContactType contact, int domainId)
         {
-            if (contact.contactInfo == null)
-                return string.Empty;
-            if (contact.contactInfo.NetworkInfoList == null)
+            if (contact.contactInfo == null || contact.contactInfo.NetworkInfoList == null)
                 return string.Empty;
 
             foreach (NetworkInfoType info in contact.contactInfo.NetworkInfoList)
