@@ -2546,23 +2546,29 @@ namespace MSNPSharpClient
 
         private void lblName_Leave(object sender, EventArgs e)
         {
-            string dn = lblName.Text;
-            string pm = lblPM.Text;
+            string displayName = lblName.Text;
+            string personalStatusMessage = lblPM.Text;
+            bool shouldChange = false;
 
-            List<string> lstPersonalMessage = new List<string>(new string[] { "", "" });
-
-            if (dn != messenger.Owner.Name)
+            if (displayName != messenger.Owner.Name)
             {
-                lstPersonalMessage[0] = dn;
+                shouldChange = true;
             }
 
-            if (messenger.Owner.PersonalMessage == null || pm != messenger.Owner.PersonalMessage.Message)
+            if (messenger.Owner.PersonalMessage == null || 
+                personalStatusMessage != messenger.Owner.PersonalMessage.Message)
             {
-                lstPersonalMessage[1] = pm;
+                shouldChange = true;
             }
 
-            Thread updateThread = new Thread(new ParameterizedThreadStart(UpdateProfile));
-            updateThread.Start(lstPersonalMessage);
+            if (shouldChange)  //This might trigger when you close the window.
+            {
+                PersonalMessage personalMessageToUpdate = messenger.Owner.PersonalMessage;
+                personalMessageToUpdate.Message = personalStatusMessage;
+                personalMessageToUpdate.FriendlyName = displayName;
+                messenger.Owner.PersonalMessage = personalMessageToUpdate;
+                messenger.Owner.UpdateRoamingProfileSync();
+            }
         }
 
         private void comboStatus_KeyPress(object sender, KeyPressEventArgs e)
@@ -2580,44 +2586,12 @@ namespace MSNPSharpClient
                 if (openImageDialog.ShowDialog() == DialogResult.OK)
                 {
                     Image newImage = Image.FromFile(openImageDialog.FileName, true);
-                    Thread updateThread = new Thread(new ParameterizedThreadStart(UpdateProfile));
-                    updateThread.Start(newImage);
+                    messenger.Owner.UpdateRoamingProfileSync(newImage);
+                   
                 }
             }
         }
 
-        private void UpdateProfile(object profileObject)
-        {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Updating owner profile, please wait....");
-
-            if (profileObject is Image)
-            {
-                bool updateResult = messenger.StorageService.UpdateProfile(profileObject as Image, "MyPhoto");
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Update displayimage completed. Result = " + updateResult);
-            }
-
-            if (profileObject is List<string>)
-            {
-                List<string> lstPersonalMessage = profileObject as List<string>;
-                PersonalMessage pm = messenger.Owner.PersonalMessage;
-
-                if (lstPersonalMessage[0] != "")
-                {
-                    messenger.Owner.Name = lstPersonalMessage[0];
-
-                    pm.FriendlyName = lstPersonalMessage[0];
-                }
-
-                if (lstPersonalMessage[1] != "")
-                {
-                    pm.Message = lstPersonalMessage[1];
-                }
-
-                messenger.Owner.PersonalMessage = pm;
-
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Update personal message completed.");
-            }
-        }
 
         private void btnSetMusic_Click(object sender, EventArgs e)
         {

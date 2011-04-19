@@ -551,7 +551,7 @@ namespace MSNPSharp
 
             if (!string.IsNullOrEmpty(personalStatus))
             {
-                expProf.PersonalStatus = personalStatus;
+                expProf.PersonalStatus = personalStatus == null ? string.Empty : personalStatus;
             }
             updateProfileRequest.profile.ExpressionProfile = expProf;
 
