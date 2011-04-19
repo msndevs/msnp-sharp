@@ -730,6 +730,15 @@ namespace MSNPSharp
             updateThread.Start(displayImage);
         }
 
+        public void UpdateDisplayImage(Image newImage)
+        {
+            if (newImage == null)
+                return;
+            MemoryStream imageStream = new MemoryStream();
+            newImage.Save(imageStream, newImage.RawFormat);
+            this.DisplayImage = new DisplayImage(this.Account.ToLowerInvariant(), imageStream);
+        }
+
         /*
             EmailEnabled: 1
             MemberIdHigh: 123456

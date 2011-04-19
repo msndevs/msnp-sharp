@@ -2563,10 +2563,13 @@ namespace MSNPSharpClient
 
             if (shouldChange)  //This might trigger when you close the window.
             {
+                // Here you set your online profile
                 PersonalMessage personalMessageToUpdate = messenger.Owner.PersonalMessage;
                 personalMessageToUpdate.Message = personalStatusMessage;
                 personalMessageToUpdate.FriendlyName = displayName;
                 messenger.Owner.PersonalMessage = personalMessageToUpdate;
+
+                // Here you update your roaming profile to make it the same with your online profile.
                 messenger.Owner.UpdateRoamingProfileSync();
             }
         }
@@ -2586,6 +2589,11 @@ namespace MSNPSharpClient
                 if (openImageDialog.ShowDialog() == DialogResult.OK)
                 {
                     Image newImage = Image.FromFile(openImageDialog.FileName, true);
+
+                    // Update the online profile.
+                    messenger.Owner.UpdateDisplayImage(newImage);
+
+                    // Update the roaming profile
                     messenger.Owner.UpdateRoamingProfileSync(newImage);
                    
                 }

@@ -195,7 +195,7 @@ namespace MSNPSharp
             return false;
         }
 
-        private InternalOperationReturnValues GetProfileLiteSync(PartnerScenario scenario, out string profileResourceId, out string expressionProfileResourceId)
+        private InternalOperationReturnValues GetProfileLiteSync(PartnerScenario scenario, out string profileResourceId, out string expressionProfileResourceId, bool syncToOwner)
         {
             MsnServiceState serviceState = new MsnServiceState(scenario, "GetProfile", false);
             StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
@@ -256,6 +256,11 @@ namespace MSNPSharp
                 }
 
                 NSMessageHandler.ContactService.Deltas.Save(true);
+
+                if (!syncToOwner)
+                {
+                    return InternalOperationReturnValues.Succeed;
+                }
 
                 // Display photo
                 if (null != response.GetProfileResult.ExpressionProfile.Photo)
@@ -738,7 +743,7 @@ namespace MSNPSharp
                 }
 
                 // [GetProfile], get the new ProfileExpression resource id.
-                getprofileResult = GetProfileLiteSync(PartnerScenario.RoamingSeed,out profileResourceId, out expressionProfileResourceId);
+                getprofileResult = GetProfileLiteSync(PartnerScenario.RoamingSeed,out profileResourceId, out expressionProfileResourceId, false);
 
                 //4. CreateDocument, create a new document for this profile and return its resource id.
                 MemoryStream defaultDisplayImageStream = new MemoryStream();
@@ -760,7 +765,7 @@ namespace MSNPSharp
                 // 6.2 Get Profile again to get notification.LastChanged
                 if (expressionProfileResourceId != string.Empty)
                 {
-                    getprofileResult = GetProfileLiteSync(PartnerScenario.RoamingSeed, out profileResourceId, out expressionProfileResourceId);
+                    getprofileResult = GetProfileLiteSync(PartnerScenario.RoamingSeed, out profileResourceId, out expressionProfileResourceId, false);
                 }
 
                 //7. FindDocuments Hmm....
@@ -779,11 +784,11 @@ namespace MSNPSharp
             }
         }
 
-        private OwnerProfile GetProfileImpl(PartnerScenario scenario)
+        private OwnerProfile GetProfileImpl(PartnerScenario scenario, bool syncDisplayImageToOwner)
         {
             string expressProfileId = string.Empty;
             string profileResourceId = string.Empty;
-            InternalOperationReturnValues result = GetProfileLiteSync(scenario, out profileResourceId, out expressProfileId);
+            InternalOperationReturnValues result = GetProfileLiteSync(scenario, out profileResourceId, out expressProfileId, syncDisplayImageToOwner);
 
             if (result == InternalOperationReturnValues.ProfileNotExist)
             {
@@ -847,7 +852,7 @@ namespace MSNPSharp
         }
 
 
-        private void UpdateProfileImpl(string displayName, string personalStatus, string freeText, int flags)
+        private void UpdateProfileImpl(string displayName, string personalStatus, string freeText, int flags, bool syncDisplayImageToOwner)
         {
             if (NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile &&
                 NSMessageHandler.BotMode == false)
@@ -860,7 +865,7 @@ namespace MSNPSharp
                     flags);
 
                 // And get profile again
-                NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.RoamingIdentityChanged);
+                NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.RoamingIdentityChanged, syncDisplayImageToOwner);
 
                 // UpdateDynamicItem
                 UpdateDynamicItemSync(PartnerScenario.RoamingIdentityChanged);
@@ -899,7 +904,7 @@ namespace MSNPSharp
                     if ((annotationLiveProfileExpressionLastChanged == DateTime.MinValue) ||
                         (deltasProfileDateModified < annotationLiveProfileExpressionLastChanged))
                     {
-                        return GetProfileImpl(PartnerScenario.Initial);
+                        return GetProfileImpl(PartnerScenario.Initial, true);
                     }
                 }
             }
@@ -936,7 +941,7 @@ namespace MSNPSharp
                 (NSMessageHandler.ContactService.Deltas.Profile.DisplayName != displayName ||
                 NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage != personalStatus))
             {
-                UpdateProfileImpl(displayName, personalStatus, "Update", 0);
+                UpdateProfileImpl(displayName, personalStatus, "Update", 0, false);
             }
         }
 
@@ -977,8 +982,8 @@ namespace MSNPSharp
             {
                 SerializableMemoryStream mem = SerializableMemoryStream.FromImage(photo);
 
-                // 1. Getprofile
-                NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.RoamingIdentityChanged);
+                // 1. Get the old profile, don't syn it to owner.
+                NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.RoamingIdentityChanged, false);
 
                 bool updateDocumentResult = false;
                 // 1.1 UpdateDocument
@@ -1004,7 +1009,8 @@ namespace MSNPSharp
                     UpdateDynamicItemSync(PartnerScenario.RoamingIdentityChanged);
                 }
 
-                NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.RoamingIdentityChanged);
+                // Then get the updated profile and sync to the owner.
+                NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.RoamingIdentityChanged, true);
 
                 return true;
             }
