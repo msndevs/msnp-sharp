@@ -714,7 +714,7 @@ namespace MSNPSharp
             }
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Updating owner profile, please wait....");
-            bool result = NSMessageHandler.StorageService.UpdateProfile(displayImage, "MyPhoto");
+            bool result = NSMessageHandler.StorageService.UpdateProfile(displayImage, "MyPhoto", false);
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Update displayimage completed. Result = " + result);
         }
 

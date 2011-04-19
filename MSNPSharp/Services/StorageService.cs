@@ -257,11 +257,6 @@ namespace MSNPSharp
 
                 NSMessageHandler.ContactService.Deltas.Save(true);
 
-                if (!syncToOwner)
-                {
-                    return InternalOperationReturnValues.Succeed;
-                }
-
                 // Display photo
                 if (null != response.GetProfileResult.ExpressionProfile.Photo)
                 {
@@ -274,10 +269,12 @@ namespace MSNPSharp
 
                         if (NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL == docStream.PreAuthURL)
                         {
+                            if (syncToOwner)
+                            {
+                                DisplayImage newDisplayImage = new DisplayImage(NSMessageHandler.Owner.Account.ToLowerInvariant(), NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);
 
-                            DisplayImage newDisplayImage = new DisplayImage(NSMessageHandler.Owner.Account.ToLowerInvariant(), NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);
-
-                            NSMessageHandler.Owner.DisplayImage = newDisplayImage;
+                                NSMessageHandler.Owner.DisplayImage = newDisplayImage;
+                            }
                         }
                         else
                         {
@@ -290,15 +287,19 @@ namespace MSNPSharp
                             // Don't urlencode t= :))
                             string usertitleURL = requesturi + "?t=" + System.Web.HttpUtility.UrlEncode(NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Storage].Ticket.Substring(2));
                             SyncUserTile(usertitleURL,
-                                delegate(object nullParam)
+                                syncToOwner,
+                                delegate(object imageStream)
                                 {
+                                    SerializableMemoryStream ms = imageStream as SerializableMemoryStream;
                                     NSMessageHandler.ContactService.Deltas.Profile.Photo.Name = response.GetProfileResult.ExpressionProfile.Photo.Name;
                                     NSMessageHandler.ContactService.Deltas.Profile.Photo.DateModified = response.GetProfileResult.ExpressionProfile.Photo.DateModified;
                                     NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID = response.GetProfileResult.ExpressionProfile.Photo.ResourceID;
                                     NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL = docStream.PreAuthURL;
-                                    SerializableMemoryStream ms = new SerializableMemoryStream();
-                                    NSMessageHandler.Owner.DisplayImage.Image.Save(ms, NSMessageHandler.Owner.DisplayImage.Image.RawFormat);
-                                    NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = ms;
+                                    if (ms != null)
+                                    {
+                                        NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = ms;
+                                    }
+
                                     NSMessageHandler.ContactService.Deltas.Save(true);
                                 },
                                 null,
@@ -308,7 +309,7 @@ namespace MSNPSharp
                                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Get DisplayImage error: " + ex.Message, GetType().Name);
                                     if (NSMessageHandler.Owner.UserTileURL != null)
                                     {
-                                        SyncUserTile(NSMessageHandler.Owner.UserTileURL.AbsoluteUri, null, null, null);
+                                        SyncUserTile(NSMessageHandler.Owner.UserTileURL.AbsoluteUri, syncToOwner, null, null, null);
                                     }
                                 });
 
@@ -799,7 +800,7 @@ namespace MSNPSharp
 
         internal delegate void GetUsertitleByURLhandler(object param);
 
-        internal void SyncUserTile(string usertitleURL, GetUsertitleByURLhandler callBackHandler, object param, GetUsertitleByURLhandler errorHandler)
+        internal void SyncUserTile(string usertitleURL, bool syncToOwner, GetUsertitleByURLhandler callBackHandler, object param, GetUsertitleByURLhandler errorHandler)
         {
             try
             {
@@ -824,12 +825,16 @@ namespace MSNPSharp
                         }
                         stream.Close();
 
-                        DisplayImage newDisplayImage = new DisplayImage(NSMessageHandler.Owner.Account.ToLowerInvariant(), ms);
+                        if (syncToOwner)
+                        {
+                            DisplayImage newDisplayImage = new DisplayImage(NSMessageHandler.Owner.Account.ToLowerInvariant(), ms);
 
-                        NSMessageHandler.Owner.DisplayImage = newDisplayImage;
+                            NSMessageHandler.Owner.DisplayImage = newDisplayImage;
+                        }
+
                         if (callBackHandler != null)
                         {
-                            callBackHandler(param);
+                            callBackHandler(ms);
                         }
                     }
                     catch (Exception ex)
@@ -955,7 +960,8 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="photo">New photo to display</param>
         /// <param name="photoName">The resourcename</param>
-        public bool UpdateProfile(Image photo, string photoName)
+        /// <param name="syncToOwner">Whether synchronize the updated image to Messenger.Owner.DisplayImage after update succeed.</param>
+        public bool UpdateProfile(Image photo, string photoName, bool syncToOwner)
         {
             if (NSMessageHandler.ContactService.Deltas == null)
             {
@@ -970,9 +976,12 @@ namespace MSNPSharp
                 photo.Save(NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage, photo.RawFormat);
                 NSMessageHandler.ContactService.Deltas.Save(true);
 
-                DisplayImage newDisplayImage = new DisplayImage(NSMessageHandler.Owner.Account.ToLowerInvariant(), NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);
+                if (syncToOwner)
+                {
+                    DisplayImage newDisplayImage = new DisplayImage(NSMessageHandler.Owner.Account.ToLowerInvariant(), NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage);
 
-                NSMessageHandler.Owner.DisplayImage = newDisplayImage;
+                    NSMessageHandler.Owner.DisplayImage = newDisplayImage;
+                }
 
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "No expression profile exists, new profile is saved locally.");
                 return true;
@@ -1010,7 +1019,7 @@ namespace MSNPSharp
                 }
 
                 // Then get the updated profile and sync to the owner.
-                NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.RoamingIdentityChanged, true);
+                NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.RoamingIdentityChanged, syncToOwner);
 
                 return true;
             }
