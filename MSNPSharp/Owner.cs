@@ -43,6 +43,7 @@ namespace MSNPSharp
 {
     using MSNPSharp.IO;
     using MSNPSharp.Core;
+    using System.Threading;
 
     [Serializable]
     public class Owner : Contact
@@ -495,6 +496,14 @@ namespace MSNPSharp
         {
             get
             {
+                if (PersonalMessage != null)
+                {
+                    if (!string.IsNullOrEmpty(PersonalMessage.FriendlyName))
+                    {
+                        return PersonalMessage.FriendlyName;
+                    }
+                }
+
                 return string.IsNullOrEmpty(base.Name) ? NickName : base.Name;
             }
 
@@ -665,19 +674,72 @@ namespace MSNPSharp
 
         #endregion
 
+        /// <summary>
+        /// Save all the owner's profile to Widnows Live Services.
+        /// </summary>
+        /// <remarks>
+        /// This function will not return until the update was completed. If you want to use a asynchronous
+        /// version, please look at <see cref="UpdateRoamingProfileSync"/>
+        /// </remarks>
+        public void UpdateRoamingProfile()
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Updating owner profile, please wait....");
+            NSMessageHandler.StorageService.UpdateProfile(Name, PersonalMessage.Message);
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Update owner profile completed.");
+        }
+
+        /// <summary>
+        /// Save the display image of the owner to raoming profile.
+        /// </summary>
+        /// <param name="displayImageObject">The <see cref="Image"/> that casted to an <see cref="object"/></param>
+        public void UpdateRoamingProfile(object displayImageObject)
+        {
+            Image displayImage = displayImageObject as Image;
+            if (displayImage == null)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Cannot update display image, invalid object found.");
+                return;
+            }
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Updating owner profile, please wait....");
+            bool result = NSMessageHandler.StorageService.UpdateProfile(displayImage, "MyPhoto", false);
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Update displayimage completed. Result = " + result);
+        }
+
+        public void UpdateRoamingProfileSync()
+        {
+            Thread updateThread = new Thread(new ThreadStart(UpdateRoamingProfile));
+            updateThread.Start();
+        }
+
+        public void UpdateRoamingProfileSync(Image displayImage)
+        {
+            Thread updateThread = new Thread(new ParameterizedThreadStart(UpdateRoamingProfile));
+            updateThread.Start(displayImage);
+        }
+
+        public void UpdateDisplayImage(Image newImage)
+        {
+            if (newImage == null)
+                return;
+            MemoryStream imageStream = new MemoryStream();
+            newImage.Save(imageStream, newImage.RawFormat);
+            this.DisplayImage = new DisplayImage(this.Account.ToLowerInvariant(), imageStream);
+        }
+
         /*
-EmailEnabled: 1
-MemberIdHigh: 123456
-MemberIdLow: -1234567890
-lang_preference: 2052
-country: US
-Kid: 0
-Flags: 1073742915
-sid: 72652
-ClientIP: XXX.XXX.XXX.XXX
-Nickname: New
-RouteInfo: msnp://XXX.XXX.XXX.XXX/013557A5
-*/
+            EmailEnabled: 1
+            MemberIdHigh: 123456
+            MemberIdLow: -1234567890
+            lang_preference: 2052
+            country: US
+            Kid: 0
+            Flags: 1073742915
+            sid: 72652
+            ClientIP: XXX.XXX.XXX.XXX
+            Nickname: New
+            RouteInfo: msnp://XXX.XXX.XXX.XXX/013557A5
+        */
         internal void UpdateProfile(StrDictionary hdr)
         {
             foreach (StrKeyValuePair pair in hdr)

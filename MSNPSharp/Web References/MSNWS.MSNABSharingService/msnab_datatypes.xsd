@@ -100,6 +100,7 @@
           <xsd:element minOccurs="0" name="PassportId" type="xsd:int" />
           <xsd:element minOccurs="0" name="CID" type="xsd:long" />
           <xsd:element minOccurs="0" name="PassportChanges" type="xsd:string" />
+          <xsd:element minOccurs="0" name="LookedupByCID" type="xsd:boolean" />
         </xsd:sequence>
       </xsd:extension>
     </xsd:complexContent>
@@ -925,7 +926,7 @@
   </xsd:complexType>
   <xsd:complexType name="LinkInfoType">
     <xsd:sequence>
-      <xsd:element name="PersionID" type="xsd:string" />
+      <xsd:element name="PersonID" type="xsd:string" />
     </xsd:sequence>
   </xsd:complexType>
 </xsd:schema>

@@ -40,6 +40,7 @@ using System.Globalization;
 namespace MSNPSharp.Core
 {
     using MSNPSharp.P2P;
+    using System.Security;
 
     internal enum EscapeType
     {
@@ -70,7 +71,7 @@ namespace MSNPSharp.Core
 
         private static uint[] ASCII_CLASS;
         private static string strUrlUnsafe = " \"#%&+,/:;<=>?@[\\]^`{|}";
-        private static string strXmlUnsafe = "&:;<=>?[]\\^{|}";
+        private static string strXmlUnsafe = "&:;<=>?[]\\^{|}\"";
         private static string strHtmlUnsafe = "&'<> ;\"";
 
         static MSNHttpUtility()
@@ -79,12 +80,12 @@ namespace MSNPSharp.Core
             int c = 0;
             for (c = 0; c < ASCII_CLASS.Length; c++)
             {
-                if ((c >= 0 && c <= 32) || c >= 126)
+                if ((c >= 0 && c <= ' ') || c >= 126)
                 {
                     ASCII_CLASS[c] |= (uint)UnSafe.UrlEscape;
                 }
 
-                if (c >= 0 && c <= 32)
+                if (c >= 0 && c < ' ')  // XML doesn't escape space.
                 {
                     ASCII_CLASS[c] |= (uint)UnSafe.XMLEscape;
                 }
@@ -241,7 +242,7 @@ namespace MSNPSharp.Core
         /// </summary>
         /// <param name="str">The string to decode.</param>
         /// <returns>A decoded string.</returns>
-        public static string XmlEncode(string str)
+        public static string XmlUnicodeEncode(string str)
         {
             if (str == null)
                 return string.Empty;
@@ -266,6 +267,16 @@ namespace MSNPSharp.Core
             }
 
             return result.ToString();
+        }
+
+        /// <summary>
+        /// Encodes a Xml string.
+        /// </summary>
+        /// <param name="str">The string to decode.</param>
+        /// <returns>A decoded string.</returns>
+        public static string XmlEncode(string str)
+        {
+            return SecurityElement.Escape(str);
         }
 
 

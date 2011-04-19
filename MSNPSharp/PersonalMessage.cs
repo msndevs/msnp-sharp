@@ -41,6 +41,7 @@ using System.Text.RegularExpressions;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
+    using System.Globalization;
 
     [Serializable]
     public class PersonalMessage
@@ -133,7 +134,7 @@ namespace MSNPSharp
             }
         }
 
-        public string Rum
+        public string RUM
         {
             get
             {
@@ -145,7 +146,7 @@ namespace MSNPSharp
             }
         }
 
-        public string Ddp
+        public string DDP
         {
             get
             {
@@ -188,6 +189,11 @@ namespace MSNPSharp
             {
                 return signatureSound;
             }
+
+            private set
+            {
+                signatureSound = value;
+            }
         }
 
         public MediaType MediaType
@@ -195,6 +201,11 @@ namespace MSNPSharp
             get
             {
                 return mediaType;
+            }
+
+            private set
+            {
+                mediaType = value;
             }
         }
 
@@ -212,6 +223,7 @@ namespace MSNPSharp
             {
                 return format;
             }
+
             set
             {
                 format = value;
@@ -257,74 +269,118 @@ namespace MSNPSharp
         {
             get
             {
+                // I think we need a serializer for PersonalMessage.
+                XmlDocument xdoc = new XmlDocument();
+                XmlNode rootNode = xdoc.CreateNode(XmlNodeType.Element, "root", xdoc.NamespaceURI);
+                xdoc.AppendChild(rootNode);
+
+                XmlNode userTileLocationNode = xdoc.CreateNode(XmlNodeType.Element, "UserTileLocation", xdoc.NamespaceURI);
+                rootNode.AppendChild(userTileLocationNode);
+
+                userTileLocationNode.InnerText = UserTileLocation;
+
+                XmlNode friendlyNameNode = xdoc.CreateNode(XmlNodeType.Element, "FriendlyName", xdoc.NamespaceURI);
+                rootNode.AppendChild(friendlyNameNode);
+                friendlyNameNode.InnerText = FriendlyName;
+
+                XmlNode rumNode = xdoc.CreateNode(XmlNodeType.Element, "RUM", xdoc.NamespaceURI);
+                rootNode.AppendChild(rumNode);
+                rumNode.InnerText = RUM;
+
+                XmlNode personalMessageNode = xdoc.CreateNode(XmlNodeType.Element, "PSM", xdoc.NamespaceURI);
+                rootNode.AppendChild(personalMessageNode);
+                personalMessageNode.InnerText = Message;
+
+                XmlNode ddpNode = xdoc.CreateNode(XmlNodeType.Element, "DDP", xdoc.NamespaceURI);
+                rootNode.AppendChild(ddpNode);
+                personalMessageNode.InnerText = DDP;
+
+                XmlNode colorSchemeNode = xdoc.CreateNode(XmlNodeType.Element, "ColorScheme", xdoc.NamespaceURI);
+                rootNode.AppendChild(colorSchemeNode);
+                colorSchemeNode.InnerText = ColorScheme.ToArgb().ToString(CultureInfo.InvariantCulture);
+
+                XmlNode sceneNode = xdoc.CreateNode(XmlNodeType.Element, "Scene", xdoc.NamespaceURI);
+                rootNode.AppendChild(sceneNode);
+                sceneNode.InnerText = Scene;
+
+                XmlNode signatureSoundNode = xdoc.CreateNode(XmlNodeType.Element, "SignatureSound", xdoc.NamespaceURI);
+                rootNode.AppendChild(signatureSoundNode);
+                signatureSoundNode.InnerText = HttpUtility.UrlEncode(SignatureSound);
+
+                XmlNode currentMediaNode = xdoc.CreateNode(XmlNodeType.Element, "CurrentMedia", xdoc.NamespaceURI);
+                rootNode.AppendChild(currentMediaNode);
+                currentMediaNode.InnerText = CurrentMedia;
+
+                return rootNode.InnerXml;
+
+                /*
                 StringBuilder pload = new StringBuilder();
 
-                if (!String.IsNullOrEmpty(userTileLocation))
+                if (!String.IsNullOrEmpty(UserTileLocation))
                 {
                     pload.Append("<UserTileLocation>");
-                    pload.Append(MSNHttpUtility.XmlEncode(userTileLocation));
+                    pload.Append(MSNHttpUtility.XmlUnicodeEncode(userTileLocation));
                     pload.Append("</UserTileLocation>");
                 }
 
-                if (!String.IsNullOrEmpty(friendlyName))
+                if (!String.IsNullOrEmpty(FriendlyName))
                 {
                     pload.Append("<FriendlyName>");
-                    pload.Append(MSNHttpUtility.XmlEncode(friendlyName));
+                    pload.Append(FriendlyName);
                     pload.Append("</FriendlyName>");
                 }
 
-                if (!String.IsNullOrEmpty(rum))
+                if (!String.IsNullOrEmpty(RUM))
                 {
                     pload.Append("<RUM>");
-                    pload.Append(MSNHttpUtility.XmlEncode(rum));
+                    pload.Append(RUM);
                     pload.Append("</RUM>");
                 }
 
-                if (!String.IsNullOrEmpty(personalMessage))
+                if (!String.IsNullOrEmpty(Message))
                 {
                     pload.Append("<PSM>");
-                    pload.Append(MSNHttpUtility.XmlEncode(personalMessage));
+                    pload.Append(Message);
                     pload.Append("</PSM>");
                 }
 
-                if (!String.IsNullOrEmpty(ddp))
+                if (!String.IsNullOrEmpty(DDP))
                 {
                     pload.Append("<DDP>");
-                    pload.Append(MSNHttpUtility.XmlEncode(ddp));
+                    pload.Append(DDP);
                     pload.Append("</DDP>");
                 }
 
-                if (colorScheme != Color.Empty)
+                if (ColorScheme != Color.Empty)
                 {
                     pload.Append("<ColorScheme>");
-                    pload.Append(MSNHttpUtility.XmlEncode(colorScheme.ToArgb().ToString()));
+                    pload.Append(colorScheme.ToArgb().ToString());
                     pload.Append("</ColorScheme>");
                 }
 
-                if (!String.IsNullOrEmpty(scene))
+                if (!String.IsNullOrEmpty(Scene))
                 {
                     pload.Append("<Scene>");
-                    pload.Append(MSNHttpUtility.XmlEncode(scene));
+                    pload.Append(MSNHttpUtility.XmlUnicodeEncode(scene));
                     pload.Append("</Scene>");
                 }
 
-                if (!String.IsNullOrEmpty(signatureSound))
+                if (!String.IsNullOrEmpty(SignatureSound))
                 {
                     pload.Append("<SignatureSound>");
-                    pload.Append(MSNHttpUtility.XmlEncode(signatureSound));
+                    pload.Append(MSNHttpUtility.XmlUnicodeEncode(SignatureSound));
                     pload.Append("</SignatureSound>");
                 }
 
-                string currentmedia = CurrentMedia;
-
-                if (!String.IsNullOrEmpty(currentmedia))
+                if (!String.IsNullOrEmpty(CurrentMedia))
                 {
                     pload.Append("<CurrentMedia>");
-                    pload.Append(MSNHttpUtility.XmlEncode(currentmedia));
+                    pload.Append(CurrentMedia);
                     pload.Append("</CurrentMedia>");
                 }
 
                 return pload.ToString();
+                */
             }
         }
 
@@ -357,44 +413,44 @@ namespace MSNPSharp
                     switch (node.Name)
                     {
                         case "UserTileLocation":
-                            userTileLocation = MSNObject.GetDecodeString(node.InnerText);
+                            UserTileLocation = MSNObject.GetDecodeString(node.InnerText);
                             break;
 
                         case "FriendlyName":
-                            friendlyName = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
+                            FriendlyName = node.InnerText;
                             break;
 
                         case "RUM":
-                            rum = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
+                            RUM = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
                             break;
 
                         case "PSM":
-                            personalMessage = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
+                            Message = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
                             break;
 
                         case "DDP":
-                            ddp = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
+                            DDP = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
                             break;
 
                         case "ColorScheme":
-                            colorScheme = ColorTranslator.FromOle(int.Parse(node.InnerText));
+                            ColorScheme = ColorTranslator.FromOle(int.Parse(node.InnerText));
                             break;
 
                         case "Scene":
-                            scene = MSNObject.GetDecodeString(node.InnerText);
+                            Scene = MSNObject.GetDecodeString(node.InnerText);
                             break;
 
                         case "SignatureSound":
-                            signatureSound = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
+                            SignatureSound = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
                             break;
 
                         case "CurrentMedia":
 
-                            currentMedia = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
+                            string mediaString = System.Web.HttpUtility.UrlDecode(node.InnerText, System.Text.Encoding.UTF8);
 
-                            if (currentMedia.Length > 0)
+                            if (mediaString.Length > 0)
                             {
-                                string[] vals = currentMedia.Split(new string[] { @"\0" }, StringSplitOptions.None);
+                                string[] vals = mediaString.Split(new string[] { @"\0" }, StringSplitOptions.None);
 
                                 if (!String.IsNullOrEmpty(vals[0]))
                                     appName = vals[0];
@@ -402,13 +458,13 @@ namespace MSNPSharp
                                 switch (vals[1])
                                 {
                                     case "Music":
-                                        mediaType = MediaType.Music;
+                                        MediaType = MediaType.Music;
                                         break;
                                     case "Games":
-                                        mediaType = MediaType.Games;
+                                        MediaType = MediaType.Games;
                                         break;
                                     case "Office":
-                                        mediaType = MediaType.Office;
+                                        MediaType = MediaType.Office;
                                         break;
                                 }
 
@@ -425,14 +481,14 @@ namespace MSNPSharp
                                 */
                                 //vals[2] = Enabled/Disabled
 
-                                format = vals[3];
+                                Format = vals[3];
 
                                 int size = vals.Length - 4;
 
-                                content = new String[size];
+                                CurrentMediaContent = new String[size];
 
                                 for (int i = 0; i < size; i++)
-                                    content[i] = vals[i + 4];
+                                    CurrentMediaContent[i] = vals[i + 4];
                             }
                             break;
                     }
