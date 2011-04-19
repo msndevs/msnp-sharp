@@ -927,7 +927,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="LinkInfoType">
 		<xsd:sequence>
-			<xsd:element name="PersionID" type="xsd:string"/>
+			<xsd:element name="PersonID" type="xsd:string"/>
 		</xsd:sequence>
 	</xsd:complexType>
 </xsd:schema>
