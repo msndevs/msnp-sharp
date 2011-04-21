@@ -3041,6 +3041,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private LinkInfoType linkInfoField;
         
+        private SourceHandleType sourceHandleField;
+        
+        private string fileAsField;
+        
+        private ContactURLType[] uRLsField;
+        
         /// <remarks/>
         [System.Xml.Serialization.XmlArrayItemAttribute("ContactEmail", IsNullable=false)]
         public contactEmailType[] emails {
@@ -3682,6 +3688,37 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.linkInfoField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public SourceHandleType SourceHandle {
+            get {
+                return this.sourceHandleField;
+            }
+            set {
+                this.sourceHandleField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string FileAs {
+            get {
+                return this.fileAsField;
+            }
+            set {
+                this.fileAsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute("ContactURL", IsNullable=false)]
+        public ContactURLType[] URLs {
+            get {
+                return this.uRLsField;
+            }
+            set {
+                this.uRLsField = value;
             }
         }
     }
@@ -4390,6 +4427,120 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.personIDField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.5420")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class SourceHandleType {
+        
+        private string sourceIDField;
+        
+        private string objectIDField;
+        
+        /// <remarks/>
+        public string SourceID {
+            get {
+                return this.sourceIDField;
+            }
+            set {
+                this.sourceIDField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string ObjectID {
+            get {
+                return this.objectIDField;
+            }
+            set {
+                this.objectIDField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.5420")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class ContactURLType {
+        
+        private int uRLIdField;
+        
+        private string uRLTypeField;
+        
+        private string uRLNameField;
+        
+        private string uRLField;
+        
+        private string lastChangeField;
+        
+        private object changesField;
+        
+        /// <remarks/>
+        public int URLId {
+            get {
+                return this.uRLIdField;
+            }
+            set {
+                this.uRLIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string URLType {
+            get {
+                return this.uRLTypeField;
+            }
+            set {
+                this.uRLTypeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string URLName {
+            get {
+                return this.uRLNameField;
+            }
+            set {
+                this.uRLNameField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string URL {
+            get {
+                return this.uRLField;
+            }
+            set {
+                this.uRLField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string LastChange {
+            get {
+                return this.lastChangeField;
+            }
+            set {
+                this.lastChangeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public object Changes {
+            get {
+                return this.changesField;
+            }
+            set {
+                this.changesField = value;
             }
         }
     }
