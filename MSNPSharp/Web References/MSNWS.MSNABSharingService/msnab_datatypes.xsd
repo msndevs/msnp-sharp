@@ -400,13 +400,13 @@
     <xsd:sequence>
       <xsd:element name="contactLocationType" type="msnab:ContactLocationTypeType" />
       <xsd:element minOccurs="0" name="name" type="xsd:string" />
-      <xsd:element name="street" type="xsd:string" />
-      <xsd:element name="city" type="xsd:string" />
-      <xsd:element name="state" type="xsd:string" />
-      <xsd:element name="country" type="xsd:string" />
-      <xsd:element name="postalCode" type="xsd:string" />
+      <xsd:element minOccurs="0" name="street" type="xsd:string" />
+      <xsd:element minOccurs="0" name="city" type="xsd:string" />
+      <xsd:element minOccurs="0" name="state" type="xsd:string" />
+      <xsd:element minOccurs="0" name="country" type="xsd:string" />
+      <xsd:element minOccurs="0" name="postalCode" type="xsd:string" />
       <xsd:element minOccurs="0" name="Department" type="xsd:string" />
-      <xsd:element name="Changes" type="xsd:string" />
+      <xsd:element name="Changes" />
     </xsd:sequence>
   </xsd:complexType>
   <xsd:simpleType name="ContactLocationTypeType">
