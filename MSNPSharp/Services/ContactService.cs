@@ -888,6 +888,10 @@ namespace MSNPSharp
 
                     request.filterOptions.DeltasOnly = deltasOnly;
                     request.filterOptions.ContactFilter.IncludeHiddenContacts = true;
+
+                    // Without these two lines we cannot get the Connect contacts correctly.
+                    request.filterOptions.ContactFilter.IncludeShellContactsSpecified = true;
+                    request.filterOptions.ContactFilter.IncludeShellContacts = true;
                 }
                 else
                 {
