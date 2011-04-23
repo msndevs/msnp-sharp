@@ -1152,6 +1152,11 @@ namespace MSNPSharp
             nickName = newNick;
         }
 
+        /// <summary>
+        /// Set the <see cref="Status"/> and fire <see cref="Contact.StatusChanged"/> ,
+        /// <see cref="Contact.ContactOnline"/> and <see cref="Contact.ContactOffline"/> event.
+        /// </summary>
+        /// <param name="newStatus"></param>
         internal void SetStatus(PresenceStatus newStatus)
         {
             //Becareful deadlock!

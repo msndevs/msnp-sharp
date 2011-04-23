@@ -1020,12 +1020,12 @@ namespace MSNPSharp.IO
         private Dictionary<Guid, string> pendingCreateCircleList = new Dictionary<Guid, string>();
         
         [NonSerialized]
-        private Dictionary<Guid, ContactType> messengerContactLink = new Dictionary<Guid, ContactType>();
+        private Dictionary<Guid, Contact> messengerContactLink = new Dictionary<Guid, Contact>();
         
         [NonSerialized]
         private Dictionary<Guid, List<ContactType>> shellContactLink = new Dictionary<Guid, List<ContactType>>();
-        
-        private Dictionary<Guid, ContactType> MessengerContactLink
+
+        private Dictionary<Guid, Contact> MessengerContactLink
         {
             get
             {
@@ -2274,11 +2274,14 @@ namespace MSNPSharp.IO
 
         private void CreateContactsFromShellContact()
         {
-            foreach(Guid persionID in MessengerContactLink.Keys)
+            lock (MessengerContactLink)
             {
-                CreateContactFromShellContact(persionID, SourceId.FaceBook);
-                CreateContactFromShellContact(persionID, SourceId.LinkedIn);
-                CreateContactFromShellContact(persionID, SourceId.MySpace);
+                foreach (Guid persionID in MessengerContactLink.Keys)
+                {
+                    CreateContactFromShellContact(persionID, SourceId.FaceBook);
+                    CreateContactFromShellContact(persionID, SourceId.LinkedIn);
+                    CreateContactFromShellContact(persionID, SourceId.MySpace);
+                }
             }
         }
         
@@ -2312,42 +2315,41 @@ namespace MSNPSharp.IO
             {
                 return null;
             }
-            
-            Contact messengerContact = null;
-            UpdateContact(MessengerContactLink[personID], out messengerContact);
-            
+
+            Contact messengerContact = MessengerContactLink[personID];
+
             if(messengerContact == null)
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Create Contact from ShellContact error, Messenger Contact is null.");
                 return null;
             }
-            
-            List<ContactType> shellContacts = ShellContactLink[personID];
-            foreach(ContactType shellContact in shellContacts)
+
+            lock (ShellContactLink)
             {
-                switch(sourceID)
+                List<ContactType> shellContacts = ShellContactLink[personID];
+                foreach (ContactType shellContact in shellContacts)
                 {
-                case "FB":
-                    // Facebook contacts.
-                    if(shellContact.contactInfo.SourceHandle.SourceID == sourceID)
+                    switch (sourceID)
                     {
-                        Contact facebookGatewayContact = NSMessageHandler.ContactList.GetContactWithCreate(RemoteNetworkGateways.FaceBookGatewayAccount, IMAddressInfoType.RemoteNetwork);
-                        Contact facebookContact = facebookGatewayContact.ContactList.GetContactWithCreate(shellContact.contactInfo.SourceHandle.ObjectID, IMAddressInfoType.Connect);
-                        facebookContact.SetName(messengerContact.Name);
-                        facebookContact.SetNickName(messengerContact.NickName);
-                        facebookContact.SetList(messengerContact.Lists);
-                        
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, facebookContact + ":" + facebookContact.Name + " added to connect contacts", GetType().Name);
-                        
-                        return facebookContact;
+                        case "FB":
+                            // Facebook contacts.
+                            if (shellContact.contactInfo.SourceHandle.SourceID == sourceID)
+                            {
+                                Contact facebookGatewayContact = NSMessageHandler.ContactList.GetContactWithCreate(RemoteNetworkGateways.FaceBookGatewayAccount, IMAddressInfoType.RemoteNetwork);
+                                Contact facebookContact = facebookGatewayContact.ContactList.CreateShellContact(messengerContact, IMAddressInfoType.Connect, sourceID, shellContact.contactInfo.SourceHandle.ObjectID);
+
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, facebookContact + ":" + facebookContact.Name + " added to connect contacts", GetType().Name);
+
+                                return facebookContact;
+                            }
+                            break;
+                        case "LI":
+                            // LinkedIn contacts.
+                            break;
+                        case "MYSP":
+                            // MySpace contacts.
+                            break;
                     }
-                    break;
-                case "LI":
-                    // LinkedIn contacts.
-                    break;
-                case "MYSP":
-                    // MySpace contacts.
-                    break;
                 }
             }
             
@@ -2388,12 +2390,15 @@ namespace MSNPSharp.IO
                 if(contactInfo.LinkInfo != null)
                 {
                     Guid persionID = new Guid(contactInfo.LinkInfo.PersonID);
-                    if(!ShellContactLink.ContainsKey(persionID))
+                    lock (ShellContactLink)
                     {
-                        ShellContactLink[persionID] = new List<ContactType>(0);
+                        if (!ShellContactLink.ContainsKey(persionID))
+                        {
+                            ShellContactLink[persionID] = new List<ContactType>(0);
+                        }
+
+                        ShellContactLink[persionID].Add(contactType);
                     }
-                    
-                    ShellContactLink[persionID].Add(contactType);
                     updatedContact = null;
                     return ReturnState.ProcessNextContact;
                 }
@@ -2450,10 +2455,13 @@ namespace MSNPSharp.IO
 
                         if (contactInfo.LinkInfo != null && isMessengerUser)
                         {
-                            // There might be shell contact connect with this contact.
-                            // Add it to link info.
-                            Guid persionID = new Guid(contactInfo.LinkInfo.PersonID);
-                            MessengerContactLink[persionID] = contactType;
+                            lock (MessengerContactLink)
+                            {
+                                // There might be shell contact connect with this contact.
+                                // Add it to link info.
+                                Guid persionID = new Guid(contactInfo.LinkInfo.PersonID);
+                                MessengerContactLink[persionID] = contact;
+                            }
                         }
                     }
                     else

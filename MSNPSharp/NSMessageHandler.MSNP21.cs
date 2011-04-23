@@ -133,7 +133,7 @@ namespace MSNPSharp
         /// Fires the <see cref="ContactOnline"/> event.
         /// </summary>
         /// <param name="e"></param>
-        protected virtual void OnContactOnline(ContactStatusChangedEventArgs e)
+        protected internal virtual void OnContactOnline(ContactStatusChangedEventArgs e)
         {
             if (ContactOnline != null)
                 ContactOnline(this, e);
