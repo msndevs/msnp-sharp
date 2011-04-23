@@ -381,8 +381,17 @@ namespace MSNPSharp
     public static class SourceId
     {
         public const string WindowsLive = "WL";
+        /// <summary>
+        /// The source Id for facebook, "FB".
+        /// </summary>
         public const string FaceBook = "FB";
+        /// <summary>
+        /// The source Id for MySpace, "MYSP".
+        /// </summary>
         public const string MySpace = "MYSP";
+        /// <summary>
+        /// The source Id for LinkedIn, "LI".
+        /// </summary>
         public const string LinkedIn = "LI";
     }
 

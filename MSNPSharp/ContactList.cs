@@ -699,6 +699,10 @@ namespace MSNPSharp
         {
             ShellContact shellContact = new ShellContact(coreContact, type, sourceID, objectID);
             string hash = Contact.MakeHash(shellContact.Account, shellContact.ClientType);
+
+            if (type == IMAddressInfoType.Connect)
+                shellContact.Via = this.gateway;
+
             lock (SyncRoot)
             {
                 base[type][hash] = shellContact;
