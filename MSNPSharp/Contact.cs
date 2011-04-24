@@ -1576,7 +1576,7 @@ namespace MSNPSharp
             ContactBlockedStatusChangedEventArgs eventArgs = new ContactBlockedStatusChangedEventArgs(this, true);
             if (ContactBlocked != null)
                 ContactBlocked(this, eventArgs);
-            NSMessageHandler.OnContactBlockedStatusChanged(eventArgs);
+            NSMessageHandler.ContactService.OnContactBlockedStatusChanged(eventArgs);
         }
 
         protected virtual void OnContactUnBlocked()
@@ -1584,7 +1584,7 @@ namespace MSNPSharp
             ContactBlockedStatusChangedEventArgs eventArgs = new ContactBlockedStatusChangedEventArgs(this, false);
             if (ContactUnBlocked != null)
                 ContactUnBlocked(this, eventArgs);
-            NSMessageHandler.OnContactBlockedStatusChanged(eventArgs);
+            NSMessageHandler.ContactService.OnContactBlockedStatusChanged(eventArgs);
         }
 
         protected void OnDirectBridgeEstablished(EventArgs e)

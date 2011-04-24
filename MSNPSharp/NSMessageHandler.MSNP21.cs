@@ -62,10 +62,6 @@ namespace MSNPSharp
         /// Occurs when any contact goes from any status to offline status.
         /// </summary>
         public event EventHandler<ContactStatusChangedEventArgs> ContactOffline;
-        /// <summary>
-        /// Fiired after a contact has been blocked/unblocked.
-        /// </summary>
-        public event EventHandler<ContactBlockedStatusChangedEventArgs> ContactBlockedStatusChanged;
 
 
         /// <summary>
@@ -108,16 +104,6 @@ namespace MSNPSharp
         /// Occurs after the user on another end point closed the IM window.
         /// </summary>
         public event EventHandler<CloseIMWindowEventArgs> RemoteEndPointCloseIMWindow;
-
-        /// <summary>
-        /// Fire <see cref="ContactBlockedStatusChanged"/> event.
-        /// </summary>
-        /// <param name="e"></param>
-        protected internal virtual void OnContactBlockedStatusChanged(ContactBlockedStatusChangedEventArgs e)
-        {
-            if (ContactBlockedStatusChanged != null)
-                ContactBlockedStatusChanged(this, e);
-        }
 
         /// <summary>
         /// Fire the <see cref="ContactStatusChanged"/> event.
