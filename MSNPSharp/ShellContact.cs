@@ -6,27 +6,6 @@ namespace MSNPSharp
 {
     public class ShellContact : Contact
     {
-        private string sourceID = string.Empty;
-
-        /// <summary>
-        /// The gateway id of remote network this contact belongs to.
-        /// </summary>
-        public string SourceID
-        {
-            get { return sourceID; }
-            private set { sourceID = value; }
-        }
-        private string objectID = string.Empty;
-
-        /// <summary>
-        /// The account of the shell contact.
-        /// </summary>
-        public string ObjectID
-        {
-            get { return objectID; }
-            set { objectID = value; }
-        }
-
         private Contact coreContact = null;
 
         internal Contact CoreContact
@@ -35,13 +14,9 @@ namespace MSNPSharp
             private set { coreContact = value; }
         }
 
-
-
-        public ShellContact(Contact coreContact, IMAddressInfoType type, string sourceID, string objectID)
+        public ShellContact(Contact coreContact, IMAddressInfoType type, string objectID)
             : base(coreContact.AddressBookId, objectID, type, 0, coreContact.NSMessageHandler)
         {
-            SourceID = sourceID;
-            ObjectID = objectID;
             CoreContact = coreContact;
             SetName(CoreContact.Name);
             SetNickName(CoreContact.NickName);

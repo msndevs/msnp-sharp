@@ -2426,9 +2426,9 @@ namespace MSNPSharp.IO
                                         Contact facebookGatewayContact = NSMessageHandler.ContactList.GetContactWithCreate(
                                             RemoteNetworkGateways.FaceBookGatewayAccount, 
                                             IMAddressInfoType.RemoteNetwork);
+
                                         Contact facebookContact = facebookGatewayContact.ContactList.CreateShellContact(
                                             messengerContact, IMAddressInfoType.Connect, 
-                                            sourceID, 
                                             networkInfo.DomainTag);
                                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, facebookContact + ":" + facebookContact.Name + " added to connect contacts", GetType().Name);
 
@@ -2462,7 +2462,7 @@ namespace MSNPSharp.IO
                             if (shellContact.contactInfo.SourceHandle.SourceID == sourceID)
                             {
                                 Contact facebookGatewayContact = NSMessageHandler.ContactList.GetContactWithCreate(RemoteNetworkGateways.FaceBookGatewayAccount, IMAddressInfoType.RemoteNetwork);
-                                Contact facebookContact = facebookGatewayContact.ContactList.CreateShellContact(messengerContact, IMAddressInfoType.Connect, sourceID, shellContact.contactInfo.SourceHandle.ObjectID);
+                                Contact facebookContact = facebookGatewayContact.ContactList.CreateShellContact(messengerContact, IMAddressInfoType.Connect, shellContact.contactInfo.SourceHandle.ObjectID);
                                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, facebookContact + ":" + facebookContact.Name + " added to connect contacts", GetType().Name);
 
                                 return facebookContact;

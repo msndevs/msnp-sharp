@@ -692,16 +692,15 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="coreContact"></param>
         /// <param name="type"></param>
-        /// <param name="sourceID">The Gateway SourceID</param>
         /// <param name="objectID">The Contact Account</param>
         /// <returns></returns>
-        internal ShellContact CreateShellContact(Contact coreContact, IMAddressInfoType type, string sourceID, string objectID)
+        internal ShellContact CreateShellContact(Contact coreContact, IMAddressInfoType type, string objectID)
         {
-            ShellContact shellContact = new ShellContact(coreContact, type, sourceID, objectID);
+            ShellContact shellContact = new ShellContact(coreContact, type, objectID);
             string hash = Contact.MakeHash(shellContact.Account, shellContact.ClientType);
 
             if (type == IMAddressInfoType.Connect)
-                shellContact.Via = this.gateway;
+                shellContact.Via = this.gateway; // sourceID
 
             lock (SyncRoot)
             {

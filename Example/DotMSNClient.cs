@@ -122,7 +122,7 @@ namespace MSNPSharpClient
             messenger.Nameserver.ContactOnline += new EventHandler<ContactStatusChangedEventArgs>(Nameserver_ContactOnline);
             messenger.Nameserver.ContactOffline += new EventHandler<ContactStatusChangedEventArgs>(Nameserver_ContactOffline);
 
-            messenger.Nameserver.ContactBlockedStatusChanged += new EventHandler<ContactBlockedStatusChangedEventArgs>(Nameserver_ContactBlockedStatusChanged);
+            messenger.ContactService.ContactBlockedStatusChanged += new EventHandler<ContactBlockedStatusChangedEventArgs>(Nameserver_ContactBlockedStatusChanged);
 
             // SynchronizationCompleted will fired after the updated operation for your contact list has completed.
             messenger.ContactService.SynchronizationCompleted += new EventHandler<EventArgs>(ContactService_SynchronizationCompleted);
