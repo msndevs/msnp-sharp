@@ -2464,7 +2464,7 @@ namespace MSNPSharpClient
             if (circle != null)
             {
                 circle.AppearOnline = true;
-                circle.ContactUnBlocked += new EventHandler<EventArgs>(circle_ContactUnBlocked);
+                circle.ContactUnBlocked += new EventHandler<ContactBlockedStatusChangedEventArgs>(circle_ContactUnBlocked);
                 Trace.WriteLine("Circle unblocked: " + circle.ToString());
             }
         }

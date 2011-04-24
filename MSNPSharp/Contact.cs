@@ -321,8 +321,8 @@ namespace MSNPSharp
 
         public event EventHandler<ContactGroupEventArgs> ContactGroupAdded;
         public event EventHandler<ContactGroupEventArgs> ContactGroupRemoved;
-        public event EventHandler<EventArgs> ContactBlocked;
-        public event EventHandler<EventArgs> ContactUnBlocked;
+        public event EventHandler<ContactBlockedStatusChangedEventArgs> ContactBlocked;
+        public event EventHandler<ContactBlockedStatusChangedEventArgs> ContactUnBlocked;
         public event EventHandler<StatusChangedEventArgs> ContactOnline;
         public event EventHandler<StatusChangedEventArgs> ContactOffline;
         public event EventHandler<StatusChangedEventArgs> StatusChanged;
@@ -1573,14 +1573,18 @@ namespace MSNPSharp
 
         protected virtual void OnContactBlocked()
         {
+            ContactBlockedStatusChangedEventArgs eventArgs = new ContactBlockedStatusChangedEventArgs(this, true);
             if (ContactBlocked != null)
-                ContactBlocked(this, new EventArgs());
+                ContactBlocked(this, eventArgs);
+            NSMessageHandler.OnContactBlockedStatusChanged(eventArgs);
         }
 
         protected virtual void OnContactUnBlocked()
         {
+            ContactBlockedStatusChangedEventArgs eventArgs = new ContactBlockedStatusChangedEventArgs(this, false);
             if (ContactUnBlocked != null)
-                ContactUnBlocked(this, new EventArgs());
+                ContactUnBlocked(this, eventArgs);
+            NSMessageHandler.OnContactBlockedStatusChanged(eventArgs);
         }
 
         protected void OnDirectBridgeEstablished(EventArgs e)

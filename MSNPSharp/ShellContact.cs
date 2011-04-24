@@ -52,8 +52,8 @@ namespace MSNPSharp
             CoreContact.ScreenNameChanged += new EventHandler<EventArgs>(CoreContact_ScreenNameChanged);
             CoreContact.StatusChanged += new EventHandler<StatusChangedEventArgs>(CoreContact_StatusChanged);
             CoreContact.PersonalMessageChanged += new EventHandler<EventArgs>(CoreContact_PersonalMessageChanged);
-            CoreContact.ContactBlocked += new EventHandler<EventArgs>(CoreContact_ContactBlocked);
-            CoreContact.ContactUnBlocked += new EventHandler<EventArgs>(CoreContact_ContactUnBlocked);
+            CoreContact.ContactBlocked += new EventHandler<ContactBlockedStatusChangedEventArgs>(CoreContact_ContactBlocked);
+            CoreContact.ContactUnBlocked += new EventHandler<ContactBlockedStatusChangedEventArgs>(CoreContact_ContactUnBlocked);
         }
 
         void CoreContact_ContactUnBlocked(object sender, EventArgs e)
