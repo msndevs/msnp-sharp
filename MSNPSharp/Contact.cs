@@ -998,9 +998,15 @@ namespace MSNPSharp
                 if (value != AppearOffline)
                 {
                     if (value)
+                    {
                         NSMessageHandler.ContactService.AppearOffline(this, null);
+                        OnContactBlocked();
+                    }
                     else
+                    {
                         NSMessageHandler.ContactService.AppearOnline(this, null);
+                        OnContactUnBlocked();
+                    }
                 }
             }
         }

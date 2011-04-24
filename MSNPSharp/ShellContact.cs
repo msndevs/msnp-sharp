@@ -52,11 +52,25 @@ namespace MSNPSharp
             CoreContact.ScreenNameChanged += new EventHandler<EventArgs>(CoreContact_ScreenNameChanged);
             CoreContact.StatusChanged += new EventHandler<StatusChangedEventArgs>(CoreContact_StatusChanged);
             CoreContact.PersonalMessageChanged += new EventHandler<EventArgs>(CoreContact_PersonalMessageChanged);
+            CoreContact.ContactBlocked += new EventHandler<EventArgs>(CoreContact_ContactBlocked);
+            CoreContact.ContactUnBlocked += new EventHandler<EventArgs>(CoreContact_ContactUnBlocked);
+        }
+
+        void CoreContact_ContactUnBlocked(object sender, EventArgs e)
+        {
+            RemoveFromList(RoleLists.Hide);
+        }
+
+        void CoreContact_ContactBlocked(object sender, EventArgs e)
+        {
+            Lists |= RoleLists.Hide;
+            OnContactBlocked();
         }
 
         void CoreContact_PersonalMessageChanged(object sender, EventArgs e)
         {
             PersonalMessage = CoreContact.PersonalMessage;
+            OnPersonalMessageChanged(PersonalMessage);
         }
 
         void CoreContact_StatusChanged(object sender, StatusChangedEventArgs e)
@@ -66,7 +80,9 @@ namespace MSNPSharp
 
         void CoreContact_ScreenNameChanged(object sender, EventArgs e)
         {
+            string oldName = Name;
             SetName(CoreContact.Name);
+            OnScreenNameChanged(oldName);
         }
 
         protected override void OnContactOffline(StatusChangedEventArgs e)
