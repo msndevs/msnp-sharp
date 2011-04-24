@@ -122,6 +122,7 @@ namespace MSNPSharpClient
             messenger.Nameserver.ContactOnline += new EventHandler<ContactStatusChangedEventArgs>(Nameserver_ContactOnline);
             messenger.Nameserver.ContactOffline += new EventHandler<ContactStatusChangedEventArgs>(Nameserver_ContactOffline);
 
+            messenger.Nameserver.ContactBlockedStatusChanged += new EventHandler<ContactBlockedStatusChangedEventArgs>(Nameserver_ContactBlockedStatusChanged);
 
             // SynchronizationCompleted will fired after the updated operation for your contact list has completed.
             messenger.ContactService.SynchronizationCompleted += new EventHandler<EventArgs>(ContactService_SynchronizationCompleted);
@@ -178,7 +179,7 @@ namespace MSNPSharpClient
 
             #endregion
         }
-        
+
 
         public static class ImageIndexes
         {
@@ -667,9 +668,21 @@ namespace MSNPSharpClient
 
         }
 
+        void Nameserver_ContactBlockedStatusChanged(object sender, ContactBlockedStatusChangedEventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler<ContactBlockedStatusChangedEventArgs>(Nameserver_ContactBlockedStatusChanged), new object[] { sender, e });
+            }
+            else
+            {
+                UpdateContactlist(sender, e);
+            }
+        }
+
         void Nameserver_ContactOnline(object sender, ContactStatusChangedEventArgs e)
         {
-            BeginInvoke(new EventHandler<ContactStatusChangedEventArgs>(ContactOnlineOffline), new object[] { sender, e });
+            Invoke(new EventHandler<ContactStatusChangedEventArgs>(ContactOnlineOffline), new object[] { sender, e });
         }
 
         void Nameserver_ContactOffline(object sender, ContactStatusChangedEventArgs e)
@@ -1570,14 +1583,19 @@ namespace MSNPSharpClient
 
         private void blockToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ((Contact)treeViewFavoriteList.SelectedNode.Tag).AppearOffline = true;
-            treeViewFavoriteList.SelectedNode.NodeFont = USER_NODE_FONT_BANNED;
+            TreeNode selectedNode = treeViewFavoriteList.SelectedNode;
+
+            ((Contact)selectedNode.Tag).AppearOffline = true;
+            selectedNode.NodeFont = USER_NODE_FONT_BANNED;
+
         }
 
         private void unblockMenuItem_Click(object sender, EventArgs e)
         {
-            ((Contact)treeViewFavoriteList.SelectedNode.Tag).AppearOffline = false;
-            treeViewFavoriteList.SelectedNode.NodeFont = USER_NODE_FONT;
+            TreeNode selectedNode = treeViewFavoriteList.SelectedNode;
+
+            ((Contact)selectedNode.Tag).AppearOffline = false;
+            selectedNode.NodeFont = USER_NODE_FONT_BANNED;
         }
 
         private void deleteMenuItem_Click(object sender, EventArgs e)
