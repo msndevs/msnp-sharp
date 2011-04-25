@@ -21,6 +21,7 @@ namespace MSNPSharpClient
     using MSNPSharp.Core;
     using MSNPSharp.P2P;
     using MSNPSharp.MSNWS.MSNABSharingService;
+    using MSNPSharp.IO;
 
     /// <summary>
     /// MSNPSharp Client example.
@@ -165,7 +166,7 @@ namespace MSNPSharpClient
             messenger.OIMService.OIMSendCompleted += new EventHandler<OIMSendCompletedEventArgs>(OIMService_OIMSendCompleted); 
 
             #endregion
-            
+            // This event will be triggered after finished getting your contacts recent updates.
             messenger.WhatsUpService.GetWhatsUpCompleted += new EventHandler<GetWhatsUpCompletedEventArgs>(WhatsUpService_GetWhatsUpCompleted);
 
             #region Webservice Error handler
@@ -462,9 +463,10 @@ namespace MSNPSharpClient
                         // Calling this LoadAsync in Mono sometimes will cause ThreadInterupt exception,
                         // which might be a bug of Mono's implementation.
                         // pbNewsPicture.LoadAsync(c.UserTileURL.AbsoluteUri);
-                        
-                        Thread httpRequestThread = new Thread(new ParameterizedThreadStart(SyncUserTile));
-                        httpRequestThread.Start(c.UserTileURL.AbsoluteUri);
+
+                        HttpDataDownloader.BeginDownload(c.UserTileURL.AbsoluteUri + "?t=" + System.Web.HttpUtility.UrlEncode(Messenger.StorageTicket), 
+                            new EventHandler<ObjectEventArgs>(SetUserTileToPictureBox), 
+                            Messenger.ConnectivitySettings.WebProxy);
                     }
                     else
                     {
@@ -476,56 +478,6 @@ namespace MSNPSharpClient
                 currentActivity++;
             else
                 currentActivity--;
-        }
-        
-        // We use this function to avoid using PictureBox.LoadAsync(string) when the application is running
-        // under Mono.
-        private void SyncUserTile(object param)
-        {
-            string usertileURL = param.ToString();
-            string storageTicket = "?t=" + System.Web.HttpUtility.UrlEncode(Messenger.StorageTicket);
-            
-            try
-            {
-                Uri uri = new Uri(usertileURL + storageTicket);
-
-                HttpWebRequest fwr = (HttpWebRequest)WebRequest.Create(uri);
-
-                // Don't override existing system wide proxy settings.
-                if (Messenger.ConnectivitySettings.WebProxy != null)
-                {
-                    fwr.Proxy = Messenger.ConnectivitySettings.WebProxy;
-                }
-                
-                fwr.Timeout = 10000;
-
-                fwr.BeginGetResponse(delegate(IAsyncResult result)
-                {
-                    try
-                    {
-                        Stream stream = ((WebRequest)result.AsyncState).EndGetResponse(result).GetResponseStream();
-                        MemoryStream ms = new MemoryStream();
-                        byte[] data = new byte[8192];
-                        int read;
-                        while ((read = stream.Read(data, 0, data.Length)) > 0)
-                        {
-                            ms.Write(data, 0, read);
-                        }
-                        stream.Close();
-                        SetUserTileToPictureBox(this, new ObjectEventArgs(ms.ToArray()));
-                        
-                    }
-                    catch (Exception ex)
-                    {
-                        Trace.WriteLine("Get user tile error: " + ex.Message);
-                    }
-
-                }, fwr);
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine("Get UserTile error: " + ex.Message);
-            }
         }
         
         private void SetUserTileToPictureBox(object sender, ObjectEventArgs e)
