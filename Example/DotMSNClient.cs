@@ -464,7 +464,7 @@ namespace MSNPSharpClient
                         // which might be a bug of Mono's implementation.
                         // pbNewsPicture.LoadAsync(c.UserTileURL.AbsoluteUri);
 
-                        HttpDataDownloader.BeginDownload(c.UserTileURL.AbsoluteUri + "?t=" + System.Web.HttpUtility.UrlEncode(Messenger.StorageTicket), 
+                        HttpAsyncDataDownloader.BeginDownload(c.UserTileURL.AbsoluteUri + "?t=" + System.Web.HttpUtility.UrlEncode(Messenger.StorageTicket), 
                             new EventHandler<ObjectEventArgs>(SetUserTileToPictureBox), 
                             Messenger.ConnectivitySettings.WebProxy);
                     }
