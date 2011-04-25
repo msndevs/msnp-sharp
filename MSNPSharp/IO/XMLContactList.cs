@@ -2343,11 +2343,7 @@ namespace MSNPSharp.IO
             switch (individualShellContact.contactInfo.SourceHandle.SourceID)
             {
                 case SourceId.FaceBook:
-                    Contact facebookGatewayContact = NSMessageHandler.ContactList.GetContactWithCreate(
-                                            RemoteNetworkGateways.FaceBookGatewayAccount,
-                                            IMAddressInfoType.RemoteNetwork);
-                    Contact facebookContact = facebookGatewayContact.ContactList.CreateShellContact(individualShellContact.contactInfo.SourceHandle.ObjectID, IMAddressInfoType.Connect);
-                    facebookContact.SetName(individualShellContact.contactInfo.firstName + " " + individualShellContact.contactInfo.lastName);
+                    Contact facebookContact = CreateFaceBookContactFromShellContact(individualShellContact);
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, facebookContact + ":" + facebookContact.Name + " added to connect contacts", GetType().Name);
 
                     return facebookContact;
@@ -2358,6 +2354,70 @@ namespace MSNPSharp.IO
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Use to create a facebook contact from an individual <see cref="ShellContact"/>.
+        /// </summary>
+        /// <param name="contactType"></param>
+        /// <returns></returns>
+        private Contact CreateFaceBookContactFromShellContact(ContactType individualShellContact)
+        {
+            return CreateFaceBookContactFromShellContact(null, individualShellContact, true);
+        }
+
+        private Contact CreateFaceBookContactFromShellContact(Contact coreContact, ContactType shellContact, bool isIndividualShellContact)
+        {
+            Contact facebookGatewayContact = NSMessageHandler.ContactList.GetContactWithCreate(
+                                            RemoteNetworkGateways.FaceBookGatewayAccount,
+                                            IMAddressInfoType.RemoteNetwork);
+            Contact facebookContact = null;
+
+            if (shellContact.contactInfo.NetworkInfoList != null)
+            {
+                foreach (NetworkInfoType networkInfo in shellContact.contactInfo.NetworkInfoList)
+                {
+                    if (!String.IsNullOrEmpty(networkInfo.DomainTag) &&
+                        networkInfo.DomainTag != WebServiceConstants.NullDomainTag &&
+                        networkInfo.SourceId == SourceId.FaceBook &&
+                        networkInfo.DomainId == DomainIds.FaceBookDomain)
+                    {
+
+                        if (networkInfo.DomainId == DomainIds.FaceBookDomain)
+                        {
+
+                            facebookContact = facebookGatewayContact.ContactList.CreateShellContact(
+                                coreContact, IMAddressInfoType.Connect,
+                                networkInfo.DomainTag);
+                            facebookContact.UserTileURL = new Uri(networkInfo.UserTileURL);
+
+                            return facebookContact;
+                        }
+
+                    }
+                }
+            }
+            else
+            {
+                facebookContact = facebookGatewayContact.ContactList.CreateShellContact(coreContact, IMAddressInfoType.Connect, shellContact.contactInfo.SourceHandle.ObjectID);
+                if (shellContact.contactInfo.URLs != null)
+                {
+                    foreach (ContactURLType contactURL in shellContact.contactInfo.URLs)
+                    {
+                        if (contactURL.URLType == URLType.Other && contactURL.URLName == URLName.UserTileXL)
+                        {
+                            facebookContact.UserTileURL = new Uri(contactURL.URL);
+                        }
+                    }
+                }
+            }
+
+            if (isIndividualShellContact)
+            {
+                facebookContact.SetName(shellContact.contactInfo.firstName + " " + shellContact.contactInfo.lastName);
+            }
+
+            return facebookContact;
         }
         
         /// <summary>
@@ -2421,13 +2481,7 @@ namespace MSNPSharp.IO
                                 case SourceId.FaceBook:
                                     if (networkInfo.DomainId == DomainIds.FaceBookDomain)
                                     {
-                                        Contact facebookGatewayContact = NSMessageHandler.ContactList.GetContactWithCreate(
-                                            RemoteNetworkGateways.FaceBookGatewayAccount, 
-                                            IMAddressInfoType.RemoteNetwork);
-
-                                        Contact facebookContact = facebookGatewayContact.ContactList.CreateShellContact(
-                                            messengerContact, IMAddressInfoType.Connect, 
-                                            networkInfo.DomainTag);
+                                        Contact facebookContact = CreateFaceBookContactFromShellContact(messengerContact, contactType, false);
                                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, facebookContact + ":" + facebookContact.Name + " added to connect contacts", GetType().Name);
 
                                         return facebookContact;
@@ -2459,8 +2513,7 @@ namespace MSNPSharp.IO
                             // Facebook contacts.
                             if (shellContact.contactInfo.SourceHandle.SourceID == sourceID)
                             {
-                                Contact facebookGatewayContact = NSMessageHandler.ContactList.GetContactWithCreate(RemoteNetworkGateways.FaceBookGatewayAccount, IMAddressInfoType.RemoteNetwork);
-                                Contact facebookContact = facebookGatewayContact.ContactList.CreateShellContact(messengerContact, IMAddressInfoType.Connect, shellContact.contactInfo.SourceHandle.ObjectID);
+                                Contact facebookContact = CreateFaceBookContactFromShellContact(messengerContact, shellContact, false);
                                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, facebookContact + ":" + facebookContact.Name + " added to connect contacts", GetType().Name);
 
                                 return facebookContact;

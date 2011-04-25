@@ -395,6 +395,17 @@ namespace MSNPSharp
         public const string LinkedIn = "LI";
     }
 
+    public static class URLType
+    {
+        public const string Other = "Other";
+    }
+
+    public static class URLName
+    {
+        public const string UserTileL = "UserTile:L";
+        public const string UserTileXL = "UserTile:XL";
+    }
+
     /// <summary>
     /// The addressbook relationship types.
     /// </summary>
