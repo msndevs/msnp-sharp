@@ -1081,7 +1081,7 @@ namespace MSNPSharp
         /// <summary>
         /// The msn lists this contact has.
         /// </summary>
-        public RoleLists Lists
+        public virtual RoleLists Lists
         {
             get
             {
@@ -1110,7 +1110,7 @@ namespace MSNPSharp
             NotifyManager();
         }
 
-        internal void SetList(RoleLists msnLists)
+        internal virtual void SetList(RoleLists msnLists)
         {
             lists = msnLists;
             NotifyManager();
@@ -1629,7 +1629,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="list"></param>
         /// <remarks>Since AllowList and BlockList are mutally exclusive, adding a member to AllowList will lead to the remove of BlockList, revese is as the same.</remarks>
-        internal void AddToList(RoleLists list)
+        internal virtual void AddToList(RoleLists list)
         {
             if ((lists & list) == RoleLists.None)
             {

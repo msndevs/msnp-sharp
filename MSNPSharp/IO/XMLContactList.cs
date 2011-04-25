@@ -2346,10 +2346,8 @@ namespace MSNPSharp.IO
                     Contact facebookGatewayContact = NSMessageHandler.ContactList.GetContactWithCreate(
                                             RemoteNetworkGateways.FaceBookGatewayAccount,
                                             IMAddressInfoType.RemoteNetwork);
-                    Contact facebookContact = facebookGatewayContact.ContactList.GetContactWithCreate(individualShellContact.contactInfo.SourceHandle.ObjectID, IMAddressInfoType.Connect);
+                    Contact facebookContact = facebookGatewayContact.ContactList.CreateShellContact(individualShellContact.contactInfo.SourceHandle.ObjectID, IMAddressInfoType.Connect);
                     facebookContact.SetName(individualShellContact.contactInfo.firstName + " " + individualShellContact.contactInfo.lastName);
-                    facebookContact.SetList(RoleLists.Forward);
-
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, facebookContact + ":" + facebookContact.Name + " added to connect contacts", GetType().Name);
 
                     return facebookContact;

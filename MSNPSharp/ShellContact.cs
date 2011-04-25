@@ -1,9 +1,43 @@
+#region
+/*
+Copyright (c) 2002-2011, Bas Geertsema, Xih Solutions
+(http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice, Andy Phan.
+All rights reserved. http://code.google.com/p/msnp-sharp/
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+* Neither the names of Bas Geertsema or Xih Solutions nor the names of its
+  contributors may be used to endorse or promote products derived from this
+  software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+THE POSSIBILITY OF SUCH DAMAGE. 
+*/
+#endregion
+
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace MSNPSharp
 {
+    using MSNPSharp.MSNWS.MSNABSharingService;
+
     public class ShellContact : Contact
     {
         private Contact coreContact = null;
@@ -14,43 +48,47 @@ namespace MSNPSharp
             private set { coreContact = value; }
         }
 
+        public override RoleLists Lists
+        {
+            get
+            {
+                return base.Lists;
+            }
+
+            protected internal set
+            {
+                if (hasBlockList(value))
+                {
+                    throw new MSNPSharpException("Cannot add a ShellContact to Hide/Block list.");
+                }
+
+                base.Lists = value;
+            }
+        }
+
         public ShellContact(Contact coreContact, IMAddressInfoType type, string objectID)
             : base(coreContact.AddressBookId, objectID, type, 0, coreContact.NSMessageHandler)
         {
             CoreContact = coreContact;
             SetName(CoreContact.Name);
             SetNickName(CoreContact.NickName);
-            SetList(CoreContact.Lists);
-            SetStatus(CoreContact.Status);
+            SetList(RoleLists.Forward);
             PersonalMessage = CoreContact.PersonalMessage;
 
             CoreContact.ScreenNameChanged += new EventHandler<EventArgs>(CoreContact_ScreenNameChanged);
-            CoreContact.StatusChanged += new EventHandler<StatusChangedEventArgs>(CoreContact_StatusChanged);
             CoreContact.PersonalMessageChanged += new EventHandler<EventArgs>(CoreContact_PersonalMessageChanged);
-            CoreContact.ContactBlocked += new EventHandler<ContactBlockedStatusChangedEventArgs>(CoreContact_ContactBlocked);
-            CoreContact.ContactUnBlocked += new EventHandler<ContactBlockedStatusChangedEventArgs>(CoreContact_ContactUnBlocked);
         }
 
-        void CoreContact_ContactUnBlocked(object sender, EventArgs e)
+        public ShellContact(Guid addressBookID, string objectID, IMAddressInfoType type, NSMessageHandler handler)
+            : base(addressBookID, objectID, type, 0, handler)
         {
-            RemoveFromList(RoleLists.Hide);
-        }
-
-        void CoreContact_ContactBlocked(object sender, EventArgs e)
-        {
-            Lists |= RoleLists.Hide;
-            OnContactBlocked();
+            SetList(RoleLists.Forward);
         }
 
         void CoreContact_PersonalMessageChanged(object sender, EventArgs e)
         {
             PersonalMessage = CoreContact.PersonalMessage;
             OnPersonalMessageChanged(PersonalMessage);
-        }
-
-        void CoreContact_StatusChanged(object sender, StatusChangedEventArgs e)
-        {
-            SetStatus(CoreContact.Status);
         }
 
         void CoreContact_ScreenNameChanged(object sender, EventArgs e)
@@ -60,22 +98,38 @@ namespace MSNPSharp
             OnScreenNameChanged(oldName);
         }
 
-        protected override void OnContactOffline(StatusChangedEventArgs e)
+        internal override void AddToList(RoleLists list)
         {
-            base.OnContactOffline(e);
-            NSMessageHandler.OnContactOffline(new ContactStatusChangedEventArgs(this, e.OldStatus, e.NewStatus));
+            if (hasBlockList(list))
+            {
+                throw new MSNPSharpException("Cannot add a ShellContact to Hide/Block list.");
+            }
+
+            base.AddToList(list);
         }
 
-        protected override void OnContactOnline(StatusChangedEventArgs e)
+        internal override void SetList(RoleLists msnLists)
         {
-            base.OnContactOnline(e);
-            NSMessageHandler.OnContactOnline(new ContactStatusChangedEventArgs(this, e.OldStatus, e.NewStatus));
+            if (hasBlockList(msnLists))
+            {
+                throw new MSNPSharpException("Cannot add a ShellContact to Hide/Block list.");
+            }
+
+            base.SetList(msnLists);
         }
-        protected override void  OnStatusChanged(StatusChangedEventArgs e)
+
+        private bool hasBlockList(RoleLists list)
         {
-            base.OnStatusChanged(e);
-            NSMessageHandler.OnContactStatusChanged(new ContactStatusChangedEventArgs(this, e.OldStatus, e.NewStatus));
+            if ((list & RoleLists.Hide) != RoleLists.None ||
+                (list & RoleLists.Block) != RoleLists.None)
+            {
+                return true;
+            }
+
+            return false;
         }
+
+    
 
     }
 }

@@ -696,7 +696,12 @@ namespace MSNPSharp
         /// <returns></returns>
         internal ShellContact CreateShellContact(Contact coreContact, IMAddressInfoType type, string objectID)
         {
-            ShellContact shellContact = new ShellContact(coreContact, type, objectID);
+            ShellContact shellContact = null;
+            if(coreContact != null)
+                shellContact = new ShellContact(coreContact, type, objectID);
+            else
+                shellContact = new ShellContact(AddressBookId, objectID, type, nsMessageHandler);
+
             string hash = Contact.MakeHash(shellContact.Account, shellContact.ClientType);
 
             if (type == IMAddressInfoType.Connect)
@@ -709,6 +714,11 @@ namespace MSNPSharp
             }
 
             return (ShellContact)GetContact(shellContact.Account, shellContact.ClientType);
+        }
+
+        internal ShellContact CreateShellContact(string objectID, IMAddressInfoType type)
+        {
+            return CreateShellContact(null, type, objectID);
         }
 
         /// <summary>
