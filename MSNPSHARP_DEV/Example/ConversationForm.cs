@@ -16,6 +16,7 @@ namespace MSNPSharpClient
     using MSNPSharp.Apps;
     using MSNPSharp.P2P;
     using MSNPSharp.Core;
+    using MSNPSharp.IO;
 
     /// <summary>
     /// Summary description for ConversationForm.
@@ -768,6 +769,26 @@ namespace MSNPSharpClient
             inputTextBox.Font = messageFont;
         }
 
+        private void SetUserTileToPictureBox(object sender, ObjectEventArgs e)
+        {
+            if (displayUser.InvokeRequired)
+            {
+                displayUser.Invoke(new EventHandler<ObjectEventArgs>(SetUserTileToPictureBox), new object[] { sender, e });
+            }
+            else
+            {
+                try
+                {
+                    Image img = Image.FromStream(new MemoryStream((byte[])e.Object));
+                    displayUser.Image = img;
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine("Get UserTile error: " + ex.Message);
+                }
+            }
+        }
+
         private void ConversationForm_Load(object sender, EventArgs e)
         {
             Text = "Conversation with " + remoteContact.Account + " - MSNPSharp";
@@ -887,6 +908,11 @@ namespace MSNPSharpClient
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message + "\r\n StackTrace: " + ex.StackTrace);
                     }
                 }
+            }
+
+            if (remoteContact.UserTileURL != null && remoteContact.ClientType != IMAddressInfoType.WindowsLive) // For WLM display image, shouldn't overwrite with user tile.
+            {
+                HttpAsyncDataDownloader.BeginDownload(remoteContact.UserTileURL.AbsoluteUri, new EventHandler<ObjectEventArgs>(SetUserTileToPictureBox), _messenger.ConnectivitySettings.WebProxy);
             }
         }
 

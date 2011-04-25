@@ -77,6 +77,11 @@ namespace MSNPSharp
 
         #region Events
         /// <summary>
+        /// Fiired after a contact has been blocked/unblocked.
+        /// </summary>
+        public event EventHandler<ContactBlockedStatusChangedEventArgs> ContactBlockedStatusChanged;
+
+        /// <summary>
         /// Occurs when a contact is added to any list (including reverse list)
         /// </summary>
         public event EventHandler<ListMutateEventArgs> ContactAdded;
@@ -168,6 +173,16 @@ namespace MSNPSharp
         {
             if (ReverseAdded != null)
                 ReverseAdded(this, e);
+        }
+
+        /// <summary>
+        /// Fire <see cref="ContactBlockedStatusChanged"/> event.
+        /// </summary>
+        /// <param name="e"></param>
+        internal void OnContactBlockedStatusChanged(ContactBlockedStatusChangedEventArgs e)
+        {
+            if (ContactBlockedStatusChanged != null)
+                ContactBlockedStatusChanged(this, e);
         }
 
         /// <summary>
@@ -888,6 +903,10 @@ namespace MSNPSharp
 
                     request.filterOptions.DeltasOnly = deltasOnly;
                     request.filterOptions.ContactFilter.IncludeHiddenContacts = true;
+
+                    // Without these two lines we cannot get the Connect contacts correctly.
+                    request.filterOptions.ContactFilter.IncludeShellContactsSpecified = true;
+                    request.filterOptions.ContactFilter.IncludeShellContacts = true;
                 }
                 else
                 {

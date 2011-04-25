@@ -21,6 +21,7 @@ namespace MSNPSharpClient
     using MSNPSharp.Core;
     using MSNPSharp.P2P;
     using MSNPSharp.MSNWS.MSNABSharingService;
+    using MSNPSharp.IO;
 
     /// <summary>
     /// MSNPSharp Client example.
@@ -122,6 +123,7 @@ namespace MSNPSharpClient
             messenger.Nameserver.ContactOnline += new EventHandler<ContactStatusChangedEventArgs>(Nameserver_ContactOnline);
             messenger.Nameserver.ContactOffline += new EventHandler<ContactStatusChangedEventArgs>(Nameserver_ContactOffline);
 
+            messenger.ContactService.ContactBlockedStatusChanged += new EventHandler<ContactBlockedStatusChangedEventArgs>(Nameserver_ContactBlockedStatusChanged);
 
             // SynchronizationCompleted will fired after the updated operation for your contact list has completed.
             messenger.ContactService.SynchronizationCompleted += new EventHandler<EventArgs>(ContactService_SynchronizationCompleted);
@@ -164,7 +166,7 @@ namespace MSNPSharpClient
             messenger.OIMService.OIMSendCompleted += new EventHandler<OIMSendCompletedEventArgs>(OIMService_OIMSendCompleted); 
 
             #endregion
-            
+            // This event will be triggered after finished getting your contacts recent updates.
             messenger.WhatsUpService.GetWhatsUpCompleted += new EventHandler<GetWhatsUpCompletedEventArgs>(WhatsUpService_GetWhatsUpCompleted);
 
             #region Webservice Error handler
@@ -178,7 +180,7 @@ namespace MSNPSharpClient
 
             #endregion
         }
-        
+
 
         public static class ImageIndexes
         {
@@ -461,9 +463,10 @@ namespace MSNPSharpClient
                         // Calling this LoadAsync in Mono sometimes will cause ThreadInterupt exception,
                         // which might be a bug of Mono's implementation.
                         // pbNewsPicture.LoadAsync(c.UserTileURL.AbsoluteUri);
-                        
-                        Thread httpRequestThread = new Thread(new ParameterizedThreadStart(SyncUserTile));
-                        httpRequestThread.Start(c.UserTileURL.AbsoluteUri);
+
+                        HttpAsyncDataDownloader.BeginDownload(c.UserTileURL.AbsoluteUri + "?t=" + System.Web.HttpUtility.UrlEncode(Messenger.StorageTicket), 
+                            new EventHandler<ObjectEventArgs>(SetUserTileToPictureBox), 
+                            Messenger.ConnectivitySettings.WebProxy);
                     }
                     else
                     {
@@ -475,56 +478,6 @@ namespace MSNPSharpClient
                 currentActivity++;
             else
                 currentActivity--;
-        }
-        
-        // We use this function to avoid using PictureBox.LoadAsync(string) when the application is running
-        // under Mono.
-        private void SyncUserTile(object param)
-        {
-            string usertileURL = param.ToString();
-            string storageTicket = "?t=" + System.Web.HttpUtility.UrlEncode(Messenger.StorageTicket);
-            
-            try
-            {
-                Uri uri = new Uri(usertileURL + storageTicket);
-
-                HttpWebRequest fwr = (HttpWebRequest)WebRequest.Create(uri);
-
-                // Don't override existing system wide proxy settings.
-                if (Messenger.ConnectivitySettings.WebProxy != null)
-                {
-                    fwr.Proxy = Messenger.ConnectivitySettings.WebProxy;
-                }
-                
-                fwr.Timeout = 10000;
-
-                fwr.BeginGetResponse(delegate(IAsyncResult result)
-                {
-                    try
-                    {
-                        Stream stream = ((WebRequest)result.AsyncState).EndGetResponse(result).GetResponseStream();
-                        MemoryStream ms = new MemoryStream();
-                        byte[] data = new byte[8192];
-                        int read;
-                        while ((read = stream.Read(data, 0, data.Length)) > 0)
-                        {
-                            ms.Write(data, 0, read);
-                        }
-                        stream.Close();
-                        SetUserTileToPictureBox(this, new ObjectEventArgs(ms.ToArray()));
-                        
-                    }
-                    catch (Exception ex)
-                    {
-                        Trace.WriteLine("Get user tile error: " + ex.Message);
-                    }
-
-                }, fwr);
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine("Get UserTile error: " + ex.Message);
-            }
         }
         
         private void SetUserTileToPictureBox(object sender, ObjectEventArgs e)
@@ -667,9 +620,21 @@ namespace MSNPSharpClient
 
         }
 
+        void Nameserver_ContactBlockedStatusChanged(object sender, ContactBlockedStatusChangedEventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler<ContactBlockedStatusChangedEventArgs>(Nameserver_ContactBlockedStatusChanged), new object[] { sender, e });
+            }
+            else
+            {
+                UpdateContactlist(sender, e);
+            }
+        }
+
         void Nameserver_ContactOnline(object sender, ContactStatusChangedEventArgs e)
         {
-            BeginInvoke(new EventHandler<ContactStatusChangedEventArgs>(ContactOnlineOffline), new object[] { sender, e });
+            Invoke(new EventHandler<ContactStatusChangedEventArgs>(ContactOnlineOffline), new object[] { sender, e });
         }
 
         void Nameserver_ContactOffline(object sender, ContactStatusChangedEventArgs e)
@@ -1570,14 +1535,19 @@ namespace MSNPSharpClient
 
         private void blockToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ((Contact)treeViewFavoriteList.SelectedNode.Tag).AppearOffline = true;
-            treeViewFavoriteList.SelectedNode.NodeFont = USER_NODE_FONT_BANNED;
+            TreeNode selectedNode = treeViewFavoriteList.SelectedNode;
+
+            ((Contact)selectedNode.Tag).AppearOffline = true;
+            selectedNode.NodeFont = USER_NODE_FONT_BANNED;
+
         }
 
         private void unblockMenuItem_Click(object sender, EventArgs e)
         {
-            ((Contact)treeViewFavoriteList.SelectedNode.Tag).AppearOffline = false;
-            treeViewFavoriteList.SelectedNode.NodeFont = USER_NODE_FONT;
+            TreeNode selectedNode = treeViewFavoriteList.SelectedNode;
+
+            ((Contact)selectedNode.Tag).AppearOffline = false;
+            selectedNode.NodeFont = USER_NODE_FONT_BANNED;
         }
 
         private void deleteMenuItem_Click(object sender, EventArgs e)
@@ -2464,7 +2434,7 @@ namespace MSNPSharpClient
             if (circle != null)
             {
                 circle.AppearOnline = true;
-                circle.ContactUnBlocked += new EventHandler<EventArgs>(circle_ContactUnBlocked);
+                circle.ContactUnBlocked += new EventHandler<ContactBlockedStatusChangedEventArgs>(circle_ContactUnBlocked);
                 Trace.WriteLine("Circle unblocked: " + circle.ToString());
             }
         }

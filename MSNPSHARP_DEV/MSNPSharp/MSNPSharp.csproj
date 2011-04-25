@@ -64,6 +64,7 @@
     <Compile Include="Credentials.cs" />
     <Compile Include="Core\MimeDictionary.cs" />
     <Compile Include="DisplayImage.cs" />
+    <Compile Include="IO\HttpAsyncDataDownloader.cs" />
     <Compile Include="MSNObjectCatalog.cs" />
     <Compile Include="P2P\SDGBridge.cs" />
     <Compile Include="P2P\SLPHandler.cs" />
@@ -155,6 +156,7 @@
     <Compile Include="Services\SoapLogExtension.cs" />
     <Compile Include="Services\StorageServiceWrapper.cs" />
     <Compile Include="Services\WhatsUpServiceBindingWrapper.cs" />
+    <Compile Include="ShellContact.cs" />
     <Compile Include="SingleSignOn.cs" />
     <Compile Include="Core\SocketMessageProcessor.cs" />
     <Compile Include="Services\StorageService.cs" />

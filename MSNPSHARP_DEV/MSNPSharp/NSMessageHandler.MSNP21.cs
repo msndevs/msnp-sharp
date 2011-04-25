@@ -106,7 +106,7 @@ namespace MSNPSharp
         public event EventHandler<CloseIMWindowEventArgs> RemoteEndPointCloseIMWindow;
 
         /// <summary>
-        /// Fires the <see cref="ContactStatusChanged"/> event.
+        /// Fire the <see cref="ContactStatusChanged"/> event.
         /// </summary>
         /// <param name="e"></param>
         protected internal virtual void OnContactStatusChanged(ContactStatusChangedEventArgs e)
@@ -116,7 +116,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Fires the <see cref="ContactOffline"/> event.
+        /// Fire the <see cref="ContactOffline"/> event.
         /// </summary>
         /// <param name="e"></param>
         protected internal virtual void OnContactOffline(ContactStatusChangedEventArgs e)
@@ -130,10 +130,10 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Fires the <see cref="ContactOnline"/> event.
+        /// Fire the <see cref="ContactOnline"/> event.
         /// </summary>
         /// <param name="e"></param>
-        protected virtual void OnContactOnline(ContactStatusChangedEventArgs e)
+        protected internal virtual void OnContactOnline(ContactStatusChangedEventArgs e)
         {
             if (ContactOnline != null)
                 ContactOnline(this, e);

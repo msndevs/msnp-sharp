@@ -239,6 +239,9 @@ namespace MSNPSharp.IO
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[Initialize Error]: update contact error.");
                     }
                 }
+                
+                // Get all remote network contacts
+                CreateContactsFromShellContact();
             }
 
             #endregion
@@ -994,27 +997,76 @@ namespace MSNPSharp.IO
 
         #region Addressbook
 
-        SerializableDictionary<string, ABFindContactsPagedResultTypeAB> abInfos = new SerializableDictionary<string, ABFindContactsPagedResultTypeAB>();
-        SerializableDictionary<string, string> myproperties = new SerializableDictionary<string, string>(0);
-        SerializableDictionary<Guid, GroupType> groups = new SerializableDictionary<Guid, GroupType>(0);
-        SerializableDictionary<string, SerializableDictionary<Guid, ContactType>> abcontacts = new SerializableDictionary<string, SerializableDictionary<Guid, ContactType>>(0);
+        private SerializableDictionary<string, ABFindContactsPagedResultTypeAB> abInfos = new SerializableDictionary<string, ABFindContactsPagedResultTypeAB>();
+        private SerializableDictionary<string, string> myproperties = new SerializableDictionary<string, string>(0);
+        private SerializableDictionary<Guid, GroupType> groups = new SerializableDictionary<Guid, GroupType>(0);
+        private SerializableDictionary<string, SerializableDictionary<Guid, ContactType>> abcontacts = new SerializableDictionary<string, SerializableDictionary<Guid, ContactType>>(0);
 
-        SerializableDictionary<string, CircleInverseInfoType> circleResults = new SerializableDictionary<string, CircleInverseInfoType>(0);
-        SerializableDictionary<long, string> wlConnections = new SerializableDictionary<long, string>(0);
+        private SerializableDictionary<string, CircleInverseInfoType> circleResults = new SerializableDictionary<string, CircleInverseInfoType>(0);
+        private SerializableDictionary<long, string> wlConnections = new SerializableDictionary<long, string>(0);
 
-        SerializableDictionary<string, ContactType> hiddenRepresentatives = new SerializableDictionary<string, ContactType>(0);
-
-        [NonSerialized]
-        Dictionary<long, ContactType> contactTable = new Dictionary<long, ContactType>();
+        private SerializableDictionary<string, ContactType> hiddenRepresentatives = new SerializableDictionary<string, ContactType>(0);
 
         [NonSerialized]
-        Dictionary<string, long> wlInverseConnections = new Dictionary<string, long>();
+        private Dictionary<long, ContactType> contactTable = new Dictionary<long, ContactType>();
 
         [NonSerialized]
-        Dictionary<Guid, Contact> pendingAcceptionCircleList = new Dictionary<Guid, Contact>();
+        private Dictionary<string, long> wlInverseConnections = new Dictionary<string, long>();
 
         [NonSerialized]
-        Dictionary<Guid, string> pendingCreateCircleList = new Dictionary<Guid, string>();
+        private Dictionary<Guid, Contact> pendingAcceptionCircleList = new Dictionary<Guid, Contact>();
+
+        [NonSerialized]
+        private Dictionary<Guid, string> pendingCreateCircleList = new Dictionary<Guid, string>();
+        
+        [NonSerialized]
+        private Dictionary<Guid, KeyValuePair<Contact, ContactType>> messengerContactLink = new Dictionary<Guid, KeyValuePair<Contact, ContactType>>();
+        
+        [NonSerialized]
+        private Dictionary<Guid, List<ContactType>> shellContactLink = new Dictionary<Guid, List<ContactType>>();
+
+        [NonSerialized]
+        private List<ContactType> individualShellContacts = new List<ContactType>(0);
+
+        /// <summary>
+        /// These contacts are pure shell contacts, they don't have windows live account.
+        /// Such an example is the facebook contact which imported to your buddy list but
+        /// the owner doesn't have a WLM account.
+        /// </summary>
+        internal List<ContactType> IndividualShellContacts
+        {
+            get 
+            { 
+                return individualShellContacts; 
+            }
+        }
+
+        /// <summary>
+        /// The messenger contact which MIGHT have shell contact connected to it.
+        /// </summary>
+        private Dictionary<Guid, KeyValuePair<Contact, ContactType>> MessengerContactLink
+        {
+            get
+            {
+                return messengerContactLink;
+            }
+        }
+        
+        /// <summary>
+        /// These contacts are "Shells" of their corresponding messenger contact but in different network.
+        /// For example, a user have both messenger and facebook account, then on his/her friend's contact list,
+        /// that user's facebook contact is a shell contact of its messenger contact. The stupid M$ Windows Live team 
+        /// finally realized that they cannot manage the contacts only by account and network type, they need a 
+        /// foreign key instead. They should do this ten years ago and the ContactInfo data structure won't be 
+        /// this ugly now.
+        /// </summary>
+        private Dictionary<Guid, List<ContactType>> ShellContactLink
+        {
+            get
+            {
+                return shellContactLink;
+            }
+        }
 
         /// <summary>
         /// Circles created by the library and waiting server's confirm.
@@ -1663,6 +1715,7 @@ namespace MSNPSharp.IO
 
                     if (null != forwardList.Contacts)
                     {
+                        #region Update the messenger contacts.
                         foreach (ContactType contactType in forwardList.Contacts)
                         {
                             if (null != contactType.contactInfo)
@@ -1786,6 +1839,14 @@ namespace MSNPSharp.IO
                                 }
                             }
                         }
+                        #endregion
+                        
+                        
+                        #region
+                        CreateContactsFromShellContact();
+                        
+                        #endregion
+                        
                     }
 
                     if (forwardList.Ab != null)
@@ -2230,30 +2291,244 @@ namespace MSNPSharp.IO
             return null;
         }
 
-        private Contact UpdateConnectContact(ContactType contactType, NetworkInfoType networkInfo)
+        private void CreateContactsFromShellContact()
         {
-            if (!String.IsNullOrEmpty(networkInfo.DomainTag) &&
-                    networkInfo.DomainTag != WebServiceConstants.NullDomainTag &&
-                    networkInfo.SourceId == SourceId.FaceBook &&
-                    networkInfo.DomainId == DomainIds.FaceBookDomain)
+            lock (MessengerContactLink)
             {
-                Contact connectGateway = NSMessageHandler.ContactList.GetContact(RemoteNetworkGateways.FaceBookGatewayAccount, IMAddressInfoType.RemoteNetwork);
-                if (connectGateway == null)
+                foreach (Guid persionID in MessengerContactLink.Keys)
                 {
-                    connectGateway = CreateGatewayContact(networkInfo);
+                    CreateContactFromLinkedShellContact(persionID, SourceId.FaceBook);
+                    CreateContactFromLinkedShellContact(persionID, SourceId.LinkedIn);
+                    CreateContactFromLinkedShellContact(persionID, SourceId.MySpace);
                 }
-
-                // For a connect contact, the domain tag is the account.
-                Contact contact = connectGateway.ContactList.GetContactWithCreate(networkInfo.DomainTag, IMAddressInfoType.Connect);
-                contact.SetName(networkInfo.DisplayName);
-
-                contact.Lists |= RoleLists.Forward;
-
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, contact + ":" + contact.Name + " added to connect contacts", GetType().Name);
-
-                return contact;
             }
 
+            lock (IndividualShellContacts)
+            {
+                foreach(ContactType individualShellContact in IndividualShellContacts)
+                {
+                    CreateContactFromIndividualShellContact(individualShellContact);
+                }
+            }
+        }
+        
+        private void CreateContactsFromLinkedShellContact(ContactType contactType)
+        {
+            if(contactType.contactInfo.LinkInfo != null)
+            {
+                Guid persionID = new Guid(contactType.contactInfo.LinkInfo.PersonID);
+                
+                CreateContactFromLinkedShellContact(persionID, SourceId.FaceBook);
+                CreateContactFromLinkedShellContact(persionID, SourceId.LinkedIn);
+                CreateContactFromLinkedShellContact(persionID, SourceId.MySpace);
+            }
+        }
+
+        private Contact CreateContactFromIndividualShellContact(ContactType individualShellContact)
+        {
+            if (individualShellContact.contactInfo == null)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                            "Create Contact from ShellContact error. Try to create shell contact from individualShellContact, but contactInfo is null.");
+                return null;
+            }
+
+            if (individualShellContact.contactInfo.SourceHandle == null)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                            "Create Contact from ShellContact error. Try to create shell contact from individualShellContact, but individualShellContact.contactInfo.SourceHandle is null.");
+                return null;
+            }
+
+            switch (individualShellContact.contactInfo.SourceHandle.SourceID)
+            {
+                case SourceId.FaceBook:
+                    Contact facebookContact = CreateFaceBookContactFromShellContact(individualShellContact);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, facebookContact + ":" + facebookContact.Name + " added to connect contacts", GetType().Name);
+
+                    return facebookContact;
+                case SourceId.LinkedIn:
+                    break;
+                case SourceId.MySpace:
+                    break;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Use to create a facebook contact from an individual <see cref="ShellContact"/>.
+        /// </summary>
+        /// <param name="individualShellContact"></param>
+        /// <returns></returns>
+        private Contact CreateFaceBookContactFromShellContact(ContactType individualShellContact)
+        {
+            return CreateFaceBookContactFromShellContact(null, individualShellContact, true);
+        }
+
+        private Contact CreateFaceBookContactFromShellContact(Contact coreContact, ContactType shellContact, bool isIndividualShellContact)
+        {
+            Contact facebookGatewayContact = NSMessageHandler.ContactList.GetContactWithCreate(
+                                            RemoteNetworkGateways.FaceBookGatewayAccount,
+                                            IMAddressInfoType.RemoteNetwork);
+            Contact facebookContact = null;
+
+            if (shellContact.contactInfo.NetworkInfoList != null)
+            {
+                foreach (NetworkInfoType networkInfo in shellContact.contactInfo.NetworkInfoList)
+                {
+                    if (!String.IsNullOrEmpty(networkInfo.DomainTag) &&
+                        networkInfo.DomainTag != WebServiceConstants.NullDomainTag &&
+                        networkInfo.SourceId == SourceId.FaceBook &&
+                        networkInfo.DomainId == DomainIds.FaceBookDomain)
+                    {
+
+                        if (networkInfo.DomainId == DomainIds.FaceBookDomain)
+                        {
+
+                            facebookContact = facebookGatewayContact.ContactList.CreateShellContact(
+                                coreContact, IMAddressInfoType.Connect,
+                                networkInfo.DomainTag);
+                            facebookContact.UserTileURL = new Uri(networkInfo.UserTileURL);
+
+                            return facebookContact;
+                        }
+
+                    }
+                }
+            }
+            else
+            {
+                facebookContact = facebookGatewayContact.ContactList.CreateShellContact(coreContact, IMAddressInfoType.Connect, shellContact.contactInfo.SourceHandle.ObjectID);
+                if (shellContact.contactInfo.URLs != null)
+                {
+                    foreach (ContactURLType contactURL in shellContact.contactInfo.URLs)
+                    {
+                        if (contactURL.URLType == URLType.Other && contactURL.URLName == URLName.UserTileXL)
+                        {
+                            facebookContact.UserTileURL = new Uri(contactURL.URL);
+                        }
+                    }
+                }
+            }
+
+            if (isIndividualShellContact)
+            {
+                facebookContact.SetName(shellContact.contactInfo.firstName + " " + shellContact.contactInfo.lastName);
+            }
+
+            return facebookContact;
+        }
+        
+        /// <summary>
+        /// Convert all shell contacts to their corresponding contacts in different networks. 
+        /// </summary>
+        /// <param name="personID">
+        /// A <see cref="Guid"/>
+        /// </param>
+        /// <param name="sourceID">
+        /// The sring of network gateway.
+        /// </param>
+        /// <returns>
+        /// A <see cref="Contact"/>
+        /// </returns>
+        private Contact CreateContactFromLinkedShellContact(Guid personID, string sourceID)
+        {
+
+            if(!MessengerContactLink.ContainsKey(personID))
+            {
+                return null;
+            }
+
+            Contact messengerContact = MessengerContactLink[personID].Key;
+
+            if(messengerContact == null)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Create Contact from ShellContact error, Messenger Contact is null.");
+                return null;
+            }
+
+            lock (ShellContactLink)
+            {
+                #region Create From NetworkInfoList
+
+                if (!ShellContactLink.ContainsKey(personID))
+                {
+                    //That means this contact links to itself, all info is in NetworkInfoList. What a crappy design!
+                    ContactType contactType = MessengerContactLink[personID].Value;
+                    if (contactType.contactInfo == null)
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                            "Create Contact from ShellContact error. Try to create shell contact from NetworkInfoList, but contactInfo is null.");
+                        return null;
+                    }
+
+                    if (contactType.contactInfo.NetworkInfoList == null)
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                            "Create Contact from ShellContact error. Try to create shell contact from NetworkInfoList, but NetworkInfoList is null.");
+                        return null;
+                    }
+
+                    foreach (NetworkInfoType networkInfo in contactType.contactInfo.NetworkInfoList)
+                    {
+                        if (!String.IsNullOrEmpty(networkInfo.DomainTag) &&
+                            networkInfo.DomainTag != WebServiceConstants.NullDomainTag &&
+                            networkInfo.SourceId == sourceID)
+                        {
+                            switch (sourceID)
+                            {
+                                case SourceId.FaceBook:
+                                    if (networkInfo.DomainId == DomainIds.FaceBookDomain)
+                                    {
+                                        Contact facebookContact = CreateFaceBookContactFromShellContact(messengerContact, contactType, false);
+                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, facebookContact + ":" + facebookContact.Name + " added to connect contacts", GetType().Name);
+
+                                        return facebookContact;
+                                    }
+                                    break;
+                                case SourceId.LinkedIn:
+                                    // LinkedIn contacts.
+                                    break;
+                                case SourceId.MySpace:
+                                    // MySpace contacts.
+                                    break;
+
+                            }
+
+                        }
+                    }
+
+                    return null; 
+                }
+
+                #endregion
+
+                List<ContactType> shellContacts = ShellContactLink[personID];
+                foreach (ContactType shellContact in shellContacts)
+                {
+                    switch (sourceID)
+                    {
+                        case SourceId.FaceBook:
+                            // Facebook contacts.
+                            if (shellContact.contactInfo.SourceHandle.SourceID == sourceID)
+                            {
+                                Contact facebookContact = CreateFaceBookContactFromShellContact(messengerContact, shellContact, false);
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, facebookContact + ":" + facebookContact.Name + " added to connect contacts", GetType().Name);
+
+                                return facebookContact;
+                            }
+                            break;
+                        case SourceId.LinkedIn:
+                            // LinkedIn contacts.
+                            break;
+                        case SourceId.MySpace:
+                            // MySpace contacts.
+                            break;
+                    }
+                }
+            }
+            
             return null;
         }
 
@@ -2277,12 +2552,43 @@ namespace MSNPSharp.IO
             string displayName = contactInfo.displayName;
             string nickName = GetContactNickName(contactType);
             Uri userTileURL = GetUserTileURLFromWindowsLiveNetworkInfo(contactType);
-            bool isMessengeruser = contactInfo.isMessengerUser;
+            bool isMessengerUser = contactInfo.isMessengerUser;
             string lowerId = abId.ToLowerInvariant();
             ReturnState returnValue = ReturnState.ProcessNextContact;
             ContactList contactList = null;
             bool isDefaultAddressBook = (lowerId == null || lowerId == WebServiceConstants.MessengerIndividualAddressBookId);
+            bool isHidden = contactType.contactInfo.IsHiddenSpecified ? contactType.contactInfo.IsHidden : false;
+            bool isShellContact = contactType.contactInfo.IsShellContactSpecified ? contactType.contactInfo.IsShellContact : false;
+            
+            
+            if(isShellContact)
+            {
+                if (contactInfo.LinkInfo != null)
+                {
+                    Guid persionID = new Guid(contactInfo.LinkInfo.PersonID);
+                    lock (ShellContactLink)
+                    {
+                        if (!ShellContactLink.ContainsKey(persionID))
+                        {
+                            ShellContactLink[persionID] = new List<ContactType>(0);
+                        }
 
+                        ShellContactLink[persionID].Add(contactType);
+                    }
+                    updatedContact = null;
+                    return ReturnState.ProcessNextContact;
+                }
+                else
+                {
+                    lock (IndividualShellContacts)
+                    {
+                        IndividualShellContacts.Add(contactType);
+                        updatedContact = null;
+                        return ReturnState.ProcessNextContact;
+                    }
+                }
+            }
+            
             if (contactInfo.emails != null && account == null && contactInfo != null)
             {
                 foreach (contactEmailType cet in contactInfo.emails)
@@ -2291,7 +2597,7 @@ namespace MSNPSharp.IO
                     {
                         type = (IMAddressInfoType)Enum.Parse(typeof(IMAddressInfoType), cet.Capability);
                         account = cet.email;
-                        isMessengeruser |= cet.isMessengerEnabled;
+                        isMessengerUser |= cet.isMessengerEnabled;
                         displayName = account;
                         break;
                     }
@@ -2306,7 +2612,7 @@ namespace MSNPSharp.IO
                     {
                         type = IMAddressInfoType.Telephone;
                         account = cpt.number;
-                        isMessengeruser |= cpt.isMessengerEnabled;
+                        isMessengerUser |= cpt.isMessengerEnabled;
                         displayName = account;
                         break;
                     }
@@ -2332,11 +2638,14 @@ namespace MSNPSharp.IO
                             return ReturnState.UpdateError;
                         }
 
-                        if (contactInfo.NetworkInfoList != null)
+                        if (contactInfo.LinkInfo != null && isMessengerUser)
                         {
-                            foreach (NetworkInfoType networkInfo in contactInfo.NetworkInfoList)
+                            lock (MessengerContactLink)
                             {
-                                UpdateConnectContact(contactType, networkInfo);
+                                // There might be shell contact connect with this contact.
+                                // Add it to link info.
+                                Guid persionID = new Guid(contactInfo.LinkInfo.PersonID);
+                                MessengerContactLink[persionID] = new KeyValuePair<Contact, ContactType>(contact, contactType);
                             }
                         }
                     }
@@ -2366,7 +2675,7 @@ namespace MSNPSharp.IO
                     contact.ContactType = contactInfo.contactType;
                     contact.SetHasSpace(contactInfo.hasSpace);
                     contact.SetComment(contactInfo.comment);
-                    contact.SetIsMessengerUser(isMessengeruser);
+                    contact.SetIsMessengerUser(isMessengerUser);
                     contact.SetMobileAccess(contactInfo.isMobileIMEnabled);
                     contact.UserTileURL = userTileURL;
                     SetContactPhones(contact, contactInfo);
@@ -2422,7 +2731,7 @@ namespace MSNPSharp.IO
                         needsDelete |= true;
                     }
 
-                    if (contactInfo.IsHiddenSpecified && contactInfo.IsHidden)
+                    if (isHidden && !isShellContact)
                     {
                         needsDelete |= true;
                     }
@@ -2608,9 +2917,7 @@ namespace MSNPSharp.IO
         /// <returns></returns>
         private string GetUserTileURLByDomainIdFromNetworkInfo(ContactType contact, int domainId)
         {
-            if (contact.contactInfo == null)
-                return string.Empty;
-            if (contact.contactInfo.NetworkInfoList == null)
+            if (contact.contactInfo == null || contact.contactInfo.NetworkInfoList == null)
                 return string.Empty;
 
             foreach (NetworkInfoType info in contact.contactInfo.NetworkInfoList)

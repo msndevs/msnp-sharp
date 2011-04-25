@@ -688,6 +688,40 @@ namespace MSNPSharp
         }
 
         /// <summary>
+        /// Create the shell contact
+        /// </summary>
+        /// <param name="coreContact"></param>
+        /// <param name="type"></param>
+        /// <param name="objectID">The Contact Account</param>
+        /// <returns></returns>
+        internal ShellContact CreateShellContact(Contact coreContact, IMAddressInfoType type, string objectID)
+        {
+            ShellContact shellContact = null;
+            if(coreContact != null)
+                shellContact = new ShellContact(coreContact, type, objectID);
+            else
+                shellContact = new ShellContact(AddressBookId, objectID, type, nsMessageHandler);
+
+            string hash = Contact.MakeHash(shellContact.Account, shellContact.ClientType);
+
+            if (type == IMAddressInfoType.Connect)
+                shellContact.Via = this.gateway; // sourceID
+
+            lock (SyncRoot)
+            {
+                base[type][hash] = shellContact;
+                base[IMAddressInfoType.None][hash] = shellContact;
+            }
+
+            return (ShellContact)GetContact(shellContact.Account, shellContact.ClientType);
+        }
+
+        internal ShellContact CreateShellContact(string objectID, IMAddressInfoType type)
+        {
+            return CreateShellContact(null, type, objectID);
+        }
+
+        /// <summary>
         /// Set the owner for default addressbook. This funcation can be only called once.
         /// </summary>
         /// <param name="owner"></param>
