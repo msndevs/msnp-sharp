@@ -67,7 +67,7 @@
     <Compile Include="Credentials.cs" />
     <Compile Include="Core\MimeDictionary.cs" />
     <Compile Include="DisplayImage.cs" />
-    <Compile Include="IO\HttpDataDownloader.cs" />
+    <Compile Include="IO\HttpAsyncDataDownloader.cs" />
     <Compile Include="MSNObjectCatalog.cs" />
     <Compile Include="P2P\SDGBridge.cs" />
     <Compile Include="P2P\SLPHandler.cs" />

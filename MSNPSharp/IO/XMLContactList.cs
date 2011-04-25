@@ -2359,7 +2359,7 @@ namespace MSNPSharp.IO
         /// <summary>
         /// Use to create a facebook contact from an individual <see cref="ShellContact"/>.
         /// </summary>
-        /// <param name="contactType"></param>
+        /// <param name="individualShellContact"></param>
         /// <returns></returns>
         private Contact CreateFaceBookContactFromShellContact(ContactType individualShellContact)
         {
