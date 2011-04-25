@@ -321,8 +321,8 @@ namespace MSNPSharp
 
         public event EventHandler<ContactGroupEventArgs> ContactGroupAdded;
         public event EventHandler<ContactGroupEventArgs> ContactGroupRemoved;
-        public event EventHandler<EventArgs> ContactBlocked;
-        public event EventHandler<EventArgs> ContactUnBlocked;
+        public event EventHandler<ContactBlockedStatusChangedEventArgs> ContactBlocked;
+        public event EventHandler<ContactBlockedStatusChangedEventArgs> ContactUnBlocked;
         public event EventHandler<StatusChangedEventArgs> ContactOnline;
         public event EventHandler<StatusChangedEventArgs> ContactOffline;
         public event EventHandler<StatusChangedEventArgs> StatusChanged;
@@ -998,9 +998,15 @@ namespace MSNPSharp
                 if (value != AppearOffline)
                 {
                     if (value)
+                    {
                         NSMessageHandler.ContactService.AppearOffline(this, null);
+                        OnContactBlocked();
+                    }
                     else
+                    {
                         NSMessageHandler.ContactService.AppearOnline(this, null);
+                        OnContactUnBlocked();
+                    }
                 }
             }
         }
@@ -1075,7 +1081,7 @@ namespace MSNPSharp
         /// <summary>
         /// The msn lists this contact has.
         /// </summary>
-        public RoleLists Lists
+        public virtual RoleLists Lists
         {
             get
             {
@@ -1104,7 +1110,7 @@ namespace MSNPSharp
             NotifyManager();
         }
 
-        internal void SetList(RoleLists msnLists)
+        internal virtual void SetList(RoleLists msnLists)
         {
             lists = msnLists;
             NotifyManager();
@@ -1152,6 +1158,11 @@ namespace MSNPSharp
             nickName = newNick;
         }
 
+        /// <summary>
+        /// Set the <see cref="Status"/> and fire <see cref="Contact.StatusChanged"/> ,
+        /// <see cref="Contact.ContactOnline"/> and <see cref="Contact.ContactOffline"/> event.
+        /// </summary>
+        /// <param name="newStatus"></param>
         internal void SetStatus(PresenceStatus newStatus)
         {
             //Becareful deadlock!
@@ -1562,14 +1573,18 @@ namespace MSNPSharp
 
         protected virtual void OnContactBlocked()
         {
+            ContactBlockedStatusChangedEventArgs eventArgs = new ContactBlockedStatusChangedEventArgs(this, true);
             if (ContactBlocked != null)
-                ContactBlocked(this, new EventArgs());
+                ContactBlocked(this, eventArgs);
+            NSMessageHandler.ContactService.OnContactBlockedStatusChanged(eventArgs);
         }
 
         protected virtual void OnContactUnBlocked()
         {
+            ContactBlockedStatusChangedEventArgs eventArgs = new ContactBlockedStatusChangedEventArgs(this, false);
             if (ContactUnBlocked != null)
-                ContactUnBlocked(this, new EventArgs());
+                ContactUnBlocked(this, eventArgs);
+            NSMessageHandler.ContactService.OnContactBlockedStatusChanged(eventArgs);
         }
 
         protected void OnDirectBridgeEstablished(EventArgs e)
@@ -1614,7 +1629,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="list"></param>
         /// <remarks>Since AllowList and BlockList are mutally exclusive, adding a member to AllowList will lead to the remove of BlockList, revese is as the same.</remarks>
-        internal void AddToList(RoleLists list)
+        internal virtual void AddToList(RoleLists list)
         {
             if ((lists & list) == RoleLists.None)
             {

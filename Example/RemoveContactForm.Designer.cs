@@ -37,19 +37,20 @@ namespace MSNPSharpClient
             // cbBlock
             // 
             this.cbBlock.AutoSize = true;
-            this.cbBlock.Location = new System.Drawing.Point(21, 57);
+            this.cbBlock.Location = new System.Drawing.Point(20, 63);
             this.cbBlock.Name = "cbBlock";
-            this.cbBlock.Size = new System.Drawing.Size(356, 17);
+            this.cbBlock.Size = new System.Drawing.Size(456, 16);
             this.cbBlock.TabIndex = 1;
             this.cbBlock.Text = "I don\'t want to receive any invitation from this contact anymore (Block)";
             this.cbBlock.UseVisualStyleBackColor = true;
             // 
             // btnRemove
             // 
+            this.btnRemove.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnRemove.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.btnRemove.Location = new System.Drawing.Point(176, 92);
+            this.btnRemove.Location = new System.Drawing.Point(295, 106);
             this.btnRemove.Name = "btnRemove";
-            this.btnRemove.Size = new System.Drawing.Size(111, 31);
+            this.btnRemove.Size = new System.Drawing.Size(111, 29);
             this.btnRemove.TabIndex = 2;
             this.btnRemove.Text = "Break connection";
             this.btnRemove.UseVisualStyleBackColor = true;
@@ -57,10 +58,11 @@ namespace MSNPSharpClient
             // 
             // btnCancel
             // 
+            this.btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btnCancel.Location = new System.Drawing.Point(293, 92);
+            this.btnCancel.Location = new System.Drawing.Point(412, 106);
             this.btnCancel.Name = "btnCancel";
-            this.btnCancel.Size = new System.Drawing.Size(75, 31);
+            this.btnCancel.Size = new System.Drawing.Size(75, 29);
             this.btnCancel.TabIndex = 3;
             this.btnCancel.Text = "Cancel";
             this.btnCancel.UseVisualStyleBackColor = true;
@@ -68,18 +70,18 @@ namespace MSNPSharpClient
             // 
             // label1
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(18, 20);
+            this.label1.Location = new System.Drawing.Point(18, 18);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(350, 13);
+            this.label1.Size = new System.Drawing.Size(479, 32);
             this.label1.TabIndex = 4;
-            this.label1.Text = "You’ll delete this person from your contact list and from your list of friends.";
+            this.label1.Text = "You are going to delete this person from your contact list and from your list of " +
+                "friends.";
             // 
             // RemoveContactForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(389, 134);
+            this.ClientSize = new System.Drawing.Size(514, 145);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnRemove);

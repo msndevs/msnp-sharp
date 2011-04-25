@@ -980,7 +980,7 @@ namespace MSNPSharp
         public const string Flags = "Flags";
         public const string Pipe = "Pipe";
         public const string BridgingOffsets = "Bridging-Offsets";
-        
+
 
         internal const string KeyParam = ";";
 
@@ -1178,9 +1178,10 @@ namespace MSNPSharp
         public const string CustomEmoticon = "CustomEmoticon";
         public const string ControlTyping = "Control/Typing";
         public const string Data = "Data";
-        public const string SignalP2P = "Signal/P2P";
-        public const string SignalCloseIMWindow = "Signal/CloseIMWindow";
 
+        public const string SignalP2P = "Signal/P2P";
+        public const string SignalForceAbchSync = "Signal/ForceAbchSync";
+        public const string SignalCloseIMWindow = "Signal/CloseIMWindow";
         public const string SignalMarkIMWindowRead = "Signal/MarkIMWindowRead";
         public const string SignalTurn = "Signal/Turn";
         public const string SignalAudioMeta = "Signal/AudioMeta";
