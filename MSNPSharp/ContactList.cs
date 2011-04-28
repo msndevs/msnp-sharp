@@ -696,13 +696,12 @@ namespace MSNPSharp
         /// <returns></returns>
         internal ShellContact CreateShellContact(Contact coreContact, IMAddressInfoType type, string objectID)
         {
-            ShellContact shellContact = null;
-            if(coreContact != null)
-                shellContact = new ShellContact(coreContact, type, objectID);
-            else
-                shellContact = new ShellContact(AddressBookId, objectID, type, nsMessageHandler);
+            ShellContact shellContact = (coreContact != null) ?
+                new ShellContact(coreContact, type, objectID, nsMessageHandler)
+                :
+                new ShellContact(AddressBookId, objectID, type, nsMessageHandler);
 
-            string hash = Contact.MakeHash(shellContact.Account, shellContact.ClientType);
+            string hash = Contact.MakeHash(objectID, type);
 
             if (type == IMAddressInfoType.Connect)
                 shellContact.Via = this.gateway; // sourceID
