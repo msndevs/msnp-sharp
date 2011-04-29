@@ -66,8 +66,8 @@ namespace MSNPSharp
             }
         }
 
-        public ShellContact(Contact coreContact, IMAddressInfoType type, string objectID)
-            : base(coreContact.AddressBookId, objectID, type, 0, coreContact.NSMessageHandler)
+        public ShellContact(Contact coreContact, IMAddressInfoType type, string objectID, NSMessageHandler handler)
+            : base(coreContact.AddressBookId, objectID, type, 0, handler)
         {
             CoreContact = coreContact;
             SetName(CoreContact.Name);

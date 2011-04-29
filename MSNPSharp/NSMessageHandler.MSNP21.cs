@@ -237,14 +237,14 @@ namespace MSNPSharp
             public event EventHandler<MultipartyCreatedEventArgs> MultipartyCreatedLocally;
 
             public int TransactionID;
-            public List<Contact> InviteQueue;
+            public List<string> InviteQueueHash;
             public Contact MultiParty;
 
-            public MultipartyObject(int transId, List<Contact> inviteQueue, Contact multiParty,
+            public MultipartyObject(int transId, List<string> inviteQueueHash, Contact multiParty,
                 EventHandler<MultipartyCreatedEventArgs> onCreated)
             {
                 TransactionID = transId;
-                InviteQueue = inviteQueue;
+                InviteQueueHash = new List<string>(inviteQueueHash);
                 MultiParty = multiParty;
 
                 if (onCreated != null)
@@ -254,7 +254,11 @@ namespace MSNPSharp
             internal void OnMultipartyCreatedLocally(object sender, MultipartyCreatedEventArgs e)
             {
                 if (MultipartyCreatedLocally != null)
+                {
                     MultipartyCreatedLocally(sender, e);
+
+                    MultipartyCreatedLocally -= OnMultipartyCreatedLocally;
+                }
             }
         };
 
@@ -274,16 +278,16 @@ namespace MSNPSharp
             if (onCreated == null)
                 throw new ArgumentNullException("onCreated");
 
-            List<Contact> newQueue = new List<Contact>();
+            List<string> newQueue = new List<string>();
 
             foreach (Contact c in inviteQueue)
             {
                 if (c != null &&
                     !c.IsSibling(Owner) &&
-                    !newQueue.Contains(c) &&
+                    !newQueue.Contains(c.SiblingString) &&
                     c.SupportsMultiparty)
                 {
-                    newQueue.Add(c);
+                    newQueue.Add(c.SiblingString);
                 }
             }
 
@@ -844,11 +848,14 @@ namespace MSNPSharp
 
                     JoinMultiparty(group);
 
-                    List<Contact> copy = new List<Contact>(mpo.InviteQueue);
+                    List<string> copy = new List<string>(mpo.InviteQueueHash);
 
-                    foreach (Contact c in copy)
+                    foreach (string siblingHash in copy)
                     {
-                        InviteContactToMultiparty(c, group);
+                        string[] addressTypeAndAccount = siblingHash.Split(new char[] { ':' }, 2, StringSplitOptions.RemoveEmptyEntries);
+                        Contact contact = ContactList.GetContactWithCreate(addressTypeAndAccount[1], (IMAddressInfoType)Enum.Parse(typeof(IMAddressInfoType), addressTypeAndAccount[0].ToString()));
+                        
+                        InviteContactToMultiparty(contact, group);
                     }
 
                     mpo.OnMultipartyCreatedLocally(this, new MultipartyCreatedEventArgs(group));
@@ -1221,7 +1228,7 @@ namespace MSNPSharp
                                 group = new Contact(routingInfo.SenderAccount, IMAddressInfoType.TemporaryGroup, this);
                                 group.ContactList = new ContactList(new Guid(routingInfo.SenderAccount.Split('@')[0]), null, group, this);
 
-                                mpo = new MultipartyObject(transId, new List<Contact>(), group, null);
+                                mpo = new MultipartyObject(transId, new List<string>(), group, null);
 
                                 lock (multiParties)
                                     multiParties[transId] = mpo;
@@ -1277,8 +1284,8 @@ namespace MSNPSharp
                                     Contact contact = group.ContactList.GetContactWithCreate(memberAccount, addressType);
                                     OnJoinedGroupChat(new GroupChatParticipationEventArgs(contact, group));
 
-                                    if (mpo.InviteQueue.Contains(contact))
-                                        mpo.InviteQueue.Remove(contact);
+                                    if (mpo.InviteQueueHash.Contains(contact.SiblingString))
+                                        mpo.InviteQueueHash.Remove(contact.SiblingString);
                                 }
                             }
                         }
@@ -1630,7 +1637,7 @@ namespace MSNPSharp
             }
 
             Contact sender = null; // via=fb, circle or temporary group
-            Contact by = null; // invidiual sender, 1 on 1 chat
+            Contact originalSender = null; // invidiual sender, 1 on 1 chat
 
             if (routingInfo.ReceiverType == IMAddressInfoType.Circle ||
                 routingInfo.ReceiverType == IMAddressInfoType.TemporaryGroup)
@@ -1645,20 +1652,20 @@ namespace MSNPSharp
                     return;
                 }
 
-                by = routingInfo.Sender;
+                originalSender = routingInfo.Sender;
             }
 
             // External Network
-            if (by == null && routingInfo.SenderGateway != null)
+            if (originalSender == null && routingInfo.SenderGateway != null)
             {
-                by = routingInfo.SenderGateway;
+                originalSender = routingInfo.SenderGateway;
                 sender = routingInfo.Sender;
             }
 
-            if (by == null)
+            if (originalSender == null)
             {
                 sender = routingInfo.Sender;
-                by = sender;
+                originalSender = sender;
             }
 
             #endregion
@@ -1674,27 +1681,27 @@ namespace MSNPSharp
                         break;
 
                     case MessageTypes.Nudge:
-                        OnNudgeReceived(new NudgeArrivedEventArgs(sender, by));
+                        OnNudgeReceived(new NudgeArrivedEventArgs(sender, originalSender));
                         break;
 
                     case MessageTypes.ControlTyping:
-                        OnTypingMessageReceived(new TypingArrivedEventArgs(sender, by));
+                        OnTypingMessageReceived(new TypingArrivedEventArgs(sender, originalSender));
                         break;
 
                     case MessageTypes.Text:
-                        OnSDGTextMessageReceived(multiMimeMessage, sender, by);
+                        OnSDGTextMessageReceived(multiMimeMessage, sender, originalSender);
                         break;
 
                     case MessageTypes.CustomEmoticon:
-                        OnSDGCustomEmoticonReceived(multiMimeMessage, sender, by);
+                        OnSDGCustomEmoticonReceived(multiMimeMessage, sender, originalSender);
                         break;
 
                     case MessageTypes.Wink:
-                        OnSDGWinkReceived(multiMimeMessage, sender, by);
+                        OnSDGWinkReceived(multiMimeMessage, sender, originalSender);
                         break;
 
                     case MessageTypes.SignalP2P:
-                        OnSDGP2PSignalReceived(multiMimeMessage, sender, by);
+                        OnSDGP2PSignalReceived(multiMimeMessage, sender, originalSender);
                         break;
 
                     case MessageTypes.SignalCloseIMWindow:
@@ -1702,7 +1709,7 @@ namespace MSNPSharp
                         break;
 
                     case MessageTypes.Data:
-                        OnSDGDataMessageReceived(multiMimeMessage, sender, by, routingInfo);
+                        OnSDGDataMessageReceived(multiMimeMessage, sender, originalSender, routingInfo);
                         break;
                 }
             }
@@ -1758,12 +1765,12 @@ namespace MSNPSharp
             return multiMimeMessage;
         }
 
-        private void OnSDGWinkReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact by)
+        private void OnSDGWinkReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact originalSender)
         {
             Wink wink = new Wink();
             wink.SetContext((multiMimeMessage.InnerMessage as TextPayloadMessage).Text);
 
-            OnWinkDefinitionReceived(new WinkEventArgs(sender, wink));
+            OnWinkDefinitionReceived(new WinkEventArgs(originalSender, wink));
         }
 
         private MultiMimeMessage ParseSDGCustomEmoticonMessage(MultiMimeMessage multiMimeMessage)
@@ -1777,19 +1784,13 @@ namespace MSNPSharp
             return multiMimeMessage;
         }
 
-        private void OnSDGCustomEmoticonReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact by)
+        private void OnSDGCustomEmoticonReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact originalSender)
         {
-            //EmoticonMessage emoticonMessage = new EmoticonMessage();
-            //emoticonMessage.EmoticonType = multiMimeMessage.ContentHeaders[MIMEContentHeaders.ContentType] == "text/x-mms-animemoticon" ?
-            //    EmoticonType.AnimEmoticon : EmoticonType.StaticEmoticon;
-
-            //emoticonMessage.ParseBytes(multiMimeMessage.InnerBody);
-
             EmoticonMessage emoticonMessage = multiMimeMessage.InnerMessage as EmoticonMessage;
 
             foreach (Emoticon emoticon in emoticonMessage.Emoticons)
             {
-                OnEmoticonDefinitionReceived(new EmoticonDefinitionEventArgs(sender, emoticon));
+                OnEmoticonDefinitionReceived(new EmoticonDefinitionEventArgs(originalSender, emoticon));
             }
         }
 
