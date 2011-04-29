@@ -1612,11 +1612,26 @@ namespace MSNPSharp.IO
                 if (contactType.contactInfo == null)
                     continue;
 
+                string passportName = contactType.contactInfo.passportName;
+
+                if (String.IsNullOrEmpty(passportName) && contactType.contactInfo.emails != null)
+                {
+                    foreach (contactEmailType emailType in contactType.contactInfo.emails)
+                    {
+                        if (emailType.contactEmailType1 == ContactEmailTypeType.ContactEmailMessenger &&
+                            !String.IsNullOrEmpty(emailType.email))
+                        {
+                            passportName = emailType.email;
+                            break;
+                        }
+                    }
+                }
+
                 if (!oldContactInverseList.ContainsKey(contactType.contactInfo.CID) &&
-                    circle.ContactList.HasContact(contactType.contactInfo.passportName, IMAddressInfoType.WindowsLive))
+                    circle.ContactList.HasContact(passportName, IMAddressInfoType.WindowsLive))
                 {
                     circle.NSMessageHandler.ContactService.OnCircleMemberJoined(new CircleMemberEventArgs(circle,
-                        circle.ContactList.GetContactWithCreate(contactType.contactInfo.passportName, IMAddressInfoType.WindowsLive)));
+                        circle.ContactList.GetContactWithCreate(passportName, IMAddressInfoType.WindowsLive)));
                 }
             }
 
