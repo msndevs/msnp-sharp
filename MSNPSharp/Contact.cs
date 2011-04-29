@@ -1284,6 +1284,9 @@ namespace MSNPSharp
 
         internal static string MakeHash(string account, ClientType type, Guid abId)
         {
+            if (account == null)
+                throw new ArgumentNullException("account");
+
             return type.ToString() + ":" + account.ToLowerInvariant() + ";via=" + abId.ToString("D").ToLowerInvariant();
         }
 

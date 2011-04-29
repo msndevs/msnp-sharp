@@ -1516,10 +1516,25 @@ namespace MSNPSharp.IO
                 if (contactType.contactInfo == null)
                     continue;
 
-                if (!oldContactInverseList.ContainsKey(contactType.contactInfo.CID) &&
-                    circle.ContactList.HasContact(contactType.contactInfo.passportName, ClientType.PassportMember))
+                string passportName = contactType.contactInfo.passportName;
+
+                if (String.IsNullOrEmpty(passportName) && contactType.contactInfo.emails != null)
                 {
-                    circle.NSMessageHandler.ContactService.OnCircleMemberJoined(new CircleMemberEventArgs(circle, circle.ContactList[contactType.contactInfo.passportName, ClientType.PassportMember]));
+                    foreach (contactEmailType emailType in contactType.contactInfo.emails)
+                    {
+                        if (emailType.contactEmailType1 == ContactEmailTypeType.ContactEmailMessenger &&
+                            !String.IsNullOrEmpty(emailType.email))
+                        {
+                            passportName = emailType.email;
+                            break;
+                        }
+                    }
+                }
+
+                if (!oldContactInverseList.ContainsKey(contactType.contactInfo.CID) &&
+                    circle.ContactList.HasContact(passportName, ClientType.PassportMember))
+                {
+                    circle.NSMessageHandler.ContactService.OnCircleMemberJoined(new CircleMemberEventArgs(circle, circle.ContactList[passportName, ClientType.PassportMember]));
                 }
             }
 
