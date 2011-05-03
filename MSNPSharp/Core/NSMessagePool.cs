@@ -53,7 +53,6 @@ namespace MSNPSharp.Core
     {
         Queue<MemoryStream> messageQueue = new Queue<MemoryStream>();
         MemoryStream bufferStream;
-        BinaryWriter bufferWriter;
         int remainingBuffer;
 
         public NSMessagePool()
@@ -101,27 +100,11 @@ namespace MSNPSharp.Core
         }
 
         /// <summary>
-        /// This is the interface to the bufferStream.
-        /// </summary>
-        protected BinaryWriter BufferWriter
-        {
-            get
-            {
-                return bufferWriter;
-            }
-            set
-            {
-                bufferWriter = value;
-            }
-        }
-
-        /// <summary>
         /// Creates a new memorystream to server as the buffer.
         /// </summary>
         private void CreateNewBuffer()
         {
             bufferStream = new MemoryStream(64);
-            bufferWriter = new BinaryWriter(bufferStream);
         }
 
         /// <summary>
@@ -129,6 +112,7 @@ namespace MSNPSharp.Core
         /// </summary>
         private void EnqueueCurrentBuffer()
         {
+            bufferStream.Position = 0;
             messageQueue.Enqueue(bufferStream);
         }
 
@@ -176,20 +160,17 @@ namespace MSNPSharp.Core
                 {
                     // read until we come across a newline
                     byte val = reader.ReadByte();
+                    bufferStream.WriteByte(val);
+                    length--;
 
-                    if (val != '\n')
-                        bufferWriter.Write(val);
-                    else
+                    if (val == '\n')
                     {
-                        // write the last newline
-                        bufferWriter.Write(val);
-
-                        // check if it's a payload command
+                        // read command
                         bufferStream.Position = 0;
                         string cmd3 = System.Text.Encoding.ASCII.GetString(new byte[3] { 
                             (byte)bufferStream.ReadByte(),
                             (byte)bufferStream.ReadByte(),
-                            (byte)bufferStream.ReadByte() 
+                            (byte)bufferStream.ReadByte()
                         });
 
                         switch (cmd3)
@@ -226,41 +207,28 @@ namespace MSNPSharp.Core
                             case "731": // 731
                             case "801": // 801
                             case "933": // 933
-                            case "000": // Assume all error codes payload, comes from case default...
+                            default: // Unknown command. If the last param is int, assume payload and parse dynamically. 
                                 {
+                                    // calculate the length by reading backwards from the end
+                                    remainingBuffer = 0;
                                     bufferStream.Seek(-3, SeekOrigin.End);
 
-                                    // calculate the length by reading backwards from the end
-                                    int size = 0;
-                                    int payloadSize = 0;
-                                    bool hasSize = false;
-
-                                    for (int i = 0; ((size = bufferStream.ReadByte()) > 0) && size >= '0' && size <= '9'; i++)
+                                    for (int p = 0, b; ((b = bufferStream.ReadByte()) > 0) && b >= '0' && b <= '9'; p++)
                                     {
-                                        payloadSize += (int)((size - '0') * Math.Pow(10, i));
+                                        remainingBuffer += (int)((b - '0') * Math.Pow(10, p));
                                         bufferStream.Seek(-2, SeekOrigin.Current);
-                                        hasSize = true;
                                     }
 
-                                    if (hasSize)
+                                    if (remainingBuffer > 0)
                                     {
-                                        remainingBuffer = payloadSize;
-
                                         // move to the end of the stream before we are going to write
                                         bufferStream.Seek(0, SeekOrigin.End);
-
-                                        if (remainingBuffer == 0)
-                                        {
-                                            EnqueueCurrentBuffer();
-                                            CreateNewBuffer();
-                                        }
                                     }
                                     else
                                     {
                                         EnqueueCurrentBuffer();
                                         CreateNewBuffer();
                                     }
-
                                 }
                                 break;
                             #endregion
@@ -282,26 +250,8 @@ namespace MSNPSharp.Core
                                 }
                                 break;
                             #endregion
-
-                            #region Unknown commands
-
-                            default:
-                                {
-                                    // If it is number, assume payload
-                                    int errorCode3;
-                                    if (int.TryParse(cmd3, out errorCode3) && errorCode3.ToString(CultureInfo.InvariantCulture).Length == 3)
-                                        goto case "000";
-
-                                    // Otherwise; it was just a plain command, start a new message
-                                    EnqueueCurrentBuffer();
-                                    CreateNewBuffer();
-                                }
-                                break;
-                            #endregion
                         }
-
                     }
-                    length--;
                 }
             }
         }
@@ -319,9 +269,6 @@ namespace MSNPSharp.Core
             if (disposing)
             {
                 // Dispose managed resources
-                if (bufferWriter != null)
-                    ((IDisposable)bufferWriter).Dispose();
-
                 if (bufferStream != null)
                     bufferStream.Dispose();
 
