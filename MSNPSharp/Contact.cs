@@ -1399,7 +1399,7 @@ namespace MSNPSharp
                 {
                     case PlaceChangedReason.SignedIn:
 
-                        lock(SyncObject)
+                        lock (SyncObject)
                             EndPointData[e.EndPointData.Id] = e.EndPointData;
 
                         triggerEvent = true;
@@ -1740,7 +1740,7 @@ namespace MSNPSharp
 
             return type.ToString() + ":" + account.ToLowerInvariant();
         }
-        
+
         internal static bool IsSpecialGatewayType(IMAddressInfoType type)
         {
             if (type == IMAddressInfoType.Circle || type == IMAddressInfoType.TemporaryGroup)
@@ -1751,10 +1751,10 @@ namespace MSNPSharp
 
             return false;
         }
-        
+
         internal static bool ParseFullAccount(
             string fullAccount,
-            out IMAddressInfoType accountAddressType, 
+            out IMAddressInfoType accountAddressType,
             out string account)
         {
             IMAddressInfoType viaAccountAddressType = IMAddressInfoType.None;
@@ -1830,7 +1830,7 @@ namespace MSNPSharp
 
         internal static RoleLists GetListForADL(
             RoleLists currentContactList,
-            IMAddressInfoType addressType, 
+            IMAddressInfoType addressType,
             ServiceShortNames service)
         {
             // Delete Reverse and Block roles, no more supported.
@@ -2002,9 +2002,6 @@ namespace MSNPSharp
 
         public void SendEmoticonDefinitions(List<Emoticon> emoticons, EmoticonType icontype)
         {
-            if (CanReceiveMessage)
-                NSMessageHandler.SendEmoticonDefinitions(this, emoticons, icontype);
-
             if (emoticons == null)
                 throw new ArgumentNullException("emoticons");
 
@@ -2017,7 +2014,8 @@ namespace MSNPSharp
                 }
             }
 
-            NSMessageHandler.SendEmoticonDefinitions(this, emoticons, icontype);
+            if (CanReceiveMessage)
+                NSMessageHandler.SendEmoticonDefinitions(this, emoticons, icontype);
         }
     }
 };
