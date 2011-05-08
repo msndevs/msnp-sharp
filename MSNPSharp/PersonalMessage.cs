@@ -271,116 +271,46 @@ namespace MSNPSharp
             {
                 // I think we need a serializer for PersonalMessage.
                 XmlDocument xdoc = new XmlDocument();
-                XmlNode rootNode = xdoc.CreateNode(XmlNodeType.Element, "root", xdoc.NamespaceURI);
+                XmlNode rootNode = xdoc.CreateElement("root");
                 xdoc.AppendChild(rootNode);
 
-                XmlNode userTileLocationNode = xdoc.CreateNode(XmlNodeType.Element, "UserTileLocation", xdoc.NamespaceURI);
+                XmlNode userTileLocationNode = xdoc.CreateElement("UserTileLocation");
+                userTileLocationNode.InnerText = UserTileLocation;
                 rootNode.AppendChild(userTileLocationNode);
 
-                userTileLocationNode.InnerText = UserTileLocation;
-
-                XmlNode friendlyNameNode = xdoc.CreateNode(XmlNodeType.Element, "FriendlyName", xdoc.NamespaceURI);
-                rootNode.AppendChild(friendlyNameNode);
+                XmlNode friendlyNameNode = xdoc.CreateElement("FriendlyName");
                 friendlyNameNode.InnerText = FriendlyName;
+                rootNode.AppendChild(friendlyNameNode);
 
-                XmlNode rumNode = xdoc.CreateNode(XmlNodeType.Element, "RUM", xdoc.NamespaceURI);
-                rootNode.AppendChild(rumNode);
+                XmlNode rumNode = xdoc.CreateElement("RUM");
                 rumNode.InnerText = RUM;
+                rootNode.AppendChild(rumNode);
 
-                XmlNode personalMessageNode = xdoc.CreateNode(XmlNodeType.Element, "PSM", xdoc.NamespaceURI);
-                rootNode.AppendChild(personalMessageNode);
+                XmlNode personalMessageNode = xdoc.CreateElement("PSM");
                 personalMessageNode.InnerText = Message;
+                rootNode.AppendChild(personalMessageNode);
 
-                XmlNode ddpNode = xdoc.CreateNode(XmlNodeType.Element, "DDP", xdoc.NamespaceURI);
+                XmlNode ddpNode = xdoc.CreateElement("DDP");
+                ddpNode.InnerText = DDP;
                 rootNode.AppendChild(ddpNode);
-                personalMessageNode.InnerText = DDP;
 
-                XmlNode colorSchemeNode = xdoc.CreateNode(XmlNodeType.Element, "ColorScheme", xdoc.NamespaceURI);
-                rootNode.AppendChild(colorSchemeNode);
+                XmlNode colorSchemeNode = xdoc.CreateElement("ColorScheme");
                 colorSchemeNode.InnerText = ColorScheme.ToArgb().ToString(CultureInfo.InvariantCulture);
+                rootNode.AppendChild(colorSchemeNode);
 
-                XmlNode sceneNode = xdoc.CreateNode(XmlNodeType.Element, "Scene", xdoc.NamespaceURI);
-                rootNode.AppendChild(sceneNode);
+                XmlNode sceneNode = xdoc.CreateElement("Scene");
                 sceneNode.InnerText = Scene;
+                rootNode.AppendChild(sceneNode);
 
-                XmlNode signatureSoundNode = xdoc.CreateNode(XmlNodeType.Element, "SignatureSound", xdoc.NamespaceURI);
-                rootNode.AppendChild(signatureSoundNode);
+                XmlNode signatureSoundNode = xdoc.CreateElement("SignatureSound");
                 signatureSoundNode.InnerText = HttpUtility.UrlEncode(SignatureSound);
+                rootNode.AppendChild(signatureSoundNode);
 
-                XmlNode currentMediaNode = xdoc.CreateNode(XmlNodeType.Element, "CurrentMedia", xdoc.NamespaceURI);
-                rootNode.AppendChild(currentMediaNode);
+                XmlNode currentMediaNode = xdoc.CreateElement("CurrentMedia");
                 currentMediaNode.InnerText = CurrentMedia;
+                rootNode.AppendChild(currentMediaNode);
 
                 return rootNode.InnerXml;
-
-                /*
-                StringBuilder pload = new StringBuilder();
-
-                if (!String.IsNullOrEmpty(UserTileLocation))
-                {
-                    pload.Append("<UserTileLocation>");
-                    pload.Append(MSNHttpUtility.XmlUnicodeEncode(userTileLocation));
-                    pload.Append("</UserTileLocation>");
-                }
-
-                if (!String.IsNullOrEmpty(FriendlyName))
-                {
-                    pload.Append("<FriendlyName>");
-                    pload.Append(FriendlyName);
-                    pload.Append("</FriendlyName>");
-                }
-
-                if (!String.IsNullOrEmpty(RUM))
-                {
-                    pload.Append("<RUM>");
-                    pload.Append(RUM);
-                    pload.Append("</RUM>");
-                }
-
-                if (!String.IsNullOrEmpty(Message))
-                {
-                    pload.Append("<PSM>");
-                    pload.Append(Message);
-                    pload.Append("</PSM>");
-                }
-
-                if (!String.IsNullOrEmpty(DDP))
-                {
-                    pload.Append("<DDP>");
-                    pload.Append(DDP);
-                    pload.Append("</DDP>");
-                }
-
-                if (ColorScheme != Color.Empty)
-                {
-                    pload.Append("<ColorScheme>");
-                    pload.Append(colorScheme.ToArgb().ToString());
-                    pload.Append("</ColorScheme>");
-                }
-
-                if (!String.IsNullOrEmpty(Scene))
-                {
-                    pload.Append("<Scene>");
-                    pload.Append(MSNHttpUtility.XmlUnicodeEncode(scene));
-                    pload.Append("</Scene>");
-                }
-
-                if (!String.IsNullOrEmpty(SignatureSound))
-                {
-                    pload.Append("<SignatureSound>");
-                    pload.Append(MSNHttpUtility.XmlUnicodeEncode(SignatureSound));
-                    pload.Append("</SignatureSound>");
-                }
-
-                if (!String.IsNullOrEmpty(CurrentMedia))
-                {
-                    pload.Append("<CurrentMedia>");
-                    pload.Append(CurrentMedia);
-                    pload.Append("</CurrentMedia>");
-                }
-
-                return pload.ToString();
-                */
             }
         }
 
