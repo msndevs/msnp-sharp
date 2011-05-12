@@ -705,6 +705,11 @@ namespace MSNPSharp
                         "<CurrentMedia>" + MSNHttpUtility.XmlEncode(newPSM.CurrentMedia) + "</CurrentMedia>";
 
                     userElement.AppendChild(service);
+
+                    if (BotMode)
+                    {
+                        Owner.SetStatus(newStatus); // Don't call Status = newStatus. It is recursive call to this method.
+                    }
                 }
 
                 // s.PE (UserTileLocation, FriendlyName, PSM, Scene, ColorScheme)
@@ -717,6 +722,12 @@ namespace MSNPSharp
                     userElement.AppendChild(service);
 
                     // Don't set owner.PersonalMessage here. It is replaced (with a new reference) when NFY PUT received.
+                    // Exception: Bots
+                    if (BotMode)
+                    {
+                        // Don't call Owner.PersonalMessage. It is recursive call to this method.
+                        ((Contact)Owner).PersonalMessage = newPSM;
+                    }
                 }
 
                 // sep.IM (Capabilities)
@@ -737,6 +748,13 @@ namespace MSNPSharp
                     Capabilities.InnerText = ((long)localIMCaps).ToString() + ":" + ((long)localIMCapsEx).ToString();
                     sep.AppendChild(Capabilities);
                     userElement.AppendChild(sep);
+
+                    if (BotMode)
+                    {
+                        // Don't call Owner.LocalEndPointIMCapabilities. It is recursive call to this method.
+                        Owner.EndPointData[MachineGuid].IMCapabilities = localIMCaps;
+                        Owner.EndPointData[MachineGuid].IMCapabilitiesEx = localIMCapsEx;
+                    }
                 }
 
                 // sep.PE (Capabilities)
@@ -759,6 +777,13 @@ namespace MSNPSharp
                     Capabilities.InnerText = ((long)localPECaps).ToString() + ":" + ((long)localPECapsEx).ToString();
                     sep.AppendChild(Capabilities);
                     userElement.AppendChild(sep);
+
+                    if (BotMode)
+                    {
+                        // Don't call Owner.LocalEndPointPECapabilities. It is recursive call to this method.
+                        Owner.EndPointData[MachineGuid].PECapabilities = localPECaps;
+                        Owner.EndPointData[MachineGuid].PECapabilitiesEx = localPECapsEx;
+                    }
                 }
 
                 // sep.PD (EpName, State)
@@ -781,6 +806,16 @@ namespace MSNPSharp
                     State.InnerText = ParseStatus(newStatus);
                     sep.AppendChild(State);
                     userElement.AppendChild(sep);
+
+                    if (BotMode)
+                    {
+                        // Don't call Owner.EpName. It is recursive call to this method.
+                        PrivateEndPointData privateEndPoint = Owner.EndPointData[MachineGuid] as PrivateEndPointData;
+                        privateEndPoint.ClientType = String.Copy(ClientType.InnerText);
+                        privateEndPoint.Name = newEPName;
+                        privateEndPoint.Idle = bool.Parse(((newStatus == PresenceStatus.Idle) ? "true" : "false"));
+                        privateEndPoint.State = newStatus;
+                    }
                 }
 
                 if (userElement.HasChildNodes)
