@@ -51,7 +51,7 @@ namespace MSNPSharp
         /// <summary>
         /// Fired when owner profile received.
         /// </summary>
-        public event EventHandler<EventArgs> ProfileReceived;        
+        public event EventHandler<EventArgs> ProfileReceived;
 
         private string epName = Environment.MachineName;
         private bool passportVerified;
@@ -284,7 +284,7 @@ namespace MSNPSharp
                     PersonalMessage pm = PersonalMessage;
 
                     pm.UserTileLocation = value.IsDefaultImage ? string.Empty : value.ContextPlain;
-                    
+
                     if (NSMessageHandler != null && NSMessageHandler.IsSignedIn &&
                         Status != PresenceStatus.Offline && Status != PresenceStatus.Unknown)
                     {
