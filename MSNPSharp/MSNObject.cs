@@ -552,7 +552,7 @@ namespace MSNPSharp
         /// <returns></returns>
         protected virtual string GetXmlString()
         {
-            return "<msnobj Creator=\"" + Creator + "\" Size=\"" + Size + "\" Type=\"" + (int)this.ObjectType + "\" Location=\"" + HttpUtility.UrlEncode(Location) + "\" Friendly=\"AAA=\" SHA1D=\"" + Sha + "\" SHA1C=\"" + CalculateChecksum() +"\"" + " />";
+            return "<msnobj Creator=\"" + Creator + "\" Size=\"" + Size + "\" Type=\"" + (int)this.ObjectType + "\" Location=\"" + HttpUtility.UrlEncode(Location) + "\" Friendly=\"AAA=\" SHA1D=\"" + Sha + "\" SHA1C=\"" + CalculateChecksum() + "\"" + " />";
         }
 
         /// <summary>
@@ -567,8 +567,7 @@ namespace MSNPSharp
 
         protected virtual bool ContextEqual(string contextPlain)
         {
-
-            if (Size == 0 && string.IsNullOrEmpty(contextPlain))
+            if (Size == 0 && (string.IsNullOrEmpty(contextPlain) || contextPlain == "0"))
                 return true;
 
             try
@@ -590,7 +589,6 @@ namespace MSNPSharp
                     ex.Message + "\r\n  Stack Trace: " + ex.StackTrace);
                 return true;
             }
-
         }
 
 
@@ -598,6 +596,7 @@ namespace MSNPSharp
         {
             if ((object)obj2 == null)
                 return false;
+
             return GetHashCode() == obj2.GetHashCode();
         }
 
@@ -606,8 +605,10 @@ namespace MSNPSharp
         {
             if ((object)msnObject == null && compareTarget == null)
                 return true;
+
             if ((object)msnObject == null || compareTarget == null)
                 return false;
+
             return msnObject.Equals(compareTarget);
         }
 
