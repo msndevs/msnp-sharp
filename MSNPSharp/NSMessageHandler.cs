@@ -989,6 +989,9 @@ namespace MSNPSharp
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Notification received : " + notification.BodyPayload);
 
+            if (AutoSynchronize == false || BotMode)
+                return;
+
             if (notification.NotificationTypeSpecified == false &&
                 notification.Id == 0 &&
                 notification.SiteId == 45705 &&
