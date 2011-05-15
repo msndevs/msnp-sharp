@@ -355,10 +355,10 @@ namespace MSNPSharp.Utilities
         /// <exception cref="NotSupportedException">The message is not compatible to the specific contact.</exception>
         private void CheckContact(Contact messengerContact, MessageObject messageObject)
         {
-            if (!messengerContact.IsMessengerUser)
+            if (!messengerContact.IsMessengerUser && !messengerContact.NSMessageHandler.BotMode)
             {
                 throw new MSNPSharpException("This is not a MSN contact.");
-            }
+                }
 
             if (messengerContact.ClientType == ClientType.EmailMember && (messageObject is EmoticonObject))
             {
