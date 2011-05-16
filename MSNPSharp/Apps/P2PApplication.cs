@@ -156,17 +156,8 @@ namespace MSNPSharp.Apps
 
         protected P2PApplication(P2PVersion ver, Contact remote, Guid remoteEP)
         {
-            if (remote.NSMessageHandler.BotMode)
-            {
-                // Provisioned accounts never know contact's p2p protocol.
-                // Back to P2Pv1. We don't attach our machine guid in p2pv1.
-                ver = P2PVersion.P2PV1;
-            }
-
             if (ver == P2PVersion.None)
-            {
                 throw new InvalidOperationException(remote.ToString() + " doesn't support P2P");
-            }
 
             this.version = ver;
 

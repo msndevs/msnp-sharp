@@ -739,12 +739,7 @@ namespace MSNPSharp
                     ClientCapabilitiesEx localIMCapsEx = setAll ? ClientCapabilitiesEx.DefaultIM : newLocalIMCapsex;
                     if (BotMode)
                     {
-                        // I am robot, I am IDIOT.
-                        // I don't know contacts' P2P version.
-                        // But I can handle incoming p2pV2 invitations :)
-                        localIMCaps &= ~ClientCapabilities.AppVersionMask;
                         localIMCaps |= ClientCapabilities.IsBot;
-                        localIMCaps |= ClientCapabilities.AppVersion85;                       
                     }
 
                     XmlElement sep = xmlDoc.CreateElement("sep");
