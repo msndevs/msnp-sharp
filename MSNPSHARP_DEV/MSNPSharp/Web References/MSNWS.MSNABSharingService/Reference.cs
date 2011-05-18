@@ -3903,7 +3903,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
     public partial class contactLocationType {
         
-        private ContactLocationTypeType contactLocationType1Field;
+        private string contactLocationType1Field;
         
         private string nameField;
         
@@ -3923,7 +3923,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute("contactLocationType")]
-        public ContactLocationTypeType contactLocationType1 {
+        public string contactLocationType1 {
             get {
                 return this.contactLocationType1Field;
             }
@@ -4016,19 +4016,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     /// <remarks/>
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.5420")]
     [System.SerializableAttribute()]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public enum ContactLocationTypeType {
-        
-        /// <remarks/>
-        ContactLocationPersonal,
-        
-        /// <remarks/>
-        ContactLocationBusiness,
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.5420")]
-    [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
@@ -4071,6 +4058,19 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         /// <remarks/>
         ContactWebSiteBusiness,
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.5420")]
+    [System.SerializableAttribute()]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public enum ContactLocationTypeType {
+        
+        /// <remarks/>
+        ContactLocationPersonal,
+        
+        /// <remarks/>
+        ContactLocationBusiness,
     }
     
     /// <remarks/>
