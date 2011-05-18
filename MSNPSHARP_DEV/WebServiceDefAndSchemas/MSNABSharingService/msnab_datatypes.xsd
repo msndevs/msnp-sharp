@@ -399,7 +399,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="contactLocationType">
 		<xsd:sequence>
-			<xsd:element name="contactLocationType" type="msnab:ContactLocationTypeType"/>
+			<xsd:element name="contactLocationType" type="xsd:string"/>
 			<xsd:element name="name" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="street" type="xsd:string" minOccurs="0"/>
 			<xsd:element name="city" type="xsd:string" minOccurs="0"/>
