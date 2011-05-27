@@ -786,7 +786,7 @@ namespace MSNPSharpClient
         {
             if (InvokeRequired)
             {
-                Invoke(new EventHandler<ContactEventArgs>(Nameserver_ReverseAdded), sender, e);
+                BeginInvoke(new EventHandler<ContactEventArgs>(Nameserver_ReverseAdded), sender, e);
                 return;
             }
 
