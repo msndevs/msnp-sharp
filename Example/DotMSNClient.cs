@@ -659,7 +659,7 @@ namespace MSNPSharpClient
         {
             if (InvokeRequired)
             {
-                Invoke(new EventHandler<OIMReceivedEventArgs>(Nameserver_OIMReceived), sender, e);
+                BeginInvoke(new EventHandler<OIMReceivedEventArgs>(Nameserver_OIMReceived), sender, e);
                 return;
             }
 
@@ -741,7 +741,7 @@ namespace MSNPSharpClient
         {
             if (InvokeRequired)
             {
-                Invoke(new EventHandler<OIMSendCompletedEventArgs>(OIMService_OIMSendCompleted), sender, e);
+                BeginInvoke(new EventHandler<OIMSendCompletedEventArgs>(OIMService_OIMSendCompleted), sender, e);
                 return;
             }
 
