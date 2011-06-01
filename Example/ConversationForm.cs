@@ -492,6 +492,7 @@ namespace MSNPSharpClient
 
         private Messenger _messenger = null;
         private Contact remoteContact;
+        private DateTime lastTypingMessageSent = DateTime.MinValue;
 
         public Contact RemoteContact
         {
@@ -627,7 +628,11 @@ namespace MSNPSharpClient
 
             try
             {
-                remoteContact.SendTypingMessage();
+                if(DateTime.Now - lastTypingMessageSent > new TimeSpan(0,0,5))
+                {
+                    remoteContact.SendTypingMessage();
+                    lastTypingMessageSent = DateTime.Now;
+                }
 
             }
             catch (Exception)
