@@ -529,56 +529,59 @@ namespace MSNPSharp
                             WebException webException = ex.InnerException as WebException;
                             HttpWebResponse webResponse = webException.Response as HttpWebResponse;
 
-                            if (webResponse.StatusCode == HttpStatusCode.Moved ||
-                                webResponse.StatusCode == HttpStatusCode.MovedPermanently ||
-                                webResponse.StatusCode == HttpStatusCode.Redirect ||
-                                webResponse.StatusCode == HttpStatusCode.RedirectKeepVerb)
+                            if (webResponse != null)
                             {
-                                string redirectUrl = webResponse.Headers[HttpResponseHeader.Location];
-                                if (!string.IsNullOrEmpty(redirectUrl))
+                                if (webResponse.StatusCode == HttpStatusCode.Moved ||
+                                    webResponse.StatusCode == HttpStatusCode.MovedPermanently ||
+                                    webResponse.StatusCode == HttpStatusCode.Redirect ||
+                                    webResponse.StatusCode == HttpStatusCode.RedirectKeepVerb)
                                 {
-                                    getHost = true;
-
-                                    lock (deltas.SyncObject)
-                                        deltas.PreferredHosts[preferredHostKey] = FetchHost(redirectUrl);
-                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Get redirect URL by HTTP error succeed, method " + methodName + ":\r\n " +
-                                        "Original: " + FetchHost(ws.Url) + "\r\n " +
-                                        "Redirect: " + FetchHost(redirectUrl) + "\r\n");
-                                }
-
-                                #region Fetch CacheKey
-
-                                try
-                                {
-                                    XmlDocument errdoc = new XmlDocument();
-                                    string errorMessage = ex.InnerException.Message;
-                                    string xmlstr = errorMessage.Substring(errorMessage.IndexOf("<?xml"));
-                                    xmlstr = xmlstr.Substring(0, xmlstr.IndexOf("</soap:envelope>", StringComparison.InvariantCultureIgnoreCase) + "</soap:envelope>".Length);
-
-                                    //I think the xml parser microsoft used internally is just a super parser, it can ignore everything.
-                                    xmlstr = xmlstr.Replace("&amp;", "&");
-                                    xmlstr = xmlstr.Replace("&", "&amp;");
-
-                                    errdoc.LoadXml(xmlstr);
-
-                                    XmlNodeList findnodelist = errdoc.GetElementsByTagName("CacheKey");
-                                    if (findnodelist.Count > 0)
+                                    string redirectUrl = webResponse.Headers[HttpResponseHeader.Location];
+                                    if (!string.IsNullOrEmpty(redirectUrl))
                                     {
-                                        deltas.CacheKeys[keyType] = findnodelist[0].InnerText;
+                                        getHost = true;
+
+                                        lock (deltas.SyncObject)
+                                            deltas.PreferredHosts[preferredHostKey] = FetchHost(redirectUrl);
+                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Get redirect URL by HTTP error succeed, method " + methodName + ":\r\n " +
+                                            "Original: " + FetchHost(ws.Url) + "\r\n " +
+                                            "Redirect: " + FetchHost(redirectUrl) + "\r\n");
                                     }
-                                }
-                                catch (Exception exc)
-                                {
-                                    Trace.WriteLineIf(
-                                        Settings.TraceSwitch.TraceError,
-                                        "An error occured while getting CacheKey:\r\n" +
-                                        "Service:    " + ws.GetType().ToString() + "\r\n" +
-                                        "MethodName: " + methodName + "\r\n" +
-                                        "Message:    " + exc.Message);
 
-                                }
+                                    #region Fetch CacheKey
 
-                                #endregion
+                                    try
+                                    {
+                                        XmlDocument errdoc = new XmlDocument();
+                                        string errorMessage = ex.InnerException.Message;
+                                        string xmlstr = errorMessage.Substring(errorMessage.IndexOf("<?xml"));
+                                        xmlstr = xmlstr.Substring(0, xmlstr.IndexOf("</soap:envelope>", StringComparison.InvariantCultureIgnoreCase) + "</soap:envelope>".Length);
+
+                                        //I think the xml parser microsoft used internally is just a super parser, it can ignore everything.
+                                        xmlstr = xmlstr.Replace("&amp;", "&");
+                                        xmlstr = xmlstr.Replace("&", "&amp;");
+
+                                        errdoc.LoadXml(xmlstr);
+
+                                        XmlNodeList findnodelist = errdoc.GetElementsByTagName("CacheKey");
+                                        if (findnodelist.Count > 0)
+                                        {
+                                            deltas.CacheKeys[keyType] = findnodelist[0].InnerText;
+                                        }
+                                    }
+                                    catch (Exception exc)
+                                    {
+                                        Trace.WriteLineIf(
+                                            Settings.TraceSwitch.TraceError,
+                                            "An error occured while getting CacheKey:\r\n" +
+                                            "Service:    " + ws.GetType().ToString() + "\r\n" +
+                                            "MethodName: " + methodName + "\r\n" +
+                                            "Message:    " + exc.Message);
+
+                                    }
+
+                                    #endregion
+                                }
                             }
                         }
 
