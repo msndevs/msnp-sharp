@@ -741,7 +741,11 @@ namespace MSNPSharp
         /// <param name="index"></param>
         public void CopyTo(Array array, int index)
         {
-            objectCollection.CopyTo(array, index);
+            MSNObject[] msnObjectArray = array as MSNObject[];
+            if (msnObjectArray != null)
+            {
+                objectCollection.Values.CopyTo(msnObjectArray, index);
+            }
         }
 
         /// <summary>
