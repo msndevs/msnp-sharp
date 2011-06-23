@@ -35,6 +35,7 @@ using System.IO;
 using System.Web;
 using System.Xml;
 using System.Text;
+using System.Collections.Generic;
 using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
@@ -645,7 +646,7 @@ namespace MSNPSharp
         /// <summary>
         /// Collection of all msn objects
         /// </summary>
-        private Hashtable objectCollection = new Hashtable();
+        private Dictionary<string, MSNObject> objectCollection = new Dictionary<string, MSNObject>(0);
 
         /// <summary>
         /// Returns the msn object with the supplied hash as checksum.
