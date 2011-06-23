@@ -58,7 +58,7 @@ namespace MSNPSharp
         /// <summary>
         /// Collection of all msn objects
         /// </summary>
-        private Hashtable objectCollection = new Hashtable();
+        private Dictionary<string, MSNObject> objectCollection = new Dictionary<string, MSNObject>();
 
         /// <summary>
         /// Returns the msn object with the supplied hash as checksum.
