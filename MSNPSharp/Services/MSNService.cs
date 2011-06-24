@@ -420,10 +420,10 @@ namespace MSNPSharp
                     wuService.Proxy = WebProxy;
                     wuService.Timeout = 60000;
                     wuService.UserAgent = Properties.Resources.WebServiceUserAgent;
-                    wuService.WNApplicationHeaderValue = new WNApplicationHeader();
-                    wuService.WNApplicationHeaderValue.ApplicationId = Properties.Resources.WhatsupServiceAppID;
-                    wuService.WNAuthHeaderValue = new WNAuthHeader();
-                    wuService.WNAuthHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.WhatsUp].Ticket;
+                    wuService.WNApplicationHeader = new WNApplicationHeaderType();
+                    wuService.WNApplicationHeader.ApplicationId = Properties.Resources.WhatsupServiceAppID;
+                    wuService.WNAuthHeader = new WNAuthHeaderType();
+                    wuService.WNAuthHeader.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.WhatsUp].Ticket;
 
                     service = wuService;
                     break;

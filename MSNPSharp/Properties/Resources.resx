@@ -134,7 +134,7 @@
     <value>MSN Explorer/9.0 (MSN 8.0; TmstmpExt)</value>
   </data>
   <data name="WhatsupServiceAppID" xml:space="preserve">
-    <value>3B119D87-1D76-4474-91AD-0D7267E86D04</value>
+    <value>3794391A-4816-4BAC-B34B-6EC7FB5046C6</value>
   </data>
   <data name="DeltasListVersion" xml:space="preserve">
     <value>4.0.1.2414</value>
@@ -144,5 +144,11 @@
   </data>
   <data name="DirectoryServiceAppID" xml:space="preserve">
     <value>F679201A-DBC9-4011-B81B-3D05F0797EA9</value>
+  </data>
+  <data name="ApplicationID" xml:space="preserve">
+    <value>3794391A-4816-4BAC-B34B-6EC7FB5046C6</value>
+  </data>
+  <data name="RenderingApplicationId" xml:space="preserve">
+    <value>E15C4A86-F6FD-4013-93A1-F2D439B94C3B</value>
   </data>
 </root>
