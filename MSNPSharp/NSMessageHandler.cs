@@ -767,6 +767,9 @@ namespace MSNPSharp
             if (ContactList.Owner == null)
                 throw new MSNPSharpException("Not a valid owner");
 
+            if (string.IsNullOrEmpty(newName))
+                newName = ContactList.Owner.Mail;
+
             if (ContactList.Owner.PassportVerified)
             {
                 MessageProcessor.SendMessage(new NSMessage("PRP", new string[] { "MFN", MSNHttpUtility.NSEncode(newName) }));
@@ -1217,7 +1220,9 @@ namespace MSNPSharp
         /// <param name="e"></param>
         protected virtual void OnSignedOff(SignedOffEventArgs e)
         {
-            ContactList.Owner.SetStatus(PresenceStatus.Offline);
+            if (ContactList.Owner != null)
+                ContactList.Owner.SetStatus(PresenceStatus.Offline);
+
             Clear();
 
             if (SignedOff != null)
