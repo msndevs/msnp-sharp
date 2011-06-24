@@ -505,6 +505,11 @@ namespace MSNPSharp
             if (Owner == null)
                 throw new MSNPSharpException("Not a valid owner");
 
+            if(string.IsNullOrEmpty(newName))
+            {
+                newName = Owner.Account;
+            }
+
             PersonalMessage pm = Owner.PersonalMessage;
 
             pm.FriendlyName = newName;
@@ -786,7 +791,8 @@ namespace MSNPSharp
         /// <param name="e"></param>
         protected virtual void OnSignedOff(SignedOffEventArgs e)
         {
-            Owner.SetStatus(PresenceStatus.Offline);
+            if (Owner != null)
+                Owner.SetStatus(PresenceStatus.Offline);
             Clear();
 
             if (SignedOff != null)

@@ -158,6 +158,15 @@
   <message name="ABFindByContactsResponseMessage">
     <part name="ABFindByContactsResponse" element="msnab:ABFindByContactsResponse" />
   </message>
+  <message name="GetBatchRecentActivityMessage">
+    <part name="GetBatchRecentActivity" element="msnab:GetBatchRecentActivity" />
+  </message>
+  <message name="GetBatchRecentActivityResponseMessage">
+    <part name="GetBatchRecentActivityResponse" element="msnab:GetBatchRecentActivityResponse" />
+  </message>
+  <message name="WNServiceHeader">
+    <part name="WNServiceHeader" element="msnab:WNServiceHeader" />
+  </message>
   <portType name="SharingServicePortType">
     <operation name="FindMembership">
       <input message="msnab:FindMembershipMessage" />
@@ -257,6 +266,10 @@
     <operation name="GetContactsRecentActivity">
       <input message="msnab:GetContactsRecentActivityMessage" />
       <output message="msnab:GetContactsRecentActivityResponseMessage" />
+    </operation>
+    <operation name="GetBatchRecentActivity">
+      <input message="msnab:GetBatchRecentActivityMessage" />
+      <output message="msnab:GetBatchRecentActivityResponseMessage" />
     </operation>
   </portType>
   <binding name="SharingServiceBinding" type="msnab:SharingServicePortType">
@@ -552,6 +565,18 @@
         <soap:header message="msnab:WNHeader" part="WNServiceHeader" use="literal" />
       </output>
     </operation>
+    <operation name="GetBatchRecentActivity">
+      <soap:operation soapAction="http://www.msn.com/webservices/AddressBook/GetBatchRecentActivity" />
+      <input>
+        <soap:body use="literal" />
+        <soap:header message="msnab:WNHeader" part="WNApplicationHeader" use="literal" />
+        <soap:header message="msnab:WNHeader" part="WNAuthHeader" use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+        <soap:header message="msnab:WNServiceHeader" part="WNServiceHeader" use="literal" />
+      </output>
+    </operation>
   </binding>
   <service name="SharingService">
     <port name="FindMembershipPort" binding="msnab:SharingServiceBinding">
@@ -625,6 +650,9 @@
   </service>
   <service name="WhatsUpService">
     <port name="GetContactsRecentActivityPort" binding="msnab:WhatsUpServiceBinding">
+      <soap:address location="http://sup.live.com/whatsnew/whatsnewservice.asmx" />
+    </port>
+    <port name="GetBatchRecentActivityPort" binding="msnab:WhatsUpServiceBinding">
       <soap:address location="http://sup.live.com/whatsnew/whatsnewservice.asmx" />
     </port>
   </service>
