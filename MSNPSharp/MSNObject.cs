@@ -648,6 +648,8 @@ namespace MSNPSharp
         /// </summary>
         private Dictionary<string, MSNObject> objectCollection = new Dictionary<string, MSNObject>(0);
 
+        private object syncRoot = new object();
+
         /// <summary>
         /// Returns the msn object with the supplied hash as checksum.
         /// </summary>
@@ -655,7 +657,8 @@ namespace MSNPSharp
         /// <returns></returns>
         public MSNObject Get(string hash)
         {
-            return (objectCollection.ContainsKey(hash)) ? (MSNObject)objectCollection[hash] : null;
+            lock (SyncRoot)
+                return (objectCollection.ContainsKey(hash)) ? (MSNObject)objectCollection[hash] : null;
         }
 
         /// <summary>
@@ -664,7 +667,8 @@ namespace MSNPSharp
         /// <param name="checksum"></param>
         public void Remove(string checksum)
         {
-            objectCollection.Remove(checksum);
+            lock (SyncRoot)
+                objectCollection.Remove(checksum);
         }
 
         /// <summary>
@@ -673,7 +677,7 @@ namespace MSNPSharp
         /// <param name="msnObject"></param>
         public void Remove(MSNObject msnObject)
         {
-            objectCollection.Remove(msnObject.CalculateChecksum());
+            Remove(msnObject.CalculateChecksum());
         }
 
         /// <summary>
@@ -693,7 +697,8 @@ namespace MSNPSharp
         /// <param name="msnObject"></param>
         public void Add(string checksum, MSNObject msnObject)
         {
-            objectCollection[checksum] = msnObject;
+            lock (SyncRoot)
+                objectCollection[checksum] = msnObject;
         }
 
         /// <summary>
@@ -720,7 +725,7 @@ namespace MSNPSharp
         {
             get
             {
-                return false;
+                return true;
             }
         }
 
@@ -731,7 +736,8 @@ namespace MSNPSharp
         {
             get
             {
-                return objectCollection.Count;
+                lock (SyncRoot)
+                    return objectCollection.Count;
             }
         }
 
@@ -744,7 +750,8 @@ namespace MSNPSharp
             MSNObject[] msnObjectArray = array as MSNObject[];
             if (msnObjectArray != null)
             {
-                objectCollection.Values.CopyTo(msnObjectArray, index);
+                lock (SyncRoot)
+                    objectCollection.Values.CopyTo(msnObjectArray, index);
             }
         }
 
@@ -754,7 +761,7 @@ namespace MSNPSharp
         {
             get
             {
-                return null;
+                return syncRoot;
             }
         }
 
@@ -767,7 +774,8 @@ namespace MSNPSharp
         /// <returns></returns>
         public IEnumerator GetEnumerator()
         {
-            return objectCollection.GetEnumerator();
+            lock (SyncRoot)
+                return objectCollection.GetEnumerator();
         }
 
         #endregion
