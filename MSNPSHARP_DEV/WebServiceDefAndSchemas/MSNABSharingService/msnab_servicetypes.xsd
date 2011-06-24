@@ -454,31 +454,45 @@
 			</xsd:sequence>
 		</xsd:complexType>
 	</xsd:element>
-	<xsd:element name="WNApplicationHeader">
-		<xsd:complexType>
-			<xsd:sequence>
-				<xsd:element name="ApplicationId" type="msnab:Guid"/>
-			</xsd:sequence>
-		</xsd:complexType>
-	</xsd:element>
-	<xsd:element name="WNAuthHeader">
-		<xsd:complexType>
-			<xsd:sequence>
-				<xsd:element name="TicketToken" type="xsd:string"/>
-			</xsd:sequence>
-		</xsd:complexType>
-	</xsd:element>
-	<xsd:element name="WNServiceHeader">
-		<xsd:complexType>
-			<xsd:sequence>
-				<xsd:element name="Version" type="xsd:token"/>
-				<xsd:element name="CacheKey" type="xsd:token" minOccurs="0"/>
-				<xsd:element name="CacheKeyChanged" type="xsd:boolean" minOccurs="0"/>
-				<xsd:element name="PreferredHostName" type="xsd:string" minOccurs="0"/>
-			</xsd:sequence>
-		</xsd:complexType>
-	</xsd:element>
+	<xsd:complexType name="WNApplicationHeaderType">
+		<xsd:sequence>
+			<xsd:element name="ApplicationId" type="msnab:Guid"/>
+			<xsd:element name="RenderingApplicationId" type="msnab:Guid" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:element name="WNApplicationHeader" type="msnab:WNApplicationHeaderType"/>
+	<xsd:complexType name="WNAuthHeaderType">
+		<xsd:sequence>
+			<xsd:element name="TicketToken" type="xsd:string"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:element name="WNAuthHeader" type="msnab:WNAuthHeaderType"/>
+	<xsd:complexType name="WNServiceHeaderType">
+		<xsd:sequence>
+			<xsd:element name="Version" type="xsd:token"/>
+			<xsd:element name="CacheKey" type="xsd:token" minOccurs="0"/>
+			<xsd:element name="CacheKeyChanged" type="xsd:boolean" minOccurs="0"/>
+			<xsd:element name="PreferredHostName" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="InExperimentalSample" type="xsd:boolean" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:element name="WNServiceHeader" type="msnab:WNServiceHeaderType"/>
+	<xsd:element name="GetBatchRecentActivity" type="msnab:GetBatchRecentActivityRequestType"/>
 	<xsd:element name="GetContactsRecentActivity" type="msnab:GetContactsRecentActivityRequestType"/>
+	<xsd:complexType name="GetBatchRecentActivityRequestType">
+		<xsd:sequence>
+			<xsd:element name="entityHandle" type="msnab:entityHandle"/>
+			<xsd:element name="locales" type="msnab:locale"/>
+			<xsd:element name="count" type="xsd:int"/>
+			<xsd:element name="templateTypes">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="string" type="xsd:string" maxOccurs="unbounded"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
 	<xsd:complexType name="GetContactsRecentActivityRequestType">
 		<xsd:sequence>
 			<xsd:element name="entityHandle" type="msnab:entityHandle"/>
@@ -486,6 +500,7 @@
 			<xsd:element name="count" type="xsd:int"/>
 		</xsd:sequence>
 	</xsd:complexType>
+	<xsd:element name="GetBatchRecentActivityResponse" type="msnab:GetBatchRecentActivityResultType"/>
 	<xsd:element name="GetContactsRecentActivityResponse">
 		<xsd:complexType>
 			<xsd:sequence>
@@ -493,6 +508,25 @@
 			</xsd:sequence>
 		</xsd:complexType>
 	</xsd:element>
+	<xsd:complexType name="GetBatchRecentActivityResultType">
+		<xsd:sequence>
+			<xsd:element name="Activities">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="ActivityDetails" type="msnab:ActivityDetailsType" maxOccurs="unbounded"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="Templates">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="RecentActivityTemplateContainer" type="msnab:RecentActivityTemplateContainerType" maxOccurs="unbounded"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="FeedUrl" type="xsd:anyURI" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
 	<xsd:complexType name="GetContactsRecentActivityResultType">
 		<xsd:sequence>
 			<xsd:element name="Activities">
