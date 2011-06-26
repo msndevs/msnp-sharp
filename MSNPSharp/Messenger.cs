@@ -401,6 +401,8 @@ namespace MSNPSharp
             if (Credentials.ClientCode.Length == 0 || credentials.ClientID.Length == 0)
                 throw new MSNPSharpException("The local messengerclient credentials (client-id and client code) are not specified. This is necessary in order to authenticate the local client with the messenger server. See for more info about the values to use the documentation of the Credentials class.");
 
+            Disconnect();
+
             // everything is okay, resume
             NameserverProcessor.ConnectivitySettings = connectivitySettings;
             NameserverProcessor.RegisterHandler(nsMessageHandler);

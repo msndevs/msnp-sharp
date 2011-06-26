@@ -453,28 +453,33 @@ namespace MSNPSharp
                 NSMessageHandler.ContactList.Owner.SetMPOP((AddressBook.MyProperties[AnnotationNames.MSN_IM_MPOP] == "1") ? MPOP.KeepOnline : MPOP.AutoLogoff);
             }
 
-            Deltas.Profile = NSMessageHandler.StorageService.GetProfile();
+            OwnerProfile profileFromWeb = NSMessageHandler.StorageService.GetProfile();
 
-            // Set display name, personal status and photo
-            string mydispName = String.IsNullOrEmpty(Deltas.Profile.DisplayName) ? NSMessageHandler.ContactList.Owner.NickName : Deltas.Profile.DisplayName;
-            PersonalMessage pm = new PersonalMessage(Deltas.Profile.PersonalMessage, MediaType.None, null, NSMessageHandler.MachineGuid);
-
-            NSMessageHandler.ContactList.Owner.SetName(mydispName);
-            NSMessageHandler.ContactList.Owner.SetPersonalMessage(pm);
-            NSMessageHandler.ContactList.Owner.CreateDefaultDisplayImage(Deltas.Profile.Photo.DisplayImage);
-
-            if (NSMessageHandler.AutoSynchronize)
+            if (profileFromWeb != null)
             {
-                #region Initial ADL
+                Deltas.Profile = profileFromWeb;
 
-                SendInitialADL(Scenario.SendInitialContactsADL | Scenario.SendInitialCirclesADL);
+                // Set display name, personal status and photo
+                string mydispName = String.IsNullOrEmpty(Deltas.Profile.DisplayName) ? NSMessageHandler.ContactList.Owner.NickName : Deltas.Profile.DisplayName;
+                PersonalMessage pm = new PersonalMessage(Deltas.Profile.PersonalMessage, MediaType.None, null, NSMessageHandler.MachineGuid);
 
-                #endregion
+                NSMessageHandler.ContactList.Owner.SetName(mydispName);
+                NSMessageHandler.ContactList.Owner.SetPersonalMessage(pm);
+                NSMessageHandler.ContactList.Owner.CreateDefaultDisplayImage(Deltas.Profile.Photo.DisplayImage);
+
+                if (NSMessageHandler.AutoSynchronize)
+                {
+                    #region Initial ADL
+
+                    SendInitialADL(Scenario.SendInitialContactsADL | Scenario.SendInitialCirclesADL);
+
+                    #endregion
+                }
+
+                // Save addressbook and then truncate deltas file.
+                AddressBook.Save();
+                Deltas.Truncate();
             }
-
-            // Save addressbook and then truncate deltas file.
-            AddressBook.Save();
-            Deltas.Truncate();
         }
 
         /// <summary>
