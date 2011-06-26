@@ -728,6 +728,15 @@ namespace MSNPSharp
 
                 sharingService.FindMembershipCompleted += delegate(object sender, FindMembershipCompletedEventArgs e)
                 {
+                    lock (this)
+                    {
+                        if (AddressBook == null && Deltas == null && AddressBookSynchronized == false)
+                        {
+                            // This means before the webservice returned the connection had broken.
+                            return;
+                        }
+                    }
+
                     OnAfterCompleted(new ServiceOperationEventArgs(sharingService, MsnServiceType.Sharing, e));
 
                     if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
@@ -857,6 +866,15 @@ namespace MSNPSharp
 
                 abService.ABFindContactsPagedCompleted += delegate(object sender, ABFindContactsPagedCompletedEventArgs e)
                 {
+                    lock (this)
+                    {
+                        if (AddressBook == null && Deltas == null && AddressBookSynchronized == false)
+                        {
+                            // This means before the webservice returned the connection had broken.
+                            return;
+                        }
+                    }
+
                     OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
 
                     if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
