@@ -145,6 +145,7 @@ namespace MSNPSharp
         private Credentials credentials = new Credentials(MsnProtocol.MSNP18);
         private ArrayList conversations = ArrayList.Synchronized(new ArrayList());
         private MessageManager messageManager = null;
+        private bool shouldReconnect = false;
 
         #endregion
 
@@ -173,7 +174,11 @@ namespace MSNPSharp
                 OnConversationCreated(c, ce.Initiator);
                 return;
             };
+
+            NameserverProcessor.ConnectionClosed += new EventHandler<EventArgs>(NameserverProcessor_ConnectionClosed);
         }
+
+        
 
         #endregion
 
@@ -378,6 +383,26 @@ namespace MSNPSharp
 
         #region Methods
 
+        private void DoConnect()
+        {
+            NameserverProcessor.ConnectivitySettings = connectivitySettings;
+            NameserverProcessor.RegisterHandler(nsMessageHandler);
+            Nameserver.MessageProcessor = NameserverProcessor;
+            Nameserver.Credentials = credentials;
+
+            NameserverProcessor.Connect();
+        }
+
+        private void NameserverProcessor_ConnectionClosed(object sender, EventArgs e)
+        {
+            if (shouldReconnect)
+            {
+                shouldReconnect = false;
+                DoConnect();
+                
+            }
+        }
+
         /// <summary>
         /// Connect to the messenger network.
         /// </summary>
@@ -401,15 +426,16 @@ namespace MSNPSharp
             if (Credentials.ClientCode.Length == 0 || credentials.ClientID.Length == 0)
                 throw new MSNPSharpException("The local messengerclient credentials (client-id and client code) are not specified. This is necessary in order to authenticate the local client with the messenger server. See for more info about the values to use the documentation of the Credentials class.");
 
-            Disconnect();
-
-            // everything is okay, resume
-            NameserverProcessor.ConnectivitySettings = connectivitySettings;
-            NameserverProcessor.RegisterHandler(nsMessageHandler);
-            Nameserver.MessageProcessor = nsMessageProcessor;
-            Nameserver.Credentials = credentials;
-
-            NameserverProcessor.Connect();
+            if (NameserverProcessor.Connected)
+            {
+                shouldReconnect = true;
+                Disconnect();
+            }
+            else
+            {
+                // everything is okay, resume
+                DoConnect();
+            }
         }
 
         /// <summary>
@@ -417,14 +443,14 @@ namespace MSNPSharp
         /// </summary>
         public virtual void Disconnect()
         {
-            if (nsMessageProcessor.Connected)
+            if (NameserverProcessor.Connected)
             {
                 if (nsMessageHandler != null && Nameserver.ContactList.Owner != null)
                 {
                     Nameserver.ContactList.Owner.SetStatus(PresenceStatus.Offline);
                 }
 
-                nsMessageProcessor.Disconnect();
+                NameserverProcessor.Disconnect();
             }
         }
 
