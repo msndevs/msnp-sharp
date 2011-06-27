@@ -1057,10 +1057,8 @@ namespace MSNPSharp
         /// <param name="e"></param>
         protected virtual void OnProcessorDisconnectCallback(object sender, EventArgs e)
         {
-            if (IsSignedIn)
+            if (Clear())
                 OnSignedOff(new SignedOffEventArgs(SignedOffReason.None));
-
-            Clear();
         }
 
         /// <summary>
@@ -1225,11 +1223,13 @@ namespace MSNPSharp
 
             Clear();
 
-            if (SignedOff != null)
-                SignedOff(this, e);
-
             if (messageProcessor != null)
                 messageProcessor.Disconnect();
+
+            //This event had to be at the last, or error might happend if user call Connect
+            //in the SignedOff event.
+            if (SignedOff != null)
+                SignedOff(this, e);
         }
 
         /// <summary>
@@ -3506,7 +3506,7 @@ namespace MSNPSharp
         /// <remarks>
         /// Called after we the processor has disconnected. This will clear the contactlist and free other resources.
         /// </remarks>
-        protected virtual void Clear()
+        protected virtual bool Clear()
         {
             // 1. Cancel transfers
             p2pHandler.Clear();
@@ -3521,6 +3521,8 @@ namespace MSNPSharp
             // 3. isSignedIn must be here... 
             // a) ContactService.Clear() merges and saves addressbook if isSignedIn=true.
             // b) Owner.ClientCapacities = ClientCapacities.None doesn't send CHG command if isSignedIn=false.
+            bool signedInStatus = IsSignedIn;
+
             isSignedIn = false;
             externalEndPoint = null;
             Interlocked.Exchange(ref canSendPing, 1);
@@ -3540,6 +3542,8 @@ namespace MSNPSharp
             //7. Unregister schedulers
             Schedulers.P2PInvitationScheduler.UnRegister(P2PInvitationSchedulerId);
             Schedulers.SwitchBoardRequestScheduler.UnRegister(SwitchBoardRequestSchedulerId);
+
+            return signedInStatus;
         }
 
         protected virtual NetworkMessage ParseTextPayloadMessage(NSMessage message)
