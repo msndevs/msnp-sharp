@@ -618,10 +618,8 @@ namespace MSNPSharp
         /// <param name="e"></param>
         protected virtual void OnProcessorDisconnectCallback(object sender, EventArgs e)
         {
-            if (IsSignedIn)
+            if (Clear())
                 OnSignedOff(new SignedOffEventArgs(SignedOffReason.None));
-
-            Clear();
         }
 
         /// <summary>
@@ -793,13 +791,14 @@ namespace MSNPSharp
         {
             if (Owner != null)
                 Owner.SetStatus(PresenceStatus.Offline);
-            Clear();
 
-            if (SignedOff != null)
-                SignedOff(this, e);
+            Clear();
 
             if (messageProcessor != null)
                 messageProcessor.Disconnect();
+
+            if (SignedOff != null)
+                SignedOff(this, e);
         }
 
         #endregion
@@ -1446,7 +1445,7 @@ namespace MSNPSharp
         /// <remarks>
         /// Called after we the processor has disconnected. This will clear the contactlist and free other resources.
         /// </remarks>
-        protected virtual void Clear()
+        protected virtual bool Clear()
         {
             // 1. Cancel transfers
             p2pHandler.Dispose();
@@ -1462,6 +1461,7 @@ namespace MSNPSharp
             // 3. isSignedIn must be here... 
             // a) ContactService.Clear() merges and saves addressbook if isSignedIn=true.
             // b) Owner.ClientCapabilities = ClientCapabilities.None doesn't send CHG command if isSignedIn=false.
+            bool signInStatus = IsSignedIn;
             isSignedIn = false;
             externalEndPoint = null;
             Interlocked.Exchange(ref canSendPing, 1);
@@ -1480,6 +1480,8 @@ namespace MSNPSharp
             //7. Clear multiparties
             lock (multiParties)
                 multiParties.Clear();
+
+            return signInStatus;
         }
 
         protected virtual NetworkMessage ParseTextPayloadMessage(NSMessage message)
