@@ -442,7 +442,7 @@ namespace MSNPSharp
             // Reset
             recursiveCall = 0;
 
-            if (NSMessageHandler.AutoSynchronize)
+            if (NSMessageHandler.AutoSynchronize && AddressBook != null)
             {
                 AddressBook.InitializeMyProperties();
 
