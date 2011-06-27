@@ -795,6 +795,10 @@ namespace MSNPSharp
             {
                 CreateProfile();
             }
+
+            if (NSMessageHandler.ContactService.Deltas == null)
+                return null;
+
             return NSMessageHandler.ContactService.Deltas.Profile;
         }
 

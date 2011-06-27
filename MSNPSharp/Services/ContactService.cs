@@ -457,51 +457,54 @@ namespace MSNPSharp
             // Reset
             recursiveCall = 0;
 
-            if (NSMessageHandler.AutoSynchronize)
+            if (NSMessageHandler.AutoSynchronize && AddressBook != null)
             {
                 AddressBook.InitializeMyProperties();
             }
 
-            Deltas.Profile = NSMessageHandler.StorageService.GetProfile();
+            OwnerProfile profileFromWeb = NSMessageHandler.StorageService.GetProfile();
 
-            // Set display name, personal status and photo
-            PersonalMessage pm = NSMessageHandler.Owner.PersonalMessage;
-
-            string mydispName = String.IsNullOrEmpty(Deltas.Profile.DisplayName) ? NSMessageHandler.Owner.NickName : Deltas.Profile.DisplayName;
-            string psmMessage = Deltas.Profile.PersonalMessage;
-            
-            NSMessageHandler.Owner.SetName(mydispName);
-
-            pm.FriendlyName = mydispName;
-            pm.Message = psmMessage;
-
-            Color colorScheme = ColorTranslator.FromOle(Deltas.Profile.ColorScheme);
-            NSMessageHandler.Owner.SetColorScheme(colorScheme);
-            pm.ColorScheme = colorScheme;
-
-            SceneImage sceneImage = NSMessageHandler.Owner.SceneImage;
-            if (sceneImage != null && !sceneImage.IsDefaultImage)
+            if (profileFromWeb != null)
             {
-                pm.Scene = sceneImage.ContextPlain;
+                // Set display name, personal status and photo
+                PersonalMessage pm = NSMessageHandler.Owner.PersonalMessage;
+
+                string mydispName = String.IsNullOrEmpty(Deltas.Profile.DisplayName) ? NSMessageHandler.Owner.NickName : Deltas.Profile.DisplayName;
+                string psmMessage = Deltas.Profile.PersonalMessage;
+
+                NSMessageHandler.Owner.SetName(mydispName);
+
+                pm.FriendlyName = mydispName;
+                pm.Message = psmMessage;
+
+                Color colorScheme = ColorTranslator.FromOle(Deltas.Profile.ColorScheme);
+                NSMessageHandler.Owner.SetColorScheme(colorScheme);
+                pm.ColorScheme = colorScheme;
+
+                SceneImage sceneImage = NSMessageHandler.Owner.SceneImage;
+                if (sceneImage != null && !sceneImage.IsDefaultImage)
+                {
+                    pm.Scene = sceneImage.ContextPlain;
+                }
+
+                NSMessageHandler.Owner.CreateDefaultDisplayImage(Deltas.Profile.Photo.DisplayImage);
+                pm.UserTileLocation = NSMessageHandler.Owner.DisplayImage.IsDefaultImage ? string.Empty : NSMessageHandler.Owner.DisplayImage.ContextPlain;
+
+                NSMessageHandler.Owner.PersonalMessage = pm;
+
+                if (NSMessageHandler.AutoSynchronize)
+                {
+                    #region Initial ADL
+
+                    SendInitialADL(Scenario.SendServiceADL | Scenario.SendInitialContactsADL | Scenario.SendInitialCirclesADL);
+
+                    #endregion
+                }
+
+                // Save addressbook and then truncate deltas file.
+                AddressBook.Save();
+                Deltas.Truncate();
             }
-
-            NSMessageHandler.Owner.CreateDefaultDisplayImage(Deltas.Profile.Photo.DisplayImage);
-            pm.UserTileLocation = NSMessageHandler.Owner.DisplayImage.IsDefaultImage ? string.Empty : NSMessageHandler.Owner.DisplayImage.ContextPlain;
-
-            NSMessageHandler.Owner.PersonalMessage = pm;
-
-            if (NSMessageHandler.AutoSynchronize)
-            {
-                #region Initial ADL
-
-                SendInitialADL(Scenario.SendServiceADL | Scenario.SendInitialContactsADL | Scenario.SendInitialCirclesADL);
-
-                #endregion
-            }
-
-            // Save addressbook and then truncate deltas file.
-            AddressBook.Save();
-            Deltas.Truncate();
         }
 
         /// <summary>

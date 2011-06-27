@@ -59,6 +59,7 @@ namespace MSNPSharp
         private NSMessageHandler nsMessageHandler = null;
         private ConnectivitySettings connectivitySettings = null;
         private Credentials credentials = new Credentials();
+        private bool shouldReconnect = false;
         
 
         #endregion
@@ -302,6 +303,25 @@ namespace MSNPSharp
 
         #region Methods
 
+        private void DoConnect()
+        {
+            // everything is okay, resume
+            NameserverProcessor.ConnectivitySettings = ConnectivitySettings;
+            NameserverProcessor.RegisterHandler(Nameserver);
+            Nameserver.MessageProcessor = NameserverProcessor;
+            Nameserver.Credentials = Credentials;
+
+            NameserverProcessor.Connect();
+        }
+
+        void NameserverProcessor_ConnectionClosed(object sender, EventArgs e)
+        {
+            NameserverProcessor.ConnectionClosed -= NameserverProcessor_ConnectionClosed;
+            if (shouldReconnect)
+                DoConnect();
+            shouldReconnect = false;
+        }
+
         /// <summary>
         /// Connects to the messenger network.
         /// </summary>
@@ -325,14 +345,20 @@ namespace MSNPSharp
             if (Credentials.ClientCode.Length == 0 || credentials.ClientID.Length == 0)
                 throw new MSNPSharpException("The local messengerclient credentials (client-id and client code) are not specified. This is necessary in order to authenticate the local client with the messenger server. See for more info about the values to use the documentation of the Credentials class.");
 
-            // everything is okay, resume
-            NameserverProcessor.ConnectivitySettings = connectivitySettings;
-            NameserverProcessor.RegisterHandler(nsMessageHandler);
-            Nameserver.MessageProcessor = nsMessageProcessor;
-            Nameserver.Credentials = credentials;
-
-            NameserverProcessor.Connect();
+            if (Connected)
+            {
+                shouldReconnect = true;
+                NameserverProcessor.ConnectionClosed += new EventHandler<EventArgs>(NameserverProcessor_ConnectionClosed);
+                Disconnect();
+            }
+            else
+            {
+                DoConnect();
+            }
+            
         }
+
+        
 
         /// <summary>
         /// Disconnects from the messenger network.
