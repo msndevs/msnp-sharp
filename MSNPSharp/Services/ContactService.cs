@@ -717,7 +717,7 @@ namespace MSNPSharp
 
                 string strLastChange = WebServiceConstants.ZeroTime;
 
-                if (msLastChange != serviceLastChange)
+                if (msLastChange != serviceLastChange && recursiveCall == 0)
                 {
                     msdeltasOnly = true;
 
