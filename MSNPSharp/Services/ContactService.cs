@@ -841,9 +841,17 @@ namespace MSNPSharp
                             {
                                 if (null != e.Result.FindMembershipResult && AddressBook != null)
                                 {
-
-                                    AddressBook.Merge(e.Result.FindMembershipResult);
-                                    AddressBook.Save();
+                                    try
+                                    {
+                                        XMLContactList addressbook = AddressBook.Merge(e.Result.FindMembershipResult);
+                                        addressbook.Save();
+                                    }
+                                    catch (Exception unknownException)
+                                    {
+                                        OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership",
+                                            new MSNPSharpException("Unknown Exception occurred while synchronizing contact list, please see inner exception.",
+                                            unknownException)));
+                                    }
 
                                 }
                             }
