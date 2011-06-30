@@ -47,6 +47,14 @@ namespace MSNPSharp.IO
     public class SerializableDictionary<TKey, TValue>
         : Dictionary<TKey, TValue>, IXmlSerializable
     {
+
+        private object syncObject = new object();
+
+        public object SyncObject
+        {
+            get { return syncObject; }
+        }
+
         #region .ctor
 
         public SerializableDictionary()
@@ -87,6 +95,49 @@ namespace MSNPSharp.IO
         }
 
         #endregion
+
+        public new bool ContainsKey(TKey key)
+        {
+            lock (SyncObject)
+            {
+                return base.ContainsKey(key);
+            }
+        }
+
+        public new bool ContainsValue(TValue val)
+        {
+            lock (SyncObject)
+            {
+                return base.ContainsValue(val);
+            }
+        }
+
+        public new void Add(TKey key, TValue value)
+        {
+            lock (SyncObject)
+            {
+                base.Add(key, value);
+            }
+        }
+
+        public new TValue this[TKey key]
+        {
+            get
+            {
+                lock(SyncObject)
+                {
+                    return base[key];
+                }
+            }
+
+            set
+            {
+                lock (SyncObject)
+                {
+                    base[key] = value;
+                }
+            }
+        }
 
         #region IXmlSerializable Members
         public System.Xml.Schema.XmlSchema GetSchema()
