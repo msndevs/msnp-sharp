@@ -376,71 +376,75 @@ namespace MSNPSharp
             string addressbookFile = Path.Combine(Settings.SavePath, NSMessageHandler.ContactList.Owner.Mail.GetHashCode() + ".mcl");
             string deltasResultsFile = Path.Combine(Settings.SavePath, NSMessageHandler.ContactList.Owner.Mail.GetHashCode() + "d" + ".mcl");
 
-            try
+            lock (SyncObject)
             {
-                AddressBook = XMLContactList.LoadFromFile(addressbookFile, st, NSMessageHandler, false);
-                Deltas = DeltasList.LoadFromFile(deltasResultsFile, st, NSMessageHandler, true);
-
-                NSMessageHandler.MSNTicket.CacheKeys = Deltas.CacheKeys;
-
-                if (NSMessageHandler.AutoSynchronize &&
-                    recursiveCall == 0 &&
-                    (AddressBook.Version != Properties.Resources.XMLContactListVersion || Deltas.Version != Properties.Resources.DeltasListVersion))
+                try
                 {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "AddressBook Version not match:\r\nMCL AddressBook Version: " +
-                        AddressBook.Version.ToString() + "\r\nAddressBook Version Required:\r\nContactListVersion " +
-                        Properties.Resources.XMLContactListVersion + ", DeltasList Version " +
-                        Properties.Resources.DeltasListVersion +
-                        "\r\nThe old mcl files for this account will be deleted and a new request for getting addressbook list will be post.");
+
+                    AddressBook = XMLContactList.LoadFromFile(addressbookFile, st, NSMessageHandler, false);
+                    Deltas = DeltasList.LoadFromFile(deltasResultsFile, st, NSMessageHandler, true);
+
+                    NSMessageHandler.MSNTicket.CacheKeys = Deltas.CacheKeys;
+
+                    if (NSMessageHandler.AutoSynchronize &&
+                        recursiveCall == 0 &&
+                        (AddressBook.Version != Properties.Resources.XMLContactListVersion || Deltas.Version != Properties.Resources.DeltasListVersion))
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "AddressBook Version not match:\r\nMCL AddressBook Version: " +
+                            AddressBook.Version.ToString() + "\r\nAddressBook Version Required:\r\nContactListVersion " +
+                            Properties.Resources.XMLContactListVersion + ", DeltasList Version " +
+                            Properties.Resources.DeltasListVersion +
+                            "\r\nThe old mcl files for this account will be deleted and a new request for getting addressbook list will be post.");
+
+                        recursiveCall++;
+                        SynchronizeContactList();
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occured while getting addressbook: " + ex.Message +
+                        "\r\nA new request for getting addressbook list will be post again.", GetType().Name);
 
                     recursiveCall++;
                     SynchronizeContactList();
                     return;
                 }
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occured while getting addressbook: " + ex.Message +
-                    "\r\nA new request for getting addressbook list will be post again.", GetType().Name);
 
-                recursiveCall++;
-                SynchronizeContactList();
-                return;
-            }
+                if (NSMessageHandler.AutoSynchronize && AddressBook != null)
+                {
 
-            if (NSMessageHandler.AutoSynchronize && AddressBook != null)
-            {
-                lock (SyncObject)
                     AddressBook.Initialize();
 
-                if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)) == DateTime.MinValue)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your membership list for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
-                }
-                msRequest(
-                    PartnerScenario.Initial,
-                    delegate
+                    if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)) == DateTime.MinValue)
                     {
-                        if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)) == DateTime.MinValue)
-                        {
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your address book for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
-                        }
-                        abRequest(PartnerScenario.Initial,
-                            delegate
-                            {
-                                SetDefaults();
-                            }
-                        );
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your membership list for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
                     }
-                );
-            }
-            else
-            {
-                // Set lastchanged and roaming profile last change to get display picture and personal message
-                NSMessageHandler.ContactService.AddressBook.MyProperties[AnnotationNames.Live_Profile_Expression_LastChanged] = XmlConvert.ToString(DateTime.MinValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
-                NSMessageHandler.ContactList.Owner.SetRoamLiveProperty(RoamLiveProperty.Enabled);
-                SetDefaults();
-                NSMessageHandler.OnSignedIn(EventArgs.Empty);
+                    msRequest(
+                        PartnerScenario.Initial,
+                        delegate
+                        {
+                            if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)) == DateTime.MinValue)
+                            {
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your address book for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
+                            }
+                            abRequest(PartnerScenario.Initial,
+                                delegate
+                                {
+                                    SetDefaults();
+                                }
+                            );
+                        }
+                    );
+                }
+                else
+                {
+                    // Set lastchanged and roaming profile last change to get display picture and personal message
+                    NSMessageHandler.ContactService.AddressBook.MyProperties[AnnotationNames.Live_Profile_Expression_LastChanged] = XmlConvert.ToString(DateTime.MinValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
+                    NSMessageHandler.ContactList.Owner.SetRoamLiveProperty(RoamLiveProperty.Enabled);
+                    SetDefaults();
+                    NSMessageHandler.OnSignedIn(EventArgs.Empty);
+                }
             }
         }
 
@@ -745,7 +749,7 @@ namespace MSNPSharp
                 {
                     OnAfterCompleted(new ServiceOperationEventArgs(sharingService, MsnServiceType.Sharing, e));
 
-                    lock (this)
+                    lock (SyncObject)
                     {
                         if (AddressBook == null && Deltas == null && AddressBookSynchronized == false)
                         {
@@ -827,14 +831,17 @@ namespace MSNPSharp
                         }
                         else
                         {
-                            if (null != e.Result.FindMembershipResult && AddressBook != null)
+                            lock (SyncObject)
                             {
-                                lock (SyncObject)
+                                if (null != e.Result.FindMembershipResult && AddressBook != null)
                                 {
+
                                     AddressBook.Merge(e.Result.FindMembershipResult);
                                     AddressBook.Save();
+
                                 }
                             }
+
                             if (onSuccess != null)
                             {
                                 onSuccess(sharingService, e);
