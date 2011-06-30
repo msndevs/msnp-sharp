@@ -361,7 +361,8 @@ namespace MSNPSharp.DataTransfer
                     directConnectionAttempt = false;
                     MessageProcessor = preDCProcessor;
 
-                    directProcessor.Disconnect();
+                    if (directProcessor != null)
+                        directProcessor.Disconnect();
 
                     P2PDirectProcessor dp = directProcessor as P2PDirectProcessor;
                     if (dp != null)
