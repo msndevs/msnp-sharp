@@ -453,15 +453,18 @@ namespace MSNPSharp
             // Reset
             recursiveCall = 0;
 
-            if (NSMessageHandler.AutoSynchronize && AddressBook != null)
+            lock (SyncObject)
             {
-                AddressBook.InitializeMyProperties();
+                if (NSMessageHandler.AutoSynchronize && AddressBook != null)
+                {
+                    AddressBook.InitializeMyProperties();
 
-                // Set privacy settings and roam property
-                NSMessageHandler.ContactList.Owner.SetPrivacy((AddressBook.MyProperties[AnnotationNames.MSN_IM_BLP] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
-                NSMessageHandler.ContactList.Owner.SetNotifyPrivacy((AddressBook.MyProperties[AnnotationNames.MSN_IM_GTC] == "1") ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd);
-                NSMessageHandler.ContactList.Owner.SetRoamLiveProperty((AddressBook.MyProperties[AnnotationNames.MSN_IM_RoamLiveProperties] == "1") ? RoamLiveProperty.Enabled : RoamLiveProperty.Disabled);
-                NSMessageHandler.ContactList.Owner.SetMPOP((AddressBook.MyProperties[AnnotationNames.MSN_IM_MPOP] == "1") ? MPOP.KeepOnline : MPOP.AutoLogoff);
+                    // Set privacy settings and roam property
+                    NSMessageHandler.ContactList.Owner.SetPrivacy((AddressBook.MyProperties[AnnotationNames.MSN_IM_BLP] == "1") ? PrivacyMode.AllExceptBlocked : PrivacyMode.NoneButAllowed);
+                    NSMessageHandler.ContactList.Owner.SetNotifyPrivacy((AddressBook.MyProperties[AnnotationNames.MSN_IM_GTC] == "1") ? NotifyPrivacy.PromptOnAdd : NotifyPrivacy.AutomaticAdd);
+                    NSMessageHandler.ContactList.Owner.SetRoamLiveProperty((AddressBook.MyProperties[AnnotationNames.MSN_IM_RoamLiveProperties] == "1") ? RoamLiveProperty.Enabled : RoamLiveProperty.Disabled);
+                    NSMessageHandler.ContactList.Owner.SetMPOP((AddressBook.MyProperties[AnnotationNames.MSN_IM_MPOP] == "1") ? MPOP.KeepOnline : MPOP.AutoLogoff);
+                }
             }
 
             OwnerProfile profileFromWeb = NSMessageHandler.StorageService.GetProfile();
@@ -490,8 +493,11 @@ namespace MSNPSharp
                 // Save addressbook and then truncate deltas file.
                 lock (SyncObject)
                 {
-                    AddressBook.Save();
-                    Deltas.Truncate();
+                    if (AddressBook != null && Deltas != null)
+                    {
+                        AddressBook.Save();
+                        Deltas.Truncate();
+                    }
                 }
             }
         }
