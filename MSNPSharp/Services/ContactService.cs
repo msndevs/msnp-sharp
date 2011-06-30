@@ -59,6 +59,7 @@ namespace MSNPSharp
         private string applicationId = String.Empty;
         private Dictionary<int, NSPayLoadMessage> initialADLs = new Dictionary<int, NSPayLoadMessage>();
         private bool abSynchronized;
+        private object syncObject = new object();
 
         internal XMLContactList AddressBook;
         internal DeltasList Deltas;
@@ -324,6 +325,11 @@ namespace MSNPSharp
 
         #region Properties
 
+        public object SyncObject
+        {
+            get { return syncObject; }
+        }
+
         /// <summary>
         /// Keep track whether a address book synchronization has been completed.
         /// </summary>
@@ -402,9 +408,10 @@ namespace MSNPSharp
                 return;
             }
 
-            if (NSMessageHandler.AutoSynchronize)
+            if (NSMessageHandler.AutoSynchronize && AddressBook != null)
             {
-                AddressBook.Initialize();
+                lock (SyncObject)
+                    AddressBook.Initialize();
 
                 if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)) == DateTime.MinValue)
                 {
@@ -477,8 +484,11 @@ namespace MSNPSharp
                 }
 
                 // Save addressbook and then truncate deltas file.
-                AddressBook.Save();
-                Deltas.Truncate();
+                lock (SyncObject)
+                {
+                    AddressBook.Save();
+                    Deltas.Truncate();
+                }
             }
         }
 
@@ -801,8 +811,11 @@ namespace MSNPSharp
                         {
                             if (null != e.Result.FindMembershipResult && AddressBook != null)
                             {
-                                AddressBook.Merge(e.Result.FindMembershipResult);
-                                AddressBook.Save();
+                                lock (SyncObject)
+                                {
+                                    AddressBook.Merge(e.Result.FindMembershipResult);
+                                    AddressBook.Save();
+                                }
                             }
                             if (onSuccess != null)
                             {
@@ -909,23 +922,26 @@ namespace MSNPSharp
                         }
                         else
                         {
-                            if (null != e.Result.ABFindContactsPagedResult)
+                            if (null != e.Result.ABFindContactsPagedResult && AddressBook != null)
                             {
-                                string lowerId = WebServiceConstants.MessengerIndividualAddressBookId;
-
-                                if (e.Result.ABFindContactsPagedResult.Ab != null)
-                                    lowerId = e.Result.ABFindContactsPagedResult.Ab.abId.ToLowerInvariant();
-
-                                if (lowerId == WebServiceConstants.MessengerIndividualAddressBookId)
+                                lock (SyncObject)
                                 {
-                                    AddressBook.MergeIndividualAddressBook(e.Result.ABFindContactsPagedResult);
-                                }
-                                else
-                                {
-                                    AddressBook.MergeGroupAddressBook(e.Result.ABFindContactsPagedResult);
-                                }
+                                    string lowerId = WebServiceConstants.MessengerIndividualAddressBookId;
 
-                                AddressBook.Save();
+                                    if (e.Result.ABFindContactsPagedResult.Ab != null)
+                                        lowerId = e.Result.ABFindContactsPagedResult.Ab.abId.ToLowerInvariant();
+
+                                    if (lowerId == WebServiceConstants.MessengerIndividualAddressBookId)
+                                    {
+                                        AddressBook.MergeIndividualAddressBook(e.Result.ABFindContactsPagedResult);
+                                    }
+                                    else
+                                    {
+                                        AddressBook.MergeGroupAddressBook(e.Result.ABFindContactsPagedResult);
+                                    }
+
+                                    AddressBook.Save();
+                                }
 
                                 if (e.Result.ABFindContactsPagedResult.CircleResult != null)
                                     NSMessageHandler.SendSHAAMessage(e.Result.ABFindContactsPagedResult.CircleResult.CircleTicket);
@@ -2848,7 +2864,8 @@ namespace MSNPSharp
                               }
                           }
 
-                          AddressBook.Save();
+                          lock (SyncObject)
+                              AddressBook.Save();
 
                           if (onSuccess != null)
                               onSuccess(sender, e);
@@ -2947,8 +2964,12 @@ namespace MSNPSharp
                 }
 
                 NSMessageHandler.SendCircleNotifyRML(circle.AddressBookId, circle.HostDomain, circle.Lists, true);
-                AddressBook.RemoveCircle(circle.AddressBookId.ToString("D").ToLowerInvariant());
-                AddressBook.Save();
+
+                lock (SyncObject)
+                {
+                    AddressBook.RemoveCircle(circle.AddressBookId.ToString("D").ToLowerInvariant());
+                    AddressBook.Save();
+                }
             };
 
             RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, leaveCircleObject, breakconnRequest));
@@ -3028,11 +3049,13 @@ namespace MSNPSharp
             throw new MSNPSharpException("Unknown MemberRole type");
         }
 
+
+
         public override void Clear()
         {
             base.Clear();
 
-            lock (this)
+            lock (SyncObject)
             {
                 recursiveCall = 0;
                 initialADLs.Clear();
