@@ -731,7 +731,19 @@ namespace MSNPSharp.DataTransfer
                                 " is requesting a new switchboard as its processor...");
 
                 Conversation conversation = messenger.CreateConversation();
-                sbHandler = conversation.Invite(session.RemoteContact);
+                try
+                {
+                    sbHandler = conversation.Invite(session.RemoteContact);
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                                "[OnP2PMessageSessionProcessorInvalid] Invite party to Conversation failed.\r\n" +
+                                " with remote contact " + session.RemoteContact + "\r\n" +
+                                " and local contact " + session.LocalContact + "\r\n" +
+                                ex.Message);
+                    Clear();
+                }
 
                 //Note: for conversation's ContactJoined event, you will never see different endpoints' joining events.
                 //So we need to listen to the corresponding events from switchboard.
