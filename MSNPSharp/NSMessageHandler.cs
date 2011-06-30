@@ -2528,7 +2528,14 @@ namespace MSNPSharp
                     externalEndPoint = new IPEndPoint(ip, clientPort);
                 }
 
-                ContactService.SynchronizeContactList();
+                try
+                {
+                    ContactService.SynchronizeContactList();
+                }
+                catch (Exception ex)
+                {
+                    OnExceptionOccurred(new ExceptionEventArgs(new MSNPSharpException("SynchronizeContactList Error.", ex)));
+                }
             }
             else if (mime.IndexOf("x-msmsgsemailnotification") >= 0)
             {

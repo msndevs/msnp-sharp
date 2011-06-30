@@ -780,9 +780,18 @@ namespace MSNPSharp
 
                                         if (abadd_e.Error == null)
                                         {
-                                            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "A new addressbook has been added, addressbook list will be request again.");
-                                            recursiveCall++;
-                                            SynchronizeContactList();
+                                            try
+                                            {
+                                                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "A new addressbook has been added, addressbook list will be request again.");
+                                                recursiveCall++;
+                                                SynchronizeContactList();
+                                            }
+                                            catch (Exception unknownSyncException)
+                                            {
+                                                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership",
+                                                     new MSNPSharpException("Unknown Exception occurred while synchronizing contact list, please see inner exception.",
+                                                     unknownSyncException)));
+                                            }
                                         }
                                     };
                                     ABAddRequestType abAddRequest = new ABAddRequestType();
@@ -797,10 +806,19 @@ namespace MSNPSharp
                             else if ((recursiveCall == 0  && partnerScenario == PartnerScenario.Initial)
                                 || (e.Error.Message.Contains("Full sync required")))
                             {
-                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, 
-                                    "Need to do full sync of current addressbook list, addressbook list will be request again. Method: FindMemberShip");
-                                recursiveCall++;
-                                SynchronizeContactList();
+                                try
+                                {
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                                        "Need to do full sync of current addressbook list, addressbook list will be request again. Method: FindMemberShip");
+                                    recursiveCall++;
+                                    SynchronizeContactList();
+                                }
+                                catch (Exception unknownSyncException)
+                                {
+                                    OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership", 
+                                        new MSNPSharpException("Unknown Exception occurred while synchronizing contact list, please see inner exception.", 
+                                        unknownSyncException)));
+                                }
                             }
                             else
                             {
