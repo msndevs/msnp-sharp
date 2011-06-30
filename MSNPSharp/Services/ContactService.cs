@@ -799,7 +799,7 @@ namespace MSNPSharp
                         }
                         else
                         {
-                            if (null != e.Result.FindMembershipResult)
+                            if (null != e.Result.FindMembershipResult && AddressBook != null)
                             {
                                 AddressBook.Merge(e.Result.FindMembershipResult);
                                 AddressBook.Save();

@@ -425,9 +425,16 @@ namespace MSNPSharp
 
                     if (onSuccess == null && onError == null)
                     {
-                        sso.Authenticate(ticket, false);
-                        cache[hashcode] = ticket;
-                        nsMessageHandler.MSNTicket = ticket;
+                        try
+                        {
+                            sso.Authenticate(ticket, false);
+                            cache[hashcode] = ticket;
+                            nsMessageHandler.MSNTicket = ticket;
+                        }
+                        catch (Exception ex)
+                        {
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "SSO Authenticate Error: " + ex.Message + "\r\n" + ex.StackTrace);
+                        }
                     }
                     else
                     {
@@ -488,8 +495,15 @@ namespace MSNPSharp
                     }
                     else
                     {
-                        sso.Authenticate(ticket, false);
-                        cache[hashcode] = ticket;
+                        try
+                        {
+                            sso.Authenticate(ticket, false);
+                            cache[hashcode] = ticket;
+                        }
+                        catch (Exception ex)
+                        {
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "SSO Authenticate Error: " + ex.Message + "\r\n" + ex.StackTrace);
+                        }
                     }
                 }
 
