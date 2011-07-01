@@ -743,6 +743,7 @@ namespace MSNPSharp.DataTransfer
                                 " and local contact " + session.LocalContact + "\r\n" +
                                 ex.Message);
                     Clear();
+                    return;
                 }
 
                 //Note: for conversation's ContactJoined event, you will never see different endpoints' joining events.
