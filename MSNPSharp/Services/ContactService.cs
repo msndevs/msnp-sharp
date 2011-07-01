@@ -406,8 +406,6 @@ namespace MSNPSharp
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occured while getting addressbook: " + ex.Message +
                         "\r\nA new request for getting addressbook list will be post again.", GetType().Name);
 
-                    //recursiveCall++;
-                    //SynchronizeContactList();
                     return;
                 }
 
@@ -433,12 +431,22 @@ namespace MSNPSharp
                                         {
                                             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your address book for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
                                         }
-                                        abRequest(PartnerScenario.Initial,
-                                            delegate
-                                            {
-                                                SetDefaults();
-                                            }
-                                        );
+                                    
+                                        try{
+                                            abRequest(PartnerScenario.Initial,
+                                                delegate
+                                                {
+                                                    SetDefaults();
+                                                }
+                                            );
+                                        }
+                                        catch(Exception abRequestEception)
+                                        {
+                                            OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged", 
+                                                new MSNPSharpException(abRequestEception.Message, abRequestEception)));
+                                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occured while getting membership list: " + ex.Message +
+                                                "\r\nA new request for getting addressbook list will be post again.", GetType().Name);
+                                        }
                                     }
                                 }
                             }
@@ -446,6 +454,8 @@ namespace MSNPSharp
                     }
                     catch (Exception ex)
                     {
+                        OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership", 
+                               new MSNPSharpException(ex.Message, ex)));
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occured while getting membership list: " + ex.Message +
                             "\r\nA new request for getting addressbook list will be post again.", GetType().Name);
                     }
@@ -898,7 +908,14 @@ namespace MSNPSharp
         /// <param name="onSuccess">The delegate to be executed after async ab request completed successfuly</param>
         internal void abRequest(PartnerScenario partnerScenario, ABFindContactsPagedCompletedEventHandler onSuccess)
         {
-            abRequest(partnerScenario, null, onSuccess);
+            try
+            {
+                abRequest(partnerScenario, null, onSuccess);
+            }catch(Exception ex)
+            {
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged", 
+                   new MSNPSharpException(ex.Message, ex)));
+            }
         }
 
         /// <summary>
@@ -907,6 +924,7 @@ namespace MSNPSharp
         /// <param name="partnerScenario"></param>
         /// <param name="abHandle">The specified addressbook to retrieve.</param>
         /// <param name="onSuccess">The delegate to be executed after async ab request completed successfuly</param>
+        /// <exception cref="Exception">This function does not handle any error, must put try/catch block around this method.</exception>
         internal void abRequest(PartnerScenario partnerScenario, abHandleType abHandle, ABFindContactsPagedCompletedEventHandler onSuccess)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
