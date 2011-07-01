@@ -3115,10 +3115,11 @@ namespace MSNPSharp
 
         public override void Clear()
         {
-            base.Clear();
 
             lock (SyncObject)
             {
+                base.Clear();
+
                 recursiveCall = 0;
                 initialADLs.Clear();
                 pendingFQYs.Clear();

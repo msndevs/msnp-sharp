@@ -464,8 +464,9 @@ namespace MSNPSharp
             }
         }
 
-        internal static void RenewIfExpired(NSMessageHandler nsMessageHandler, SSOTicketType renew)
+        internal static bool RenewIfExpired(NSMessageHandler nsMessageHandler, SSOTicketType renew)
         {
+            bool renewResult = true;
             CheckCleanup();
 
             if (nsMessageHandler != null)
@@ -488,13 +489,24 @@ namespace MSNPSharp
                     }
                     else
                     {
-                        sso.Authenticate(ticket, false);
+                        try
+                        {
+                            sso.Authenticate(ticket, false);
+                        }
+                        catch (Exception ex)
+                        {
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError
+                                , "Renew failed: " + ex.Message + "\r\n" + ex.StackTrace);
+                            renewResult = false;
+                        }
                         cache[hashcode] = ticket;
                     }
                 }
 
                 nsMessageHandler.MSNTicket = ticket;
             }
+
+            return renewResult;
         }
     }
 
