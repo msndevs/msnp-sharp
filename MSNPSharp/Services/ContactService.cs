@@ -406,36 +406,49 @@ namespace MSNPSharp
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occured while getting addressbook: " + ex.Message +
                         "\r\nA new request for getting addressbook list will be post again.", GetType().Name);
 
-                    recursiveCall++;
-                    SynchronizeContactList();
+                    //recursiveCall++;
+                    //SynchronizeContactList();
                     return;
                 }
 
                 if (NSMessageHandler.AutoSynchronize && AddressBook != null)
                 {
-
-                    AddressBook.Initialize();
-
-                    if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)) == DateTime.MinValue)
+                    try
                     {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your membership list for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
-                    }
-                    msRequest(
-                        PartnerScenario.Initial,
-                        delegate
+                        AddressBook.Initialize();
+
+                        if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)) == DateTime.MinValue)
                         {
-                            if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)) == DateTime.MinValue)
-                            {
-                                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your address book for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
-                            }
-                            abRequest(PartnerScenario.Initial,
-                                delegate
-                                {
-                                    SetDefaults();
-                                }
-                            );
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your membership list for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
                         }
-                    );
+                        msRequest(
+                            PartnerScenario.Initial,
+                            delegate
+                            {
+                                lock (SyncObject)
+                                {
+                                    if (AddressBook != null && Deltas != null)
+                                    {
+                                        if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)) == DateTime.MinValue)
+                                        {
+                                            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your address book for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
+                                        }
+                                        abRequest(PartnerScenario.Initial,
+                                            delegate
+                                            {
+                                                SetDefaults();
+                                            }
+                                        );
+                                    }
+                                }
+                            }
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occured while getting membership list: " + ex.Message +
+                            "\r\nA new request for getting addressbook list will be post again.", GetType().Name);
+                    }
                 }
                 else
                 {
@@ -962,8 +975,16 @@ namespace MSNPSharp
                                     recursiveCall++;
 
                                     AddressBook.ClearCircleInfos();
-
-                                    SynchronizeContactList();
+                                    try
+                                    {
+                                        SynchronizeContactList();
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged",
+                                                         new MSNPSharpException("Unknown Exception occurred while synchronizing contact list, please see inner exception.",
+                                                         ex)));
+                                    }
                                 }
                                 else
                                 {

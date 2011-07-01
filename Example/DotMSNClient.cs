@@ -665,8 +665,11 @@ namespace MSNPSharpClient
 
         void ContactService_ContactAdded(object sender, ListMutateEventArgs e)
         {
-            e.Contact.OnForwardList = true;
-            e.Contact.OnAllowedList = true;
+            if (Messenger.Nameserver.IsSignedIn)
+            {
+                e.Contact.OnForwardList = true;
+                e.Contact.OnAllowedList = true;
+            }
             Trace.WriteLine(e.Contact.Hash + " added to the " + e.AffectedList + " role list.");
 
         }
