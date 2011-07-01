@@ -444,7 +444,8 @@ namespace MSNPSharp
                                         {
                                             OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged", 
                                                 new MSNPSharpException(abRequestEception.Message, abRequestEception)));
-                                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occured while getting membership list: " + ex.Message +
+                                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occured while getting membership list: " + 
+                                                          abRequestEception.Message +
                                                 "\r\nA new request for getting addressbook list will be post again.", GetType().Name);
                                         }
                                     }
