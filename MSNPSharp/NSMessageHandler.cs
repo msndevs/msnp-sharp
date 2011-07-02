@@ -1229,7 +1229,8 @@ namespace MSNPSharp
 
             //This event had to be at the last, or error might happend if user call Connect
             //in the SignedOff event.
-            if (SignedOff != null)
+            // Do not trigger this event if the library is not signed in.
+            if (SignedOff != null && IsSignedIn)
                 SignedOff(this, e);
         }
 
