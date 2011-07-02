@@ -828,11 +828,20 @@ namespace MSNPSharp
         {
             string expressProfileId = string.Empty;
             string profileResourceId = string.Empty;
-            InternalOperationReturnValues result = GetProfileLiteSync(scenario, out profileResourceId, out expressProfileId);
 
-            if (result == InternalOperationReturnValues.ProfileNotExist)
+            try
             {
-                CreateProfile();
+                InternalOperationReturnValues result = GetProfileLiteSync(scenario, out profileResourceId, out expressProfileId);
+
+                if (result == InternalOperationReturnValues.ProfileNotExist)
+                {
+                    CreateProfile();
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                    "GetProfileLiteSync Error." + ex.Message + "\r\n" + ex.StackTrace);
             }
 
             if (NSMessageHandler.ContactService.Deltas == null)
