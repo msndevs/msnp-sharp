@@ -1057,8 +1057,7 @@ namespace MSNPSharp
         /// <param name="e"></param>
         protected virtual void OnProcessorDisconnectCallback(object sender, EventArgs e)
         {
-            if (Clear())
-                OnSignedOff(new SignedOffEventArgs(SignedOffReason.None));
+            OnSignedOff(new SignedOffEventArgs(SignedOffReason.None));
         }
 
         /// <summary>
@@ -1073,7 +1072,6 @@ namespace MSNPSharp
             if (Credentials == null)
                 throw new MSNPSharpException("No Credentials passed in the NSMessageHandler");
 
-            Clear();
             SendInitialMessage();
         }
 
@@ -1218,13 +1216,16 @@ namespace MSNPSharp
         /// <param name="e"></param>
         protected virtual void OnSignedOff(SignedOffEventArgs e)
         {
-            if (ContactList.Owner != null)
-                ContactList.Owner.SetStatus(PresenceStatus.Offline);
+            
+            if (messageProcessor != null && messageProcessor.Connected)
+            {
+                if (ContactList.Owner != null)
+                    ContactList.Owner.SetStatus(PresenceStatus.Offline);
+                messageProcessor.Disconnect(); // The disconnect will trigger this again.
+                return;
+            }
 
             Clear();
-
-            if (messageProcessor != null)
-                messageProcessor.Disconnect();
 
             //This event had to be at the last, or error might happend if user call Connect
             //in the SignedOff event.
