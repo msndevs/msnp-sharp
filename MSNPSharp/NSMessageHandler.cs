@@ -1225,12 +1225,12 @@ namespace MSNPSharp
                 return;
             }
 
-            Clear();
+            bool signedIn = Clear();
 
             //This event had to be at the last, or error might happend if user call Connect
             //in the SignedOff event.
             // Do not trigger this event if the library is not signed in.
-            if (SignedOff != null && IsSignedIn)
+            if (SignedOff != null && signedIn)
                 SignedOff(this, e);
         }
 
