@@ -1114,7 +1114,8 @@ namespace MSNPSharpClient
                 foreach (KeyValuePair<Guid, EndPointData> keyvalue in copyPlaces)
                 {
                     PrivateEndPointData ipep = keyvalue.Value as PrivateEndPointData;
-                    comboPlaces.Items.Add(ipep.Name + " " + ipep.Id);
+                    if (ipep.Id != NSMessageHandler.MachineGuid)
+                        comboPlaces.Items.Add(ipep.Name + " " + ipep.Id);
                 }
 
                 comboPlaces.SelectedIndex = 0;
