@@ -491,10 +491,12 @@ namespace MSNPSharp
         {
             // Reset
             recursiveCall = 0;
-
-            if (NSMessageHandler.AutoSynchronize && AddressBook != null)
+            lock (SyncObject)
             {
-                AddressBook.InitializeMyProperties();
+                if (NSMessageHandler.AutoSynchronize && AddressBook != null)
+                {
+                    AddressBook.InitializeMyProperties();
+                }
             }
 
             OwnerProfile profileFromWeb = NSMessageHandler.StorageService.GetProfile();
@@ -536,9 +538,15 @@ namespace MSNPSharp
                     #endregion
                 }
 
-                // Save addressbook and then truncate deltas file.
-                AddressBook.Save();
-                Deltas.Truncate();
+                lock (SyncObject)
+                {
+                    if (AddressBook != null && Deltas != null)
+                    {
+                        // Save addressbook and then truncate deltas file.
+                        AddressBook.Save();
+                        Deltas.Truncate();
+                    }
+                }
             }
         }
 
