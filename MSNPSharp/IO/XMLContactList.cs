@@ -2135,10 +2135,25 @@ namespace MSNPSharp.IO
             {
                 case RelationshipState.Accepted:
                     requestCircleCount++;
-                    NSMessageHandler.ContactService.abRequest(PartnerScenario.Initial, individualAB, null);
+                    try
+                    {
+                        NSMessageHandler.ContactService.abRequest(PartnerScenario.Initial, individualAB, null);
+                    }
+                    catch (Exception ex1)
+                    {
+                        requestCircleCount--;
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[RequestAddressBookByABId] Error: " + ex1.Message);
+                    }
                     break;
                 case RelationshipState.WaitingResponse:
-                    NSMessageHandler.ContactService.abRequest(PartnerScenario.Initial, individualAB, null);
+                    try
+                    {
+                        NSMessageHandler.ContactService.abRequest(PartnerScenario.Initial, individualAB, null);
+                    }
+                    catch (Exception ex2)
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[RequestAddressBookByABId] Error: " + ex2.Message);
+                    }
                     break;
             }
 

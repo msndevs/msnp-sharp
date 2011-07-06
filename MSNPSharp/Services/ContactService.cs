@@ -61,6 +61,7 @@ namespace MSNPSharp
         private string applicationId = String.Empty;
         private Dictionary<int, NSPayLoadMessage> initialADLs = new Dictionary<int, NSPayLoadMessage>();
         private bool abSynchronized;
+        private object syncObject = new object();
         private int serviceADL = 0;
 
         internal XMLContactList AddressBook;
@@ -341,6 +342,11 @@ namespace MSNPSharp
 
         #region Properties
 
+        public object SyncObject
+        {
+            get { return syncObject; }
+        }
+
         /// <summary>
         /// Keep track whether a address book synchronization has been completed.
         /// </summary>
@@ -387,68 +393,97 @@ namespace MSNPSharp
             string addressbookFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Account.GetHashCode() + ".mcl");
             string deltasResultsFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Account.GetHashCode() + "d" + ".mcl");
 
-            try
+            lock (SyncObject)
             {
-                AddressBook = XMLContactList.LoadFromFile(addressbookFile, st, NSMessageHandler, false);
-                Deltas = DeltasList.LoadFromFile(deltasResultsFile, st, NSMessageHandler, true);
-
-                NSMessageHandler.MSNTicket.CacheKeys = Deltas.CacheKeys;
-
-                if (NSMessageHandler.AutoSynchronize &&
-                    recursiveCall == 0 &&
-                    (AddressBook.Version != Properties.Resources.XMLContactListVersion || Deltas.Version != Properties.Resources.DeltasListVersion))
+                try
                 {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "AddressBook Version not match:\r\nMCL AddressBook Version: " +
-                        AddressBook.Version.ToString() + "\r\nAddressBook Version Required:\r\nContactListVersion " +
-                        Properties.Resources.XMLContactListVersion + ", DeltasList Version " +
-                        Properties.Resources.DeltasListVersion +
-                        "\r\nThe old mcl files for this account will be deleted and a new request for getting addressbook list will be post.");
+                    AddressBook = XMLContactList.LoadFromFile(addressbookFile, st, NSMessageHandler, false);
+                    Deltas = DeltasList.LoadFromFile(deltasResultsFile, st, NSMessageHandler, true);
 
-                    recursiveCall++;
-                    SynchronizeContactList();
+                    NSMessageHandler.MSNTicket.CacheKeys = Deltas.CacheKeys;
+
+                    if (NSMessageHandler.AutoSynchronize &&
+                        recursiveCall == 0 &&
+                        (AddressBook.Version != Properties.Resources.XMLContactListVersion || Deltas.Version != Properties.Resources.DeltasListVersion))
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "AddressBook Version not match:\r\nMCL AddressBook Version: " +
+                            AddressBook.Version.ToString() + "\r\nAddressBook Version Required:\r\nContactListVersion " +
+                            Properties.Resources.XMLContactListVersion + ", DeltasList Version " +
+                            Properties.Resources.DeltasListVersion +
+                            "\r\nThe old mcl files for this account will be deleted and a new request for getting addressbook list will be post.");
+
+                        recursiveCall++;
+                        SynchronizeContactList();
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occured while getting addressbook: " + ex.Message +
+                        "\r\nA new request for getting addressbook list will be post again.", GetType().Name);
+
                     return;
                 }
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occured while getting addressbook: " + ex.Message +
-                    "\r\nA new request for getting addressbook list will be post again.", GetType().Name);
 
-                recursiveCall++;
-                SynchronizeContactList();
-                return;
-            }
-
-            if (NSMessageHandler.AutoSynchronize)
-            {
-                AddressBook.Initialize();
-
-                if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)) == DateTime.MinValue)
+                if (NSMessageHandler.AutoSynchronize)
                 {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your membership list for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
-                }
-                msRequest(
-                    PartnerScenario.Initial,
-                    delegate
+                    try
                     {
+                        AddressBook.Initialize();
+
                         if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)) == DateTime.MinValue)
                         {
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your address book for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your membership list for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
                         }
-                        abRequest(PartnerScenario.Initial,
+                        msRequest(
+                            PartnerScenario.Initial,
                             delegate
                             {
-                                SetDefaults();
+                                lock (SyncObject)
+                                {
+                                    if (AddressBook != null && Deltas != null)
+                                    {
+                                        if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)) == DateTime.MinValue)
+                                        {
+                                            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your address book for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
+                                        }
+
+                                        try
+                                        {
+                                            abRequest(PartnerScenario.Initial,
+                                                delegate
+                                                {
+                                                    SetDefaults();
+                                                }
+                                            );
+                                        }
+                                        catch (Exception abRequestEception)
+                                        {
+                                            OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged",
+                                                new MSNPSharpException(abRequestEception.Message, abRequestEception)));
+                                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occured while getting membership list: " +
+                                                          abRequestEception.Message +
+                                                "\r\nA new request for getting addressbook list will be post again.", GetType().Name);
+                                        }
+                                    }
+                                }
                             }
                         );
                     }
-                );
-            }
-            else
-            {
-                // Set lastchanged and roaming profile last change to get display picture and personal message
-                NSMessageHandler.ContactService.AddressBook.MyProperties[AnnotationNames.Live_Profile_Expression_LastChanged] = XmlConvert.ToString(DateTime.MinValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");                SetDefaults();
-                NSMessageHandler.OnSignedIn(EventArgs.Empty);
+                    catch (Exception ex)
+                    {
+                        OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership",
+                               new MSNPSharpException(ex.Message, ex)));
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occured while getting membership list: " + ex.Message +
+                            "\r\nA new request for getting addressbook list will be post again.", GetType().Name);
+                    }
+                }
+                else
+                {
+                    // Set lastchanged and roaming profile last change to get display picture and personal message
+                    NSMessageHandler.ContactService.AddressBook.MyProperties[AnnotationNames.Live_Profile_Expression_LastChanged] = XmlConvert.ToString(DateTime.MinValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz"); SetDefaults();
+                    NSMessageHandler.OnSignedIn(EventArgs.Empty);
+                }
             }
         }
 
@@ -788,15 +823,6 @@ namespace MSNPSharp
                 {
                     OnAfterCompleted(new ServiceOperationEventArgs(sharingService, MsnServiceType.Sharing, e));
 
-                    lock (this)
-                    {
-                        if (AddressBook == null && Deltas == null && AddressBookSynchronized == false)
-                        {
-                            // This means before the webservice returned the connection had broken.
-                            return;
-                        }
-                    }
-
                     if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
                         return;
 
@@ -804,62 +830,113 @@ namespace MSNPSharp
                     {
                         if (e.Error != null)
                         {
-                            if (e.Error.Message.Contains("Address Book Does Not Exist"))
+                            lock (SyncObject)
                             {
-                                if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
+                                if (AddressBook == null && Deltas == null && AddressBookSynchronized == false)
                                 {
-                                    OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership", new MSNPSharpException("You don't have access right on this action anymore.")));
+                                    // This means before the webservice returned the connection had broken.
+                                    OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership",
+                                            new MSNPSharpException("Addressbook and Deltas have been reset.")));
+                                    return;
+                                }
+
+                                if (e.Error.Message.Contains("Address Book Does Not Exist"))
+                                {
+                                    if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
+                                    {
+                                        OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership", new MSNPSharpException("You don't have access right on this action anymore.")));
+                                    }
+                                    else
+                                    {
+                                        MsnServiceState ABAddObject = new MsnServiceState(partnerScenario, "ABAdd", true);
+                                        ABServiceBinding abservice = (ABServiceBinding)CreateService(MsnServiceType.AB, ABAddObject);
+                                        abservice.ABAddCompleted += delegate(object srv, ABAddCompletedEventArgs abadd_e)
+                                        {
+                                            OnAfterCompleted(new ServiceOperationEventArgs(abservice, MsnServiceType.AB, abadd_e));
+
+                                            if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                                                return;
+
+                                            if (abadd_e.Error == null)
+                                            {
+                                                try
+                                                {
+                                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "A new addressbook has been added, addressbook list will be request again.");
+                                                    recursiveCall++;
+                                                    SynchronizeContactList();
+                                                }
+                                                catch (Exception unknownSyncException)
+                                                {
+                                                    OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership",
+                                                         new MSNPSharpException("Unknown Exception occurred while synchronizing contact list, please see inner exception.",
+                                                         unknownSyncException)));
+                                                }
+                                            }
+                                        };
+                                        ABAddRequestType abAddRequest = new ABAddRequestType();
+                                        abAddRequest.abInfo = new abInfoType();
+                                        abAddRequest.abInfo.ownerEmail = NSMessageHandler.Owner.Account;
+                                        abAddRequest.abInfo.ownerPuid = "0";
+                                        abAddRequest.abInfo.fDefault = true;
+
+                                        RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abservice, MsnServiceType.AB, ABAddObject, abAddRequest));
+                                    }
+                                }
+                                else if ((recursiveCall == 0 && partnerScenario == PartnerScenario.Initial)
+                                    || (e.Error.Message.Contains("Need to do full sync")))
+                                {
+                                    try
+                                    {
+                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                                            "Need to do full sync of current addressbook list, addressbook list will be request again. Method: FindMemberShip");
+                                        recursiveCall++;
+                                        SynchronizeContactList();
+                                    }
+                                    catch (Exception unknownSyncException)
+                                    {
+                                        OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership",
+                                            new MSNPSharpException("Unknown Exception occurred while synchronizing contact list, please see inner exception.",
+                                            unknownSyncException)));
+                                    }
                                 }
                                 else
                                 {
-                                    MsnServiceState ABAddObject = new MsnServiceState(partnerScenario, "ABAdd", true);
-                                    ABServiceBinding abservice = (ABServiceBinding)CreateService(MsnServiceType.AB, ABAddObject);
-                                    abservice.ABAddCompleted += delegate(object srv, ABAddCompletedEventArgs abadd_e)
-                                    {
-                                        OnAfterCompleted(new ServiceOperationEventArgs(abservice, MsnServiceType.AB, abadd_e));
-
-                                        if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
-                                            return;
-
-                                        if (abadd_e.Error == null)
-                                        {
-                                            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "A new addressbook has been added, addressbook list will be request again.");
-                                            recursiveCall++;
-                                            SynchronizeContactList();
-                                        }
-                                    };
-                                    ABAddRequestType abAddRequest = new ABAddRequestType();
-                                    abAddRequest.abInfo = new abInfoType();
-                                    abAddRequest.abInfo.ownerEmail = NSMessageHandler.Owner.Account;
-                                    abAddRequest.abInfo.ownerPuid = "0";
-                                    abAddRequest.abInfo.fDefault = true;
-
-                                    RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abservice, MsnServiceType.AB, ABAddObject, abAddRequest));
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Error.ToString(), GetType().Name);
                                 }
-                            }
-                            else if ((recursiveCall == 0 && partnerScenario == PartnerScenario.Initial)
-                                || (e.Error.Message.Contains("Need to do full sync")))
-                            {
-                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                                    "Need to do full sync of current addressbook list, addressbook list will be request again. Method: FindMemberShip");
-                                recursiveCall++;
-                                SynchronizeContactList();
-                            }
-                            else
-                            {
-                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Error.ToString(), GetType().Name);
                             }
                         }
                         else
                         {
-                            if (null != e.Result.FindMembershipResult)
+                            lock (SyncObject)
                             {
-                                AddressBook.Merge(e.Result.FindMembershipResult);
-                                AddressBook.Save();
-                            }
-                            if (onSuccess != null)
-                            {
-                                onSuccess(sharingService, e);
+                                if (null != e.Result.FindMembershipResult && AddressBook != null)
+                                {
+                                    try
+                                    {
+                                        XMLContactList addressbook = AddressBook.Merge(e.Result.FindMembershipResult);
+                                        addressbook.Save();
+                                    }
+                                    catch (Exception unknownException)
+                                    {
+                                        OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership",
+                                            new MSNPSharpException("Unknown Exception occurred while synchronizing contact list, please see inner exception.",
+                                            unknownException)));
+                                    }
+
+                                }
+
+                                if (AddressBook != null && Deltas != null)
+                                {
+                                    if (onSuccess != null)
+                                    {
+                                        onSuccess(sharingService, e);
+                                    }
+                                }
+                                else
+                                {
+                                    OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership",
+                                            new MSNPSharpException("Addressbook and Deltas have been reset.")));
+                                }
                             }
                         }
                     }
@@ -876,7 +953,15 @@ namespace MSNPSharp
         /// <param name="onSuccess">The delegate to be executed after async ab request completed successfuly</param>
         internal void abRequest(PartnerScenario partnerScenario, ABFindContactsPagedCompletedEventHandler onSuccess)
         {
-            abRequest(partnerScenario, null, onSuccess);
+            try
+            {
+                abRequest(partnerScenario, null, onSuccess);
+            }
+            catch (Exception ex)
+            {
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged",
+                   new MSNPSharpException(ex.Message, ex)));
+            }
         }
 
         /// <summary>
@@ -930,15 +1015,6 @@ namespace MSNPSharp
                 {
                     OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
 
-                    lock (this)
-                    {
-                        if (AddressBook == null && Deltas == null && AddressBookSynchronized == false)
-                        {
-                            // This means before the webservice returned the connection had broken.
-                            return;
-                        }
-                    }
-
                     if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
                         return;
 
@@ -946,51 +1022,72 @@ namespace MSNPSharp
                     {
                         if (e.Error != null)
                         {
-                            if ((recursiveCall == 0 && ((MsnServiceState)e.UserState).PartnerScenario == PartnerScenario.Initial
-                                && (abHandle == null || abHandle.ABId == WebServiceConstants.MessengerIndividualAddressBookId))
-                                || (e.Error.Message.Contains("Need to do full sync")))
+                            lock (SyncObject)
                             {
-                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                                    "Need to do full sync of current addressbook list, addressbook list will be request again. Method: ABFindContactsPaged");
+                                if (AddressBook == null && Deltas == null && AddressBookSynchronized == false)
+                                {
+                                    // This means before the webservice returned the connection had broken.
+                                    OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged",
+                                            new MSNPSharpException("Addressbook and Deltas have been reset.")));
+                                    return;
+                                }
+                                if ((recursiveCall == 0 && ((MsnServiceState)e.UserState).PartnerScenario == PartnerScenario.Initial
+                                    && (abHandle == null || abHandle.ABId == WebServiceConstants.MessengerIndividualAddressBookId))
+                                    || (e.Error.Message.Contains("Need to do full sync")))
+                                {
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                                        "Need to do full sync of current addressbook list, addressbook list will be request again. Method: ABFindContactsPaged");
 
-                                recursiveCall++;
+                                    recursiveCall++;
 
-                                AddressBook.ClearCircleInfos();
+                                    AddressBook.ClearCircleInfos();
 
-                                SynchronizeContactList();
-                            }
-                            else
-                            {
-                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Error.ToString(), GetType().Name);
+                                    SynchronizeContactList();
+                                }
+                                else
+                                {
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Error.ToString(), GetType().Name);
+                                }
                             }
                         }
                         else
                         {
-                            if (null != e.Result.ABFindContactsPagedResult)
+                            lock (SyncObject)
                             {
-                                string lowerId = WebServiceConstants.MessengerIndividualAddressBookId;
-
-                                if (e.Result.ABFindContactsPagedResult.Ab != null)
-                                    lowerId = e.Result.ABFindContactsPagedResult.Ab.abId.ToLowerInvariant();
-
-                                if (lowerId == WebServiceConstants.MessengerIndividualAddressBookId)
+                                if (e.Result.ABFindContactsPagedResult != null && AddressBook != null)
                                 {
-                                    AddressBook.MergeIndividualAddressBook(e.Result.ABFindContactsPagedResult);
+                                    string lowerId = WebServiceConstants.MessengerIndividualAddressBookId;
+
+                                    if (e.Result.ABFindContactsPagedResult.Ab != null)
+                                        lowerId = e.Result.ABFindContactsPagedResult.Ab.abId.ToLowerInvariant();
+
+                                    if (lowerId == WebServiceConstants.MessengerIndividualAddressBookId)
+                                    {
+                                        AddressBook.MergeIndividualAddressBook(e.Result.ABFindContactsPagedResult);
+                                    }
+                                    else
+                                    {
+                                        AddressBook.MergeGroupAddressBook(e.Result.ABFindContactsPagedResult);
+                                    }
+
+                                    AddressBook.Save();
+
+                                    if (e.Result.ABFindContactsPagedResult.CircleResult != null)
+                                        NSMessageHandler.SendSHAAMessage(e.Result.ABFindContactsPagedResult.CircleResult.CircleTicket);
+                                }
+
+                                if (AddressBook != null && Deltas != null)
+                                {
+                                    if (onSuccess != null)
+                                    {
+                                        onSuccess(abService, e);
+                                    }
                                 }
                                 else
                                 {
-                                    AddressBook.MergeGroupAddressBook(e.Result.ABFindContactsPagedResult);
+                                    OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged",
+                                            new MSNPSharpException("Addressbook and Deltas have been reset.")));
                                 }
-
-                                AddressBook.Save();
-
-                                if (e.Result.ABFindContactsPagedResult.CircleResult != null)
-                                    NSMessageHandler.SendSHAAMessage(e.Result.ABFindContactsPagedResult.CircleResult.CircleTicket);
-                            }
-
-                            if (onSuccess != null)
-                            {
-                                onSuccess(abService, e);
                             }
                         }
                     }
@@ -2795,10 +2892,10 @@ namespace MSNPSharp
 
         public override void Clear()
         {
-            base.Clear();
-
-            lock (this)
+            lock (SyncObject)
             {
+                base.Clear();
+
                 recursiveCall = 0;
                 serviceADL = 0;
                 initialADLs.Clear();
