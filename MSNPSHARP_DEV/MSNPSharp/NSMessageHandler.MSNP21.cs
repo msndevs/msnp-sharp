@@ -1316,11 +1316,13 @@ namespace MSNPSharp
                                 }
                                 else
                                 {
-                                    Contact contact = group.ContactList.GetContactWithCreate(memberAccount, addressType);
-                                    OnJoinedGroupChat(new GroupChatParticipationEventArgs(contact, group));
+                                    Contact part = group.ContactList.GetContactWithCreate(memberAccount, addressType);
+                                    Contact real = ContactList.GetContactWithCreate(memberAccount, addressType);
+                                    part.SetStatus(real.Status);
+                                    OnJoinedGroupChat(new GroupChatParticipationEventArgs(part, group));
 
-                                    if (mpo.InviteQueueHash.Contains(contact.SiblingString))
-                                        mpo.InviteQueueHash.Remove(contact.SiblingString);
+                                    if (mpo.InviteQueueHash.Contains(part.SiblingString))
+                                        mpo.InviteQueueHash.Remove(part.SiblingString);
                                 }
                             }
                         }
