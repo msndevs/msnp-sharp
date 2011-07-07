@@ -70,7 +70,7 @@ namespace MSNPSharp.Properties {
         }
         
         /// <summary>
-        ///   查找类似 Messenger Client 9.0 的本地化字符串。
+        ///   查找类似 Messenger Client 15 的本地化字符串。
         /// </summary>
         internal static string ApplicationStrId {
             get {
@@ -93,7 +93,7 @@ namespace MSNPSharp.Properties {
         }
         
         /// <summary>
-        ///   查找类似 5.0.0.2312 的本地化字符串。
+        ///   查找类似 4.0.1.2414 的本地化字符串。
         /// </summary>
         internal static string DeltasListVersion {
             get {
@@ -145,7 +145,7 @@ namespace MSNPSharp.Properties {
         }
         
         /// <summary>
-        ///   查找类似 5.0.0.2312 的本地化字符串。
+        ///   查找类似 4.0.1.2414 的本地化字符串。
         /// </summary>
         internal static string XMLContactListVersion {
             get {

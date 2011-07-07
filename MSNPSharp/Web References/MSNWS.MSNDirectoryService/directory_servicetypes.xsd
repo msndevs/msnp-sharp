@@ -88,4 +88,26 @@
       </xs:sequence>
     </xs:complexType>
   </xs:element>
+  <xs:complexType name="SetRequestType">
+    <xs:sequence>
+      <xs:element name="request">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" name="ViewName" type="xs:string" />
+            <xs:element minOccurs="0" name="Id" type="IdType" />
+            <xs:element minOccurs="0" name="GetUpdatedProfileOnSet" type="xs:boolean" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="SetResultType">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="CallStatistics" type="CallStatisticsType" />
+      <xs:element minOccurs="0" name="Id" type="IdType" />
+      <xs:element minOccurs="0" name="View" type="ViewType" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="Set" type="SetRequestType" />
+  <xs:element name="SetResponse" type="SetResultType" />
 </xs:schema>

@@ -530,10 +530,10 @@ namespace MSNPSharp
                 throw new MSNPSharpException("Not a valid owner");
 
             SetPresenceStatus(
-                        Owner.Status,
-                        Owner.LocalEndPointIMCapabilities, Owner.LocalEndPointIMCapabilitiesEx,
-                        Owner.LocalEndPointPECapabilities, Owner.LocalEndPointPECapabilitiesEx,
-                        Owner.EpName, newPSM, true);
+                (Owner.Status == PresenceStatus.Offline && IsSignedIn) ? PresenceStatus.Hidden : Owner.Status,
+                Owner.LocalEndPointIMCapabilities, Owner.LocalEndPointIMCapabilitiesEx,
+                Owner.LocalEndPointPECapabilities, Owner.LocalEndPointPECapabilitiesEx,
+                Owner.EpName, newPSM, true);
 
         }
 
@@ -759,8 +759,17 @@ namespace MSNPSharp
                 {
                     // set the owner's name and CID
                     ContactList.SetOwner(new Owner(WebServiceConstants.MessengerIndividualAddressBookId, message.CommandValues[1].ToString(), msnTicket.OwnerCID, this));
-                    OnOwnerVerified(EventArgs.Empty);
-                    Owner.GetCoreProfile();
+                    
+                    Owner.GetCoreProfile(
+                        delegate(object sender1, EventArgs arg)
+                        {
+                            OnOwnerVerified(EventArgs.Empty);
+                        },
+                        delegate(object sender2, ExceptionEventArgs exceptionArgs)
+                        {
+                            OnOwnerVerified(EventArgs.Empty);
+                        }
+                        );
                 }
 
                 Owner.PassportVerified = message.CommandValues[2].Equals("1");
@@ -776,6 +785,10 @@ namespace MSNPSharp
             isSignedIn = true;
 
             Owner.EndPointData[NSMessageHandler.MachineGuid] = new PrivateEndPointData(Owner.Account, NSMessageHandler.MachineGuid);
+
+            if (ContactService.Deltas != null)
+                Owner.SyncProfileToDeltas();
+
 
             if (SignedIn != null)
                 SignedIn(this, e);
