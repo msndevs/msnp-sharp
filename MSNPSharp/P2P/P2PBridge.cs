@@ -337,19 +337,19 @@ namespace MSNPSharp.P2P
             {
                 List<P2PMessage> raks = new List<P2PMessage>();
 
-                lock (SyncObject)
+                if (nextCleanup < DateTime.Now)
                 {
-                    if (nextCleanup < DateTime.Now)
+                    inCleanup++;
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                        String.Format("Running RAK cleanup for {0}...", this.ToString()));
+
+                    nextCleanup = NextCleanupTime();
+                    int tickcount = Environment.TickCount + 2000; // Give +2 secs change...
+
+                    List<uint> ackstodelete = new List<uint>();
+
+                    lock (ackHandlersV1)
                     {
-                        inCleanup++;
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                            String.Format("Running RAK cleanup for {0}...", this.ToString()));
-
-                        nextCleanup = NextCleanupTime();
-                        int tickcount = Environment.TickCount + 2000; // Give +2 secs change...
-
-                        List<uint> ackstodelete = new List<uint>();
-
                         // P2Pv1
                         foreach (KeyValuePair<uint, P2PAckMessageEventArgs> pair in ackHandlersV1)
                         {
@@ -363,9 +363,12 @@ namespace MSNPSharp.P2P
                         {
                             ackHandlersV1.Remove(i);
                         }
+                    }
 
-                        ackstodelete.Clear();
+                    ackstodelete.Clear();
 
+                    lock (ackHandlersV2)
+                    {
                         // P2Pv2
                         foreach (KeyValuePair<uint, P2PAckMessageEventArgs> pair in ackHandlersV2)
                         {
@@ -379,13 +382,13 @@ namespace MSNPSharp.P2P
                         {
                             ackHandlersV2.Remove(i);
                         }
-
-                        GC.Collect();
-
-                        inCleanup = 0;
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                            String.Format("End RAK cleanup for {0}...", this.ToString()));
                     }
+
+                    GC.Collect();
+
+                    inCleanup = 0;
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                        String.Format("End RAK cleanup for {0}...", this.ToString()));
                 }
 
                 if (raks.Count > 0)
@@ -571,12 +574,18 @@ namespace MSNPSharp.P2P
         {
             if (e.P2PMessage.Version == P2PVersion.P2PV2)
             {
-                e.P2PMessage.V2Header.OperationCode |= (byte)OperationCode.RAK;
-                ackHandlersV2[e.P2PMessage.V2Header.Identifier + e.P2PMessage.Header.MessageSize] = e;
+                lock (ackHandlersV2)
+                {
+                    e.P2PMessage.V2Header.OperationCode |= (byte)OperationCode.RAK;
+                    ackHandlersV2[e.P2PMessage.V2Header.Identifier + e.P2PMessage.Header.MessageSize] = e;
+                }
             }
             else if (e.P2PMessage.Version == P2PVersion.P2PV1)
             {
-                ackHandlersV1[e.P2PMessage.V1Header.AckSessionId] = e;
+                lock (ackHandlersV1)
+                {
+                    ackHandlersV1[e.P2PMessage.V1Header.AckSessionId] = e;
+                }
             }
         }
 
