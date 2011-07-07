@@ -461,6 +461,9 @@
     <None Include="Web References\MSNWS.MSNABSharingService\AddServiceResponseType.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
+    <None Include="Web References\MSNWS.MSNDirectoryService\SetResultType.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
     <None Include="Web References\MSNWS.MSNSecurityTokenService\addressing-04-08.xsd">
       <SubType>Designer</SubType>
     </None>

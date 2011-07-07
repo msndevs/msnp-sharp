@@ -44,6 +44,7 @@ namespace MSNPSharp
     using MSNPSharp.IO;
     using MSNPSharp.Core;
     using System.Threading;
+    using MSNPSharp.MSNWS.MSNStorageService;
 
     [Serializable]
     public class Owner : Contact
@@ -755,6 +756,111 @@ namespace MSNPSharp
             OnProfileReceived(EventArgs.Empty);
         }
 
+        internal void SyncProfileToDeltas()
+        {
+            string ownerName = Account;
+
+            if (CoreProfile.ContainsKey(CoreProfileAttributeName.PublicProfile_ResourceId))
+            {
+                if (NSMessageHandler.ContactService.Deltas.Profile == null)
+                {
+                    NSMessageHandler.ContactService.Deltas.Profile = new OwnerProfile();
+                }
+
+                NSMessageHandler.ContactService.Deltas.Profile.ResourceID = CoreProfile[CoreProfileAttributeName.PublicProfile_ResourceId].ToString();
+
+                if (CoreProfile.ContainsKey(CoreProfileAttributeName.LastModified))
+                    NSMessageHandler.ContactService.Deltas.Profile.DateModified = CoreProfile[CoreProfileAttributeName.LastModified].ToString();
+
+                if (CoreProfile.ContainsKey(CoreProfileAttributeName.PublicProfile_DisplayName) &&
+                        CoreProfile.ContainsKey(CoreProfileAttributeName.PublicProfile_DisplayLastName))
+                {
+                    NSMessageHandler.ContactService.Deltas.Profile.DisplayName =
+                        CoreProfile[CoreProfileAttributeName.PublicProfile_DisplayName].ToString() + " " +
+                        CoreProfile[CoreProfileAttributeName.PublicProfile_DisplayLastName].ToString();
+
+                    ownerName = NSMessageHandler.ContactService.Deltas.Profile.DisplayName;
+                }
+            }
+
+
+            if (CoreProfile.ContainsKey(CoreProfileAttributeName.PictureProfile_UserTileStatic_ResourceId))
+            {
+                NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID = CoreProfile[CoreProfileAttributeName.PictureProfile_UserTileStatic_ResourceId].ToString();
+            }
+
+            if (CoreProfile.ContainsKey(CoreProfileAttributeName.UserTileStaticUrl))
+            {
+                NSMessageHandler.ContactService.Deltas.Profile.Photo.PreAthURL = CoreProfile[CoreProfileAttributeName.UserTileStaticUrl].ToString();
+            }
+
+
+
+            if (CoreProfile.ContainsKey(CoreProfileAttributeName.ExpressionProfile_ResourceId))
+            {
+                NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile = true;
+                if (NSMessageHandler.ContactService.Deltas.Profile.ExpressionProfile == null)
+                    NSMessageHandler.ContactService.Deltas.Profile.ExpressionProfile = new ProfileResource();
+                NSMessageHandler.ContactService.Deltas.Profile.ExpressionProfile.ResourceID = CoreProfile[CoreProfileAttributeName.ExpressionProfile_ResourceId].ToString();
+
+                if (CoreProfile.ContainsKey(CoreProfileAttributeName.ExpressionProfile_ResourceId))
+                    NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID = CoreProfile[CoreProfileAttributeName.PictureProfile_UserTileStatic_ResourceId].ToString();
+
+                if (CoreProfile.ContainsKey(CoreProfileAttributeName.ExpressionProfile_DisplayName))
+                {
+                    NSMessageHandler.ContactService.Deltas.Profile.DisplayName = CoreProfile[CoreProfileAttributeName.ExpressionProfile_DisplayName].ToString();
+                    if (ownerName == Account)
+                        ownerName = NSMessageHandler.ContactService.Deltas.Profile.DisplayName;
+                }
+
+
+                if (CoreProfile.ContainsKey(CoreProfileAttributeName.ExpressionProfile_DisplayName_LastModified))
+                    NSMessageHandler.ContactService.Deltas.Profile.ExpressionProfile.DateModified = CoreProfile[CoreProfileAttributeName.ExpressionProfile_DisplayName_LastModified].ToString();
+
+                if (CoreProfile.ContainsKey(CoreProfileAttributeName.ExpressionProfile_PersonalStatus))
+                {
+                    NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage = CoreProfile[CoreProfileAttributeName.ExpressionProfile_PersonalStatus].ToString();
+                    PersonalMessage newPersonalMessage = PersonalMessage == null ? new PersonalMessage(NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage) : PersonalMessage;
+                    newPersonalMessage.Message = NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage;
+                    PersonalMessage = newPersonalMessage;
+                }
+            }
+
+
+            NSMessageHandler.ContactService.Deltas.Save(true);
+
+            if (CoreProfile.ContainsKey(CoreProfileAttributeName.UserTileStaticUrl))
+            {
+                NSMessageHandler.StorageService.SyncUserTile(CoreProfile[CoreProfileAttributeName.UserTileStaticUrl].ToString(), true,
+                    delegate(object param)
+                    {
+                        SerializableMemoryStream ms = param as SerializableMemoryStream;
+                        if (ms != null)
+                        {
+                            NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = ms;
+                            NSMessageHandler.ContactService.Deltas.Save(true);
+                        }
+
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Get owner's display image from: " + CoreProfile[CoreProfileAttributeName.UserTileStaticUrl] +
+                            " succeeded.");
+                    },
+                    delegate(object param)
+                    {
+                        Exception ex = param as Exception;
+                        if (ex != null)
+                        {
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occurred while getting owner's display image from:" +
+                                CoreProfile[CoreProfileAttributeName.UserTileStaticUrl] + "\r\n" +
+                                ex.Message);
+                        }
+                    }
+                    );
+            }
+
+            SetName(ownerName);
+            SetNickName(ownerName);
+        }
+
         /// <summary>
         /// Called when the server has send a profile description.
         /// </summary>
@@ -763,6 +869,14 @@ namespace MSNPSharp
         {
             if (ProfileReceived != null)
                 ProfileReceived(this, e);
+        }
+
+        protected internal override void OnCoreProfileUpdated(EventArgs e)
+        {
+            if (NSMessageHandler.ContactService.Deltas != null)
+                SyncProfileToDeltas();
+
+            base.OnCoreProfileUpdated(e);
         }
 
     }

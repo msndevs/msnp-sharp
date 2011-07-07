@@ -529,11 +529,14 @@ namespace MSNPSharp
             if (Owner == null)
                 throw new MSNPSharpException("Not a valid owner");
 
-            SetPresenceStatus(
-                        Owner.Status,
-                        Owner.LocalEndPointIMCapabilities, Owner.LocalEndPointIMCapabilitiesEx,
-                        Owner.LocalEndPointPECapabilities, Owner.LocalEndPointPECapabilitiesEx,
-                        Owner.EpName, newPSM, true);
+            if (Owner.Status != PresenceStatus.Offline)
+            {
+                SetPresenceStatus(
+                    Owner.Status,
+                    Owner.LocalEndPointIMCapabilities, Owner.LocalEndPointIMCapabilitiesEx,
+                    Owner.LocalEndPointPECapabilities, Owner.LocalEndPointPECapabilitiesEx,
+                    Owner.EpName, newPSM, true);
+            }
 
         }
 
@@ -618,7 +621,8 @@ namespace MSNPSharp
         /// <param name="e"></param>
         protected virtual void OnProcessorDisconnectCallback(object sender, EventArgs e)
         {
-            OnSignedOff(new SignedOffEventArgs(SignedOffReason.None));
+            if (Clear())
+                OnSignedOff(new SignedOffEventArgs(SignedOffReason.None));
         }
 
         /// <summary>
@@ -757,8 +761,17 @@ namespace MSNPSharp
                 {
                     // set the owner's name and CID
                     ContactList.SetOwner(new Owner(WebServiceConstants.MessengerIndividualAddressBookId, message.CommandValues[1].ToString(), msnTicket.OwnerCID, this));
-                    OnOwnerVerified(EventArgs.Empty);
-                    Owner.GetCoreProfile();
+                    
+                    Owner.GetCoreProfile(
+                        delegate(object sender1, EventArgs arg)
+                        {
+                            OnOwnerVerified(EventArgs.Empty);
+                        },
+                        delegate(object sender2, ExceptionEventArgs exceptionArgs)
+                        {
+                            OnOwnerVerified(EventArgs.Empty);
+                        }
+                        );
                 }
 
                 Owner.PassportVerified = message.CommandValues[2].Equals("1");
@@ -775,6 +788,10 @@ namespace MSNPSharp
 
             Owner.EndPointData[NSMessageHandler.MachineGuid] = new PrivateEndPointData(Owner.Account, NSMessageHandler.MachineGuid);
 
+            if (ContactService.Deltas != null)
+                Owner.SyncProfileToDeltas();
+
+
             if (SignedIn != null)
                 SignedIn(this, e);
 
@@ -787,20 +804,15 @@ namespace MSNPSharp
         /// <param name="e"></param>
         protected virtual void OnSignedOff(SignedOffEventArgs e)
         {
-            if (messageProcessor != null && messageProcessor.Connected)
-            {
-                if (Owner != null)
-                    Owner.SetStatus(PresenceStatus.Offline);
-                messageProcessor.Disconnect(); // The disconnect will trigger this again.
-                return;
-            }
+            if (Owner != null)
+                Owner.SetStatus(PresenceStatus.Offline);
 
-            bool signedIn = Clear();
+            Clear();
 
-            //This event had to be at the last, or error might happend if user call Connect
-            //in the SignedOff event.
-            // Do not trigger this event if the library is not signed in.
-            if (SignedOff != null && signedIn)
+            if (messageProcessor != null)
+                messageProcessor.Disconnect();
+
+            if (SignedOff != null)
                 SignedOff(this, e);
         }
 

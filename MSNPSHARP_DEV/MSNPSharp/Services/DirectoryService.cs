@@ -55,7 +55,7 @@ namespace MSNPSharp
         /// <param name="cid"></param>
         public void Get(long cid)
         {
-            Get(cid, null);
+            Get(cid, null, null);
         }
 
         /// <summary>
@@ -65,10 +65,10 @@ namespace MSNPSharp
         /// <param name="cids"></param>
         public void GetMany(long[] cids)
         {
-            GetMany(cids, null);
+            GetMany(cids, null, null);
         }
 
-        public void Get(long cid, GetCompletedEventHandler callback)
+        public void Get(long cid, EventHandler<EventArgs> onSuccess, EventHandler<ExceptionEventArgs> onError)
         {
             if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
@@ -84,13 +84,32 @@ namespace MSNPSharp
                     if (e.Cancelled)
                         return;
 
-                    if (callback != null)
+                    if (e.Error != null)
                     {
-                        callback(sender, e);
+                        OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("Get", e.Error));
+
+                        if (onError != null)
+                            onError(sender, new ExceptionEventArgs(e.Error));
+                        return;
                     }
-                    else if (e.Error == null && e.Result != null && e.Result.GetResult != null)
+                    
+                    if (e.Result.GetResult != null)
                     {
-                        FindContactByCidAndFireCoreProfileUpdated(cid, e.Result.GetResult.View);
+                        if (e.Result.GetResult.View != null)
+                        {
+                            FindContactByCidAndFireCoreProfileUpdated(cid, e.Result.GetResult.View);
+                        }
+                        else
+                        {
+                            //No profile yet.
+
+                        }
+                        
+                    }
+
+                    if (onSuccess != null)
+                    {
+                        onSuccess(sender, e);
                     }
                 };
 
@@ -111,7 +130,7 @@ namespace MSNPSharp
             }
         }
 
-        public void GetMany(long[] cids, GetManyCompletedEventHandler callback)
+        public void GetMany(long[] cids, EventHandler<EventArgs> onSuccess, EventHandler<ExceptionEventArgs> onError)
         {
             if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
@@ -127,11 +146,15 @@ namespace MSNPSharp
                     if (e.Cancelled)
                         return;
 
-                    if (callback != null)
+                    if (e.Error != null)
                     {
-                        callback(sender, e);
+                        OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("Get", e.Error));
+                        if (onError != null)
+                            onError(sender, new ExceptionEventArgs(e.Error));
+                        return;
                     }
-                    else if (e.Error == null && e.Result != null && e.Result.GetManyResult != null)
+                    
+                    if (e.Result.GetManyResult != null)
                     {
                         GetManyResultType r = e.Result.GetManyResult;
                         for (int i = 0; i < r.Ids.Length; i++)
@@ -146,6 +169,11 @@ namespace MSNPSharp
                                 }
                             }
                         }
+                    }
+
+                    if (onSuccess != null)
+                    {
+                        onSuccess(sender, e);
                     }
                 };
 

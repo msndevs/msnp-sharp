@@ -22,17 +22,17 @@
   </xsd:complexType>
   <xsd:complexType name="DocumentStream">
     <xsd:sequence>
-      <xsd:element name="DocumentStreamName" type="xsd:string" />
+      <xsd:element minOccurs="0" name="DocumentStreamName" type="xsd:string" />
       <xsd:element name="MimeType" type="xsd:string" />
       <xsd:element minOccurs="0" name="Data" type="xsd:base64Binary" />
       <xsd:element name="DataSize" type="xsd:int" />
       <xsd:element minOccurs="0" name="PreAuthURL" type="xsd:anyURI" />
       <xsd:element minOccurs="0" name="PreAuthURLPartner" type="xsd:anyURI" />
       <xsd:element name="DocumentStreamType" type="xsd:string" />
-      <xsd:element name="WriteMode" type="xsd:string" />
-      <xsd:element name="StreamVersion" type="xsd:int" />
-      <xsd:element name="SHA1Hash" type="xsd:base64Binary" />
-      <xsd:element name="Genie" type="xsd:boolean" />
+      <xsd:element minOccurs="0" name="WriteMode" type="xsd:string" />
+      <xsd:element minOccurs="0" name="StreamVersion" type="xsd:int" />
+      <xsd:element minOccurs="0" name="SHA1Hash" type="xsd:base64Binary" />
+      <xsd:element minOccurs="0" name="Genie" type="xsd:boolean" />
     </xsd:sequence>
   </xsd:complexType>
   <xsd:complexType name="PhotoStream">

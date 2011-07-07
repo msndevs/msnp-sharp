@@ -324,6 +324,7 @@ namespace MSNPSharp
         /// <param name="e"></param>
         internal void OnSynchronizationCompleted(EventArgs e)
         {
+            
             if (SynchronizationCompleted != null)
                 SynchronizationCompleted(this, e);
         }
@@ -497,9 +498,9 @@ namespace MSNPSharp
                 AddressBook.InitializeMyProperties();
             }
 
-            OwnerProfile profileFromWeb = NSMessageHandler.StorageService.GetProfile();
+            //OwnerProfile profileFromWeb = NSMessageHandler.StorageService.GetProfile();
 
-            if (profileFromWeb != null)
+            //if (profileFromWeb != null)
             {
                 // Set display name, personal status and photo
                 PersonalMessage pm = NSMessageHandler.Owner.PersonalMessage;
@@ -507,10 +508,10 @@ namespace MSNPSharp
                 string mydispName = String.IsNullOrEmpty(Deltas.Profile.DisplayName) ? NSMessageHandler.Owner.NickName : Deltas.Profile.DisplayName;
                 string psmMessage = Deltas.Profile.PersonalMessage;
 
-                NSMessageHandler.Owner.SetName(mydispName);
+                //NSMessageHandler.Owner.SetName(mydispName);
 
-                pm.FriendlyName = mydispName;
-                pm.Message = psmMessage;
+                //pm.FriendlyName = mydispName;
+                //pm.Message = psmMessage;
 
                 Color colorScheme = ColorTranslator.FromOle(Deltas.Profile.ColorScheme);
                 NSMessageHandler.Owner.SetColorScheme(colorScheme);
@@ -780,7 +781,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="partnerScenario"></param>
         /// <param name="onSuccess">The delegate to be executed after async membership request completed successfuly</param>
-        internal void msRequest(PartnerScenario partnerScenario, FindMembershipCompletedEventHandler onSuccess)
+        internal void msRequest(string partnerScenario, FindMembershipCompletedEventHandler onSuccess)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
@@ -951,7 +952,7 @@ namespace MSNPSharp
         /// </summary>
         /// <param name="partnerScenario"></param>
         /// <param name="onSuccess">The delegate to be executed after async ab request completed successfuly</param>
-        internal void abRequest(PartnerScenario partnerScenario, ABFindContactsPagedCompletedEventHandler onSuccess)
+        internal void abRequest(string partnerScenario, ABFindContactsPagedCompletedEventHandler onSuccess)
         {
             try
             {
@@ -970,7 +971,7 @@ namespace MSNPSharp
         /// <param name="partnerScenario"></param>
         /// <param name="abHandle">The specified addressbook to retrieve.</param>
         /// <param name="onSuccess">The delegate to be executed after async ab request completed successfuly</param>
-        internal void abRequest(PartnerScenario partnerScenario, abHandleType abHandle, ABFindContactsPagedCompletedEventHandler onSuccess)
+        internal void abRequest(string partnerScenario, abHandleType abHandle, ABFindContactsPagedCompletedEventHandler onSuccess)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
@@ -2490,7 +2491,7 @@ namespace MSNPSharp
         }
 
 
-        internal void ServerNotificationRequest(PartnerScenario scene, object[] parameters, ABFindContactsPagedCompletedEventHandler onSuccess)
+        internal void ServerNotificationRequest(string scene, object[] parameters, ABFindContactsPagedCompletedEventHandler onSuccess)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Executing notify addressbook request, PartnerScenario: " + scene);
 
@@ -2522,7 +2523,7 @@ namespace MSNPSharp
 
         }
 
-        private void ABNotifyChangedSaveReuqest(PartnerScenario scene, ABFindContactsPagedCompletedEventHandler onSuccess)
+        private void ABNotifyChangedSaveReuqest(string scene, ABFindContactsPagedCompletedEventHandler onSuccess)
         {
             abRequest(scene,
                       delegate(object sender, ABFindContactsPagedCompletedEventArgs e)
