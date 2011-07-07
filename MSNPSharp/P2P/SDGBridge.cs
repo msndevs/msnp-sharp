@@ -113,6 +113,9 @@ namespace MSNPSharp.P2P
 
         protected override void SendOnePacket(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage p2pMessage)
         {
+            if (remote == null)
+                return;
+
             string to = ((int)remote.ClientType).ToString() + ":" + remote.Account;
             string from = ((int)NSMessageHandler.Owner.ClientType).ToString() + ":" + NSMessageHandler.Owner.Account;
 
