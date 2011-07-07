@@ -529,11 +529,14 @@ namespace MSNPSharp
             if (Owner == null)
                 throw new MSNPSharpException("Not a valid owner");
 
-            SetPresenceStatus(
-                (Owner.Status == PresenceStatus.Offline && IsSignedIn) ? PresenceStatus.Hidden : Owner.Status,
-                Owner.LocalEndPointIMCapabilities, Owner.LocalEndPointIMCapabilitiesEx,
-                Owner.LocalEndPointPECapabilities, Owner.LocalEndPointPECapabilitiesEx,
-                Owner.EpName, newPSM, true);
+            if (Owner.Status != PresenceStatus.Offline)
+            {
+                SetPresenceStatus(
+                    Owner.Status,
+                    Owner.LocalEndPointIMCapabilities, Owner.LocalEndPointIMCapabilitiesEx,
+                    Owner.LocalEndPointPECapabilities, Owner.LocalEndPointPECapabilitiesEx,
+                    Owner.EpName, newPSM, true);
+            }
 
         }
 
