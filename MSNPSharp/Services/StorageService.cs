@@ -89,7 +89,7 @@ namespace MSNPSharp
             return expAttrib;
         }
 
-        private bool CreateProfileSync(PartnerScenario scenario, out string profileResourceId)
+        private bool CreateProfileSync(string scenario, out string profileResourceId)
         {
 
             //1. CreateProfile, create a new profile and return its resource id.
@@ -122,7 +122,7 @@ namespace MSNPSharp
             return true;
         }
 
-        private bool ShareItemSync(PartnerScenario scenario, string profileResourceId)
+        private bool ShareItemSync(string scenario, string profileResourceId)
         {
             MsnServiceState serviceState = new MsnServiceState(scenario, "ShareItem", false);
             StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
@@ -145,7 +145,7 @@ namespace MSNPSharp
             return true;
         }
 
-        private bool AddProfileExpressionRoleMemberSync(PartnerScenario scenario)
+        private bool AddProfileExpressionRoleMemberSync(string scenario)
         {
             HandleType srvHandle = new HandleType();
             srvHandle.ForeignId = "MyProfile";
@@ -195,7 +195,8 @@ namespace MSNPSharp
             return false;
         }
 
-        private InternalOperationReturnValues GetProfileLiteSync(PartnerScenario scenario, out string profileResourceId, out string expressionProfileResourceId, bool syncToOwner)
+        [Obsolete("No more used in MSNP21, please use directory service instead.")]
+        private InternalOperationReturnValues GetProfileLiteSync(string scenario, out string profileResourceId, out string expressionProfileResourceId, bool syncToOwner)
         {
             MsnServiceState serviceState = new MsnServiceState(scenario, "GetProfile", false);
             StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
@@ -302,14 +303,13 @@ namespace MSNPSharp
 
                                     NSMessageHandler.ContactService.Deltas.Save(true);
                                 },
-                                null,
                                 delegate(object param)
                                 {
                                     Exception ex = param as Exception;
                                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Get DisplayImage error: " + ex.Message, GetType().Name);
                                     if (NSMessageHandler.Owner.UserTileURL != null)
                                     {
-                                        SyncUserTile(NSMessageHandler.Owner.UserTileURL.AbsoluteUri, syncToOwner, null, null, null);
+                                        SyncUserTile(NSMessageHandler.Owner.UserTileURL.AbsoluteUri, syncToOwner, null, null);
                                     }
                                 });
 
@@ -338,7 +338,7 @@ namespace MSNPSharp
             return InternalOperationReturnValues.Succeed;
         }
 
-        private bool CreatePhotoDocumentSync(PartnerScenario scenario, out string documentResourceId, string photoName, byte[] photoData)
+        private bool CreatePhotoDocumentSync(string scenario, out string documentResourceId, string photoName, byte[] photoData)
         {
             if (photoData == null)
             {
@@ -349,12 +349,12 @@ namespace MSNPSharp
             MsnServiceState serviceState = new MsnServiceState(scenario, "CreateDocument", false);
             StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
 
-
             CreateDocumentRequestType createDocRequest = new CreateDocumentRequestType();
-            createDocRequest.relationshipName = "Messenger User Tile";
+            
+            createDocRequest.relationshipName = "ProfilePhoto";
 
             Handle parenthandle = new Handle();
-            parenthandle.RelationshipName = "/UserTiles";
+            parenthandle.RelationshipName = @"/MyProfile/ExpressionProfile";
 
             Alias alias = new Alias();
             alias.NameSpace = "MyCidStuff";
@@ -367,7 +367,7 @@ namespace MSNPSharp
 
             PhotoStream photoStream = new PhotoStream();
             photoStream.DataSize = 0;
-            photoStream.MimeType = "png";
+            photoStream.MimeType = @"image/png";
             photoStream.DocumentStreamType = "UserTileStatic";
             photoStream.Data = photoData;
             createDocRequest.document.DocumentStreams = new PhotoStream[] { photoStream };
@@ -398,7 +398,7 @@ namespace MSNPSharp
             return true;
         }
 
-        private bool CreateRelationshipsSync(PartnerScenario scenario, string expressionProfileResourceId, string documentResourceId)
+        private bool CreateRelationshipsSync(string scenario, string expressionProfileResourceId, string documentResourceId)
         {
             if (string.IsNullOrEmpty(expressionProfileResourceId) || string.IsNullOrEmpty(documentResourceId))
             {
@@ -433,7 +433,7 @@ namespace MSNPSharp
             return true;
         }
 
-        private bool DeleteRelationshipByNameSync(PartnerScenario scenario, string relationshipName, string targetHandlerResourceId)
+        private bool DeleteRelationshipByNameSync(string scenario, string relationshipName, string targetHandlerResourceId)
         {
             MsnServiceState serviceState = new MsnServiceState(scenario, "DeleteRelationships", false);
             StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
@@ -468,7 +468,7 @@ namespace MSNPSharp
             
         }
 
-        private bool DeleteRelationshipByResourceIdSync(PartnerScenario scenario, string sourceHandlerResourceId, string targetHandlerResourceId)
+        private bool DeleteRelationshipByResourceIdSync(string scenario, string sourceHandlerResourceId, string targetHandlerResourceId)
         {
             if (string.IsNullOrEmpty(sourceHandlerResourceId) || string.IsNullOrEmpty(targetHandlerResourceId))
                 return false;
@@ -497,7 +497,7 @@ namespace MSNPSharp
             return true;
         }
 
-        private bool UpdatePhotoDocumentSync(PartnerScenario scenario, string photoName, string documentResourceId, byte[] photoData)
+        private bool UpdatePhotoDocumentSync(string scenario, string photoName, string documentResourceId, byte[] photoData)
         {
             if (string.IsNullOrEmpty(documentResourceId) || photoData == null)
                 return false;
@@ -511,6 +511,10 @@ namespace MSNPSharp
             if (!string.IsNullOrEmpty(photoName))
             {
                 request.document.Name = photoName;
+            }
+            else
+            {
+                request.document.Name = "?";
             }
 
 
@@ -541,7 +545,7 @@ namespace MSNPSharp
             return true;
         }
 
-        private bool UpdateProfileLiteSync(PartnerScenario scenario, string profileResourceId, string displayName, string personalStatus, string freeText, int flag)
+        private bool UpdateProfileLiteSync(string scenario, string profileResourceId, string displayName, string personalStatus, string freeText, int flag)
         {
             MsnServiceState serviceState = new MsnServiceState(scenario, "UpdateProfile", false);
             StorageService storageService = (StorageService)CreateService(MsnServiceType.Storage, serviceState);
@@ -580,7 +584,7 @@ namespace MSNPSharp
             return true;
         }
 
-        private bool AddDynamicItemSync(PartnerScenario scenario)
+        private bool AddDynamicItemSync(string scenario)
         {
             if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
@@ -613,7 +617,7 @@ namespace MSNPSharp
             return false;
         }
 
-        private bool UpdateDynamicItemSync(PartnerScenario scenario)
+        private bool UpdateDynamicItemSync(string scenario)
         {
             if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
@@ -709,6 +713,7 @@ namespace MSNPSharp
         /// 
         /// 10 steps, what the hell!! If M$ change any protocol in their strageservice, it will be a disaster to find the difference.
         /// </summary>
+        [Obsolete("No more used in MSNP21, please use directory service instead.")]
         private void CreateProfile()
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || NSMessageHandler.ContactService.Deltas == null)
@@ -785,7 +790,8 @@ namespace MSNPSharp
             }
         }
 
-        private OwnerProfile GetProfileImpl(PartnerScenario scenario, bool syncDisplayImageToOwner)
+        [Obsolete("No more used in MSNP21, please use directory service instead.")]
+        private OwnerProfile GetProfileImpl(string scenario, bool syncDisplayImageToOwner)
         {
             string expressProfileId = string.Empty;
             string profileResourceId = string.Empty;
@@ -813,7 +819,7 @@ namespace MSNPSharp
 
         internal delegate void GetUsertitleByURLhandler(object param);
 
-        internal void SyncUserTile(string usertitleURL, bool syncToOwner, GetUsertitleByURLhandler callBackHandler, object param, GetUsertitleByURLhandler errorHandler)
+        internal void SyncUserTile(string usertitleURL, bool syncToOwner, GetUsertitleByURLhandler callBackHandler, GetUsertitleByURLhandler errorHandler)
         {
             try
             {
@@ -883,10 +889,14 @@ namespace MSNPSharp
                     flags);
 
                 // And get profile again
-                NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.RoamingIdentityChanged, syncDisplayImageToOwner);
+                //NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.RoamingIdentityChanged, syncDisplayImageToOwner);
+                if (NSMessageHandler.Owner != null)
+                {
+                    NSMessageHandler.Owner.GetCoreProfile();
+                }
 
                 // UpdateDynamicItem
-                UpdateDynamicItemSync(PartnerScenario.RoamingIdentityChanged);
+                //UpdateDynamicItemSync(PartnerScenario.RoamingIdentityChanged);
 
             }
             else
@@ -904,6 +914,7 @@ namespace MSNPSharp
         /// <summary>
         /// Get my profile. Display name, personal status and display photo.
         /// </summary>
+        [Obsolete("No more used in MSNP21, please use directory service instead.")]
         public OwnerProfile GetProfile()
         {
             if (NSMessageHandler.BotMode == false)
@@ -1005,35 +1016,37 @@ namespace MSNPSharp
                 SerializableMemoryStream mem = SerializableMemoryStream.FromImage(photo);
 
                 // 1. Get the old profile, don't syn it to owner.
-                NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.RoamingIdentityChanged, false);
+                //NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.RoamingIdentityChanged, false);
 
                 bool updateDocumentResult = false;
                 // 1.1 UpdateDocument
-                if (!String.IsNullOrEmpty(NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID))
+                if (NSMessageHandler.Owner.CoreProfile.ContainsKey(CoreProfileAttributeName.PictureProfile_UserTileStatic_ResourceId))
                 {
-                    updateDocumentResult = UpdatePhotoDocumentSync(PartnerScenario.RoamingIdentityChanged,
+                    updateDocumentResult = UpdatePhotoDocumentSync(PartnerScenario.LivePlatformSyncChangesToServer0,
                         NSMessageHandler.ContactService.Deltas.Profile.Photo.Name,
-                        NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID,
+                        NSMessageHandler.Owner.CoreProfile[CoreProfileAttributeName.PictureProfile_UserTileStatic_ResourceId].ToString(),
                         mem.ToArray());
 
                     // UpdateDynamicItem
-                    if (updateDocumentResult)
-                    {
-                        updateDocumentResult = UpdateDynamicItemSync(PartnerScenario.RoamingIdentityChanged);
-                    }
+                    // Currently I found no UpdateDynamicItem any more
+                    //if (updateDocumentResult)
+                    //{
+                    //    updateDocumentResult = UpdateDynamicItemSync(PartnerScenario.RoamingIdentityChanged);
+                    //}
                 }
-
-                if (updateDocumentResult == false &&
-                    NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile)
+                else
                 {
                     string resourceId = string.Empty;
-                    CreatePhotoDocumentSync(PartnerScenario.RoamingIdentityChanged, out resourceId, photoName, mem.ToArray());
-                    UpdateDynamicItemSync(PartnerScenario.RoamingIdentityChanged);
+                    CreatePhotoDocumentSync(PartnerScenario.LivePlatformSyncChangesToServer0, out resourceId, photoName, mem.ToArray());
+                    //UpdateDynamicItemSync(PartnerScenario.RoamingIdentityChanged);
                 }
 
                 // Then get the updated profile and sync to the owner.
-                NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.RoamingIdentityChanged, syncToOwner);
-
+                //NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.RoamingIdentityChanged, syncToOwner);
+                if (NSMessageHandler.Owner != null)
+                {
+                    NSMessageHandler.Owner.GetCoreProfile();
+                }
                 return true;
             }
 

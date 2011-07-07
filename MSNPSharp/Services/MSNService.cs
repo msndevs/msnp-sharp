@@ -53,7 +53,7 @@ namespace MSNPSharp
 
     public class MsnServiceState
     {
-        private PartnerScenario partnerScenario;
+        private string partnerScenario = MSNPSharp.PartnerScenario.None;
         private string methodName;
         private bool addToAsyncList;
 
@@ -63,14 +63,14 @@ namespace MSNPSharp
         /// <param name="scenario">Partner scenario</param>
         /// <param name="method">Method name</param>
         /// <param name="async"></param>
-        public MsnServiceState(PartnerScenario scenario, string method, bool async)
+        public MsnServiceState(string scenario, string method, bool async)
         {
             partnerScenario = scenario;
             methodName = method;
             addToAsyncList = async;
         }
 
-        public PartnerScenario PartnerScenario
+        public string PartnerScenario
         {
             get
             {

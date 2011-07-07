@@ -173,28 +173,54 @@ namespace MSNPSharp
         Directory
     }
 
-    public enum PartnerScenario
+    public static class PartnerScenario
     {
-        None,
-        Initial,
-        Timer,
-        BlockUnblock,
-        GroupSave,
-        GeneralDialogApply,
-        ContactSave,
-        ContactMsgrAPI,
-        MessengerPendingList,
-        PrivacyApply,
-        NewCircleDuringPull,
-        CircleInvite,
-        CircleIdAlert,
-        CircleStatus,
-        CircleSave,
-        CircleLeave,
-        JoinedCircleDuringPush,
-        ABChangeNotifyAlert,
-        RoamingSeed,
-        RoamingIdentityChanged
+        public const string None = "None";
+        public const string Initial = "Initial";
+        public const string Timer = "Timer";
+        public const string BlockUnblock = "BlockUnblock";
+        public const string GroupSave = "GroupSave";
+        public const string GeneralDialogApply = "GeneralDialogApply";
+        public const string ContactSave = "ContactSave";
+        public const string ContactMsgrAPI = "ContactMsgrAPI";
+        public const string MessengerPendingList = "MessengerPendingList";
+        public const string PrivacyApply = "PrivacyApply";
+        public const string NewCircleDuringPull = "NewCircleDuringPull";
+        public const string CircleInvite = "CircleInvite";
+        public const string CircleIdAlert = "CircleIdAlert";
+        public const string CircleStatus = "CircleStatus";
+        public const string CircleSave = "CircleSave";
+        public const string CircleLeave = "CircleLeave";
+        public const string JoinedCircleDuringPush = "JoinedCircleDuringPush";
+        public const string ABChangeNotifyAlert = "ABChangeNotifyAlert";
+        public const string RoamingSeed = "RoamingSeed";
+        public const string RoamingIdentityChanged = "RoamingIdentityChanged";
+        public const string LivePlatformSyncChangesToServer0 = @"LivePlatform!SyncChangesToServer(0)";
+    }
+
+    public static class CoreProfileAttributeName
+    {
+        public const string PublicProfile_ResourceId = "PublicProfile.ResourceId";
+        public const string UserTileStaticUrl = "UserTileStaticUrl";
+        public const string UserTileStaticHash = "UserTileStaticHash";
+        public const string UserTileStaticSize = "UserTileStaticSize";
+        public const string ProfilePage = "ProfilePage";
+        public const string LastModified = "LastModified";
+        public const string LCid = "LCid";
+
+        public const string PictureProfile_UserTileStatic_ResourceId = "PictureProfile.UserTileStatic.ResourceId";
+        
+
+        public const string ExpressionProfile_ResourceId = "ExpressionProfile.ResourceId";
+        public const string ExpressionProfile_DisplayName = "ExpressionProfile.DisplayName";
+        public const string ExpressionProfile_DisplayName_LastModified = "ExpressionProfile.DisplayName.LastModified";
+        public const string ExpressionProfile_PersonalStatus = "ExpressionProfile.PersonalStatus";
+        public const string ExpressionProfile_PersonalStatus_LastModified = "ExpressionProfile.PersonalStatus.LastModified";
+        
+        public const string PublicProfile_DisplayName = "PublicProfile.DisplayName";
+        public const string PublicProfile_DisplayName_LastModified = "PublicProfile.DisplayName.LastModified";
+        public const string PublicProfile_DisplayLastName = "PublicProfile.DisplayLastName";
+        public const string PublicProfile_DisplayLastName_LastModified = "PublicProfile.DisplayLastName.LastModified";
     }
 
     /// <summary>

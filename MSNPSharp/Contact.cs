@@ -45,6 +45,7 @@ namespace MSNPSharp
     using MSNPSharp.Core;
     using MSNPSharp.MSNWS.MSNABSharingService;
     using System.Globalization;
+    using MSNPSharp.MSNWS.MSNDirectoryService;
 
     /// <summary>
     /// User in roster list.
@@ -1860,9 +1861,17 @@ namespace MSNPSharp
         /// </summary>
         public void GetCoreProfile()
         {
+            GetCoreProfile(null, null);
+        }
+
+        public void GetCoreProfile(EventHandler<EventArgs> getCoreProfileCompletedHandler, EventHandler<ExceptionEventArgs> getCoreProfileErrorHandler)
+        {
             if (CID != 0 && NSMessageHandler != null && NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
-                NSMessageHandler.DirectoryService.Get(CID);
+                NSMessageHandler.DirectoryService.Get(CID, 
+                    getCoreProfileCompletedHandler,
+                    getCoreProfileErrorHandler
+                    );
             }
         }
 

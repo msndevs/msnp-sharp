@@ -437,12 +437,22 @@ namespace MSNPSharp
                             sso.Authenticate(ticket, true,
                                 delegate(object sender, EventArgs e)
                                 {
-                                    cache[hashcode] = ticket;
-                                    nsMessageHandler.MSNTicket = ticket;
-
-                                    if (onSuccess != null)
+                                    try
                                     {
-                                        onSuccess(nsMessageHandler, e);
+                                        cache[hashcode] = ticket;
+                                        nsMessageHandler.MSNTicket = ticket;
+
+                                        if (onSuccess != null)
+                                        {
+                                            onSuccess(nsMessageHandler, e);
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        if (onError != null)
+                                        {
+                                            onError(nsMessageHandler, new ExceptionEventArgs(ex));
+                                        }
                                     }
                                 },
                                 delegate(object sender, ExceptionEventArgs e)

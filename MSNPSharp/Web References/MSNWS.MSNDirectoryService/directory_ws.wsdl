@@ -21,6 +21,12 @@
     <wsdl:part name="SOAPApplicationHeader" element="tns:SOAPApplicationHeader" />
     <wsdl:part name="SOAPUserHeader" element="tns:SOAPUserHeader" />
   </wsdl:message>
+  <wsdl:message name="SetMessage">
+    <wsdl:part name="SetReauest" element="tns:Set" />
+  </wsdl:message>
+  <wsdl:message name="SetResponseMessage">
+    <wsdl:part name="SetResponse" element="tns:SetResponse" />
+  </wsdl:message>
   <wsdl:portType name="DirectoryServicePortType">
     <wsdl:operation name="Get">
       <wsdl:input message="tns:GetMessage" />
@@ -29,6 +35,10 @@
     <wsdl:operation name="GetMany">
       <wsdl:input message="tns:GetManyMessage" />
       <wsdl:output message="tns:GetManyResponseMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="Set">
+      <wsdl:input message="tns:SetMessage" />
+      <wsdl:output message="tns:SetResponseMessage" />
     </wsdl:operation>
   </wsdl:portType>
   <wsdl:binding name="DirectoryServiceBinding" type="tns:DirectoryServicePortType">
@@ -55,12 +65,26 @@
         <soap:body use="literal" />
       </wsdl:output>
     </wsdl:operation>
+    <wsdl:operation name="Set">
+      <soap:operation soapAction="http://profile.live.com/Set" />
+      <wsdl:input>
+        <soap:body use="literal" />
+        <soap:header message="tns:SOAPHeaders" part="SOAPApplicationHeader" use="literal" />
+        <soap:header message="tns:SOAPHeaders" part="SOAPUserHeader" use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
   </wsdl:binding>
   <wsdl:service name="DirectoryService">
     <wsdl:port name="GetPort" binding="tns:DirectoryServiceBinding">
       <soap:address location="https://directory.services.live.com/profile/profile.asmx" />
     </wsdl:port>
     <wsdl:port name="GetManyPort" binding="tns:DirectoryServiceBinding">
+      <soap:address location="https://directory.services.live.com/profile/profile.asmx" />
+    </wsdl:port>
+    <wsdl:port name="SetPort" binding="tns:DirectoryServiceBinding">
       <soap:address location="https://directory.services.live.com/profile/profile.asmx" />
     </wsdl:port>
   </wsdl:service>
