@@ -465,6 +465,40 @@ namespace MSNPSharp
         }
 
         /// <summary>
+        /// The name displayed for local user since WLM2011.
+        /// </summary>
+        public virtual string PublicProfileName
+        {
+            get
+            {
+                if (CoreProfile.ContainsKey(CoreProfileAttributeName.PublicProfile_DisplayName) &&
+                    CoreProfile.ContainsKey(CoreProfileAttributeName.PublicProfile_DisplayLastName))
+                {
+                    return CoreProfile[CoreProfileAttributeName.PublicProfile_DisplayName].ToString() + " " +
+                        CoreProfile[CoreProfileAttributeName.PublicProfile_DisplayLastName].ToString();
+                }
+
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// The name displayed to your buddies since WLM2011.
+        /// </summary>
+        public virtual string ExpressionProfileName
+        {
+            get
+            {
+                if (CoreProfile.ContainsKey(CoreProfileAttributeName.ExpressionProfile_DisplayName))
+                {
+                    return CoreProfile[CoreProfileAttributeName.ExpressionProfile_DisplayName].ToString();
+                }
+
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
         /// The display name of contact.
         /// </summary>
         public virtual string Name
