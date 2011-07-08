@@ -856,8 +856,15 @@ namespace MSNPSharp
 
             if (Name != PreferredName)
             {
-                NSMessageHandler.SetScreenName(PreferredName);
-                SetName(PreferredName);
+                try
+                {
+                    NSMessageHandler.SetScreenName(PreferredName);
+                    SetName(PreferredName);
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message);
+                }
             }
         }
 
