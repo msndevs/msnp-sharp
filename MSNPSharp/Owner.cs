@@ -505,6 +505,7 @@ namespace MSNPSharp
             }
         }
 
+
         public override string Name
         {
             get
@@ -516,12 +517,6 @@ namespace MSNPSharp
                         return PersonalMessage.FriendlyName;
                     }
                 }
-
-                if (!string.IsNullOrEmpty(ExpressionProfileName))
-                    return ExpressionProfileName;
-
-                if (!string.IsNullOrEmpty(PublicProfileName))
-                    return PublicProfileName;
 
                 return string.IsNullOrEmpty(base.Name) ? NickName : base.Name;
             }
@@ -859,7 +854,11 @@ namespace MSNPSharp
                     );
             }
 
-            NSMessageHandler.SetScreenName(Name);
+            if (Name != PreferredName)
+            {
+                NSMessageHandler.SetScreenName(PreferredName);
+                SetName(PreferredName);
+            }
         }
 
         /// <summary>

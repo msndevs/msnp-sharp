@@ -498,6 +498,28 @@ namespace MSNPSharp
             }
         }
 
+        public virtual string PreferredName
+        {
+            get
+            {
+                if (PersonalMessage != null)
+                {
+                    if (!string.IsNullOrEmpty(PersonalMessage.FriendlyName))
+                    {
+                        return PersonalMessage.FriendlyName;
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(ExpressionProfileName))
+                    return ExpressionProfileName;
+
+                if (!string.IsNullOrEmpty(PublicProfileName))
+                    return PublicProfileName;
+
+                return string.IsNullOrEmpty(Name) ? NickName : Name;
+            }
+        }
+
         /// <summary>
         /// The display name of contact.
         /// </summary>
