@@ -427,13 +427,19 @@ namespace MSNPSharp.P2P
         /// <returns></returns>
         public virtual bool Ready(P2PSession session)
         {
-            if (queueSize == 0)
-                return IsOpen && (!stoppedSessions.Contains(session));
+            lock (stoppedSessions)
+            {
+                if (queueSize == 0)
+                    return IsOpen && (!stoppedSessions.Contains(session));
 
-            if (!sendingQueues.ContainsKey(session))
-                return IsOpen && SuitableFor(session) && (!stoppedSessions.Contains(session));
+                lock (sendingQueues)
+                {
+                    if (!sendingQueues.ContainsKey(session))
+                        return IsOpen && SuitableFor(session) && (!stoppedSessions.Contains(session));
 
-            return IsOpen && (sendingQueues[session].Count < queueSize) && (!stoppedSessions.Contains(session));
+                    return IsOpen && (sendingQueues[session].Count < queueSize) && (!stoppedSessions.Contains(session));
+                }
+            }
         }
   
         /// <summary>
@@ -777,14 +783,16 @@ namespace MSNPSharp.P2P
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                 String.Format("P2PBridge {0} stop sending for {1}", this.ToString(), session.SessionId), GetType().Name);
-
-            if (!stoppedSessions.Contains(session))
+            lock (stoppedSessions)
             {
-                lock (stoppedSessions)
+                if (!stoppedSessions.Contains(session))
+                {
+
                     stoppedSessions.Add(session);
+                }
+                else
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Session is already in stopped list", GetType().Name);
             }
-            else
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Session is already in stopped list", GetType().Name);
         }
 
         /// <summary>
@@ -795,16 +803,17 @@ namespace MSNPSharp.P2P
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                 String.Format("P2PBridge {0} resume sending for {1}", this.ToString(), session.SessionId), GetType().Name);
-
-            if (stoppedSessions.Contains(session))
+            lock (stoppedSessions)
             {
-                lock (stoppedSessions)
+                if (stoppedSessions.Contains(session))
+                {
                     stoppedSessions.Remove(session);
 
-                ProcessSendQueues();
+                    ProcessSendQueues();
+                }
+                else
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Session not present in stopped list", GetType().Name);
             }
-            else
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "Session not present in stopped list", GetType().Name);
         }
 
         /// <summary>
@@ -819,20 +828,21 @@ namespace MSNPSharp.P2P
                this.ToString(), session.SessionId, (newBridge != null) ? newBridge.ToString() : "null"), GetType().Name);
 
             P2PSendQueue newQueue = new P2PSendQueue();
-
-            if (sendingQueues.ContainsKey(session))
+            lock (sendingQueues)
             {
-                if (newBridge != null)
+                if (sendingQueues.ContainsKey(session))
                 {
-                    lock (sendingQueues[session])
+                    if (newBridge != null)
                     {
-                        foreach (P2PSendItem item in sendingQueues[session])
-                            newQueue.Enqueue(item);
+                        lock (sendingQueues[session])
+                        {
+                            foreach (P2PSendItem item in sendingQueues[session])
+                                newQueue.Enqueue(item);
+                        }
                     }
-                }
 
-                lock (sendingQueues)
                     sendingQueues.Remove(session);
+                }
             }
 
             lock (sendQueues)
@@ -849,10 +859,12 @@ namespace MSNPSharp.P2P
                 }
             }
 
-            if (stoppedSessions.Contains(session))
+            lock (stoppedSessions)
             {
-                lock (stoppedSessions)
+                if (stoppedSessions.Contains(session))
+                {
                     stoppedSessions.Remove(session);
+                }
             }
 
             if (newBridge != null)
@@ -934,16 +946,19 @@ namespace MSNPSharp.P2P
         {
             P2PSession session = e.P2PSession;
 
-            if ((session != null) && sendingQueues.ContainsKey(session))
+            lock (sendingQueues)
             {
-                if (sendingQueues[session].Contains(e.P2PMessage))
+                if ((session != null) && sendingQueues.ContainsKey(session))
                 {
-                    sendingQueues[session].Remove(e.P2PMessage);
-                }
-                else
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                        "Sent message not present in sending queue", GetType().Name);
+                    if (sendingQueues[session].Contains(e.P2PMessage))
+                    {
+                        sendingQueues[session].Remove(e.P2PMessage);
+                    }
+                    else
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                            "Sent message not present in sending queue", GetType().Name);
+                    }
                 }
             }
 
