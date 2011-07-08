@@ -859,8 +859,7 @@ namespace MSNPSharp
                     );
             }
 
-            SetName(Name);
-            SetNickName(Name);
+            NSMessageHandler.SetScreenName(Name);
         }
 
         /// <summary>
