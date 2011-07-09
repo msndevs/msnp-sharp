@@ -209,6 +209,11 @@ namespace MSNPSharp.Core
 
                 return;
             }
+            catch (ObjectDisposedException)
+            {
+                // the connection is closed
+                OnDisconnected();
+            }
             catch (Exception e)
             {
                 throw new MSNPSharpException("Error while sending network message. See the inner exception for more details.", e);
