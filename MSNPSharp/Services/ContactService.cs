@@ -1079,7 +1079,8 @@ namespace MSNPSharp
                                         AddressBook.MergeGroupAddressBook(e.Result.ABFindContactsPagedResult);
                                     }
 
-                                    AddressBook.Save();
+                                    if (AddressBook != null)
+                                        AddressBook.Save();
 
                                     if (e.Result.ABFindContactsPagedResult.CircleResult != null)
                                         NSMessageHandler.SendSHAAMessage(e.Result.ABFindContactsPagedResult.CircleResult.CircleTicket);
