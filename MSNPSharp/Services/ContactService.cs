@@ -1272,56 +1272,65 @@ namespace MSNPSharp
                 Guid.Empty,
                 delegate(object service, CreateContactCompletedEventArgs cce)
                 {
-                    // Get windows live contact (yes)
-                    Contact contact = NSMessageHandler.ContactList.GetContactWithCreate(account, IMAddressInfoType.WindowsLive);
-                    contact.Guid = new Guid(cce.Result.CreateContactResult.contactId);
+                    try
+                    {
+                        // Get windows live contact (yes)
+                        Contact contact = NSMessageHandler.ContactList.GetContactWithCreate(account, IMAddressInfoType.WindowsLive);
+                        contact.Guid = new Guid(cce.Result.CreateContactResult.contactId);
 
-                    if (network == IMAddressInfoType.Telephone)
-                        return;
+                        if (network == IMAddressInfoType.Telephone)
+                            return;
 
-                    ManageWLConnectionAsync(
-                        contact.Guid, Guid.Empty, invitation,
-                        true, true, 1, RelationshipTypes.IndividualAddressBook, (int)RelationshipState.None,
-                        delegate(object wlcSender, ManageWLConnectionCompletedEventArgs mwlce)
-                        {
-                            Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(2);
-                            hashlist.Add(contact.Hash, RoleLists.Allow | RoleLists.Forward);
-                            string payload = ConstructLists(hashlist, false)[0];
-                            NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
+                        ManageWLConnectionAsync(
+                            contact.Guid, Guid.Empty, invitation,
+                            true, true, 1, RelationshipTypes.IndividualAddressBook, (int)RelationshipState.None,
+                            delegate(object wlcSender, ManageWLConnectionCompletedEventArgs mwlce)
+                            {
+                                Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(2);
+                                hashlist.Add(contact.Hash, RoleLists.Allow | RoleLists.Forward);
+                                string payload = ConstructLists(hashlist, false)[0];
+                                NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
 
-                            // Get all contacts and send ADL for each contact... Yahoo, Facebook etc.
-                            abRequest(PartnerScenario.ContactSave,
-                                delegate
-                                {
-                                    msRequest(PartnerScenario.ContactSave,
-                                        delegate
-                                        {
-                                            List<IMAddressInfoType> typesFound = new List<IMAddressInfoType>();
-                                            IMAddressInfoType[] addressTypes = (IMAddressInfoType[])Enum.GetValues(typeof(IMAddressInfoType));
-
-                                            foreach (IMAddressInfoType at in addressTypes)
+                                // Get all contacts and send ADL for each contact... Yahoo, Facebook etc.
+                                abRequest(PartnerScenario.ContactSave,
+                                    delegate
+                                    {
+                                        msRequest(PartnerScenario.ContactSave,
+                                            delegate
                                             {
-                                                if (NSMessageHandler.ContactList.HasContact(account, at))
-                                                {
-                                                    typesFound.Add(at);
-                                                }
-                                            }
+                                                List<IMAddressInfoType> typesFound = new List<IMAddressInfoType>();
+                                                IMAddressInfoType[] addressTypes = (IMAddressInfoType[])Enum.GetValues(typeof(IMAddressInfoType));
 
-                                            if (typesFound.Count > 0)
-                                            {
-                                                hashlist = new Dictionary<string, RoleLists>(2);
-
-                                                foreach (IMAddressInfoType im in typesFound)
+                                                foreach (IMAddressInfoType at in addressTypes)
                                                 {
-                                                    hashlist.Add(Contact.MakeHash(account, im), RoleLists.Allow | RoleLists.Forward);
+                                                    if (NSMessageHandler.ContactList.HasContact(account, at))
+                                                    {
+                                                        typesFound.Add(at);
+                                                    }
                                                 }
 
-                                                payload = ConstructLists(hashlist, false)[0];
-                                                NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
-                                            }
-                                        });
-                                });
-                        });
+                                                if (typesFound.Count > 0)
+                                                {
+                                                    hashlist = new Dictionary<string, RoleLists>(2);
+
+                                                    foreach (IMAddressInfoType im in typesFound)
+                                                    {
+                                                        hashlist.Add(Contact.MakeHash(account, im), RoleLists.Allow | RoleLists.Forward);
+                                                    }
+
+                                                    payload = ConstructLists(hashlist, false)[0];
+                                                    NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
+                                                }
+                                            });
+                                    });
+                            });
+                    }
+                    catch (Exception ex)
+                    {
+                        //Usually is Member does not exist.
+                        OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("CreateContactAsync", ex));
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "CreateContactAsync Error: " + ex.Message);
+                    }
                 });
         }        
 
