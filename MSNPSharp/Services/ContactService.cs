@@ -62,6 +62,8 @@ namespace MSNPSharp
         private Dictionary<int, NSPayLoadMessage> initialADLs = new Dictionary<int, NSPayLoadMessage>();
         private bool abSynchronized;
         private object syncObject = new object();
+        private Semaphore binarySemaphore = new Semaphore(1, 1);
+
         private int serviceADL = 0;
 
         internal XMLContactList AddressBook;
@@ -348,6 +350,11 @@ namespace MSNPSharp
             get { return syncObject; }
         }
 
+        public Semaphore BinarySemaphore
+        {
+            get { return binarySemaphore; }
+        }
+
         /// <summary>
         /// Keep track whether a address book synchronization has been completed.
         /// </summary>
@@ -394,15 +401,24 @@ namespace MSNPSharp
             string addressbookFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Account.GetHashCode() + ".mcl");
             string deltasResultsFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Account.GetHashCode() + "d" + ".mcl");
 
-            lock (SyncObject)
+            //lock (SyncObject)
             {
+
+                BinarySemaphore.WaitOne();
+
                 try
                 {
                     AddressBook = XMLContactList.LoadFromFile(addressbookFile, st, NSMessageHandler, false);
                     Deltas = DeltasList.LoadFromFile(deltasResultsFile, st, NSMessageHandler, true);
 
                     NSMessageHandler.MSNTicket.CacheKeys = Deltas.CacheKeys;
+                }
+                catch (Exception ex)
+                {
+                }
 
+                try
+                {
                     if (NSMessageHandler.AutoSynchronize &&
                         recursiveCall == 0 &&
                         (AddressBook.Version != Properties.Resources.XMLContactListVersion || Deltas.Version != Properties.Resources.DeltasListVersion))
@@ -414,9 +430,12 @@ namespace MSNPSharp
                             "\r\nThe old mcl files for this account will be deleted and a new request for getting addressbook list will be post.");
 
                         recursiveCall++;
+                        BinarySemaphore.Release();
                         SynchronizeContactList();
                         return;
                     }
+
+                    BinarySemaphore.Release();
                 }
                 catch (Exception ex)
                 {
@@ -426,21 +445,38 @@ namespace MSNPSharp
                     return;
                 }
 
+
+
+                //Should has no lock here.
+
                 if (NSMessageHandler.AutoSynchronize)
                 {
-                    try
+
+                    BinarySemaphore.WaitOne();
+                    if (AddressBook != null)
                     {
-                        AddressBook.Initialize();
+                        try
+                        {
+                            AddressBook.Initialize();
+                        }
+                        catch (Exception ex) { }
 
                         if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)) == DateTime.MinValue)
                         {
                             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your membership list for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
                         }
+                    }
+                    BinarySemaphore.Release();
+
+                    //should be no lock here, let the msRequest take care of the locks.
+                    try
+                    {
                         msRequest(
                             PartnerScenario.Initial,
                             delegate
                             {
-                                lock (SyncObject)
+                                //lock (SyncObject)
+                                BinarySemaphore.WaitOne();
                                 {
                                     if (AddressBook != null && Deltas != null)
                                     {
@@ -449,11 +485,15 @@ namespace MSNPSharp
                                             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your address book for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
                                         }
 
+                                        BinarySemaphore.Release();
+
+                                        //should be no lock here, let the abRequest take care of the locks.
                                         try
                                         {
                                             abRequest(PartnerScenario.Initial,
                                                 delegate
                                                 {
+                                                    //should be no lock here, let the SetDefaults take care of the locks.
                                                     SetDefaults();
                                                 }
                                             );
@@ -465,9 +505,17 @@ namespace MSNPSharp
                                             Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occured while getting membership list: " +
                                                           abRequestEception.Message +
                                                 "\r\nA new request for getting addressbook list will be post again.", GetType().Name);
+                                            return;
                                         }
                                     }
+                                    else
+                                    {
+                                        //If addressbook is null, we are still locking.
+                                        BinarySemaphore.Release();
+                                    }
                                 }
+
+                                //Should has no lock here.
                             }
                         );
                     }
@@ -482,7 +530,17 @@ namespace MSNPSharp
                 else
                 {
                     // Set lastchanged and roaming profile last change to get display picture and personal message
-                    NSMessageHandler.ContactService.AddressBook.MyProperties[AnnotationNames.Live_Profile_Expression_LastChanged] = XmlConvert.ToString(DateTime.MinValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz"); SetDefaults();
+
+                    BinarySemaphore.WaitOne();
+
+                    if (AddressBook != null)
+                    {
+                        AddressBook.MyProperties[AnnotationNames.Live_Profile_Expression_LastChanged] = XmlConvert.ToString(DateTime.MinValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
+                    }
+                    BinarySemaphore.Release();
+
+                    SetDefaults();
+
                     NSMessageHandler.OnSignedIn(EventArgs.Empty);
                 }
             }
@@ -492,13 +550,15 @@ namespace MSNPSharp
         {
             // Reset
             recursiveCall = 0;
-            lock (SyncObject)
+            //lock (SyncObject)
+            BinarySemaphore.WaitOne();
             {
                 if (NSMessageHandler.AutoSynchronize && AddressBook != null)
                 {
                     AddressBook.InitializeMyProperties();
                 }
             }
+            BinarySemaphore.Release();
 
             //OwnerProfile profileFromWeb = NSMessageHandler.StorageService.GetProfile();
 
@@ -539,7 +599,8 @@ namespace MSNPSharp
                     #endregion
                 }
 
-                lock (SyncObject)
+                //lock (SyncObject)
+                BinarySemaphore.WaitOne();
                 {
                     if (AddressBook != null && Deltas != null)
                     {
@@ -548,6 +609,7 @@ namespace MSNPSharp
                         Deltas.Truncate();
                     }
                 }
+                BinarySemaphore.Release();
             }
         }
 
@@ -839,11 +901,13 @@ namespace MSNPSharp
                     {
                         if (e.Error != null)
                         {
-                            lock (SyncObject)
+                            //lock (SyncObject)
+                            BinarySemaphore.WaitOne();
                             {
                                 if (AddressBook == null && Deltas == null && AddressBookSynchronized == false)
                                 {
                                     // This means before the webservice returned the connection had broken.
+                                    BinarySemaphore.Release();
                                     OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership",
                                             new MSNPSharpException("Addressbook and Deltas have been reset.")));
                                     return;
@@ -853,10 +917,13 @@ namespace MSNPSharp
                                 {
                                     if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
                                     {
+                                        BinarySemaphore.Release();
                                         OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership", new MSNPSharpException("You don't have access right on this action anymore.")));
+                                        return;
                                     }
                                     else
                                     {
+                                        BinarySemaphore.Release();
                                         MsnServiceState ABAddObject = new MsnServiceState(partnerScenario, "ABAdd", true);
                                         ABServiceBinding abservice = (ABServiceBinding)CreateService(MsnServiceType.AB, ABAddObject);
                                         abservice.ABAddCompleted += delegate(object srv, ABAddCompletedEventArgs abadd_e)
@@ -890,10 +957,14 @@ namespace MSNPSharp
 
                                         RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abservice, MsnServiceType.AB, ABAddObject, abAddRequest));
                                     }
+
+                                    //Now here should have no lock.
                                 }
                                 else if ((recursiveCall == 0 && partnerScenario == PartnerScenario.Initial)
                                     || (e.Error.Message.Contains("Need to do full sync")))
                                 {
+                                    BinarySemaphore.Release();  //release for recursive calls.
+
                                     try
                                     {
                                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
@@ -903,6 +974,7 @@ namespace MSNPSharp
                                     }
                                     catch (Exception unknownSyncException)
                                     {
+
                                         OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership",
                                             new MSNPSharpException("Unknown Exception occurred while synchronizing contact list, please see inner exception.",
                                             unknownSyncException)));
@@ -911,17 +983,23 @@ namespace MSNPSharp
                                 else
                                 {
                                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Error.ToString(), GetType().Name);
+                                    BinarySemaphore.Release();
                                 }
                             }
                         }
                         else
                         {
-                            lock (SyncObject)
+                            //lock (SyncObject)
+                            
                             {
+                                BinarySemaphore.WaitOne();
+
                                 if (null != e.Result.FindMembershipResult && AddressBook != null)
                                 {
+                                    BinarySemaphore.Release();
                                     try
                                     {
+                                        //Following line is horrible for semaphore usage...
                                         XMLContactList addressbook = AddressBook.Merge(e.Result.FindMembershipResult);
                                         addressbook.Save();
                                     }
@@ -933,9 +1011,15 @@ namespace MSNPSharp
                                     }
 
                                 }
+                                else
+                                {
+                                    BinarySemaphore.Release();
+                                }
 
+                                BinarySemaphore.WaitOne();
                                 if (AddressBook != null && Deltas != null)
                                 {
+                                    BinarySemaphore.Release();
                                     if (onSuccess != null)
                                     {
                                         onSuccess(sharingService, e);
@@ -943,6 +1027,8 @@ namespace MSNPSharp
                                 }
                                 else
                                 {
+                                    BinarySemaphore.Release();
+
                                     OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership",
                                             new MSNPSharpException("Addressbook and Deltas have been reset.")));
                                 }
@@ -970,6 +1056,7 @@ namespace MSNPSharp
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged",
                    new MSNPSharpException(ex.Message, ex)));
+                return;
             }
         }
 
@@ -1031,15 +1118,19 @@ namespace MSNPSharp
                     {
                         if (e.Error != null)
                         {
-                            lock (SyncObject)
+                            //lock (SyncObject)
                             {
+                                BinarySemaphore.WaitOne();
                                 if (AddressBook == null && Deltas == null && AddressBookSynchronized == false)
                                 {
+                                    BinarySemaphore.Release();
                                     // This means before the webservice returned the connection had broken.
                                     OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged",
                                             new MSNPSharpException("Addressbook and Deltas have been reset.")));
                                     return;
                                 }
+
+
                                 if ((recursiveCall == 0 && ((MsnServiceState)e.UserState).PartnerScenario == PartnerScenario.Initial
                                     && (abHandle == null || abHandle.ABId == WebServiceConstants.MessengerIndividualAddressBookId))
                                     || (e.Error.Message.Contains("Need to do full sync")))
@@ -1050,19 +1141,26 @@ namespace MSNPSharp
                                     recursiveCall++;
 
                                     AddressBook.ClearCircleInfos();
+                                    BinarySemaphore.Release();
+
 
                                     SynchronizeContactList();
+                                    return;
                                 }
                                 else
                                 {
                                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Error.ToString(), GetType().Name);
                                 }
+
+                                BinarySemaphore.Release();
                             }
+                            
                         }
                         else
                         {
-                            lock (SyncObject)
+                            //lock (SyncObject)
                             {
+                                BinarySemaphore.WaitOne();
                                 if (e.Result.ABFindContactsPagedResult != null && AddressBook != null)
                                 {
                                     string lowerId = WebServiceConstants.MessengerIndividualAddressBookId;
@@ -1086,17 +1184,23 @@ namespace MSNPSharp
                                         NSMessageHandler.SendSHAAMessage(e.Result.ABFindContactsPagedResult.CircleResult.CircleTicket);
                                 }
 
-                                if (AddressBook != null && Deltas != null)
+                                //if (AddressBook != null && Deltas != null)
+                                //{
+                                //    if (onSuccess != null)
+                                //    {
+                                //        onSuccess(abService, e);
+                                //    }
+                                //}
+                                //else
+                                //{
+                                //    OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged",
+                                //            new MSNPSharpException("Addressbook and Deltas have been reset.")));
+                                //}
+
+                                BinarySemaphore.Release();
+                                if (onSuccess != null)
                                 {
-                                    if (onSuccess != null)
-                                    {
-                                        onSuccess(abService, e);
-                                    }
-                                }
-                                else
-                                {
-                                    OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged",
-                                            new MSNPSharpException("Addressbook and Deltas have been reset.")));
+                                    onSuccess(abService, e);
                                 }
                             }
                         }
@@ -2911,7 +3015,8 @@ namespace MSNPSharp
 
         public override void Clear()
         {
-            lock (SyncObject)
+            binarySemaphore.WaitOne();
+            //lock (SyncObject)
             {
                 base.Clear();
 
@@ -2937,6 +3042,8 @@ namespace MSNPSharp
                 Deltas = null;
                 abSynchronized = false;
             }
+
+            binarySemaphore.Release();
         }
     }
 };
