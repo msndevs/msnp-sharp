@@ -803,7 +803,7 @@ namespace MSNPSharp
                     NSMessageHandler.ContactService.Deltas.Profile.ExpressionProfile = new ProfileResource();
                 NSMessageHandler.ContactService.Deltas.Profile.ExpressionProfile.ResourceID = CoreProfile[CoreProfileAttributeName.ExpressionProfile_ResourceId].ToString();
 
-                if (CoreProfile.ContainsKey(CoreProfileAttributeName.ExpressionProfile_ResourceId))
+                if (CoreProfile.ContainsKey(CoreProfileAttributeName.PictureProfile_UserTileStatic_ResourceId))
                     NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID = CoreProfile[CoreProfileAttributeName.PictureProfile_UserTileStatic_ResourceId].ToString();
 
                 if (CoreProfile.ContainsKey(CoreProfileAttributeName.ExpressionProfile_DisplayName))
