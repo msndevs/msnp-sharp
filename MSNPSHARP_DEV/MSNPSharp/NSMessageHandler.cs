@@ -514,11 +514,14 @@ namespace MSNPSharp
 
             pm.FriendlyName = newName;
 
-            SetPresenceStatus(
-                        Owner.Status,
-                        Owner.LocalEndPointIMCapabilities, Owner.LocalEndPointIMCapabilitiesEx,
-                        Owner.LocalEndPointPECapabilities, Owner.LocalEndPointPECapabilitiesEx,
-                        Owner.EpName, pm, true);
+            if (Owner.Status != PresenceStatus.Offline)
+            {
+                SetPresenceStatus(
+                            Owner.Status,
+                            Owner.LocalEndPointIMCapabilities, Owner.LocalEndPointIMCapabilitiesEx,
+                            Owner.LocalEndPointPECapabilities, Owner.LocalEndPointPECapabilitiesEx,
+                            Owner.EpName, pm, true);
+            }
         }
 
         /// <summary>

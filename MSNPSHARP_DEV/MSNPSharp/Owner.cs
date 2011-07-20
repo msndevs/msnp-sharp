@@ -493,6 +493,7 @@ namespace MSNPSharp
             }
         }
 
+
         public override string Name
         {
             get
@@ -758,7 +759,6 @@ namespace MSNPSharp
 
         internal void SyncProfileToDeltas()
         {
-            string ownerName = Account;
 
             if (CoreProfile.ContainsKey(CoreProfileAttributeName.PublicProfile_ResourceId))
             {
@@ -772,15 +772,6 @@ namespace MSNPSharp
                 if (CoreProfile.ContainsKey(CoreProfileAttributeName.LastModified))
                     NSMessageHandler.ContactService.Deltas.Profile.DateModified = CoreProfile[CoreProfileAttributeName.LastModified].ToString();
 
-                if (CoreProfile.ContainsKey(CoreProfileAttributeName.PublicProfile_DisplayName) &&
-                        CoreProfile.ContainsKey(CoreProfileAttributeName.PublicProfile_DisplayLastName))
-                {
-                    NSMessageHandler.ContactService.Deltas.Profile.DisplayName =
-                        CoreProfile[CoreProfileAttributeName.PublicProfile_DisplayName].ToString() + " " +
-                        CoreProfile[CoreProfileAttributeName.PublicProfile_DisplayLastName].ToString();
-
-                    ownerName = NSMessageHandler.ContactService.Deltas.Profile.DisplayName;
-                }
             }
 
 
@@ -806,12 +797,6 @@ namespace MSNPSharp
                 if (CoreProfile.ContainsKey(CoreProfileAttributeName.PictureProfile_UserTileStatic_ResourceId))
                     NSMessageHandler.ContactService.Deltas.Profile.Photo.ResourceID = CoreProfile[CoreProfileAttributeName.PictureProfile_UserTileStatic_ResourceId].ToString();
 
-                if (CoreProfile.ContainsKey(CoreProfileAttributeName.ExpressionProfile_DisplayName))
-                {
-                    NSMessageHandler.ContactService.Deltas.Profile.DisplayName = CoreProfile[CoreProfileAttributeName.ExpressionProfile_DisplayName].ToString();
-                    if (ownerName == Account)
-                        ownerName = NSMessageHandler.ContactService.Deltas.Profile.DisplayName;
-                }
 
 
                 if (CoreProfile.ContainsKey(CoreProfileAttributeName.ExpressionProfile_DisplayName_LastModified))
@@ -826,7 +811,7 @@ namespace MSNPSharp
                 }
             }
 
-
+            NSMessageHandler.ContactService.Deltas.Profile.DisplayName = Name;
             NSMessageHandler.ContactService.Deltas.Save(true);
 
             if (CoreProfile.ContainsKey(CoreProfileAttributeName.UserTileStaticUrl))
@@ -857,8 +842,18 @@ namespace MSNPSharp
                     );
             }
 
-            SetName(ownerName);
-            SetNickName(ownerName);
+            if (Name != PreferredName)
+            {
+                try
+                {
+                    NSMessageHandler.SetScreenName(PreferredName);
+                    SetName(PreferredName);
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message);
+                }
+            }
         }
 
         /// <summary>
