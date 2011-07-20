@@ -2239,9 +2239,18 @@ namespace MSNPSharp
             if (!contact.HasLists(RoleLists.Hide))
                 return;
 
-            Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(2);
-            hashlist.Add(contact.Hash, RoleLists.Hide);
-            string payload = ConstructLists(hashlist, false)[0];
+            Service imAvailabilityService = AddressBook.SelectTargetService(ServiceFilterType.IMAvailability);
+
+            if (imAvailabilityService == null)
+            {
+                AddServiceAsync(ServiceFilterType.IMAvailability,
+                    delegate
+                    {
+                        // RESURSIVE CALL
+                        AppearOnline(contact, onSuccess);
+                    });
+                return;
+            }
 
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
@@ -2269,6 +2278,9 @@ namespace MSNPSharp
                     AddressBook.RemoveMemberhip(ServiceFilterType.IMAvailability, contact.Account, contact.ClientType, GetMemberRole(RoleLists.Hide), Scenario.ContactServeAPI);
                     NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, RoleLists.Hide));
 
+                    Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(2);
+                    hashlist.Add(contact.Hash, RoleLists.Hide);
+                    string payload = ConstructLists(hashlist, false)[0];
                     NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML", payload));
 
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "DeleteMember completed: " + RoleLists.Hide, GetType().Name);
@@ -2277,20 +2289,6 @@ namespace MSNPSharp
 
             DeleteMemberRequestType deleteMemberRequest = new DeleteMemberRequestType();
             deleteMemberRequest.serviceHandle = new HandleType();
-
-            Service imAvailabilityService = AddressBook.SelectTargetService(ServiceFilterType.IMAvailability);
-
-            if (imAvailabilityService == null)
-            {
-                AddServiceAsync(ServiceFilterType.IMAvailability,
-                    delegate
-                    {
-                        // RESURSIVE CALL
-                        AppearOnline(contact, onSuccess);
-                    });
-                return;
-            }
-
             deleteMemberRequest.serviceHandle.Id = imAvailabilityService.Id.ToString();
             deleteMemberRequest.serviceHandle.Type = ServiceFilterType.IMAvailability;
 
@@ -2364,22 +2362,6 @@ namespace MSNPSharp
             if (contact.HasLists(RoleLists.Hide))
                 return;
 
-            Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(2);
-            hashlist.Add(contact.Hash, RoleLists.Hide);
-            string payload = ConstructLists(hashlist, false)[0];
-
-            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
-            {
-                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("AppearOffline", new MSNPSharpException("You don't have access right on this action anymore.")));
-                return;
-            }
-
-            MsnServiceState AddMemberObject = new MsnServiceState(PartnerScenario.BlockUnblock, "AddMember", true);
-            SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, AddMemberObject);
-
-            AddMemberRequestType addMemberRequest = new AddMemberRequestType();
-            addMemberRequest.serviceHandle = new HandleType();
-
             Service imAvailabilityService = AddressBook.SelectTargetService(ServiceFilterType.IMAvailability);
 
             if (imAvailabilityService == null)
@@ -2393,6 +2375,17 @@ namespace MSNPSharp
                 return;
             }
 
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
+            {
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("AppearOffline", new MSNPSharpException("You don't have access right on this action anymore.")));
+                return;
+            }
+
+            MsnServiceState AddMemberObject = new MsnServiceState(PartnerScenario.BlockUnblock, "AddMember", true);
+            SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, AddMemberObject);
+
+            AddMemberRequestType addMemberRequest = new AddMemberRequestType();
+            addMemberRequest.serviceHandle = new HandleType();
             addMemberRequest.serviceHandle.Id = imAvailabilityService.Id.ToString();
             addMemberRequest.serviceHandle.Type = ServiceFilterType.IMAvailability;
 
@@ -2457,6 +2450,9 @@ namespace MSNPSharp
                     AddressBook.AddMemberhip(ServiceFilterType.IMAvailability, contact.Account, contact.ClientType, GetMemberRole(RoleLists.Hide), member, Scenario.ContactServeAPI);
                     NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, RoleLists.Hide));
 
+                    Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(2);
+                    hashlist.Add(contact.Hash, RoleLists.Hide);
+                    string payload = ConstructLists(hashlist, false)[0];
                     NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
 
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "AddMember completed: " + RoleLists.Hide, GetType().Name);
