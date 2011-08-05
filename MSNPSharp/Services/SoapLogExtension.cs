@@ -128,8 +128,9 @@ namespace MSNPSharp.Services
 
             StreamReader reader = new StreamReader(newStream);
 
-            //Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, FormatXML(reader.ReadToEnd()),
-            //    GetType().Name + ":SOAP-REQUEST(" + message.Url + ")");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose && Settings.TraceSoap,
+                FormatXML(reader.ReadToEnd()),
+                GetType().Name + ":SOAP-REQUEST(" + message.Url + ")");
 
             newStream.Position = 0;
             Copy(newStream, oldStream);
@@ -143,13 +144,14 @@ namespace MSNPSharp.Services
 
             StreamReader reader = new StreamReader(newStream);
 
-            //Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, FormatXML(reader.ReadToEnd()),
-            //    GetType().Name + ":SOAP-RESPONSE(" + message.Url + ")");
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose && Settings.TraceSoap,
+                FormatXML(reader.ReadToEnd()),
+                GetType().Name + ":SOAP-RESPONSE(" + message.Url + ")");
 
             newStream.Position = 0;
         }
 
-        void Copy(Stream from, Stream to)
+        private void Copy(Stream from, Stream to)
         {
             TextReader reader = new StreamReader(from);
             TextWriter writer = new StreamWriter(to);

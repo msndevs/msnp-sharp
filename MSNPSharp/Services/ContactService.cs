@@ -419,7 +419,7 @@ namespace MSNPSharp
 
                     NSMessageHandler.MSNTicket.CacheKeys = Deltas.CacheKeys;
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                 }
 
@@ -465,7 +465,7 @@ namespace MSNPSharp
                         {
                             AddressBook.Initialize();
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
                         }
 

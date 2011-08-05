@@ -50,23 +50,23 @@ namespace MSNPSharp.Services
         {
         }
 
-        public WhatsUpServiceBindingWrapper(IPEndPoint localEndPoint)
-            : base()
+        public WhatsUpServiceBindingWrapper(IPEndPoint localEndPoint, NSMessageHandler nsHandler)
+            : this()
         {
             this.localEndPoint = localEndPoint;
+
+            SingleSignOnManager.RenewIfExpired(nsHandler, SSOTicketType.WhatsUp);
         }
 
         protected override WebRequest GetWebRequest(Uri uri)
         {
-            WebRequest request =  base.GetWebRequest(uri);
-            if (request is HttpWebRequest)
+            WebRequest request = base.GetWebRequest(uri);
+            HttpWebRequest httpRequest = request as HttpWebRequest;
+            if (httpRequest != null)
             {
-                (request as HttpWebRequest).ServicePoint.BindIPEndPointDelegate = new BindIPEndPoint((new IPEndPointCallback(localEndPoint)).BindIPEndPointCallback);
+                httpRequest.ServicePoint.BindIPEndPointDelegate = new BindIPEndPoint((new IPEndPointCallback(localEndPoint)).BindIPEndPointCallback);
             }
-
             return request;
         }
-
     }
-}
-
+};

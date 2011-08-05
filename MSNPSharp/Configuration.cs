@@ -73,6 +73,11 @@ namespace MSNPSharp
         public static TraceSwitch TraceSwitch = new TraceSwitch("MSNPSharp", "MSNPSharp switch");
 
         /// <summary>
+        /// Trace soap request/response.
+        /// </summary>
+        public static bool TraceSoap = false;
+
+        /// <summary>
         /// Ports for DC to try bind. These ports aren't firewalled by ISS.
         /// </summary>
         public static readonly ushort[] PublicPorts = new ushort[]
@@ -97,6 +102,9 @@ namespace MSNPSharp
             serializationType = MclSerialization.Compression | MclSerialization.Cryptography;
 
             enableGzipCompressionForWebServices = (isMono == false);
+#if DEBUG
+            TraceSoap = true;
+#endif
         }
 
         private static PublicPortPriority publicPortPriority = PublicPortPriority.First;
