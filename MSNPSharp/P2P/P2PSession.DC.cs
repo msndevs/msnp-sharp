@@ -425,7 +425,7 @@ namespace MSNPSharp.P2P
 
             if (from.DirectBridge != null && ipEndPoints != null && ipEndPoints.Length > 0)
             {
-                ((TCPv1Bridge)from.DirectBridge).OnDestinationAddressUpdated(new DestinationAddressUpdatedEventHandler(ipEndPoints));
+                ((TCPv1Bridge)from.DirectBridge).OnDestinationAddressUpdated(new DestinationAddressUpdatedEventArgs(ipEndPoints));
             }
         }
 
