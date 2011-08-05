@@ -41,7 +41,7 @@ namespace MSNPSharp.Services
     using MSNPSharp.MSNWS.MSNStorageService;
 
     [System.Web.Services.WebServiceBindingAttribute(Name = "StorageServiceBinding", Namespace = "http://www.msn.com/webservices/storage/2008")]
-    internal sealed class StorageServiceWrapper: StorageService
+    internal sealed class StorageServiceWrapper : StorageService
     {
         private IPEndPoint localEndPoint = null;
 
@@ -50,22 +50,24 @@ namespace MSNPSharp.Services
         {
         }
 
-        public StorageServiceWrapper(IPEndPoint localEndPoint)
-            : base()
+        public StorageServiceWrapper(IPEndPoint localEndPoint, NSMessageHandler nsHandler)
+            : this()
         {
             this.localEndPoint = localEndPoint;
+
+            SingleSignOnManager.RenewIfExpired(nsHandler, SSOTicketType.Storage);
         }
 
 
         protected override WebRequest GetWebRequest(Uri uri)
         {
             WebRequest request = base.GetWebRequest(uri);
-            if (request is HttpWebRequest)
+            HttpWebRequest httpRequest = request as HttpWebRequest;
+            if (httpRequest != null)
             {
-                (request as HttpWebRequest).ServicePoint.BindIPEndPointDelegate = new BindIPEndPoint((new IPEndPointCallback(localEndPoint)).BindIPEndPointCallback);
+                httpRequest.ServicePoint.BindIPEndPointDelegate = new BindIPEndPoint((new IPEndPointCallback(localEndPoint)).BindIPEndPointCallback);
             }
-
             return request;
         }
     }
-}
+};

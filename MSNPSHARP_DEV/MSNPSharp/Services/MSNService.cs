@@ -323,8 +323,7 @@ namespace MSNPSharp
             {
                 case MsnServiceType.AB:
 
-                    SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Contact);
-                    ABServiceBinding abService = new ABServiceBindingWrapper(localEndPoint);
+                    ABServiceBinding abService = new ABServiceBindingWrapper(localEndPoint, NSMessageHandler);
                     abService.Proxy = WebProxy;
                     abService.Timeout = Int32.MaxValue;
                     abService.UserAgent = Properties.Resources.WebServiceUserAgent;
@@ -342,9 +341,7 @@ namespace MSNPSharp
 
                 case MsnServiceType.Sharing:
 
-                    SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Contact);
-
-                    SharingServiceBinding sharingService = new SharingServiceBindingWrapper(localEndPoint);
+                    SharingServiceBinding sharingService = new SharingServiceBindingWrapper(localEndPoint, NSMessageHandler);
                     sharingService.Proxy = WebProxy;
                     sharingService.Timeout = Int32.MaxValue;
                     sharingService.UserAgent = Properties.Resources.WebServiceUserAgent;
@@ -363,14 +360,10 @@ namespace MSNPSharp
 
                 case MsnServiceType.Storage:
 
-                    SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Storage);
-
-                    StorageService storageService = new StorageServiceWrapper(localEndPoint);
+                    StorageService storageService = new StorageServiceWrapper(localEndPoint, NSMessageHandler);
                     storageService.Proxy = WebProxy;
                     storageService.StorageApplicationHeaderValue = new StorageApplicationHeader();
                     storageService.StorageApplicationHeaderValue.ApplicationID = Properties.Resources.ApplicationStrId;
-
-
                     storageService.StorageApplicationHeaderValue.Scenario = Convert.ToString(asyncObject.PartnerScenario);
                     storageService.StorageUserHeaderValue = new StorageUserHeader();
                     storageService.StorageUserHeaderValue.Puid = 0;
@@ -384,11 +377,9 @@ namespace MSNPSharp
 
                 case MsnServiceType.RSI:
 
-                    SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Web);
-
                     string[] TandP = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Web].Ticket.Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
 
-                    RSIService rsiService = new RSIServiceWrapper(localEndPoint);
+                    RSIService rsiService = new RSIServiceWrapper(localEndPoint, NSMessageHandler);
                     rsiService.Proxy = WebProxy;
                     rsiService.Timeout = Int32.MaxValue;
                     rsiService.PassportCookieValue = new PassportCookie();
@@ -400,9 +391,7 @@ namespace MSNPSharp
 
                 case MsnServiceType.OIMStore:
 
-                    SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.OIM);
-
-                    OIMStoreService oimService = new OIMStoreServiceWrapper(localEndPoint);
+                    OIMStoreService oimService = new OIMStoreServiceWrapper(localEndPoint, NSMessageHandler);
                     oimService.Proxy = WebProxy;
                     oimService.TicketValue = new Ticket();
                     oimService.TicketValue.passport = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.OIM].Ticket;
@@ -414,9 +403,7 @@ namespace MSNPSharp
 
                 case MsnServiceType.WhatsUp:
 
-                    SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.WhatsUp);
-
-                    WhatsUpServiceBinding wuService = new WhatsUpServiceBindingWrapper(localEndPoint);
+                    WhatsUpServiceBinding wuService = new WhatsUpServiceBindingWrapper(localEndPoint, NSMessageHandler);
                     wuService.Proxy = WebProxy;
                     wuService.Timeout = 60000;
                     wuService.UserAgent = Properties.Resources.WebServiceUserAgent;
@@ -430,9 +417,7 @@ namespace MSNPSharp
 
                 case MsnServiceType.Directory:
 
-                    SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.Directory);
-
-                    DirectoryService dirService = new DirectoryServiceWrapper(localEndPoint);
+                    DirectoryService dirService = new DirectoryServiceWrapper(localEndPoint, NSMessageHandler);
                     dirService.Proxy = WebProxy;
                     dirService.Timeout = Int32.MaxValue;
                     dirService.SOAPApplicationHeaderValue = new SOAPApplicationHeader();
@@ -440,6 +425,7 @@ namespace MSNPSharp
                     dirService.SOAPApplicationHeaderValue.Scenario = Convert.ToString(asyncObject.PartnerScenario);
                     dirService.SOAPUserHeaderValue = new SOAPUserHeader();
                     dirService.SOAPUserHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Directory].Ticket;
+
                     service = dirService;
                     break;
             }
@@ -517,7 +503,7 @@ namespace MSNPSharp
                                     deltas.PreferredHosts[preferredHostKey] == String.Empty)));
                 }
 
-                if(needRequest)
+                if (needRequest)
                 {
 
                     try
@@ -667,8 +653,7 @@ namespace MSNPSharp
             {
                 host = fullUrl.Substring(httpsHeader.Length);
             }
-
-            if (fullUrl.StartsWith(httpHeader))
+            else if (fullUrl.StartsWith(httpHeader))
             {
                 host = fullUrl.Substring(httpHeader.Length);
             }

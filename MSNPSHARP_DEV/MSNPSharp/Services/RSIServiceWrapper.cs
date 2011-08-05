@@ -50,23 +50,24 @@ namespace MSNPSharp.Services
         {
         }
 
-        public RSIServiceWrapper(IPEndPoint localEndPoint)
-            : base()
+        public RSIServiceWrapper(IPEndPoint localEndPoint, NSMessageHandler nsHandler)
+            : this()
         {
             this.localEndPoint = localEndPoint;
+
+            SingleSignOnManager.RenewIfExpired(nsHandler, SSOTicketType.Web);
         }
 
 
         protected override WebRequest GetWebRequest(Uri uri)
         {
             WebRequest request = base.GetWebRequest(uri);
-            if (request is HttpWebRequest)
+            HttpWebRequest httpRequest = request as HttpWebRequest;
+            if (httpRequest != null)
             {
-                (request as HttpWebRequest).ServicePoint.BindIPEndPointDelegate = new BindIPEndPoint((new IPEndPointCallback(localEndPoint)).BindIPEndPointCallback);
+                httpRequest.ServicePoint.BindIPEndPointDelegate = new BindIPEndPoint((new IPEndPointCallback(localEndPoint)).BindIPEndPointCallback);
             }
-
             return request;
         }
     }
-}
-
+};

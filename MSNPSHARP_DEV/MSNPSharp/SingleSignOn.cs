@@ -524,7 +524,10 @@ namespace MSNPSharp
 
         private NSMessageHandler NSMessageHandler
         {
-            get { return nsMessageHandler; }
+            get
+            {
+                return nsMessageHandler;
+            }
             set
             {
                 nsMessageHandler = value;
@@ -664,10 +667,11 @@ namespace MSNPSharp
                 {
                     if (!e.Cancelled)
                     {
-                        
+
                         if (e.Error != null)
                         {
-                            if (ProcessError(securService, e.Error as SoapException, msnticket, async, onSuccess, onError)) return;
+                            if (ProcessError(securService, e.Error as SoapException, msnticket, async, onSuccess, onError))
+                                return;
 
                             MSNPSharpException sexp = new MSNPSharpException(e.Error.Message + ". See innerexception for detail.", e.Error);
                             if (securService.pp != null)
@@ -704,7 +708,8 @@ namespace MSNPSharp
                 }
                 catch (Exception ex)
                 {
-                    if (ProcessError(securService, ex as SoapException, msnticket, async, onSuccess, onError)) return;
+                    if (ProcessError(securService, ex as SoapException, msnticket, async, onSuccess, onError))
+                        return;
 
                     MSNPSharpException sexp = new MSNPSharpException(ex.Message + ". See innerexception for detail.", ex);
                     if (securService.pp != null)
@@ -720,8 +725,10 @@ namespace MSNPSharp
         private bool ProcessError(SecurityTokenService secureService, SoapException exception, MSNTicket msnticket, bool async, EventHandler onSuccess, EventHandler<ExceptionEventArgs> onError)
         {
             string errFedDirectLogin = @"Direct login to WLID is not allowed for this federated namespace";
-            if (exception == null) return false;
-            if (secureService.pp == null) return false;
+            if (exception == null)
+                return false;
+            if (secureService.pp == null)
+                return false;
 
             uint errorCode = uint.Parse(secureService.pp.reqstatus.Remove(0, "0x".Length), NumberStyles.HexNumber);
 
@@ -757,13 +764,14 @@ namespace MSNPSharp
                         }
                     }
 
-                    if (fedLoginURL == string.Empty) return false;
+                    if (fedLoginURL == string.Empty)
+                        return false;
 
                     Uri fedLoginURI = new Uri(fedLoginURL);
                     string strFedLoginURI = fedLoginURI.Scheme.ToUpperInvariant() + "://" + fedLoginURI.Host + (fedLoginURI.Scheme.ToLowerInvariant() == "https" ? ":443" : string.Empty) + "/" + fedLoginURI.PathAndQuery;
                     SecurityTokenService fedSecureService = CreateSecurityTokenService(@"http://schemas.xmlsoap.org/ws/2005/02/trust/RST/Issue", strFedLoginURI);
                     fedSecureService.Url = fedLoginURL;
-                    
+
                     RequestSecurityTokenType token = new RequestSecurityTokenType();
                     token.Id = "RST0";
                     token.RequestType = RequestTypeOpenEnum.httpschemasxmlsoaporgws200502trustIssue;
@@ -801,8 +809,10 @@ namespace MSNPSharp
                                 }
 
                                 response = e.Result;
-                                if (response.RequestedSecurityToken == null) return;
-                                if (response.RequestedSecurityToken.Assertion == null) return;
+                                if (response.RequestedSecurityToken == null)
+                                    return;
+                                if (response.RequestedSecurityToken.Assertion == null)
+                                    return;
 
                                 AssertionType assertion = response.RequestedSecurityToken.Assertion;
                                 secureService = CreateSecurityTokenService(@"http://schemas.xmlsoap.org/ws/2005/02/trust/RST/Issue", @"HTTPS://login.live.com:443//RST2.srf");
@@ -832,8 +842,10 @@ namespace MSNPSharp
                             throw sexp;
                         }
 
-                        if (response.RequestedSecurityToken == null) return false;
-                        if (response.RequestedSecurityToken.Assertion == null) return false;
+                        if (response.RequestedSecurityToken == null)
+                            return false;
+                        if (response.RequestedSecurityToken.Assertion == null)
+                            return false;
 
                         AssertionType assertion = response.RequestedSecurityToken.Assertion;
                         secureService = CreateSecurityTokenService(@"http://schemas.xmlsoap.org/ws/2005/02/trust/RST/Issue", @"HTTPS://login.live.com:443//RST2.srf");
