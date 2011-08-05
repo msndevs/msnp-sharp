@@ -256,8 +256,8 @@ namespace MSNPSharp
 
         private WebProxy webProxy;
         private NSMessageHandler nsMessageHandler;
-        private Dictionary<SoapHttpClientProtocol, MsnServiceState> asyncStates =
-            new Dictionary<SoapHttpClientProtocol, MsnServiceState>(0);
+        private Dictionary<MsnServiceState, SoapHttpClientProtocol> asyncStates =
+            new Dictionary<MsnServiceState, SoapHttpClientProtocol>(0);
 
         private MSNService()
         {
@@ -451,7 +451,9 @@ namespace MSNPSharp
                 if (asyncObject != null && asyncObject.AddToAsyncList)
                 {
                     lock (asyncStates)
-                        asyncStates[service] = asyncObject;
+                    {
+                        asyncStates[asyncObject] = service;
+                    }
                 }
             }
 
@@ -720,7 +722,7 @@ namespace MSNPSharp
             if (e.MsnServiceState.AddToAsyncList)
             {
                 lock (asyncStates)
-                    asyncStates.Remove(e.WebService);
+                    asyncStates.Remove(e.MsnServiceState);
             }
 
             if (e.AsyncCompletedEventArgs.Cancelled)
@@ -772,29 +774,29 @@ namespace MSNPSharp
                 {
                     if (asyncStates.Count > 0)
                     {
-                        Dictionary<SoapHttpClientProtocol, MsnServiceState> copyStates = new Dictionary<SoapHttpClientProtocol, MsnServiceState>(asyncStates);
-                        asyncStates = new Dictionary<SoapHttpClientProtocol, MsnServiceState>();
+                        Dictionary<MsnServiceState, SoapHttpClientProtocol> copyStates = new Dictionary<MsnServiceState, SoapHttpClientProtocol>(asyncStates);
+                        asyncStates = new Dictionary<MsnServiceState, SoapHttpClientProtocol>();
 
-                        foreach (KeyValuePair<SoapHttpClientProtocol, MsnServiceState> state in copyStates)
+                        foreach (KeyValuePair<MsnServiceState, SoapHttpClientProtocol> keyValue in copyStates)
                         {
                             try
                             {
-                                state.Key.GetType().InvokeMember("CancelAsync",
+                                keyValue.Value.GetType().InvokeMember("CancelAsync",
                                     System.Reflection.BindingFlags.InvokeMethod,
-                                    null, state.Key,
-                                    new object[] { state.Value });
+                                    null, keyValue.Value,
+                                    new object[] { keyValue.Key });
                             }
                             catch (Exception error)
                             {
                                 System.Diagnostics.Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
                                         "An error occured while canceling :\r\n" +
-                                        "Service: " + state.Key.ToString() + "\r\n" +
-                                        "State:   " + state.Value.MethodName + "(" + state.Value.GetHashCode() + ")r\n" +
+                                        "Service: " + keyValue.Value.ToString() + "\r\n" +
+                                        "State:   " + keyValue.Key.MethodName + "(" + keyValue.Key.GetHashCode() + ")r\n" +
                                         "Message: " + error.Message);
                             }
                             finally
                             {
-                                state.Key.Dispose();
+                                keyValue.Value.Dispose();
                             }
                         }
                         copyStates.Clear();
