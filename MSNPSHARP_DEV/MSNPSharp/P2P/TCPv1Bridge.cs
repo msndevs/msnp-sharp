@@ -39,7 +39,7 @@ namespace MSNPSharp.P2P
 {
     using MSNPSharp.Core;
 
-    public class DestinationAddressUpdatedEventHandler : EventArgs
+    public class DestinationAddressUpdatedEventArgs : EventArgs
     {
         private IPEndPoint[] ipEndPoints;
 
@@ -51,7 +51,7 @@ namespace MSNPSharp.P2P
             }
         }
 
-        public DestinationAddressUpdatedEventHandler(IPEndPoint[] ipeps)
+        public DestinationAddressUpdatedEventArgs(IPEndPoint[] ipeps)
         {
             this.ipEndPoints = ipeps;
         }
@@ -59,7 +59,7 @@ namespace MSNPSharp.P2P
 
     public class TCPv1Bridge : P2PBridge
     {
-        public event EventHandler<DestinationAddressUpdatedEventHandler> DestinationAddressUpdated;
+        public event EventHandler<DestinationAddressUpdatedEventArgs> DestinationAddressUpdated;
 
         private P2PSession startupSession = null;
         private P2PDirectProcessor directConnection = null;
@@ -167,7 +167,7 @@ namespace MSNPSharp.P2P
             directConnection.ConnectionException += new EventHandler<ExceptionEventArgs>(directConnection_ConnectionException);
         }
 
-        protected internal virtual void OnDestinationAddressUpdated(DestinationAddressUpdatedEventHandler e)
+        protected internal virtual void OnDestinationAddressUpdated(DestinationAddressUpdatedEventArgs e)
         {
             if (directConnection != null && directConnection.Connected && directConnection.RemoteEndPoint != null)
             {
