@@ -326,7 +326,7 @@ namespace MSNPSharp
         /// <param name="e"></param>
         internal void OnSynchronizationCompleted(EventArgs e)
         {
-            
+
             if (SynchronizationCompleted != null)
                 SynchronizationCompleted(this, e);
         }
@@ -347,12 +347,18 @@ namespace MSNPSharp
 
         public object SyncObject
         {
-            get { return syncObject; }
+            get
+            {
+                return syncObject;
+            }
         }
 
         public Semaphore BinarySemaphore
         {
-            get { return binarySemaphore; }
+            get
+            {
+                return binarySemaphore;
+            }
         }
 
         /// <summary>
@@ -413,7 +419,7 @@ namespace MSNPSharp
 
                     NSMessageHandler.MSNTicket.CacheKeys = Deltas.CacheKeys;
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                 }
 
@@ -459,7 +465,9 @@ namespace MSNPSharp
                         {
                             AddressBook.Initialize();
                         }
-                        catch (Exception ex) { }
+                        catch (Exception)
+                        {
+                        }
 
                         if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)) == DateTime.MinValue)
                         {
@@ -659,7 +667,7 @@ namespace MSNPSharp
             }
 
             #endregion
-            
+
             #region Process Contacts
 
             if ((scene & Scenario.SendInitialContactsADL) != Scenario.None)
@@ -989,7 +997,7 @@ namespace MSNPSharp
                         else
                         {
                             //lock (SyncObject)
-                            
+
                             {
                                 BinarySemaphore.WaitOne();
 
@@ -1153,7 +1161,7 @@ namespace MSNPSharp
 
                                 BinarySemaphore.Release();
                             }
-                            
+
                         }
                         else
                         {
@@ -1436,7 +1444,7 @@ namespace MSNPSharp
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "CreateContactAsync Error: " + ex.Message);
                     }
                 });
-        }        
+        }
 
         /// <summary>
         /// Creates a new contact on your address book and adds to allowed list if not blocked before.
@@ -2034,7 +2042,7 @@ namespace MSNPSharp
             {
                 member = new CircleMember();
                 CircleMember circleMember = member as CircleMember;
-                circleMember.Type =  MembershipType.Circle;
+                circleMember.Type = MembershipType.Circle;
                 circleMember.State = MemberState.Accepted;
                 circleMember.CircleId = contact.AddressBookId.ToString("D").ToLowerInvariant();
             }
@@ -2912,8 +2920,8 @@ namespace MSNPSharp
                     if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
                         return;
 
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, 
-                        serviceName + "=" +  e.Result.AddServiceResult + " created...");
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                        serviceName + "=" + e.Result.AddServiceResult + " created...");
 
                     // Update service membership...
                     msRequest(PartnerScenario.BlockUnblock,
@@ -2928,7 +2936,7 @@ namespace MSNPSharp
             }
         }
 
-        #endregion 
+        #endregion
 
         #region DeleteRecordFile
 
