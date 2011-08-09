@@ -345,15 +345,19 @@ namespace MSNPSharp
         internal Contact GetContact(string account, ClientType type)
         {
             int hash = Contact.MakeHash(account, type, AddressBookId.ToString("D")).GetHashCode();
-            if (ContainsKey(hash))
-            {
-                return this[hash];
-            }
-
-            Contact tmpContact = new Contact(AddressBookId, account, type, 0, nsMessageHandler);
-
+            
             lock (SyncRoot)
+            {
+                if (ContainsKey(hash))
+                {
+                    return this[hash];
+                }
+    
+                Contact tmpContact = new Contact(AddressBookId, account, type, 0, nsMessageHandler);
+    
+                
                 Add(hash, tmpContact);
+            }
 
             return GetContact(account, type);
         }
