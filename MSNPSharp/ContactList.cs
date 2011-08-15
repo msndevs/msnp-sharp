@@ -422,8 +422,11 @@ namespace MSNPSharp
             {
                 if (addressType != IMAddressInfoType.None)
                 {
-                    if (HasContact(account, addressType))
-                        return GetContact(account, addressType);
+                    lock (SyncRoot)
+                    {
+                        if (HasContact(account, addressType))
+                            return GetContact(account, addressType);
+                    }
                 }
             }
 
@@ -435,9 +438,12 @@ namespace MSNPSharp
             if (addressType != IMAddressInfoType.None)
             {
                 string hash = Contact.MakeHash(account, addressType);
-                if (base[addressType].ContainsKey(hash))
+                lock (SyncRoot)
                 {
-                    return base[addressType][hash];
+                    if (base[addressType].ContainsKey(hash))
+                    {
+                        return base[addressType][hash];
+                    }
                 }
             }
             return null;
@@ -445,10 +451,13 @@ namespace MSNPSharp
 
         public Contact GetCircle(string account)
         {
-            if (HasContact(account, IMAddressInfoType.Circle))
-                return GetContact(account, IMAddressInfoType.Circle);
+            lock (SyncRoot)
+            {
+                if (HasContact(account, IMAddressInfoType.Circle))
+                    return GetContact(account, IMAddressInfoType.Circle);
 
-            return null;
+                return null;
+            }
         }
 
         public Contact GetContactByGuid(Guid guid)
@@ -509,7 +518,8 @@ namespace MSNPSharp
             if (addressType != IMAddressInfoType.None)
             {
                 string hash = Contact.MakeHash(account, addressType);
-                return base[addressType].ContainsKey(hash);
+                lock (SyncRoot)
+                    return base[addressType].ContainsKey(hash);
             }
             return false;
         }
