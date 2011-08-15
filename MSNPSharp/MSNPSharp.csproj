@@ -149,7 +149,6 @@
     <Compile Include="ProxySocket\SocksHandler.cs" />
     <Compile Include="QRYFactory.cs" />
     <Compile Include="Core\MimeMessage.cs" />
-    <Compile Include="Services\OIMStoreServiceWrapper.cs" />
     <Compile Include="Services\RSIServiceWrapper.cs" />
     <Compile Include="Services\SecurityTokenServiceWrapper.cs" />
     <Compile Include="Services\SharingServiceBindingWrapper.cs" />
@@ -170,11 +169,6 @@
       <DependentUpon>Reference.map</DependentUpon>
     </Compile>
     <Compile Include="Web References\MSNWS.MSNABSharingService\Reference.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Reference.map</DependentUpon>
-    </Compile>
-    <Compile Include="Web References\MSNWS.MSNOIMStoreService\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Reference.map</DependentUpon>
@@ -240,23 +234,6 @@
     <None Include="Web References\MSNWS.MSNABSharingService\Reference.map">
       <Generator>MSDiscoCodeGenerator</Generator>
       <LastGenOutput>Reference.cs</LastGenOutput>
-    </None>
-    <None Include="Web References\MSNWS.MSNOIMStoreService\oim_servicetypes.xsd">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="Web References\MSNWS.MSNOIMStoreService\oim_ws.wsdl" />
-    <None Include="Web References\MSNWS.MSNOIMStoreService\Reference.map">
-      <Generator>MSDiscoCodeGenerator</Generator>
-      <LastGenOutput>Reference.cs</LastGenOutput>
-    </None>
-    <None Include="Web References\MSNWS.MSNOIMStoreService\StoreResultType.datasource">
-      <DependentUpon>Reference.map</DependentUpon>
-    </None>
-    <None Include="Web References\MSNWS.MSNOIMStoreService\utility.xsd">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="Web References\MSNWS.MSNOIMStoreService\wsrm.xsd">
-      <SubType>Designer</SubType>
     </None>
     <None Include="Web References\MSNWS.MSNRSIService\DeleteMessagesResponseType.datasource">
       <DependentUpon>Reference.map</DependentUpon>
@@ -350,15 +327,6 @@
       <CachedDynamicPropName />
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>MSNPSharp_MSNWS_MSNABSharingService_SharingService</CachedSettingsPropName>
-    </WebReferenceUrl>
-    <WebReferenceUrl Include="http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNOIMStoreService/oim_ws.wsdl">
-      <UrlBehavior>Static</UrlBehavior>
-      <RelPath>Web References\MSNWS.MSNOIMStoreService\</RelPath>
-      <UpdateFromURL>http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNOIMStoreService/oim_ws.wsdl</UpdateFromURL>
-      <ServiceLocationURL />
-      <CachedDynamicPropName />
-      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
-      <CachedSettingsPropName>MSNPSharp_MSNWS_MSNOIMStoreService_OIMStoreService</CachedSettingsPropName>
     </WebReferenceUrl>
     <WebReferenceUrl Include="http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNRSIService/rsi_ws.wsdl">
       <UrlBehavior>Static</UrlBehavior>

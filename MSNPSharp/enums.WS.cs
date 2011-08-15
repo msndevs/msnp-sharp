@@ -168,7 +168,6 @@ namespace MSNPSharp
         Sharing,
         Storage,
         RSI,
-        OIMStore,
         WhatsUp,
         Directory
     }

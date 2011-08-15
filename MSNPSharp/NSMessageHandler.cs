@@ -1385,7 +1385,6 @@ namespace MSNPSharp
                 throw new MSNPSharpException("No credentials available for the NSMSNP15 handler. No challenge answer could be send.");
 
             string payload = QRYFactory.CreateQRY(Credentials.ClientID, Credentials.ClientCode, message.CommandValues[0].ToString());
-            MSNTicket.OIMLockKey = payload;
             MessageProcessor.SendMessage(new NSPayLoadMessage("QRY", new string[] { Credentials.ClientID }, payload));
         }
 
