@@ -693,7 +693,7 @@ namespace MSNPSharp
         /// </summary>
         /// <remarks>
         /// This function will not return until the update was completed. If you want to use a asynchronous
-        /// version, please look at <see cref="UpdateRoamingProfileSync"/>
+        /// version, please look at <see cref="UpdateRoamingProfileAsync"/>
         /// </remarks>
         public void UpdateRoamingProfile()
         {
@@ -720,7 +720,7 @@ namespace MSNPSharp
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Update displayimage completed. Result = " + result);
         }
 
-        public void UpdateRoamingProfileSync()
+        public void UpdateRoamingProfileAsync()
         {
             Thread updateThread = new Thread(new ThreadStart(UpdateRoamingProfile));
             updateThread.Start();

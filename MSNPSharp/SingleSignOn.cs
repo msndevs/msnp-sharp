@@ -57,7 +57,6 @@ namespace MSNPSharp
         None = 0x00,
         Clear = 0x01,
         Contact = 0x02,
-        OIM = 0x04,
         Storage = 0x10,
         Web = 0x20,
         WhatsUp = 0x40,
@@ -80,7 +79,6 @@ namespace MSNPSharp
 
         private string policy = "MBI_KEY_OLD";
         private string mainBrandID = "MSFT";
-        private string oimLockKey = String.Empty;
         private long ownerCID = 0;
 
         [NonSerialized]
@@ -174,18 +172,6 @@ namespace MSNPSharp
             set
             {
                 mainBrandID = value;
-            }
-        }
-
-        public string OIMLockKey
-        {
-            get
-            {
-                return oimLockKey;
-            }
-            set
-            {
-                oimLockKey = value;
             }
         }
 
@@ -587,7 +573,7 @@ namespace MSNPSharp
 
         public void AddDefaultAuths()
         {
-            AddAuths(SSOTicketType.Clear | SSOTicketType.Contact | SSOTicketType.OIM | SSOTicketType.Storage | SSOTicketType.Web | SSOTicketType.WhatsUp | SSOTicketType.Directory);
+            AddAuths(SSOTicketType.Clear | SSOTicketType.Contact | SSOTicketType.Storage | SSOTicketType.Web | SSOTicketType.WhatsUp | SSOTicketType.Directory);
         }
 
         public void AddAuths(SSOTicketType ssott)
@@ -602,10 +588,6 @@ namespace MSNPSharp
                 {
                     case SSOTicketType.Contact:
                         AuthenticationAdd("contacts.msn.com", "MBI");
-                        break;
-
-                    case SSOTicketType.OIM:
-                        AuthenticationAdd("messengersecure.live.com", "MBI_SSL");
                         break;
 
                     case SSOTicketType.Clear:
@@ -943,9 +925,6 @@ namespace MSNPSharp
                 {
                     case "messenger.msn.com":
                         ticketype = SSOTicketType.Web;
-                        break;
-                    case "messengersecure.live.com":
-                        ticketype = SSOTicketType.OIM;
                         break;
                     case "contacts.msn.com":
                         ticketype = SSOTicketType.Contact;

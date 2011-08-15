@@ -120,9 +120,6 @@ namespace MSNPSharp
         private string comment = string.Empty;
 
         [NonSerialized]
-        private ulong oimCount = 1;
-
-        [NonSerialized]
         private int adlCount = 1;
 
         [NonSerialized]
@@ -966,26 +963,6 @@ namespace MSNPSharp
                     nickName = value;
                     NSMessageHandler.ContactService.UpdateContact(this, AddressBookId, null);
                 }
-            }
-        }
-
-
-        /// <summary>
-        /// The amount of OIMs sent in a session.
-        /// </summary>
-        internal ulong OIMCount
-        {
-            get
-            {
-                return oimCount;
-            }
-            set
-            {
-                if (value < 1)
-                {
-                    value = 1;
-                }
-                oimCount = value;
             }
         }
 

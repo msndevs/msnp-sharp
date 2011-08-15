@@ -2541,7 +2541,7 @@ namespace MSNPSharpClient
                 messenger.Owner.PersonalMessage = personalMessageToUpdate;
 
                 // Here you update your roaming profile to make it the same with your online profile.
-                messenger.Owner.UpdateRoamingProfileSync();
+                messenger.Owner.UpdateRoamingProfileAsync();
             }
         }
 
