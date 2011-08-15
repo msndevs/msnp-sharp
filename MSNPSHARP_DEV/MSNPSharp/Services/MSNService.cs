@@ -45,7 +45,6 @@ namespace MSNPSharp
     using MSNPSharp.MSNWS.MSNStorageService;
     using MSNPSharp.MSNWS.MSNABSharingService;
     using MSNPSharp.MSNWS.MSNRSIService;
-    using MSNPSharp.MSNWS.MSNOIMStoreService;
     using MSNPSharp.MSNWS.MSNDirectoryService;
     using MSNPSharp.Services;
 
@@ -387,18 +386,6 @@ namespace MSNPSharp
                     rsiService.PassportCookieValue.p = TandP[2];
 
                     service = rsiService;
-                    break;
-
-                case MsnServiceType.OIMStore:
-
-                    OIMStoreService oimService = new OIMStoreServiceWrapper(localEndPoint, NSMessageHandler);
-                    oimService.Proxy = WebProxy;
-                    oimService.TicketValue = new Ticket();
-                    oimService.TicketValue.passport = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.OIM].Ticket;
-                    oimService.TicketValue.lockkey = NSMessageHandler.MSNTicket.OIMLockKey;
-                    oimService.TicketValue.appid = NSMessageHandler.Credentials.ClientID;
-
-                    service = oimService;
                     break;
 
                 case MsnServiceType.WhatsUp:

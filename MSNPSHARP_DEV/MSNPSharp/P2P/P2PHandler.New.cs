@@ -271,7 +271,6 @@ namespace MSNPSharp.P2P
 
             return bridge;
              * */
-            return null;
         }
 
         private void BridgeClosed(object sender, EventArgs args)

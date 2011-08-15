@@ -35,6 +35,7 @@ using System.Net;
 using System.Xml;
 using System.Text;
 using System.Diagnostics;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Web.Services.Protocols;
 using System.Security.Authentication;
@@ -44,8 +45,6 @@ namespace MSNPSharp
 {
     using MSNPSharp.Core;
     using MSNPSharp.MSNWS.MSNRSIService;
-    using MSNPSharp.MSNWS.MSNOIMStoreService;
-    using System.Globalization;
 
     #region EventArgs
 
@@ -218,33 +217,6 @@ namespace MSNPSharp
             message = msg;
         }
     }
-    #endregion
-
-    #region Exceptions
-
-    /// <summary>
-    /// SenderThrottleLimitExceededException
-    /// <remarks>If you get this exception, please wait at least 11 seconds then try to send the OIM again.</remarks>
-    /// </summary>
-    [Serializable]
-    public class SenderThrottleLimitExceededException : Exception
-    {
-        public SenderThrottleLimitExceededException()
-            : base("OIM: SenderThrottleLimitExceeded. Please wait 11 seconds to send again...")
-        {
-        }
-
-        public SenderThrottleLimitExceededException(string message)
-            : base(message)
-        {
-        }
-
-        public override string ToString()
-        {
-            return Message;
-        }
-    }
-
     #endregion
 
     /// <summary>
@@ -501,116 +473,6 @@ namespace MSNPSharp
             RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(rsiService, MsnServiceType.RSI, deleteMessagesObject, request));
         }
 
-        private string _RunGuid = Guid.NewGuid().ToString();
-
-        private void SendOIMMessage(string account, string msg, OIMUserState userstate)
-        {
-            Contact contact = NSMessageHandler.ContactList.GetContact(account); // Only PassportMembers can receive oims.
-
-            if (NSMessageHandler.MSNTicket != MSNTicket.Empty && contact != null && contact.ClientType == IMAddressInfoType.WindowsLive && contact.OnAllowedList)
-            {
-                StringBuilder messageTemplate = new StringBuilder(
-                    "MIME-Version: 1.0\r\n"
-                  + "Content-Type: text/plain; charset=UTF-8\r\n"
-                  + "Content-Transfer-Encoding: base64\r\n"
-                  + "X-OIM-Message-Type: OfflineMessage\r\n"
-                  + "X-OIM-Run-Id: {{run_id}}\r\n"
-                  + "X-OIM-Sequence-Num: {seq-num}\r\n"
-                  + "\r\n"
-                  + "{base64_msg}\r\n"
-                );
-
-                messageTemplate.Replace("{base64_msg}", Convert.ToBase64String(Encoding.UTF8.GetBytes(msg), Base64FormattingOptions.InsertLineBreaks));
-                messageTemplate.Replace("{seq-num}", contact.OIMCount.ToString());
-                messageTemplate.Replace("{run_id}", _RunGuid);
-
-                string message = messageTemplate.ToString();
-
-                if (userstate == null)
-                    userstate = new OIMUserState(contact.OIMCount, account);
-
-                string name48 = NSMessageHandler.Owner.Name;
-                if (name48.Length > 48)
-                    name48 = name48.Substring(47);
-
-                MsnServiceState storeObject = new MsnServiceState(PartnerScenario.None, "Store", true);
-                OIMStoreService oimService = (OIMStoreService)CreateService(MsnServiceType.OIMStore, storeObject);
-                oimService.FromValue = new From();
-                oimService.FromValue.memberName = NSMessageHandler.Owner.Account;
-                oimService.FromValue.friendlyName = "=?utf-8?B?" + Convert.ToBase64String(Encoding.UTF8.GetBytes(name48)) + "?=";
-                oimService.FromValue.buildVer = "8.5.1302";
-                oimService.FromValue.msnpVer = "MSNP15";
-                oimService.FromValue.lang = System.Globalization.CultureInfo.CurrentCulture.Name;
-                oimService.FromValue.proxy = "MSNMSGR";
-
-                oimService.ToValue = new To();
-                oimService.ToValue.memberName = account;
-
-                oimService.Sequence = new SequenceType();
-                oimService.Sequence.Identifier = new AttributedURI();
-                oimService.Sequence.Identifier.Value = "http://messenger.msn.com";
-                oimService.Sequence.MessageNumber = userstate.oimcount;
-
-                oimService.StoreCompleted += delegate(object service, StoreCompletedEventArgs e)
-                {
-                    OnAfterCompleted(new ServiceOperationEventArgs(oimService, MsnServiceType.OIMStore, e));
-
-                    if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
-                        return;
-
-                    if (e.Cancelled == false && e.Error == null)
-                    {
-                        SequenceAcknowledgmentAcknowledgmentRange range = oimService.SequenceAcknowledgmentValue.AcknowledgmentRange[0];
-                        if (range.Lower == userstate.oimcount && range.Upper == userstate.oimcount)
-                        {
-                            contact.OIMCount++; // Sent successfully.
-                            OnOIMSendCompleted(this,
-                                new OIMSendCompletedEventArgs(
-                                NSMessageHandler.Owner.Account,
-                                userstate.account,
-                                userstate.oimcount,
-                                msg,
-                                null));
-
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "An OIM Message has been sent: " + userstate.account + ", runId = " + _RunGuid, GetType().Name);
-                        }
-                    }
-                    else if (e.Error != null && e.Error is SoapException)
-                    {
-                        SoapException soapexp = e.Error as SoapException;
-                        Exception exp = soapexp;
-                        if (soapexp.Code.Name == "AuthenticationFailed")
-                        {
-                            NSMessageHandler.MSNTicket.OIMLockKey = QRYFactory.CreateQRY(NSMessageHandler.Credentials.ClientID, NSMessageHandler.Credentials.ClientCode, soapexp.Detail.InnerText);
-                            oimService.TicketValue.lockkey = NSMessageHandler.MSNTicket.OIMLockKey;
-                            if (userstate.RecursiveCall++ < 5)
-                            {
-                                SendOIMMessage(account, msg, userstate); // Call this method again.
-                                return;
-                            }
-                            exp = new AuthenticationException("OIM:AuthenticationFailed");
-                        }
-                        else if (soapexp.Code.Name == "SenderThrottleLimitExceeded")
-                        {
-                            exp = new SenderThrottleLimitExceededException();
-
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, exp.Message, GetType().Name);
-                        }
-
-                        OnOIMSendCompleted(this,
-                                new OIMSendCompletedEventArgs(
-                                NSMessageHandler.Owner.Account,
-                                userstate.account,
-                                userstate.oimcount,
-                                msg,
-                                exp)
-                        );
-                    }
-                };
-                oimService.StoreAsync(MessageType.text, message, storeObject);
-            }
-        }
-
         /// <summary>
         /// Send an offline message to a contact.
         /// </summary>
@@ -618,7 +480,7 @@ namespace MSNPSharp
         /// <param name="msg">Plain text message</param>
         public void SendOIMMessage(string account, string msg)
         {
-            SendOIMMessage(account, msg, null);
+            SendOIMMessage(NSMessageHandler.ContactList.GetContact(account), new TextMessage(msg));
         }
 
         /// <summary>
@@ -628,25 +490,26 @@ namespace MSNPSharp
         /// <param name="msg"><see cref="TextMessage"/> to send</param>
         public void SendOIMMessage(Contact receiver, TextMessage msg)
         {
-            Exception err = null;
-            try
-            {                
-                NSMessageHandler.SendOIMMessage(receiver, msg);
-            }
-            catch (Exception exp)
+            if (receiver != null)
             {
-                err = exp;
+                Exception err = null;
+                try
+                {
+                    NSMessageHandler.SendOIMMessage(receiver, msg);
+                }
+                catch (Exception exp)
+                {
+                    err = exp;
+                }
+
+                OnOIMSendCompleted(this,
+                                new OIMSendCompletedEventArgs(
+                                NSMessageHandler.Owner.Account,
+                                receiver.Account,
+                                0,
+                                msg.Text,
+                                err));
             }
-
-            OnOIMSendCompleted(this,
-                            new OIMSendCompletedEventArgs(
-                            NSMessageHandler.Owner.Account,
-                            receiver.Account,
-                            0,
-                            msg.Text,
-                            err));
-
-
         }
 
         protected virtual void OnOIMReceived(object sender, OIMReceivedEventArgs e)
@@ -663,18 +526,6 @@ namespace MSNPSharp
             {
                 OIMSendCompleted(sender, e);
             }
-        }
-    }
-
-    internal class OIMUserState
-    {
-        public int RecursiveCall;
-        public readonly ulong oimcount;
-        public readonly string account = String.Empty;
-        public OIMUserState(ulong oimCount, string account)
-        {
-            this.oimcount = oimCount;
-            this.account = account;
         }
     }
 };
