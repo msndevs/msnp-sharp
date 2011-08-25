@@ -167,7 +167,6 @@ namespace MSNPSharp
         AB,
         Sharing,
         Storage,
-        RSI,
         WhatsUp,
         Directory
     }

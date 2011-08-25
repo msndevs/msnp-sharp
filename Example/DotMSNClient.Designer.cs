@@ -35,7 +35,6 @@ namespace MSNPSharpClient
             this.ImageList1 = new System.Windows.Forms.ImageList(this.components);
             this.userMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.sendIMMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.sendOIMMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.sendMIMMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem3 = new System.Windows.Forms.ToolStripSeparator();
             this.importContactsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -124,7 +123,6 @@ namespace MSNPSharpClient
             // 
             this.userMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.sendIMMenuItem,
-            this.sendOIMMenuItem,
             this.sendMIMMenuItem,
             this.toolStripMenuItem3,
             this.importContactsMenuItem,
@@ -134,74 +132,66 @@ namespace MSNPSharpClient
             this.appearOnlineMenuItem,
             this.deleteMenuItem});
             this.userMenuStrip.Name = "contextMenuStrip1";
-            this.userMenuStrip.Size = new System.Drawing.Size(201, 192);
+            this.userMenuStrip.Size = new System.Drawing.Size(161, 192);
             // 
             // sendIMMenuItem
             // 
             this.sendIMMenuItem.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold);
             this.sendIMMenuItem.Name = "sendIMMenuItem";
-            this.sendIMMenuItem.Size = new System.Drawing.Size(200, 22);
-            this.sendIMMenuItem.Text = "Send Instant Message";
+            this.sendIMMenuItem.Size = new System.Drawing.Size(194, 22);
+            this.sendIMMenuItem.Text = "Send Message";
             this.sendIMMenuItem.Click += new System.EventHandler(this.sendMessageToolStripMenuItem_Click);
-            // 
-            // sendOIMMenuItem
-            // 
-            this.sendOIMMenuItem.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold);
-            this.sendOIMMenuItem.Name = "sendOIMMenuItem";
-            this.sendOIMMenuItem.Size = new System.Drawing.Size(200, 22);
-            this.sendOIMMenuItem.Text = "Send Offline Message";
-            this.sendOIMMenuItem.Click += new System.EventHandler(this.sendOfflineMessageToolStripMenuItem_Click);
             // 
             // sendMIMMenuItem
             // 
             this.sendMIMMenuItem.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold);
             this.sendMIMMenuItem.Name = "sendMIMMenuItem";
-            this.sendMIMMenuItem.Size = new System.Drawing.Size(200, 22);
-            this.sendMIMMenuItem.Text = "Send Mobile Message";
+            this.sendMIMMenuItem.Size = new System.Drawing.Size(194, 22);
+            this.sendMIMMenuItem.Text = "Send SMS";
             this.sendMIMMenuItem.Click += new System.EventHandler(this.sendMIMMenuItem_Click);
             // 
             // toolStripMenuItem3
             // 
             this.toolStripMenuItem3.Name = "toolStripMenuItem3";
-            this.toolStripMenuItem3.Size = new System.Drawing.Size(197, 6);
+            this.toolStripMenuItem3.Size = new System.Drawing.Size(191, 6);
             // 
             // importContactsMenuItem
             // 
             this.importContactsMenuItem.Name = "importContactsMenuItem";
-            this.importContactsMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.importContactsMenuItem.Size = new System.Drawing.Size(194, 22);
             this.importContactsMenuItem.Text = "Import Contacts";
             this.importContactsMenuItem.Click += new System.EventHandler(this.importContactsMenuItem_Click);
             // 
             // createCircleMenuItem
             // 
             this.createCircleMenuItem.Name = "createCircleMenuItem";
-            this.createCircleMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.createCircleMenuItem.Size = new System.Drawing.Size(194, 22);
             this.createCircleMenuItem.Text = "Circle Tests";
             this.createCircleMenuItem.Click += new System.EventHandler(this.createCircleMenuItem_Click);
             // 
             // toolStripMenuItem2
             // 
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(197, 6);
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(191, 6);
             // 
             // appearOfflineMenuItem
             // 
             this.appearOfflineMenuItem.Name = "appearOfflineMenuItem";
-            this.appearOfflineMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.appearOfflineMenuItem.Size = new System.Drawing.Size(194, 22);
             this.appearOfflineMenuItem.Text = "Appear offline";
             this.appearOfflineMenuItem.Click += new System.EventHandler(this.blockToolStripMenuItem_Click);
             // 
             // appearOnlineMenuItem
             // 
             this.appearOnlineMenuItem.Name = "appearOnlineMenuItem";
-            this.appearOnlineMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.appearOnlineMenuItem.Size = new System.Drawing.Size(194, 22);
             this.appearOnlineMenuItem.Text = "Appear online";
             this.appearOnlineMenuItem.Click += new System.EventHandler(this.unblockMenuItem_Click);
             // 
             // deleteMenuItem
             // 
             this.deleteMenuItem.Name = "deleteMenuItem";
-            this.deleteMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.deleteMenuItem.Size = new System.Drawing.Size(194, 22);
             this.deleteMenuItem.Text = "Delete contact";
             this.deleteMenuItem.Click += new System.EventHandler(this.deleteMenuItem_Click);
             // 
@@ -834,7 +824,6 @@ namespace MSNPSharpClient
         private ToolStripMenuItem appearOfflineMenuItem;
         private ToolStripSeparator toolStripMenuItem2;
         private ToolStripMenuItem appearOnlineMenuItem;
-        private ToolStripMenuItem sendOIMMenuItem;
         private ToolStripSeparator toolStripMenuItem3;
         private ToolStripMenuItem sendMIMMenuItem;
         private ContextMenuStrip sortContextMenu;
