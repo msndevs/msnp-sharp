@@ -58,7 +58,6 @@ namespace MSNPSharp
         Clear = 0x01,
         Contact = 0x02,
         Storage = 0x10,
-        Web = 0x20,
         WhatsUp = 0x40,
         Directory = 0x80
     }
@@ -573,7 +572,7 @@ namespace MSNPSharp
 
         public void AddDefaultAuths()
         {
-            AddAuths(SSOTicketType.Clear | SSOTicketType.Contact | SSOTicketType.Storage | SSOTicketType.Web | SSOTicketType.WhatsUp | SSOTicketType.Directory);
+            AddAuths(SSOTicketType.Clear | SSOTicketType.Contact | SSOTicketType.Storage | SSOTicketType.WhatsUp | SSOTicketType.Directory);
         }
 
         public void AddAuths(SSOTicketType ssott)
@@ -596,10 +595,6 @@ namespace MSNPSharp
 
                     case SSOTicketType.Storage:
                         AuthenticationAdd("storage.msn.com", "MBI");
-                        break;
-
-                    case SSOTicketType.Web:
-                        AuthenticationAdd("messenger.msn.com", "?id=507");
                         break;
 
                     case SSOTicketType.WhatsUp:
@@ -923,9 +918,6 @@ namespace MSNPSharp
                 SSOTicketType ticketype = SSOTicketType.None;
                 switch (token.AppliesTo.EndpointReference.Address.Value)
                 {
-                    case "messenger.msn.com":
-                        ticketype = SSOTicketType.Web;
-                        break;
                     case "contacts.msn.com":
                         ticketype = SSOTicketType.Contact;
                         break;

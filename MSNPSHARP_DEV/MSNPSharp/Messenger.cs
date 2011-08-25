@@ -203,17 +203,6 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Offline message service.
-        /// </summary>
-        public OIMService OIMService
-        {
-            get
-            {
-                return Nameserver.OIMService;
-            }
-        }
-
-        /// <summary>
         /// Storage service to get/update display name, personal status, display picture etc.
         /// </summary>
         public MSNStorageService StorageService
