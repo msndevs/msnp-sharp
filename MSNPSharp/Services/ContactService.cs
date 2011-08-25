@@ -59,12 +59,19 @@ namespace MSNPSharp
 
         private int recursiveCall;
         private string applicationId = String.Empty;
-        private Dictionary<int, NSPayLoadMessage> initialADLs = new Dictionary<int, NSPayLoadMessage>();
+
         private bool abSynchronized;
         private object syncObject = new object();
         private Semaphore binarySemaphore = new Semaphore(1, 1);
 
+        /// <summary>
+        /// The indicator of whether the initial contact ADL has been processed. <br/>
+        /// If the contact ADL was not processed, ignore the circle ADL.
+        /// </summary>
+        private bool contactADLProcessed = false;
         private int serviceADL = 0;
+        private Scenario ignoredSenario = Scenario.None;
+        private Dictionary<int, NSPayLoadMessage> initialADLs = new Dictionary<int, NSPayLoadMessage>();
 
         internal XMLContactList AddressBook;
         internal DeltasList Deltas;
@@ -558,7 +565,7 @@ namespace MSNPSharp
         {
             // Reset
             recursiveCall = 0;
-            //lock (SyncObject)
+
             BinarySemaphore.WaitOne();
             {
                 if (NSMessageHandler.AutoSynchronize && AddressBook != null)
@@ -568,65 +575,64 @@ namespace MSNPSharp
             }
             BinarySemaphore.Release();
 
-            //OwnerProfile profileFromWeb = NSMessageHandler.StorageService.GetProfile();
+            // Set display name, personal status and photo
+            PersonalMessage pm = NSMessageHandler.Owner.PersonalMessage;
 
-            //if (profileFromWeb != null)
+            string mydispName = String.IsNullOrEmpty(Deltas.Profile.DisplayName) ? NSMessageHandler.Owner.NickName : Deltas.Profile.DisplayName;
+            string psmMessage = Deltas.Profile.PersonalMessage;
+
+            Color colorScheme = ColorTranslator.FromOle(Deltas.Profile.ColorScheme);
+            NSMessageHandler.Owner.SetColorScheme(colorScheme);
+            pm.ColorScheme = colorScheme;
+
+            SceneImage sceneImage = NSMessageHandler.Owner.SceneImage;
+            if (sceneImage != null && !sceneImage.IsDefaultImage)
             {
-                // Set display name, personal status and photo
-                PersonalMessage pm = NSMessageHandler.Owner.PersonalMessage;
-
-                string mydispName = String.IsNullOrEmpty(Deltas.Profile.DisplayName) ? NSMessageHandler.Owner.NickName : Deltas.Profile.DisplayName;
-                string psmMessage = Deltas.Profile.PersonalMessage;
-
-                //NSMessageHandler.Owner.SetName(mydispName);
-
-                //pm.FriendlyName = mydispName;
-                //pm.Message = psmMessage;
-
-                Color colorScheme = ColorTranslator.FromOle(Deltas.Profile.ColorScheme);
-                NSMessageHandler.Owner.SetColorScheme(colorScheme);
-                pm.ColorScheme = colorScheme;
-
-                SceneImage sceneImage = NSMessageHandler.Owner.SceneImage;
-                if (sceneImage != null && !sceneImage.IsDefaultImage)
-                {
-                    pm.Scene = sceneImage.ContextPlain;
-                }
-
-                NSMessageHandler.Owner.CreateDefaultDisplayImage(Deltas.Profile.Photo.DisplayImage);
-                pm.UserTileLocation = NSMessageHandler.Owner.DisplayImage.IsDefaultImage ? string.Empty : NSMessageHandler.Owner.DisplayImage.ContextPlain;
-
-                NSMessageHandler.Owner.PersonalMessage = pm;
-
-                if (NSMessageHandler.AutoSynchronize)
-                {
-                    #region Initial ADL
-
-                    SendInitialADL(Scenario.SendServiceADL | Scenario.SendInitialContactsADL | Scenario.SendInitialCirclesADL);
-
-                    #endregion
-                }
-
-                //lock (SyncObject)
-                BinarySemaphore.WaitOne();
-                {
-                    if (AddressBook != null && Deltas != null)
-                    {
-                        // Save addressbook and then truncate deltas file.
-                        AddressBook.Save();
-                        Deltas.Truncate();
-                    }
-                }
-                BinarySemaphore.Release();
+                pm.Scene = sceneImage.ContextPlain;
             }
+
+            NSMessageHandler.Owner.CreateDefaultDisplayImage(Deltas.Profile.Photo.DisplayImage);
+            pm.UserTileLocation = NSMessageHandler.Owner.DisplayImage.IsDefaultImage ? string.Empty : NSMessageHandler.Owner.DisplayImage.ContextPlain;
+
+            NSMessageHandler.Owner.PersonalMessage = pm;
+
+            if (NSMessageHandler.AutoSynchronize)
+            {
+                SendInitialServiceADL();
+            }
+
+            BinarySemaphore.WaitOne();
+            {
+                if (AddressBook != null && Deltas != null)
+                {
+                    // Save addressbook and then truncate deltas file.
+                    AddressBook.Save();
+                    Deltas.Truncate();
+                }
+            }
+            BinarySemaphore.Release();
+
         }
 
-        /// <summary>
-        /// The indicator of whether the initial contact ADL has been processed. <br/>
-        /// If the contact ADL was not processed, ignore the circle ADL.
-        /// </summary>
-        bool contactADLProcessed = false;
-        Scenario ignoredSenario = Scenario.None;
+        private void SendInitialServiceADL()
+        {
+            NSMessageProcessor nsmp = NSMessageHandler.MessageProcessor as NSMessageProcessor;
+
+            if (nsmp == null)
+                return;
+
+            if (serviceADL == 0)
+            {
+                serviceADL = nsmp.IncreaseTransactionID();
+
+                string[] ownerAccount = NSMessageHandler.Owner.Account.Split('@');
+                string payload = "<ml><d n=\"" + ownerAccount[1] + "\"><c n=\"" + ownerAccount[0] + "\" t=\"1\"><s l=\"3\" n=\"IM\" /><s l=\"3\" n=\"PE\" /><s l=\"3\" n=\"PD\" /><s l=\"3\" n=\"PF\"/></c></d></ml>";
+
+                NSPayLoadMessage nsPayload = new NSPayLoadMessage("ADL", payload);
+                nsPayload.TransactionID = serviceADL;
+                nsmp.SendMessage(nsPayload, serviceADL);
+            }
+        }
 
         /// <summary>
         /// Send the initial ADL command to NS server. 
@@ -648,25 +654,7 @@ namespace MSNPSharp
             if (nsmp == null)
                 return;
 
-            int firstADLKey = 0;
             Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>();
-
-            #region Service ADL
-
-            if ((scene & Scenario.SendServiceADL) != Scenario.None)
-            {
-                string[] ownerAccount = NSMessageHandler.Owner.Account.Split('@');
-                string payload = "<ml><d n=\"" + ownerAccount[1] + "\"><c n=\"" + ownerAccount[0] + "\" t=\"1\"><s l=\"3\" n=\"IM\" /><s l=\"3\" n=\"PE\" /><s l=\"3\" n=\"PD\" /><s l=\"3\" n=\"PF\"/></c></d></ml>";
-
-                serviceADL = nsmp.IncreaseTransactionID();
-                NSPayLoadMessage nsPayload = new NSPayLoadMessage("ADL", payload);
-                nsPayload.TransactionID = serviceADL;
-                nsmp.SendMessage(nsPayload, serviceADL);
-
-                ignoredSenario |= Scenario.SendServiceADL;
-            }
-
-            #endregion
 
             #region Process Contacts
 
@@ -708,18 +696,10 @@ namespace MSNPSharp
                         NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
                         message.TransactionID = nsmp.IncreaseTransactionID();
                         initialADLs.Add(message.TransactionID, message);
-
-                        if (firstADLKey == 0)
-                        {
-                            firstADLKey = message.TransactionID;
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                                "#################### first contact ADL trasID: " +
-                                firstADLKey + " ############################");
-                        }
                     }
                 }
-                contactADLProcessed = true;
                 scene |= ignoredSenario;
+                contactADLProcessed = true;
             }
 
             #endregion
@@ -757,14 +737,6 @@ namespace MSNPSharp
                                 NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
                                 message.TransactionID = nsmp.IncreaseTransactionID();
                                 initialADLs.Add(message.TransactionID, message);
-
-                                if (firstADLKey == 0)
-                                {
-                                    firstADLKey = message.TransactionID;
-                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                                    "#################### first circle ADL trasID: " +
-                                    firstADLKey + " ############################");
-                                }
                             }
                         }
                     }
@@ -777,16 +749,15 @@ namespace MSNPSharp
 
             #endregion
 
-            // Send First Initial ADL,.
-            // NSHandler doesn't accept more than 3 ADLs at the same time... So we must wait OK response.
-
-            if (initialADLs.ContainsKey(firstADLKey))
+            // Send All Initial ADLs...
+            lock (initialADLs)
             {
-                NSPayLoadMessage firstADL = initialADLs[firstADLKey];
-                nsmp.SendMessage(firstADL, firstADL.TransactionID);
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                                "#################### ADL trasID choosen: " +
-                                firstADLKey + " ############################");
+                Dictionary<int, NSPayLoadMessage> initialADLsCopy = new Dictionary<int, NSPayLoadMessage>(initialADLs);
+
+                foreach (NSPayLoadMessage nsPayload in initialADLsCopy.Values)
+                {
+                    ((NSMessageProcessor)NSMessageHandler.MessageProcessor).SendMessage(nsPayload, nsPayload.TransactionID);
+                }
             }
         }
 
@@ -794,11 +765,12 @@ namespace MSNPSharp
         {
             if (transid == serviceADL)
             {
+                SendInitialADL(Scenario.SendInitialContactsADL | Scenario.SendInitialCirclesADL);
                 return true;
             }
             else if (initialADLs.ContainsKey(transid))
             {
-                lock (this)
+                lock (initialADLs)
                 {
                     initialADLs.Remove(transid);
                 }
@@ -838,15 +810,6 @@ namespace MSNPSharp
                                 }
                             }
                         }
-                    }
-                }
-                else
-                {
-                    // Send next ADL...
-                    foreach (NSPayLoadMessage nsPayload in initialADLs.Values)
-                    {
-                        ((NSMessageProcessor)NSMessageHandler.MessageProcessor).SendMessage(nsPayload, nsPayload.TransactionID);
-                        break;
                     }
                 }
                 return true;
@@ -3016,12 +2979,13 @@ namespace MSNPSharp
         public override void Clear()
         {
             binarySemaphore.WaitOne();
-            //lock (SyncObject)
             {
                 base.Clear();
 
                 recursiveCall = 0;
                 serviceADL = 0;
+                ignoredSenario = Scenario.None;
+                contactADLProcessed = false;
                 initialADLs.Clear();
 
                 // Last save for contact list files

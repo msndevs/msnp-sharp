@@ -1901,7 +1901,7 @@ namespace MSNPSharp
         {
             if (CID != 0 && NSMessageHandler != null && NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
-                NSMessageHandler.DirectoryService.Get(CID, 
+                NSMessageHandler.DirectoryService.Get(CID,
                     getCoreProfileCompletedHandler,
                     getCoreProfileErrorHandler
                     );
@@ -2003,7 +2003,7 @@ namespace MSNPSharp
         /// <exception cref="InvalidOperationException">Not sign in to the server, or you send a message to a circle in <see cref="PresenceStatus.Hidden"/> status.</exception>
         public void SendTypingMessage()
         {
-            if (CanReceiveMessage)
+            if (Online && CanReceiveMessage)
                 NSMessageHandler.SendTypingMessage(this);
         }
 
@@ -2014,7 +2014,7 @@ namespace MSNPSharp
         /// <exception cref="InvalidOperationException">Not sign in to the server, or you send a message to a circle in <see cref="PresenceStatus.Hidden"/> status.</exception>
         public void SendNudge()
         {
-            if (CanReceiveMessage)
+            if (Online && CanReceiveMessage)
                 NSMessageHandler.SendNudge(this);
         }
 

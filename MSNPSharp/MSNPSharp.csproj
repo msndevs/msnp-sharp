@@ -138,7 +138,6 @@
     <Compile Include="Core\NSMessage.cs" />
     <Compile Include="Core\NSMessagePool.cs" />
     <Compile Include="NSMessageProcessor.cs" />
-    <Compile Include="Services\OIMService.cs" />
     <Compile Include="Owner.cs" />
     <Compile Include="PersonalMessage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -158,7 +157,6 @@
     <Compile Include="ProxySocket\SocksHandler.cs" />
     <Compile Include="QRYFactory.cs" />
     <Compile Include="Core\MimeMessage.cs" />
-    <Compile Include="Services\RSIServiceWrapper.cs" />
     <Compile Include="Services\SecurityTokenServiceWrapper.cs" />
     <Compile Include="Services\SharingServiceBindingWrapper.cs" />
     <Compile Include="Services\SoapLogExtension.cs" />
@@ -181,11 +179,6 @@
       <DependentUpon>Reference.map</DependentUpon>
     </Compile>
     <Compile Include="Web References\MSNWS.MSNABSharingService\Reference.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Reference.map</DependentUpon>
-    </Compile>
-    <Compile Include="Web References\MSNWS.MSNRSIService\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Reference.map</DependentUpon>
@@ -247,26 +240,6 @@
       <Generator>MSDiscoCodeGenerator</Generator>
       <LastGenOutput>Reference.cs</LastGenOutput>
     </None>
-    <None Include="Web References\MSNWS.MSNRSIService\DeleteMessagesResponseType.datasource">
-      <DependentUpon>Reference.map</DependentUpon>
-    </None>
-    <None Include="Web References\MSNWS.MSNRSIService\GetMessageResponseType.datasource">
-      <DependentUpon>Reference.map</DependentUpon>
-    </None>
-    <None Include="Web References\MSNWS.MSNRSIService\Reference.map">
-      <Generator>MSDiscoCodeGenerator</Generator>
-      <LastGenOutput>Reference.cs</LastGenOutput>
-    </None>
-    <None Include="Web References\MSNWS.MSNRSIService\rsi_datatypes.xsd">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="Web References\MSNWS.MSNRSIService\rsi_faulttypes.xsd">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="Web References\MSNWS.MSNRSIService\rsi_servicetypes.xsd">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="Web References\MSNWS.MSNRSIService\rsi_ws.wsdl" />
     <None Include="Web References\MSNWS.MSNSecurityTokenService\addressing.xsd">
       <SubType>Designer</SubType>
     </None>
@@ -339,15 +312,6 @@
       <CachedDynamicPropName />
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>MSNPSharp_MSNWS_MSNABSharingService_SharingService</CachedSettingsPropName>
-    </WebReferenceUrl>
-    <WebReferenceUrl Include="http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNRSIService/rsi_ws.wsdl">
-      <UrlBehavior>Static</UrlBehavior>
-      <RelPath>Web References\MSNWS.MSNRSIService\</RelPath>
-      <UpdateFromURL>http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNRSIService/rsi_ws.wsdl</UpdateFromURL>
-      <ServiceLocationURL />
-      <CachedDynamicPropName />
-      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
-      <CachedSettingsPropName>MSNPSharp_MSNWS_MSNRSIService_RSIService</CachedSettingsPropName>
     </WebReferenceUrl>
     <WebReferenceUrl Include="http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.wsdl">
       <UrlBehavior>Static</UrlBehavior>

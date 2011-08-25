@@ -1039,8 +1039,6 @@ namespace MSNPSharp
         ContactServeAPI = 128,
 
         InternalCall = 256,
-
-        SendServiceADL = 512
     }
 
     internal enum InternalOperationReturnValues

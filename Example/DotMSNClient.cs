@@ -155,17 +155,6 @@ namespace MSNPSharpClient
 
             #endregion
 
-
-            #region Offline Message Operation events
-
-            // OIMReceived will be triggered after receved an Offline Message.
-            messenger.OIMService.OIMReceived += new EventHandler<OIMReceivedEventArgs>(Nameserver_OIMReceived);
-
-            // Triggered after the send operation for an Offline Message has been completed.
-            // If the operation failed, there will contains an error in the event args.
-            messenger.OIMService.OIMSendCompleted += new EventHandler<OIMSendCompletedEventArgs>(OIMService_OIMSendCompleted);
-
-            #endregion
             // This event will be triggered after finished getting your contacts recent updates.
             messenger.WhatsUpService.GetWhatsUpCompleted += new EventHandler<GetWhatsUpCompletedEventArgs>(WhatsUpService_GetWhatsUpCompleted);
 
@@ -174,7 +163,6 @@ namespace MSNPSharpClient
             // Handle Service Operation Errors
             //In most cases, these error are not so important.
             messenger.ContactService.ServiceOperationFailed += new EventHandler<ServiceOperationFailedEventArgs>(ServiceOperationFailed);
-            messenger.OIMService.ServiceOperationFailed += new EventHandler<ServiceOperationFailedEventArgs>(ServiceOperationFailed);
             messenger.StorageService.ServiceOperationFailed += new EventHandler<ServiceOperationFailedEventArgs>(ServiceOperationFailed);
             messenger.WhatsUpService.ServiceOperationFailed += new EventHandler<ServiceOperationFailedEventArgs>(ServiceOperationFailed);
 
@@ -655,23 +643,6 @@ namespace MSNPSharpClient
             nextPing = e.SecondsToWait;
         }
 
-        void Nameserver_OIMReceived(object sender, OIMReceivedEventArgs e)
-        {
-            if (InvokeRequired)
-            {
-                BeginInvoke(new EventHandler<OIMReceivedEventArgs>(Nameserver_OIMReceived), sender, e);
-                return;
-            }
-
-            if (DialogResult.Yes == MessageBox.Show(
-                "OIM received at : " + e.ReceivedTime + "\r\nFrom : " + e.NickName + " (" + e.Email + ") " + ":\r\n"
-                + e.Message + "\r\n\r\n\r\nClick yes, if you want to receive this message next time you login.",
-                "Offline Message from " + e.Email, MessageBoxButtons.YesNoCancel))
-            {
-                e.IsRead = false;
-            }
-        }
-
         void Nameserver_TextMessageReceived(object sender, TextMessageArrivedEventArgs e)
         {
             MessageManager_MessageArrived(sender, e);
@@ -734,20 +705,6 @@ namespace MSNPSharpClient
                 {
                     CreateConversationForm(e.Sender).OnMessageReceived(sender, e);
                 }
-            }
-        }
-
-        void OIMService_OIMSendCompleted(object sender, OIMSendCompletedEventArgs e)
-        {
-            if (InvokeRequired)
-            {
-                BeginInvoke(new EventHandler<OIMSendCompletedEventArgs>(OIMService_OIMSendCompleted), sender, e);
-                return;
-            }
-
-            if (e.Error != null)
-            {
-                MessageBox.Show(e.Error.Message, "OIM Send Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -1437,11 +1394,7 @@ namespace MSNPSharpClient
                 if (selectedContact != null)
                 {
                     propertyGrid.SelectedObject = selectedContact;
-
-                    if (selectedContact.Online && (!(selectedContact.ClientType == IMAddressInfoType.Circle)))
-                    {
-                        sendIMMenuItem.PerformClick();
-                    }
+                    sendIMMenuItem.PerformClick();
                 }
             }
         }
@@ -1502,21 +1455,6 @@ namespace MSNPSharpClient
                     {
                         appearOfflineMenuItem.Visible = true;
                         appearOnlineMenuItem.Visible = false;
-                    }
-
-                    if (contact.Online)
-                    {
-                        sendIMMenuItem.Visible = true;
-                        sendOIMMenuItem.Visible = false;
-
-                        toolStripMenuItem2.Visible = true;
-                    }
-                    else
-                    {
-                        sendIMMenuItem.Visible = false;
-                        sendOIMMenuItem.Visible = true;
-
-                        toolStripMenuItem2.Visible = false;
                     }
 
                     deleteMenuItem.Visible = contact.Guid != Guid.Empty;
@@ -1586,20 +1524,13 @@ namespace MSNPSharpClient
             form.Show();
         }
 
-        private void sendOfflineMessageToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Contact selectedContact = (Contact)treeViewFavoriteList.SelectedNode.Tag;
-            this.propertyGrid.SelectedObject = selectedContact;
-            messenger.OIMService.SendOIMMessage(selectedContact, new TextMessage("MSNPSharp offline message test."));
-
-        }
-
         private void sendMIMMenuItem_Click(object sender, EventArgs e)
         {
             Contact selectedContact = (Contact)treeViewFavoriteList.SelectedNode.Tag;
             this.propertyGrid.SelectedObject = selectedContact;
 
-            if (selectedContact.MobileAccess || selectedContact.ClientType == IMAddressInfoType.Telephone)
+            if (selectedContact.MobileAccess ||
+                selectedContact.ClientType == IMAddressInfoType.Telephone)
             {
                 selectedContact.SendMobileMessage("MSNP mobile message");
             }

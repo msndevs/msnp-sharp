@@ -44,7 +44,6 @@ namespace MSNPSharp
     using MSNPSharp.IO;
     using MSNPSharp.MSNWS.MSNStorageService;
     using MSNPSharp.MSNWS.MSNABSharingService;
-    using MSNPSharp.MSNWS.MSNRSIService;
     using MSNPSharp.MSNWS.MSNDirectoryService;
     using MSNPSharp.Services;
 
@@ -372,20 +371,6 @@ namespace MSNPSharp
                         ? NSMessageHandler.ContactService.Deltas.CacheKeys[CacheKeyType.StorageServiceCacheKey] : String.Empty;
 
                     service = storageService;
-                    break;
-
-                case MsnServiceType.RSI:
-
-                    string[] TandP = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Web].Ticket.Split(new string[] { "t=", "&p=" }, StringSplitOptions.None);
-
-                    RSIService rsiService = new RSIServiceWrapper(localEndPoint, NSMessageHandler);
-                    rsiService.Proxy = WebProxy;
-                    rsiService.Timeout = Int32.MaxValue;
-                    rsiService.PassportCookieValue = new PassportCookie();
-                    rsiService.PassportCookieValue.t = TandP[1];
-                    rsiService.PassportCookieValue.p = TandP[2];
-
-                    service = rsiService;
                     break;
 
                 case MsnServiceType.WhatsUp:

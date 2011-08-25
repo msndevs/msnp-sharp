@@ -140,7 +140,6 @@ namespace MSNPSharp
         private MSNTicket msnTicket = MSNTicket.Empty;
 
         private ContactService contactService;
-        private OIMService oimService;
         private MSNStorageService storageService;
         private WhatsUpService whatsUpService;
         private MSNDirectoryService dirService;
@@ -156,7 +155,6 @@ namespace MSNPSharp
             messageManager = new MessageManager(this);
 
             contactService = new ContactService(this);
-            oimService = new OIMService(this);
             storageService = new MSNStorageService(this);
             whatsUpService = new WhatsUpService(this);
             dirService = new MSNDirectoryService(this);
@@ -330,17 +328,6 @@ namespace MSNPSharp
             get
             {
                 return contactService;
-            }
-        }
-
-        /// <summary>
-        /// Offline message service.
-        /// </summary>
-        internal OIMService OIMService
-        {
-            get
-            {
-                return oimService;
             }
         }
 
@@ -1217,8 +1204,6 @@ namespace MSNPSharp
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError, ex.Message, GetType().Name);
                 }
-
-                OIMService.ProcessOIM(innerMimeMessage, mime.IndexOf("x-msmsgsinitialmdatanotification") >= 0);
             }
         }
 
@@ -1472,7 +1457,6 @@ namespace MSNPSharp
             msnTicket = MSNTicket.Empty;
             ContactService.Clear();
             StorageService.Clear();
-            OIMService.Clear();
             WhatsUpService.Clear();
             DirectoryService.Clear();
 
