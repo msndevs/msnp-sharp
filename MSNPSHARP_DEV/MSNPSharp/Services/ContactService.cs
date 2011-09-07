@@ -593,13 +593,7 @@ namespace MSNPSharp
 
             NSMessageHandler.Owner.CreateDefaultDisplayImage(Deltas.Profile.Photo.DisplayImage);
             pm.UserTileLocation = NSMessageHandler.Owner.DisplayImage.IsDefaultImage ? string.Empty : NSMessageHandler.Owner.DisplayImage.ContextPlain;
-
             NSMessageHandler.Owner.PersonalMessage = pm;
-
-            if (NSMessageHandler.AutoSynchronize)
-            {
-                SendInitialServiceADL();
-            }
 
             BinarySemaphore.WaitOne();
             {
@@ -612,6 +606,10 @@ namespace MSNPSharp
             }
             BinarySemaphore.Release();
 
+            if (NSMessageHandler.AutoSynchronize)
+            {
+                SendInitialServiceADL();
+            }
         }
 
         private void SendInitialServiceADL()
@@ -827,188 +825,81 @@ namespace MSNPSharp
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership", new MSNPSharpException("You don't have access right on this action anymore.")));
+                return;
             }
-            else
-            {
-                bool msdeltasOnly = false;
-                DateTime serviceLastChange = WebServiceDateTimeConverter.ConvertToDateTime(WebServiceConstants.ZeroTime);
-                DateTime msLastChange = WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.MembershipLastChange);
-                string strLastChange = WebServiceConstants.ZeroTime;
 
-                if (msLastChange != serviceLastChange)
+
+            FindMembershipAsync(partnerScenario,
+                // Register callback for success/error. e.Cancelled handled by FindMembershipAsync.
+                delegate(object sender, FindMembershipCompletedEventArgs fmcea)
                 {
-                    msdeltasOnly = true;
-                    strLastChange = AddressBook.MembershipLastChange;
-                }
-
-                FindMembershipRequestType request = new FindMembershipRequestType();
-                request.View = "Full";  // NO default!
-                request.deltasOnly = msdeltasOnly;
-                request.lastChange = strLastChange;
-                request.serviceFilter = new FindMembershipRequestTypeServiceFilter();
-                request.serviceFilter.Types = new string[]
-                {
-                    ServiceFilterType.Messenger,
-                    ServiceFilterType.IMAvailability
-                    /*,ServiceFilterType.Profile,
-                    ServiceFilterType.SocialNetwork,
-                    ServiceFilterType.Invitation,
-                    ServiceFilterType.Folder,
-                    ServiceFilterType.OfficeLiveWebNotification*/
-                };
-
-                MsnServiceState FindMembershipObject = new MsnServiceState(partnerScenario, "FindMembership", true);
-                SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, FindMembershipObject);
-                sharingService.FindMembershipCompleted += delegate(object sender, FindMembershipCompletedEventArgs e)
-                {
-                    OnAfterCompleted(new ServiceOperationEventArgs(sharingService, MsnServiceType.Sharing, e));
-
-                    if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
-                        return;
-
-                    if (!e.Cancelled)
+                    if (fmcea.Error == null /* No error */)
                     {
-                        if (e.Error != null)
+                        BinarySemaphore.WaitOne();
+
+                        // Addressbook re-defined here, because the reference can be changed.
+                        // Findmembershipasync can delete addressbook if addressbook sync is required.
+                        XMLContactList xmlcl;
+
+                        if ((null != (xmlcl = AddressBook)) &&
+                            (null != fmcea.Result.FindMembershipResult))
                         {
-                            //lock (SyncObject)
-                            BinarySemaphore.WaitOne();
+                            BinarySemaphore.Release();
+                            try
                             {
-                                if (AddressBook == null && Deltas == null && AddressBookSynchronized == false)
-                                {
-                                    // This means before the webservice returned the connection had broken.
-                                    BinarySemaphore.Release();
-                                    OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership",
-                                            new MSNPSharpException("Addressbook and Deltas have been reset.")));
-                                    return;
-                                }
-
-                                if (e.Error.Message.Contains("Address Book Does Not Exist"))
-                                {
-                                    if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
-                                    {
-                                        BinarySemaphore.Release();
-                                        OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership", new MSNPSharpException("You don't have access right on this action anymore.")));
-                                        return;
-                                    }
-                                    else
-                                    {
-                                        BinarySemaphore.Release();
-
-                                        ABAddRequestType abAddRequest = new ABAddRequestType();
-                                        abAddRequest.abInfo = new abInfoType();
-                                        abAddRequest.abInfo.ownerEmail = NSMessageHandler.Owner.Account;
-                                        abAddRequest.abInfo.ownerPuid = "0";
-                                        abAddRequest.abInfo.fDefault = true;
-
-                                        MsnServiceState ABAddObject = new MsnServiceState(partnerScenario, "ABAdd", true);
-                                        ABServiceBinding abservice = (ABServiceBinding)CreateService(MsnServiceType.AB, ABAddObject);
-                                        abservice.ABAddCompleted += delegate(object srv, ABAddCompletedEventArgs abadd_e)
-                                        {
-                                            OnAfterCompleted(new ServiceOperationEventArgs(abservice, MsnServiceType.AB, abadd_e));
-
-                                            if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
-                                                return;
-
-                                            if (abadd_e.Error == null)
-                                            {
-                                                try
-                                                {
-                                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "A new addressbook has been added, addressbook list will be request again.");
-                                                    recursiveCall++;
-                                                    SynchronizeContactList();
-                                                }
-                                                catch (Exception unknownSyncException)
-                                                {
-                                                    OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership",
-                                                         new MSNPSharpException("Unknown Exception occurred while synchronizing contact list, please see inner exception.",
-                                                         unknownSyncException)));
-                                                }
-                                            }
-                                        };
-                                        RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abservice, MsnServiceType.AB, ABAddObject, abAddRequest));
-                                    }
-
-                                    //Now here should have no lock.
-                                }
-                                else if ((recursiveCall == 0 && partnerScenario == PartnerScenario.Initial)
-                                    || (e.Error.Message.Contains("Need to do full sync")))
-                                {
-                                    BinarySemaphore.Release();  //release for recursive calls.
-
-                                    try
-                                    {
-                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                                            "Need to do full sync of current addressbook list, addressbook list will be request again. Method: FindMemberShip");
-                                        recursiveCall++;
-                                        SynchronizeContactList();
-                                    }
-                                    catch (Exception unknownSyncException)
-                                    {
-
-                                        OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership",
-                                            new MSNPSharpException("Unknown Exception occurred while synchronizing contact list, please see inner exception.",
-                                            unknownSyncException)));
-                                    }
-                                }
-                                else
-                                {
-                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Error.ToString(), GetType().Name);
-                                    BinarySemaphore.Release();
-                                }
+                                // Following line is horrible for semaphore usage...
+                                xmlcl
+                                    .Merge(fmcea.Result.FindMembershipResult)
+                                    .Save();
+                            }
+                            catch (Exception unknownException)
+                            {
+                                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership",
+                                    new MSNPSharpException("Unknown Exception occurred while synchronizing contact list, please see inner exception.",
+                                    unknownException)));
                             }
                         }
                         else
                         {
-                            //lock (SyncObject)
+                            BinarySemaphore.Release();
+                        }
 
+                        BinarySemaphore.WaitOne();
+                        if (AddressBook != null && Deltas != null)
+                        {
+                            BinarySemaphore.Release();
+
+                            if (onSuccess != null)
                             {
-                                BinarySemaphore.WaitOne();
-
-                                if (null != e.Result.FindMembershipResult && AddressBook != null)
-                                {
-                                    BinarySemaphore.Release();
-                                    try
-                                    {
-                                        //Following line is horrible for semaphore usage...
-                                        XMLContactList addressbook = AddressBook.Merge(e.Result.FindMembershipResult);
-                                        addressbook.Save();
-                                    }
-                                    catch (Exception unknownException)
-                                    {
-                                        OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership",
-                                            new MSNPSharpException("Unknown Exception occurred while synchronizing contact list, please see inner exception.",
-                                            unknownException)));
-                                    }
-
-                                }
-                                else
-                                {
-                                    BinarySemaphore.Release();
-                                }
-
-                                BinarySemaphore.WaitOne();
-                                if (AddressBook != null && Deltas != null)
-                                {
-                                    BinarySemaphore.Release();
-                                    if (onSuccess != null)
-                                    {
-                                        onSuccess(sharingService, e);
-                                    }
-                                }
-                                else
-                                {
-                                    BinarySemaphore.Release();
-
-                                    OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership",
-                                            new MSNPSharpException("Addressbook and Deltas have been reset.")));
-                                }
+                                onSuccess(sender, fmcea);
                             }
                         }
-                    }
-                };
+                        else
+                        {
+                            BinarySemaphore.Release();
 
-                RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(sharingService, MsnServiceType.Sharing, FindMembershipObject, request));
-            }
+                            OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership",
+                                    new MSNPSharpException("Addressbook and Deltas have been reset.")));
+                        }
+                    }
+                    else
+                    { 
+                        // Error handler
+                        BinarySemaphore.WaitOne();
+                        {
+                            if (AddressBook == null && Deltas == null && AddressBookSynchronized == false)
+                            {
+                                // This means before the webservice returned the connection had broken.
+                                BinarySemaphore.Release();
+                                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership",
+                                        new MSNPSharpException("Addressbook and Deltas have been reset.")));
+                                return;
+                            }
+                        }
+                        BinarySemaphore.Release();
+                    }
+                }
+            );
         }
 
         /// <summary>
@@ -2702,6 +2593,113 @@ namespace MSNPSharp
 
         #region Private
 
+        private void FindMembershipAsync(string partnerScenario, FindMembershipCompletedEventHandler findMembershipCallback)
+        {
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
+            {
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership", new MSNPSharpException("You don't have access right on this action anymore.")));
+                return;
+            }
+
+            bool msdeltasOnly = false;
+            DateTime serviceLastChange = WebServiceDateTimeConverter.ConvertToDateTime(WebServiceConstants.ZeroTime);
+            DateTime msLastChange = WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.MembershipLastChange);
+            string strLastChange = WebServiceConstants.ZeroTime;
+
+            if (msLastChange != serviceLastChange)
+            {
+                msdeltasOnly = true;
+                strLastChange = AddressBook.MembershipLastChange;
+            }
+
+            FindMembershipRequestType request = new FindMembershipRequestType();
+            request.View = "Full";  // NO default!
+            request.deltasOnly = msdeltasOnly;
+            request.lastChange = strLastChange;
+            request.serviceFilter = new FindMembershipRequestTypeServiceFilter();
+            request.serviceFilter.Types = new string[]
+            {
+                ServiceFilterType.Messenger,
+                ServiceFilterType.IMAvailability
+                /*,ServiceFilterType.Profile,
+                ServiceFilterType.SocialNetwork,
+                ServiceFilterType.Invitation,
+                ServiceFilterType.Folder,
+                ServiceFilterType.OfficeLiveWebNotification*/
+            };
+
+            MsnServiceState FindMembershipObject = new MsnServiceState(partnerScenario, "FindMembership", true);
+            SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, FindMembershipObject);
+            sharingService.FindMembershipCompleted += delegate(object sender, FindMembershipCompletedEventArgs e)
+            {
+                OnAfterCompleted(new ServiceOperationEventArgs(sharingService, MsnServiceType.Sharing, e));
+
+                // Cancelled or signed off
+                if (e.Cancelled || NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
+
+                if (e.Error != null)
+                {
+                    // Handle errors and recall this method if necesarry.
+                    if (e.Error.Message.ToLowerInvariant().Contains("need to do full sync")
+                        || e.Error.Message.ToLowerInvariant().Contains("full sync required"))
+                    {
+                        // recursive Call -----------------------------
+                        DeleteRecordFile();
+                        FindMembershipAsync(partnerScenario, findMembershipCallback);
+                    }
+                    else if (e.Error.Message.ToLowerInvariant().Contains("address book does not exist"))
+                    {
+                        ABAddRequestType abAddRequest = new ABAddRequestType();
+                        abAddRequest.abInfo = new abInfoType();
+                        abAddRequest.abInfo.ownerEmail = NSMessageHandler.Owner.Account;
+                        abAddRequest.abInfo.ownerPuid = "0";
+                        abAddRequest.abInfo.fDefault = true;
+
+                        MsnServiceState ABAddObject = new MsnServiceState(partnerScenario, "ABAdd", true);
+                        ABServiceBinding abservice = (ABServiceBinding)CreateService(MsnServiceType.AB, ABAddObject);
+                        abservice.ABAddCompleted += delegate(object srv, ABAddCompletedEventArgs abadd_e)
+                        {
+                            OnAfterCompleted(new ServiceOperationEventArgs(abservice, MsnServiceType.AB, abadd_e));
+
+                            if (abadd_e.Cancelled || NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                                return;
+
+                            if (abadd_e.Error == null)
+                            {
+                                // recursive Call -----------------------------
+                                DeleteRecordFile();
+                                FindMembershipAsync(partnerScenario, findMembershipCallback);
+                            }
+                        };
+                        RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abservice, MsnServiceType.AB, ABAddObject, abAddRequest));
+                    }
+                    else
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                            "UNHANDLED ERROR: " + e.Error.Message.ToString(), GetType().Name);
+
+                        // Pass to the callback
+                        if (findMembershipCallback != null)
+                        {
+                            findMembershipCallback(sharingService, e);
+                        }
+                    }
+                }
+                else
+                {
+                    // No error, fire event handler.
+                    if (findMembershipCallback != null)
+                    {
+                        findMembershipCallback(sharingService, e);
+                    }
+                }
+            };
+
+            RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(sharingService, MsnServiceType.Sharing, FindMembershipObject, request));
+        }
+
+
         private void CreateContactAsync(string account, IMAddressInfoType network, Guid abId,
             CreateContactCompletedEventHandler callback)
         {
@@ -2910,24 +2908,39 @@ namespace MSNPSharp
         {
             if (NSMessageHandler.Owner != null && NSMessageHandler.Owner.Account != null)
             {
+                MclSerialization st = Settings.SerializationType;
                 string addressbookFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Account.GetHashCode() + ".mcl");
+                string deltasResultFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Account.GetHashCode() + "d" + ".mcl");
+
                 if (File.Exists(addressbookFile))
                 {
                     File.SetAttributes(addressbookFile, FileAttributes.Normal);  //By default, the file is hidden.
                     File.Delete(addressbookFile);
+
+                    // Re-init addressbook
+                    AddressBook = XMLContactList.LoadFromFile(addressbookFile, st, NSMessageHandler, false);
+                    AddressBook.Save();
                 }
 
-                string deltasResultFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Account.GetHashCode() + "d" + ".mcl");
                 if (File.Exists(deltasResultFile))
                 {
+                    //If we saved cachekey and preferred host in it, deltas can't be deleted.
                     if (Deltas != null)
                     {
-                        Deltas.Truncate();  //If we saved cachekey and preferred host in it, deltas can't be deleted.
+                        Deltas.Truncate();
                     }
                     else
                     {
                         File.SetAttributes(deltasResultFile, FileAttributes.Normal);  //By default, the file is hidden.
                         File.Delete(deltasResultFile);
+
+                        Deltas = DeltasList.LoadFromFile(deltasResultFile, st, NSMessageHandler, true);
+                        Deltas.Save(true);
+
+                        if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
+                        {
+                            NSMessageHandler.MSNTicket.CacheKeys = Deltas.CacheKeys;
+                        }
                     }
                 }
                 abSynchronized = false;
