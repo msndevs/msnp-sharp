@@ -160,6 +160,9 @@
     <Compile Include="StrDictionary.cs" />
     <Compile Include="TextMessage.cs" />
     <Compile Include="Services\ContactService.cs" />
+    <Compile Include="Services\ContactService.Async.cs">
+      <DependentUpon>ContactService.cs</DependentUpon>
+    </Compile>
     <Compile Include="Web References\MSNWS.MSNDirectoryService\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
