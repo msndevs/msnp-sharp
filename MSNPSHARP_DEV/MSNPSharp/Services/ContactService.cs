@@ -932,144 +932,69 @@ namespace MSNPSharp
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged", new MSNPSharpException("You don't have access right on this action anymore.")));
+                return;
             }
-            else
-            {
-                bool deltasOnly = false;
 
-                ABFindContactsPagedRequestType request = new ABFindContactsPagedRequestType();
-                request.abView = "MessengerClient8";  //NO default!
-
-                if (abHandle == null || abHandle.ABId == WebServiceConstants.MessengerIndividualAddressBookId)
+            ABFindContactsPagedAsync(partnerScenario, abHandle,
+                // Register callback for success/error. e.Cancelled handled by FindMembershipAsync.
+                delegate(object sender, ABFindContactsPagedCompletedEventArgs abfcpcea)
                 {
-                    request.extendedContent = "AB AllGroups CircleResult";
-
-                    request.filterOptions = new filterOptionsType();
-                    request.filterOptions.ContactFilter = new ContactFilterType();
-
-                    if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)) != DateTime.MinValue)
+                    if (abfcpcea.Error == null /* No error */)
                     {
-                        deltasOnly = true;
-                        request.filterOptions.LastChanged = AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId);
-                    }
+                        BinarySemaphore.WaitOne();
 
-                    request.filterOptions.DeltasOnly = deltasOnly;
-                    request.filterOptions.ContactFilter.IncludeHiddenContacts = true;
+                        // Addressbook re-defined here, because the reference can be changed.
+                        // Findmembershipasync can delete addressbook if addressbook sync is required.
+                        XMLContactList xmlcl;
 
-                    // Without these two lines we cannot get the Connect contacts correctly.
-                    request.filterOptions.ContactFilter.IncludeShellContactsSpecified = true;
-                    request.filterOptions.ContactFilter.IncludeShellContacts = true;
-                }
-                else
-                {
-                    request.extendedContent = "AB";
-                    request.abHandle = abHandle;
-                }
-
-                MsnServiceState ABFindContactsPagedObject = new MsnServiceState(partnerScenario, "ABFindContactsPaged", true);
-                ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABFindContactsPagedObject);
-                abService.ABFindContactsPagedCompleted += delegate(object sender, ABFindContactsPagedCompletedEventArgs e)
-                {
-                    OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
-
-                    if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
-                        return;
-
-                    if (!e.Cancelled)
-                    {
-                        if (e.Error != null)
+                        if (((xmlcl = AddressBook) != null) &&
+                            abfcpcea.Result.ABFindContactsPagedResult != null)
                         {
-                            //lock (SyncObject)
+                            string lowerId = WebServiceConstants.MessengerIndividualAddressBookId;
+
+                            if (abfcpcea.Result.ABFindContactsPagedResult.Ab != null)
+                                lowerId = abfcpcea.Result.ABFindContactsPagedResult.Ab.abId.ToLowerInvariant();
+
+                            if (lowerId == WebServiceConstants.MessengerIndividualAddressBookId)
                             {
-                                BinarySemaphore.WaitOne();
-                                if (AddressBook == null && Deltas == null && AddressBookSynchronized == false)
-                                {
-                                    BinarySemaphore.Release();
-                                    // This means before the webservice returned the connection had broken.
-                                    OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged",
-                                            new MSNPSharpException("Addressbook and Deltas have been reset.")));
-                                    return;
-                                }
-
-
-                                if ((recursiveCall == 0 && ((MsnServiceState)e.UserState).PartnerScenario == PartnerScenario.Initial
-                                    && (abHandle == null || abHandle.ABId == WebServiceConstants.MessengerIndividualAddressBookId))
-                                    || (e.Error.Message.Contains("Need to do full sync")))
-                                {
-                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                                        "Need to do full sync of current addressbook list, addressbook list will be request again. Method: ABFindContactsPaged");
-
-                                    recursiveCall++;
-
-                                    AddressBook.ClearCircleInfos();
-                                    BinarySemaphore.Release();
-
-
-                                    SynchronizeContactList();
-                                    return;
-                                }
-                                else
-                                {
-                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Error.ToString(), GetType().Name);
-                                }
-
-                                BinarySemaphore.Release();
+                                xmlcl.MergeIndividualAddressBook(abfcpcea.Result.ABFindContactsPagedResult);
+                            }
+                            else
+                            {
+                                xmlcl.MergeGroupAddressBook(abfcpcea.Result.ABFindContactsPagedResult);
                             }
 
-                        }
-                        else
-                        {
-                            //lock (SyncObject)
+                            xmlcl.Save();
+
+                            if (abfcpcea.Result.ABFindContactsPagedResult.CircleResult != null)
                             {
-                                BinarySemaphore.WaitOne();
-                                if (e.Result.ABFindContactsPagedResult != null && AddressBook != null)
-                                {
-                                    string lowerId = WebServiceConstants.MessengerIndividualAddressBookId;
-
-                                    if (e.Result.ABFindContactsPagedResult.Ab != null)
-                                        lowerId = e.Result.ABFindContactsPagedResult.Ab.abId.ToLowerInvariant();
-
-                                    if (lowerId == WebServiceConstants.MessengerIndividualAddressBookId)
-                                    {
-                                        AddressBook.MergeIndividualAddressBook(e.Result.ABFindContactsPagedResult);
-                                    }
-                                    else
-                                    {
-                                        AddressBook.MergeGroupAddressBook(e.Result.ABFindContactsPagedResult);
-                                    }
-
-                                    if (AddressBook != null)
-                                        AddressBook.Save();
-
-                                    if (e.Result.ABFindContactsPagedResult.CircleResult != null)
-                                        NSMessageHandler.SendSHAAMessage(e.Result.ABFindContactsPagedResult.CircleResult.CircleTicket);
-                                }
-
-                                //if (AddressBook != null && Deltas != null)
-                                //{
-                                //    if (onSuccess != null)
-                                //    {
-                                //        onSuccess(abService, e);
-                                //    }
-                                //}
-                                //else
-                                //{
-                                //    OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged",
-                                //            new MSNPSharpException("Addressbook and Deltas have been reset.")));
-                                //}
-
-                                BinarySemaphore.Release();
-                                if (onSuccess != null)
-                                {
-                                    onSuccess(abService, e);
-                                }
+                                NSMessageHandler.SendSHAAMessage(abfcpcea.Result.ABFindContactsPagedResult.CircleResult.CircleTicket);
                             }
                         }
-                    }
-                };
 
-                RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, ABFindContactsPagedObject, request));
-            }
+                        BinarySemaphore.Release();
+
+                        if (onSuccess != null)
+                        {
+                            onSuccess(sender, abfcpcea);
+                        }
+                    }
+                    else
+                    {
+                        // Error handler
+
+                        BinarySemaphore.WaitOne();
+                        if (AddressBook == null && Deltas == null && AddressBookSynchronized == false)
+                        {
+                            BinarySemaphore.Release();
+                            // This means before the webservice returned the connection had broken.
+                            OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged",
+                                    new MSNPSharpException("Addressbook and Deltas have been reset.")));
+                            return;
+                        }
+                        BinarySemaphore.Release();
+                    }
+                });
         }
 
         public static string[] ConstructLists(Dictionary<string, RoleLists> contacts, bool initial)
@@ -2582,7 +2507,7 @@ namespace MSNPSharp
                     }
 
                     NSMessageHandler.SendCircleNotifyRML(circle.AddressBookId, circle.HostDomain, circle.Lists, true);
-                    AddressBook.RemoveCircle(circle.AddressBookId.ToString("D").ToLowerInvariant());
+                    AddressBook.RemoveCircle(circle.AddressBookId.ToString("D").ToLowerInvariant(), true);
                     AddressBook.Save();
                 });
         }
@@ -2699,6 +2624,102 @@ namespace MSNPSharp
             RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(sharingService, MsnServiceType.Sharing, FindMembershipObject, request));
         }
 
+
+        private void ABFindContactsPagedAsync(string partnerScenario, abHandleType abHandle, ABFindContactsPagedCompletedEventHandler abFindContactsPagedCallback)
+        {
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
+            {
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged", new MSNPSharpException("You don't have access right on this action anymore.")));
+                return;
+            }
+
+            bool deltasOnly = false;
+            ABFindContactsPagedRequestType request = new ABFindContactsPagedRequestType();
+            request.abView = "MessengerClient8";  //NO default!
+
+            if (abHandle == null ||
+                abHandle.ABId == WebServiceConstants.MessengerIndividualAddressBookId)
+            {
+                request.extendedContent = "AB AllGroups CircleResult";
+
+                request.filterOptions = new filterOptionsType();
+                request.filterOptions.ContactFilter = new ContactFilterType();
+
+                if (DateTime.MinValue != WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)))
+                {
+                    deltasOnly = true;
+                    request.filterOptions.LastChanged = AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId);
+                }
+
+                request.filterOptions.DeltasOnly = deltasOnly;
+                request.filterOptions.ContactFilter.IncludeHiddenContacts = true;
+
+                // Without these two lines we cannot get the Connect contacts correctly.
+                request.filterOptions.ContactFilter.IncludeShellContactsSpecified = true;
+                request.filterOptions.ContactFilter.IncludeShellContacts = true;
+            }
+            else
+            {
+                request.extendedContent = "AB";
+                request.abHandle = abHandle;
+            }
+
+            MsnServiceState ABFindContactsPagedObject = new MsnServiceState(partnerScenario, "ABFindContactsPaged", true);
+            ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABFindContactsPagedObject);
+            abService.ABFindContactsPagedCompleted += delegate(object sender, ABFindContactsPagedCompletedEventArgs e)
+            {
+                OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
+
+                // Cancelled or signed off
+                if (e.Cancelled || NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
+
+                if (e.Error != null)
+                {
+                    // Handle errors and recall this method if necesarry.
+
+                    if ((e.Error.Message.ToLowerInvariant().Contains("need to do full sync")
+                         || e.Error.Message.ToLowerInvariant().Contains("full sync required")))
+                    {
+                        if (abHandle == null ||
+                            abHandle.ABId == WebServiceConstants.MessengerIndividualAddressBookId)
+                        {
+                            // Default addressbook
+                            DeleteRecordFile();
+                        }
+                        else
+                        {
+                            // Circle addressbook
+                            AddressBook.RemoveCircle(new Guid(abHandle.ABId).ToString("D").ToLowerInvariant(), false);
+                        }
+
+                        // recursive Call -----------------------------
+                        ABFindContactsPagedAsync(partnerScenario, abHandle, abFindContactsPagedCallback);
+                    }
+                    else
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                            "UNHANDLED ERROR: " + e.Error.Message.ToString(), GetType().Name);
+
+                        // Pass to the callback
+                        if (abFindContactsPagedCallback != null)
+                        {
+                            abFindContactsPagedCallback(sender, e);
+                        }
+                    }
+                }
+                else
+                {
+                    // No error, fire event handler.
+                    if (abFindContactsPagedCallback != null)
+                    {
+                        abFindContactsPagedCallback(sender, e);
+                    }
+                }
+            };
+
+            RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, ABFindContactsPagedObject, request));
+        }
 
         private void CreateContactAsync(string account, IMAddressInfoType network, Guid abId,
             CreateContactCompletedEventHandler callback)
