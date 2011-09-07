@@ -90,6 +90,7 @@ namespace MSNPSharpClient
             this.displayImageBox = new System.Windows.Forms.PictureBox();
             this.logoImageBox = new System.Windows.Forms.PictureBox();
             this.statusBar = new System.Windows.Forms.Label();
+            this.leaveCircleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.userMenuStrip.SuspendLayout();
             this.sortContextMenu.SuspendLayout();
             this.groupContextMenu.SuspendLayout();
@@ -127,18 +128,19 @@ namespace MSNPSharpClient
             this.toolStripMenuItem3,
             this.importContactsMenuItem,
             this.createCircleMenuItem,
+            this.leaveCircleToolStripMenuItem,
             this.toolStripMenuItem2,
             this.appearOfflineMenuItem,
             this.appearOnlineMenuItem,
             this.deleteMenuItem});
             this.userMenuStrip.Name = "contextMenuStrip1";
-            this.userMenuStrip.Size = new System.Drawing.Size(161, 192);
+            this.userMenuStrip.Size = new System.Drawing.Size(161, 214);
             // 
             // sendIMMenuItem
             // 
             this.sendIMMenuItem.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold);
             this.sendIMMenuItem.Name = "sendIMMenuItem";
-            this.sendIMMenuItem.Size = new System.Drawing.Size(194, 22);
+            this.sendIMMenuItem.Size = new System.Drawing.Size(160, 22);
             this.sendIMMenuItem.Text = "Send Message";
             this.sendIMMenuItem.Click += new System.EventHandler(this.sendMessageToolStripMenuItem_Click);
             // 
@@ -146,52 +148,52 @@ namespace MSNPSharpClient
             // 
             this.sendMIMMenuItem.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold);
             this.sendMIMMenuItem.Name = "sendMIMMenuItem";
-            this.sendMIMMenuItem.Size = new System.Drawing.Size(194, 22);
+            this.sendMIMMenuItem.Size = new System.Drawing.Size(160, 22);
             this.sendMIMMenuItem.Text = "Send SMS";
             this.sendMIMMenuItem.Click += new System.EventHandler(this.sendMIMMenuItem_Click);
             // 
             // toolStripMenuItem3
             // 
             this.toolStripMenuItem3.Name = "toolStripMenuItem3";
-            this.toolStripMenuItem3.Size = new System.Drawing.Size(191, 6);
+            this.toolStripMenuItem3.Size = new System.Drawing.Size(157, 6);
             // 
             // importContactsMenuItem
             // 
             this.importContactsMenuItem.Name = "importContactsMenuItem";
-            this.importContactsMenuItem.Size = new System.Drawing.Size(194, 22);
+            this.importContactsMenuItem.Size = new System.Drawing.Size(160, 22);
             this.importContactsMenuItem.Text = "Import Contacts";
             this.importContactsMenuItem.Click += new System.EventHandler(this.importContactsMenuItem_Click);
             // 
             // createCircleMenuItem
             // 
             this.createCircleMenuItem.Name = "createCircleMenuItem";
-            this.createCircleMenuItem.Size = new System.Drawing.Size(194, 22);
+            this.createCircleMenuItem.Size = new System.Drawing.Size(160, 22);
             this.createCircleMenuItem.Text = "Circle Tests";
             this.createCircleMenuItem.Click += new System.EventHandler(this.createCircleMenuItem_Click);
             // 
             // toolStripMenuItem2
             // 
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(191, 6);
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(157, 6);
             // 
             // appearOfflineMenuItem
             // 
             this.appearOfflineMenuItem.Name = "appearOfflineMenuItem";
-            this.appearOfflineMenuItem.Size = new System.Drawing.Size(194, 22);
+            this.appearOfflineMenuItem.Size = new System.Drawing.Size(160, 22);
             this.appearOfflineMenuItem.Text = "Appear offline";
             this.appearOfflineMenuItem.Click += new System.EventHandler(this.blockToolStripMenuItem_Click);
             // 
             // appearOnlineMenuItem
             // 
             this.appearOnlineMenuItem.Name = "appearOnlineMenuItem";
-            this.appearOnlineMenuItem.Size = new System.Drawing.Size(194, 22);
+            this.appearOnlineMenuItem.Size = new System.Drawing.Size(160, 22);
             this.appearOnlineMenuItem.Text = "Appear online";
             this.appearOnlineMenuItem.Click += new System.EventHandler(this.unblockMenuItem_Click);
             // 
             // deleteMenuItem
             // 
             this.deleteMenuItem.Name = "deleteMenuItem";
-            this.deleteMenuItem.Size = new System.Drawing.Size(194, 22);
+            this.deleteMenuItem.Size = new System.Drawing.Size(160, 22);
             this.deleteMenuItem.Text = "Delete contact";
             this.deleteMenuItem.Click += new System.EventHandler(this.deleteMenuItem_Click);
             // 
@@ -770,6 +772,14 @@ namespace MSNPSharpClient
             this.statusBar.TabIndex = 10;
             this.statusBar.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
+            // leaveCircleToolStripMenuItem
+            // 
+            this.leaveCircleToolStripMenuItem.Name = "leaveCircleToolStripMenuItem";
+            this.leaveCircleToolStripMenuItem.Size = new System.Drawing.Size(160, 22);
+            this.leaveCircleToolStripMenuItem.Text = "Leave circle";
+            this.leaveCircleToolStripMenuItem.Visible = false;
+            this.leaveCircleToolStripMenuItem.Click += new System.EventHandler(this.leaveCircleToolStripMenuItem_Click);
+            // 
             // ClientForm
             // 
             this.AutoScaleBaseSize = new System.Drawing.Size(6, 14);
@@ -873,6 +883,7 @@ namespace MSNPSharpClient
         private PictureBox logoImageBox;
         private Button btnSetTheme;
         private ComboBox comboPlaces;
+        private ToolStripMenuItem leaveCircleToolStripMenuItem;
 
     }
 }

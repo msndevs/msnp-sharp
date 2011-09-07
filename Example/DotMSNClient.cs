@@ -1178,11 +1178,6 @@ namespace MSNPSharpClient
             }
             else
             {
-
-                // ignore the unauthorized exception, since we're handling that error in another method.
-                if (e.Exception is UnauthorizedException)
-                    return;
-
                 MessageBox.Show(e.Exception.ToString(), "Nameserver exception");
             }
         }
@@ -1458,6 +1453,7 @@ namespace MSNPSharpClient
                     }
 
                     deleteMenuItem.Visible = contact.Guid != Guid.Empty;
+                    leaveCircleToolStripMenuItem.Visible = contact.ClientType == IMAddressInfoType.Circle;
 
                     Point point = treeViewFavoriteList.PointToScreen(new Point(e.X, e.Y));
                     userMenuStrip.Show(point.X - userMenuStrip.Width, point.Y);
@@ -2522,6 +2518,17 @@ namespace MSNPSharpClient
                 Image newImage = Image.FromFile(openImageDialog.FileName, true);
                 messenger.Owner.SetScene(newImage, Color.White);
             }
+        }
+
+        private void leaveCircleToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Contact selectedContact = treeViewFavoriteList.SelectedNode.Tag as Contact;
+
+            if (selectedContact != null && selectedContact.ClientType == IMAddressInfoType.Circle)
+            {
+                messenger.ContactService.ExitCircle(selectedContact);
+            }
+
         }
 
     }
