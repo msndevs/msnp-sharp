@@ -1178,11 +1178,6 @@ namespace MSNPSharpClient
             }
             else
             {
-
-                // ignore the unauthorized exception, since we're handling that error in another method.
-                if (e.Exception is UnauthorizedException)
-                    return;
-
                 MessageBox.Show(e.Exception.ToString(), "Nameserver exception");
             }
         }
