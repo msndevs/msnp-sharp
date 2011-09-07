@@ -1922,7 +1922,7 @@ namespace MSNPSharp.IO
                 CircleInverseInfoType inverseInfo = SelectWLConnection(abId);
                 if (inverseInfo != null && modifiedConnections[abId].Deleted)
                 {
-                    RemoveCircle(modifiedConnections[abId].Content.Handle.Id);
+                    RemoveCircle(modifiedConnections[abId].Content.Handle.Id, true);
                     connectionClone.Remove(abId);
                     deleted++;
                 }
@@ -2038,8 +2038,9 @@ namespace MSNPSharp.IO
         /// 5. RemoveCircle
         /// </summary>
         /// <param name="abId"></param>
+        /// <param name="breakConnection"></param>
         /// <returns></returns>
-        internal bool RemoveCircle(string abId)
+        internal bool RemoveCircle(string abId, bool breakConnection)
         {
             lock (SyncObject)
             {
@@ -2062,16 +2063,19 @@ namespace MSNPSharp.IO
                     //3. Remove circle inverse info.
                     RemoveCircleInverseInfo(abId);
 
-                    //4. Break the connection between hidden representative and addressbook.
-                    BreakWLConnection(abId);
-
-                    //5. Remove the presentation data structure for a circle.
-                    string circleMail2 = abId + "@" + Contact.DefaultHostDomain;
-                    NSMessageHandler.ContactList.Remove(circleMail2, IMAddressInfoType.Circle);
-
-                    if (tempCircle != null)
+                    if (breakConnection)
                     {
-                        NSMessageHandler.ContactService.OnExitCircleCompleted(new CircleEventArgs(tempCircle));
+                        //4. Break the connection between hidden representative and addressbook.
+                        BreakWLConnection(abId);
+
+                        //5. Remove the presentation data structure for a circle.
+                        string circleMail2 = abId + "@" + Contact.DefaultHostDomain;
+                        NSMessageHandler.ContactList.Remove(circleMail2, IMAddressInfoType.Circle);
+
+                        if (tempCircle != null)
+                        {
+                            NSMessageHandler.ContactService.OnExitCircleCompleted(new CircleEventArgs(tempCircle));
+                        }
                     }
 
                     return true;
