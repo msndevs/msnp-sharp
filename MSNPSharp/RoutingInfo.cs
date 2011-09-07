@@ -38,7 +38,7 @@ namespace MSNPSharp
 {
     using MSNPSharp.Core;
 
-    internal class RoutingInfo
+    public class RoutingInfo
     {
         private string senderAccount = String.Empty;
         private Guid senderEndPointID = Guid.Empty;
