@@ -91,6 +91,7 @@ namespace MSNPSharp.LiveConnectAPI
             request.ContentType = @"application/atom+xml";
             request.Headers.Add(HttpRequestHeader.Authorization, "WLID1.0 " + authToken);
             request.Headers.Add("AppId", appID);
+            request.ServicePoint.Expect100Continue = false;
 
             entryType entry = new entryType();
 

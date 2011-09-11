@@ -882,7 +882,7 @@ namespace MSNPSharp
         {
             LiveAtomAPILight.UpdatePersonalStatusAsync(personalStatus, 
                 NSMessageHandler.Owner.CID, 
-                NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Storage].Ticket,  //This is NOT correct, needs to figure out
+                NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.RPST].Ticket,
                 null,
                 null
                 );
