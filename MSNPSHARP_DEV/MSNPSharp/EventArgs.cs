@@ -37,6 +37,7 @@ namespace MSNPSharp
     using MSNPSharp.Apps;
     using MSNPSharp.Core;
     using MSNPSharp.P2P;
+using MSNPSharp.LiveConnectAPI.Atom;
 
     /// <summary>
     /// Notify the client the blocked/unblocked status changed.
@@ -963,5 +964,24 @@ namespace MSNPSharp
             Parties = parties;
         }
         
+    }
+
+    public class AtomRequestSucceedEventArgs : EventArgs
+    {
+        private entryType entry = null;
+
+        /// <summary>
+        /// The return entry of atom request.
+        /// </summary>
+        public entryType Entry
+        {
+            get { return entry; }
+            private set { entry = value; }
+        }
+
+        public AtomRequestSucceedEventArgs(entryType entry)
+        {
+            Entry = entry;
+        }
     }
 };

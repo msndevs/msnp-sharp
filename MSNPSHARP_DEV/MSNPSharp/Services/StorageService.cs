@@ -49,6 +49,8 @@ namespace MSNPSharp
     using MSNPSharp.MSNWS.MSNStorageService;
     using MSNPSharp.Core;
     using MSNPSharp.Services;
+    using MSNPSharp.LiveConnectAPI;
+    using MSNPSharp.LiveConnectAPI.Atom;
 
     /// <summary>
     /// Provide webservice operations for Storage Service
@@ -878,6 +880,14 @@ namespace MSNPSharp
 
         private void UpdateProfileImpl(string displayName, string personalStatus, string freeText, int flags, bool syncDisplayImageToOwner)
         {
+            LiveAtomAPILight.UpdatePersonalStatusAsync(personalStatus, 
+                NSMessageHandler.Owner.CID, 
+                NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Storage].Ticket,  //This is NOT correct, needs to figure out
+                null,
+                null
+                );
+
+            /*
             if (NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile &&
                 NSMessageHandler.BotMode == false)
             {
@@ -906,6 +916,7 @@ namespace MSNPSharp
                 NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage = personalStatus;
                 NSMessageHandler.ContactService.Deltas.Save(true);
             }
+             * */
 
         }
 
