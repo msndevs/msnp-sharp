@@ -880,6 +880,8 @@ namespace MSNPSharp
 
         private void UpdateProfileImpl(string displayName, string personalStatus, string freeText, int flags, bool syncDisplayImageToOwner)
         {
+            SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.RPST);
+
             LiveAtomAPILight.UpdatePersonalStatusAsync(personalStatus, 
                 NSMessageHandler.Owner.CID, 
                 NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.RPST].Ticket,
