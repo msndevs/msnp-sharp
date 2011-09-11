@@ -87,52 +87,52 @@ namespace MSNPSharp
 
         #region Events
         /// <summary>
-        /// Fiired after a contact has been blocked/unblocked.
+        /// Fired after a contact has been blocked/unblocked.
         /// </summary>
         public event EventHandler<ContactBlockedStatusChangedEventArgs> ContactBlockedStatusChanged;
 
         /// <summary>
-        /// Occurs when a contact is added to any list (including reverse list)
+        /// Fires when a contact is added to any list (including reverse list)
         /// </summary>
         public event EventHandler<ListMutateEventArgs> ContactAdded;
 
         /// <summary>
-        /// Occurs when a contact is removed from any list (including reverse list)
+        /// Fires when a contact is removed from any list (including reverse list)
         /// </summary>
         public event EventHandler<ListMutateEventArgs> ContactRemoved;
 
         /// <summary>
-        /// Occurs when another user adds us to their contactlist. A ContactAdded event with the reverse list as parameter will also be raised.
+        /// Fires when another user adds us to their contactlist. A ContactAdded event with the reverse list as parameter will also be raised.
         /// </summary>
         public event EventHandler<ContactEventArgs> ReverseAdded;
 
         /// <summary>
-        /// Occurs when another user removes us from their contactlist. A ContactRemoved event with the reverse list as parameter will also be raised.
+        /// Fires when another user removes us from their contactlist. A ContactRemoved event with the reverse list as parameter will also be raised.
         /// </summary>
         public event EventHandler<ContactEventArgs> ReverseRemoved;
 
         /// <summary>
-        /// Occurs when a new contactgroup is created
+        /// Fires when a new contactgroup is created
         /// </summary>
         public event EventHandler<ContactGroupEventArgs> ContactGroupAdded;
 
         /// <summary>
-        /// Occurs when a contactgroup is removed
+        /// Fires when a contactgroup is removed
         /// </summary>
         public event EventHandler<ContactGroupEventArgs> ContactGroupRemoved;
 
         /// <summary>
-        /// Occurs when a new <see cref="Contact"/> is created.
+        /// Fires when a new <see cref="Contact"/> is created.
         /// </summary>
         public event EventHandler<CircleEventArgs> CreateCircleCompleted;
 
         /// <summary>
-        /// Occurs when the owner has left a specific <see cref="Contact"/>.
+        /// Fires when the owner has left a specific <see cref="Contact"/>.
         /// </summary>
         public event EventHandler<CircleEventArgs> ExitCircleCompleted;
 
         /// <summary>
-        /// Occurs when a call to SynchronizeList() has been made and the synchronization process is completed.
+        /// Fires when a call to SynchronizeList() has been made and the synchronization process is completed.
         /// This means all contact-updates are received from the server and processed.
         /// </summary>
         public event EventHandler<EventArgs> SynchronizationCompleted;

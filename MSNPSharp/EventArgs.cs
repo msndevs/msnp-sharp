@@ -966,7 +966,7 @@ using MSNPSharp.LiveConnectAPI.Atom;
         
     }
 
-    public class AtomRequestSucceedEventArgs : EventArgs
+    internal class AtomRequestSucceedEventArgs : EventArgs
     {
         private entryType entry = null;
 
@@ -982,6 +982,37 @@ using MSNPSharp.LiveConnectAPI.Atom;
         public AtomRequestSucceedEventArgs(entryType entry)
         {
             Entry = entry;
+        }
+    }
+
+    public class PersonalStatusChangedEventArgs : EventArgs
+    {
+        private string oldStatusText = string.Empty;
+
+        /// <summary>
+        /// The previous personal status.
+        /// </summary>
+        public string OldStatusText
+        {
+            get { return oldStatusText; }
+            private set { oldStatusText = value; }
+        }
+
+        private string newStatusText = string.Empty;
+
+        /// <summary>
+        /// Current sttaus text after changed.
+        /// </summary>
+        public string NewStatusText
+        {
+            get { return newStatusText; }
+            private set { newStatusText = value; }
+        }
+
+        public PersonalStatusChangedEventArgs(string oldText, string newText)
+        {
+            OldStatusText = oldText;
+            NewStatusText = newText;
         }
     }
 };
