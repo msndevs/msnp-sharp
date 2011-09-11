@@ -1721,27 +1721,27 @@ namespace MSNPSharp
                         break;
 
                     case MessageTypes.Nudge:
-                        OnNudgeReceived(new NudgeArrivedEventArgs(sender, originalSender));
+                        OnNudgeReceived(new NudgeArrivedEventArgs(sender, originalSender, routingInfo));
                         break;
 
                     case MessageTypes.ControlTyping:
-                        OnTypingMessageReceived(new TypingArrivedEventArgs(sender, originalSender));
+                        OnTypingMessageReceived(new TypingArrivedEventArgs(sender, originalSender, routingInfo));
                         break;
 
                     case MessageTypes.Text:
-                        OnSDGTextMessageReceived(multiMimeMessage, sender, originalSender);
+                        OnSDGTextMessageReceived(multiMimeMessage, sender, originalSender, routingInfo);
                         break;
 
                     case MessageTypes.CustomEmoticon:
-                        OnSDGCustomEmoticonReceived(multiMimeMessage, sender, originalSender);
+                        OnSDGCustomEmoticonReceived(multiMimeMessage, sender, originalSender, routingInfo);
                         break;
 
                     case MessageTypes.Wink:
-                        OnSDGWinkReceived(multiMimeMessage, sender, originalSender);
+                        OnSDGWinkReceived(multiMimeMessage, sender, originalSender, routingInfo);
                         break;
 
                     case MessageTypes.SignalP2P:
-                        OnSDGP2PSignalReceived(multiMimeMessage, sender, originalSender);
+                        OnSDGP2PSignalReceived(multiMimeMessage, sender, originalSender, routingInfo);
                         break;
 
                     case MessageTypes.SignalCloseIMWindow:
@@ -1805,12 +1805,12 @@ namespace MSNPSharp
             return multiMimeMessage;
         }
 
-        private void OnSDGWinkReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact originalSender)
+        private void OnSDGWinkReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact originalSender, RoutingInfo routingInfo)
         {
             Wink wink = new Wink();
             wink.SetContext((multiMimeMessage.InnerMessage as TextPayloadMessage).Text);
 
-            OnWinkDefinitionReceived(new WinkEventArgs(originalSender, wink));
+            OnWinkDefinitionReceived(new WinkEventArgs(originalSender, wink, routingInfo));
         }
 
         private MultiMimeMessage ParseSDGCustomEmoticonMessage(MultiMimeMessage multiMimeMessage)
@@ -1824,13 +1824,13 @@ namespace MSNPSharp
             return multiMimeMessage;
         }
 
-        private void OnSDGCustomEmoticonReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact originalSender)
+        private void OnSDGCustomEmoticonReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact originalSender, RoutingInfo routingInfo)
         {
             EmoticonMessage emoticonMessage = multiMimeMessage.InnerMessage as EmoticonMessage;
 
             foreach (Emoticon emoticon in emoticonMessage.Emoticons)
             {
-                OnEmoticonDefinitionReceived(new EmoticonDefinitionEventArgs(originalSender, emoticon));
+                OnEmoticonDefinitionReceived(new EmoticonDefinitionEventArgs(originalSender, originalSender, routingInfo, emoticon));
             }
         }
 
@@ -1842,12 +1842,12 @@ namespace MSNPSharp
             return multiMimeMessage;
         }
 
-        private void OnSDGTextMessageReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact by)
+        private void OnSDGTextMessageReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact by, RoutingInfo routingInfo)
         {
 
             TextMessage txtMessage = multiMimeMessage.InnerMessage as TextMessage;
 
-            OnTextMessageReceived(new TextMessageArrivedEventArgs(sender, txtMessage, by));
+            OnTextMessageReceived(new TextMessageArrivedEventArgs(sender, txtMessage, by, routingInfo));
         }
 
         private MultiMimeMessage ParseSDGP2PSignalMessage(MultiMimeMessage multiMimeMessage)
@@ -1858,7 +1858,7 @@ namespace MSNPSharp
             return multiMimeMessage;
         }
 
-        private void OnSDGP2PSignalReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact by)
+        private void OnSDGP2PSignalReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact by, RoutingInfo routingInfo)
         {
             //SLPMessage slpMessage = SLPMessage.Parse(multiMimeMessage.InnerBody);
             SLPMessage slpMessage = multiMimeMessage.InnerMessage as SLPMessage;

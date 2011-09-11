@@ -186,7 +186,7 @@ namespace MSNPSharp
                     EmoticonDefinitionReceived(this, e);
 
                 //If exists, fire the event.
-                OnEmoticonReceived(this, new EmoticonArrivedEventArgs(e.Sender, existing as Emoticon, null));
+                OnEmoticonReceived(this, new EmoticonArrivedEventArgs(e.Sender, existing as Emoticon, null, e.RoutingInfo));
             }
         }
 
@@ -205,7 +205,7 @@ namespace MSNPSharp
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Emoticon received", GetType().Name);
 
-            OnEmoticonReceived(this, new EmoticonArrivedEventArgs(session.Remote, session.Object as Emoticon, null));
+            OnEmoticonReceived(this, new EmoticonArrivedEventArgs(session.Remote, session.Object as Emoticon, null, null));
         }
 
         protected virtual void OnWinkReceived(object sender, WinkEventArgs e)
@@ -235,10 +235,10 @@ namespace MSNPSharp
             else
             {
                 if (WinkDefinitionReceived != null)
-                    WinkDefinitionReceived(this, new WinkEventArgs(e.Sender, existing as Wink));
+                    WinkDefinitionReceived(this, new WinkEventArgs(e.Sender, existing as Wink, e.RoutingInfo));
 
                 //If exists, fire the event.
-                OnWinkReceived(this, new WinkEventArgs(e.Sender, existing as Wink));
+                OnWinkReceived(this, new WinkEventArgs(e.Sender, existing as Wink, e.RoutingInfo));
             }
         }
 
@@ -257,7 +257,7 @@ namespace MSNPSharp
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Wink received", GetType().Name);
 
-            OnWinkReceived(this, new WinkEventArgs(session.Remote, session.Object as Wink));
+            OnWinkReceived(this, new WinkEventArgs(session.Remote, session.Object as Wink, null));
         }
 
 

@@ -49,15 +49,28 @@ namespace MSNPSharp
     using MSNPSharp.MSNWS.MSNStorageService;
     using MSNPSharp.Core;
     using MSNPSharp.Services;
+    using MSNPSharp.LiveConnectAPI;
+    using MSNPSharp.LiveConnectAPI.Atom;
 
     /// <summary>
     /// Provide webservice operations for Storage Service
     /// </summary>
     public class MSNStorageService : MSNService
     {
+        /// <summary>
+        /// Fired after the update status request was successfully returned.
+        /// </summary>
+        public event EventHandler<PersonalStatusChangedEventArgs> PersonalStatusUpdated;
+
         public MSNStorageService(NSMessageHandler nsHandler)
             : base(nsHandler)
         {
+        }
+
+        protected void OnPersonalStatusUpdated(PersonalStatusChangedEventArgs e)
+        {
+            if (PersonalStatusUpdated != null)
+                PersonalStatusUpdated(this, e);
         }
 
         #region Internal implementation
@@ -878,34 +891,26 @@ namespace MSNPSharp
 
         private void UpdateProfileImpl(string displayName, string personalStatus, string freeText, int flags, bool syncDisplayImageToOwner)
         {
-            if (NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile &&
-                NSMessageHandler.BotMode == false)
-            {
-                UpdateProfileLiteSync(PartnerScenario.RoamingIdentityChanged,
-                    NSMessageHandler.ContactService.Deltas.Profile.ResourceID,
-                    displayName,
-                    personalStatus,
-                    freeText,
-                    flags);
+            SingleSignOnManager.RenewIfExpired(NSMessageHandler, SSOTicketType.RPST);
+            string oldStatus = NSMessageHandler.Owner.PersonalMessage.Message;
 
-                // And get profile again
-                //NSMessageHandler.ContactService.Deltas.Profile = GetProfileImpl(PartnerScenario.RoamingIdentityChanged, syncDisplayImageToOwner);
-                if (NSMessageHandler.Owner != null)
+            LiveAtomAPILight.UpdatePersonalStatusAsync(personalStatus,
+                NSMessageHandler.Owner.CID,
+                NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.RPST].Ticket,
+                delegate(object sender, AtomRequestSucceedEventArgs succ)
                 {
-                    NSMessageHandler.Owner.GetCoreProfile();
+                    if (succ.Entry != null)
+                    {
+                        OnPersonalStatusUpdated(new PersonalStatusChangedEventArgs(oldStatus, succ.Entry.legacyPsm));
+                        NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage = succ.Entry.legacyPsm;
+                        NSMessageHandler.ContactService.Deltas.Save(true);
+                    }
+                },
+                delegate(object sender, ExceptionEventArgs ex)
+                {
+                    OnServiceOperationFailed(sender, new ServiceOperationFailedEventArgs("UpdatePersonalStatusAsync", ex.Exception));
                 }
-
-                // UpdateDynamicItem
-                //UpdateDynamicItemSync(PartnerScenario.RoamingIdentityChanged);
-
-            }
-            else
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Roaming disabled or invalid expression profile. Update skipped.");
-                NSMessageHandler.ContactService.Deltas.Profile.DisplayName = displayName;
-                NSMessageHandler.ContactService.Deltas.Profile.PersonalMessage = personalStatus;
-                NSMessageHandler.ContactService.Deltas.Save(true);
-            }
+                );
 
         }
 

@@ -68,6 +68,7 @@
     <Compile Include="Core\MimeDictionary.cs" />
     <Compile Include="DisplayImage.cs" />
     <Compile Include="IO\HttpAsyncDataDownloader.cs" />
+    <Compile Include="LiveConnectAPI\Reference.cs" />
     <Compile Include="MSNObjectCatalog.cs" />
     <Compile Include="P2P\SDGBridge.cs" />
     <Compile Include="P2P\SLPHandler.cs" />
@@ -122,6 +123,7 @@
     <Compile Include="Services\DirectoryService.cs" />
     <Compile Include="Services\DirectoryServiceBindingWrapper.cs" />
     <Compile Include="Services\IPEndPointCallback.cs" />
+    <Compile Include="LiveConnectAPI\LiveAtomAPILight.cs" />
     <Compile Include="Services\MSNService.cs" />
     <Compile Include="Core\NetworkMessage.cs" />
     <Compile Include="Core\NotificationMessage.cs" />

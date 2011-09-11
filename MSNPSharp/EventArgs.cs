@@ -37,6 +37,7 @@ namespace MSNPSharp
     using MSNPSharp.Apps;
     using MSNPSharp.Core;
     using MSNPSharp.P2P;
+using MSNPSharp.LiveConnectAPI.Atom;
 
     /// <summary>
     /// Notify the client the blocked/unblocked status changed.
@@ -316,33 +317,10 @@ namespace MSNPSharp
     }
 
     /// <summary>
-    /// Base class for all message received event args.
-    /// </summary>
-    [Serializable()]
-    public class BaseMessageReceivedEventArgs : BaseContactEventArgs
-    {
-        /// <summary>
-        /// The sender.
-        /// </summary>
-        public Contact Sender
-        {
-            get
-            {
-                return contact;
-            }
-        }
-
-        internal BaseMessageReceivedEventArgs(Contact sender)
-            : base(sender)
-        {
-        }
-    }
-
-    /// <summary>
     /// Used as event argument when a emoticon definition is send.
     /// </summary>
     [Serializable()]
-    public class EmoticonDefinitionEventArgs : BaseMessageReceivedEventArgs
+    public class EmoticonDefinitionEventArgs : MessageArrivedEventArgs
     {
         /// <summary>
         /// </summary>
@@ -363,13 +341,8 @@ namespace MSNPSharp
             }
         }
 
-        /// <summary>
-        /// Constructor.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="emoticon"></param>
-        public EmoticonDefinitionEventArgs(Contact sender, Emoticon emoticon)
-            : base(sender)
+        public EmoticonDefinitionEventArgs(Contact contact, Contact originalSender, RoutingInfo routingInfo, Emoticon emoticon)
+            : base(contact, originalSender, routingInfo)
         {
             this.emoticon = emoticon;
         }
@@ -586,6 +559,7 @@ namespace MSNPSharp
     {
         private Contact sender;
         private Contact originalSender;
+        private RoutingInfo routingInfo;
 
         /// <summary>
         /// The sender of message (type can be contact, circle or temporary group)
@@ -609,18 +583,27 @@ namespace MSNPSharp
             }
         }
 
-        protected MessageArrivedEventArgs(Contact contact, Contact originalSender)
+        public RoutingInfo RoutingInfo
+        {
+            get
+            {
+                return routingInfo;
+            }
+        }
+
+        protected MessageArrivedEventArgs(Contact contact, Contact originalSender, RoutingInfo routingInfo)
         {
             this.sender = contact;
             this.originalSender = originalSender;
+            this.routingInfo = routingInfo;
         }
     }
 
     [Serializable]
     public class NudgeArrivedEventArgs : MessageArrivedEventArgs
     {
-        public NudgeArrivedEventArgs(Contact contact, Contact originalSender)
-            : base(contact, originalSender)
+        public NudgeArrivedEventArgs(Contact contact, Contact originalSender, RoutingInfo routingInfo)
+            : base(contact, originalSender, routingInfo)
         {
         }
     }
@@ -628,8 +611,8 @@ namespace MSNPSharp
     [Serializable]
     public class TypingArrivedEventArgs : MessageArrivedEventArgs
     {
-        public TypingArrivedEventArgs(Contact contact, Contact originalSender)
-            : base(contact, originalSender)
+        public TypingArrivedEventArgs(Contact contact, Contact originalSender, RoutingInfo routingInfo)
+            : base(contact, originalSender, routingInfo)
         {
         }
     }
@@ -650,8 +633,8 @@ namespace MSNPSharp
             }
         }
 
-        public TextMessageArrivedEventArgs(Contact sender, TextMessage textMessage, Contact originalSender)
-            : base(sender, originalSender)
+        public TextMessageArrivedEventArgs(Contact sender, TextMessage textMessage, Contact originalSender, RoutingInfo routingInfo)
+            : base(sender, originalSender, routingInfo)
         {
             this.textMessage = textMessage;
         }
@@ -673,8 +656,8 @@ namespace MSNPSharp
             }
         }
 
-        public EmoticonArrivedEventArgs(Contact sender, Emoticon emoticon, Contact circle)
-            : base(sender, circle)
+        public EmoticonArrivedEventArgs(Contact sender, Emoticon emoticon, Contact circle, RoutingInfo routingInfo)
+            : base(sender, circle, routingInfo)
         {
             this.emoticon = emoticon;
         }
@@ -692,8 +675,8 @@ namespace MSNPSharp
             }
         }
 
-        public WinkEventArgs(Contact contact, Wink wink)
-            : base(contact, null)
+        public WinkEventArgs(Contact contact, Wink wink, RoutingInfo routingInfo)
+            : base(contact, null, routingInfo)
         {
             this.wink = wink;
         }
@@ -981,5 +964,55 @@ namespace MSNPSharp
             Parties = parties;
         }
         
+    }
+
+    internal class AtomRequestSucceedEventArgs : EventArgs
+    {
+        private entryType entry = null;
+
+        /// <summary>
+        /// The return entry of atom request.
+        /// </summary>
+        public entryType Entry
+        {
+            get { return entry; }
+            private set { entry = value; }
+        }
+
+        public AtomRequestSucceedEventArgs(entryType entry)
+        {
+            Entry = entry;
+        }
+    }
+
+    public class PersonalStatusChangedEventArgs : EventArgs
+    {
+        private string oldStatusText = string.Empty;
+
+        /// <summary>
+        /// The previous personal status.
+        /// </summary>
+        public string OldStatusText
+        {
+            get { return oldStatusText; }
+            private set { oldStatusText = value; }
+        }
+
+        private string newStatusText = string.Empty;
+
+        /// <summary>
+        /// Current sttaus text after changed.
+        /// </summary>
+        public string NewStatusText
+        {
+            get { return newStatusText; }
+            private set { newStatusText = value; }
+        }
+
+        public PersonalStatusChangedEventArgs(string oldText, string newText)
+        {
+            OldStatusText = oldText;
+            NewStatusText = newText;
+        }
     }
 };
