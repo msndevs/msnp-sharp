@@ -304,21 +304,45 @@ namespace MSNPSharp
             {
                 OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
 
-                if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                if (e.Cancelled || NSMessageHandler.MSNTicket == MSNTicket.Empty)
                     return;
 
-                if (!e.Cancelled)
+                if (callback != null)
                 {
-                    // No error, creates a new contact or returns existing.
-                    if (callback != null)
-                    {
-                        callback(service, e);
-                    }
+                    callback(service, e);
                 }
             };
 
             RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, createContactObject, request));
         }
+
+        private void UpdateContactAsync(ContactType contact, string abId, ABContactUpdateCompletedEventHandler callback)
+        {
+            ABContactUpdateRequestType request = new ABContactUpdateRequestType();
+            request.abId = abId;
+            request.contacts = new ContactType[] { contact };
+            request.options = new ABContactUpdateRequestTypeOptions();
+            request.options.EnableAllowListManagementSpecified = true;
+            request.options.EnableAllowListManagement = true;
+
+            MsnServiceState ABContactUpdateObject = new MsnServiceState(contact.contactInfo.isMessengerUser ? PartnerScenario.ContactSave : PartnerScenario.Timer, "ABContactUpdate", true);
+            ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABContactUpdateObject);
+            abService.ABContactUpdateCompleted += delegate(object service, ABContactUpdateCompletedEventArgs e)
+            {
+                OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
+
+                if (e.Cancelled || NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
+
+                if (callback != null)
+                {
+                    callback(service, e);
+                }
+            };
+
+            RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, ABContactUpdateObject, request));
+        }
+
 
         private void BreakConnectionAsync(Guid contactGuid, Guid abID, bool block, bool delete,
             BreakConnectionCompletedEventHandler callback)
@@ -344,15 +368,12 @@ namespace MSNPSharp
             {
                 OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
 
-                if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                if (e.Cancelled || NSMessageHandler.MSNTicket == MSNTicket.Empty)
                     return;
 
-                if (!e.Cancelled)
+                if (callback != null)
                 {
-                    if (callback != null)
-                    {
-                        callback(sender, e);
-                    }
+                    callback(sender, e);
                 }
             };
 
@@ -398,19 +419,404 @@ namespace MSNPSharp
             {
                 OnAfterCompleted(new ServiceOperationEventArgs(abServiceBinding, MsnServiceType.AB, e));
 
-                if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                if (e.Cancelled || NSMessageHandler.MSNTicket == MSNTicket.Empty)
                     return;
 
-                if (!e.Cancelled)
+                if (callback != null)
                 {
-                    if (callback != null)
-                    {
-                        callback(wlcSender, e);
-                    }
+                    callback(wlcSender, e);
                 }
             };
 
             RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abServiceBinding, MsnServiceType.AB, manageWLConnectionObject, wlconnectionRequest));
+        }
+
+
+        private void ABGroupAddAsync(string groupName, ABGroupAddCompletedEventHandler callback)
+        {
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
+            {
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABGroupAdd", new MSNPSharpException("You don't have access right on this action anymore.")));
+                return;
+            }
+
+            ABGroupAddRequestType request = new ABGroupAddRequestType();
+            request.abId = WebServiceConstants.MessengerIndividualAddressBookId;
+            request.groupAddOptions = new ABGroupAddRequestTypeGroupAddOptions();
+            request.groupAddOptions.fRenameOnMsgrConflict = false;
+            request.groupAddOptions.fRenameOnMsgrConflictSpecified = true;
+            request.groupInfo = new ABGroupAddRequestTypeGroupInfo();
+            request.groupInfo.GroupInfo = new groupInfoType();
+            request.groupInfo.GroupInfo.name = groupName;
+            request.groupInfo.GroupInfo.fMessenger = false;
+            request.groupInfo.GroupInfo.fMessengerSpecified = true;
+            request.groupInfo.GroupInfo.groupType = WebServiceConstants.MessengerGroupType;
+            request.groupInfo.GroupInfo.annotations = new Annotation[] { new Annotation() };
+            request.groupInfo.GroupInfo.annotations[0].Name = AnnotationNames.MSN_IM_Display;
+            request.groupInfo.GroupInfo.annotations[0].Value = "1";
+
+            MsnServiceState ABGroupAddObject = new MsnServiceState(PartnerScenario.GroupSave, "ABGroupAdd", true);
+            ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABGroupAddObject);
+            abService.ABGroupAddCompleted += delegate(object service, ABGroupAddCompletedEventArgs e)
+            {
+                OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
+
+                if (e.Cancelled || NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
+
+                if (callback != null)
+                {
+                    callback(service, e);
+                }
+            };
+
+            RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, ABGroupAddObject, request));
+        }
+
+
+        private void ABGroupUpdateAsync(ContactGroup group, string newGroupName, ABGroupUpdateCompletedEventHandler callback)
+        {
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
+            {
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABGroupUpdate", new MSNPSharpException("You don't have access right on this action anymore.")));
+                return;
+            }
+
+            ABGroupUpdateRequestType request = new ABGroupUpdateRequestType();
+            request.abId = WebServiceConstants.MessengerIndividualAddressBookId;
+            request.groups = new GroupType[1] { new GroupType() };
+            request.groups[0].groupId = group.Guid;
+            request.groups[0].propertiesChanged = PropertyString.GroupName; //"GroupName";
+            request.groups[0].groupInfo = new groupInfoType();
+            request.groups[0].groupInfo.name = newGroupName;
+
+            MsnServiceState ABGroupUpdateObject = new MsnServiceState(PartnerScenario.GroupSave, "ABGroupUpdate", true);
+            ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABGroupUpdateObject);
+            abService.ABGroupUpdateCompleted += delegate(object service, ABGroupUpdateCompletedEventArgs e)
+            {
+                OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
+
+                if (e.Cancelled || NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
+
+                if (callback != null)
+                {
+                    callback(service, e);
+                }
+            };
+
+            RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, ABGroupUpdateObject, request));
+        }
+
+
+        private void ABGroupDeleteAsync(ContactGroup contactGroup, ABGroupDeleteCompletedEventHandler callback)
+        {
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
+            {
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABGroupDelete", new MSNPSharpException("You don't have access right on this action anymore.")));
+                return;
+            }
+
+            ABGroupDeleteRequestType request = new ABGroupDeleteRequestType();
+            request.abId = WebServiceConstants.MessengerIndividualAddressBookId;
+            request.groupFilter = new groupFilterType();
+            request.groupFilter.groupIds = new string[] { contactGroup.Guid };
+
+            MsnServiceState ABGroupDeleteObject = new MsnServiceState(PartnerScenario.Timer, "ABGroupDelete", true);
+            ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABGroupDeleteObject);
+            abService.ABGroupDeleteCompleted += delegate(object service, ABGroupDeleteCompletedEventArgs e)
+            {
+                OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
+
+                if (e.Cancelled || NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
+
+                if (callback != null)
+                {
+                    callback(service, e);
+                }
+            };
+
+            RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, ABGroupDeleteObject, request));
+        }
+
+        private void ABGroupContactAddAsync(Contact contact, ContactGroup group, ABGroupContactAddCompletedEventHandler callback)
+        {
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
+            {
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABGroupContactAdd", new MSNPSharpException("You don't have access right on this action anymore.")));
+                return;
+            }
+
+            ABGroupContactAddRequestType request = new ABGroupContactAddRequestType();
+            request.abId = WebServiceConstants.MessengerIndividualAddressBookId;
+            request.groupFilter = new groupFilterType();
+            request.groupFilter.groupIds = new string[] { group.Guid };
+            request.contacts = new ContactType[] { new ContactType() };
+            request.contacts[0].contactId = contact.Guid.ToString();
+
+            MsnServiceState ABGroupContactAddObject = new MsnServiceState(PartnerScenario.GroupSave, "ABGroupContactAdd", true);
+            ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABGroupContactAddObject);
+            abService.ABGroupContactAddCompleted += delegate(object service, ABGroupContactAddCompletedEventArgs e)
+            {
+                OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
+
+                if (e.Cancelled || NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
+
+                if (callback != null)
+                {
+                    callback(service, e);
+                }
+            };
+
+            RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, ABGroupContactAddObject, request));
+        }
+
+        private void ABGroupContactDeleteAsync(Contact contact, ContactGroup group, ABGroupContactDeleteCompletedEventHandler callback)
+        {
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
+            {
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABGroupContactDelete", new MSNPSharpException("You don't have access right on this action anymore.")));
+                return;
+            }
+
+            ABGroupContactDeleteRequestType request = new ABGroupContactDeleteRequestType();
+            request.abId = WebServiceConstants.MessengerIndividualAddressBookId;
+            request.groupFilter = new groupFilterType();
+            request.groupFilter.groupIds = new string[] { group.Guid };
+            request.contacts = new ContactType[] { new ContactType() };
+            request.contacts[0].contactId = contact.Guid.ToString();
+
+            MsnServiceState ABGroupContactDelete = new MsnServiceState(PartnerScenario.GroupSave, "ABGroupContactDelete", true);
+            ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, ABGroupContactDelete);
+            abService.ABGroupContactDeleteCompleted += delegate(object service, ABGroupContactDeleteCompletedEventArgs e)
+            {
+                OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
+
+                if (e.Cancelled || NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
+
+                if (callback != null)
+                {
+                    callback(service, e);
+                }
+            };
+
+            RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, ABGroupContactDelete, request));
+        }
+
+
+        private void AddMemberAsync(Contact contact, RoleLists list, AddMemberCompletedEventHandler callback)
+        {
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
+            {
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("AddMember", new MSNPSharpException("You don't have access right on this action anymore.")));
+                return;
+            }
+
+            AddMemberRequestType addMemberRequest = new AddMemberRequestType();
+            addMemberRequest.serviceHandle = new HandleType();
+
+            Service messengerService = AddressBook.SelectTargetService(ServiceFilterType.Messenger);
+            addMemberRequest.serviceHandle.Id = messengerService.Id.ToString();
+            addMemberRequest.serviceHandle.Type = messengerService.ServiceType;
+
+            Membership memberShip = new Membership();
+            memberShip.MemberRole = GetMemberRole(list);
+            BaseMember member = new BaseMember();
+
+            if (contact.ClientType == IMAddressInfoType.WindowsLive)
+            {
+                member = new PassportMember();
+                PassportMember passportMember = member as PassportMember;
+                passportMember.PassportName = contact.Account;
+                passportMember.State = MemberState.Accepted;
+                passportMember.Type = MembershipType.Passport;
+            }
+            else if (contact.ClientType == IMAddressInfoType.Yahoo)
+            {
+                member = new EmailMember();
+                EmailMember emailMember = member as EmailMember;
+                emailMember.State = MemberState.Accepted;
+                emailMember.Type = MembershipType.Email;
+                emailMember.Email = contact.Account;
+                emailMember.Annotations = new Annotation[] { new Annotation() };
+                emailMember.Annotations[0].Name = AnnotationNames.MSN_IM_BuddyType;
+                emailMember.Annotations[0].Value = "32:";
+            }
+            else if (contact.ClientType == IMAddressInfoType.Telephone)
+            {
+                member = new PhoneMember();
+                PhoneMember phoneMember = member as PhoneMember;
+                phoneMember.State = MemberState.Accepted;
+                phoneMember.Type = MembershipType.Phone;
+                phoneMember.PhoneNumber = contact.Account;
+            }
+            else if (contact.ClientType == IMAddressInfoType.Circle)
+            {
+                member = new CircleMember();
+                CircleMember circleMember = member as CircleMember;
+                circleMember.Type = MembershipType.Circle;
+                circleMember.State = MemberState.Accepted;
+                circleMember.CircleId = contact.AddressBookId.ToString("D").ToLowerInvariant();
+            }
+
+            memberShip.Members = new BaseMember[] { member };
+            addMemberRequest.memberships = new Membership[] { memberShip };
+
+            MsnServiceState AddMemberObject = new MsnServiceState((list == RoleLists.Reverse) ? PartnerScenario.ContactMsgrAPI : PartnerScenario.BlockUnblock, "AddMember", true);
+            SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, AddMemberObject);
+            sharingService.AddMemberCompleted += delegate(object service, AddMemberCompletedEventArgs e)
+            {
+                OnAfterCompleted(new ServiceOperationEventArgs(sharingService, MsnServiceType.Sharing, e));
+
+                if (e.Cancelled || NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
+
+                // Update AB
+                AddressBook.AddMemberhip(ServiceFilterType.Messenger, contact.Account, contact.ClientType, GetMemberRole(list), member, Scenario.ContactServeAPI);
+
+                if (callback != null)
+                {
+                    callback(service, e);
+                }
+            };
+
+            RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(sharingService, MsnServiceType.Sharing, AddMemberObject, addMemberRequest));
+        }
+
+
+
+        private void DeleteMemberAsync(Contact contact, RoleLists list, DeleteMemberCompletedEventHandler callback)
+        {
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
+            {
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("DeleteMember", new MSNPSharpException("You don't have access right on this action anymore.")));
+                return;
+            }
+
+            DeleteMemberRequestType deleteMemberRequest = new DeleteMemberRequestType();
+            deleteMemberRequest.serviceHandle = new HandleType();
+
+            Service messengerService = AddressBook.SelectTargetService(ServiceFilterType.Messenger);
+            deleteMemberRequest.serviceHandle.Id = messengerService.Id.ToString();   //Always set to 0 ??
+            deleteMemberRequest.serviceHandle.Type = messengerService.ServiceType;
+
+            Membership memberShip = new Membership();
+            memberShip.MemberRole = GetMemberRole(list);
+
+            BaseMember deleteMember = null; // BaseMember is an abstract type, so we cannot create a new instance.
+            // If we have a MembershipId different from 0, just use it. Otherwise, use email or phone number. 
+            BaseMember baseMember = AddressBook.SelectBaseMember(ServiceFilterType.Messenger, contact.Account, contact.ClientType, GetMemberRole(list));
+            int membershipId = (baseMember == null || String.IsNullOrEmpty(baseMember.MembershipId)) ? 0 : int.Parse(baseMember.MembershipId);
+
+            switch (contact.ClientType)
+            {
+                case IMAddressInfoType.WindowsLive:
+
+                    deleteMember = new PassportMember();
+                    deleteMember.Type = (baseMember == null) ? MembershipType.Passport : baseMember.Type;
+                    deleteMember.State = (baseMember == null) ? MemberState.Accepted : baseMember.State;
+                    if (membershipId == 0)
+                    {
+                        (deleteMember as PassportMember).PassportName = contact.Account;
+                    }
+                    break;
+
+                case IMAddressInfoType.Yahoo:
+
+                    deleteMember = new EmailMember();
+                    deleteMember.Type = (baseMember == null) ? MembershipType.Email : baseMember.Type;
+                    deleteMember.State = (baseMember == null) ? MemberState.Accepted : baseMember.State;
+                    if (membershipId == 0)
+                    {
+                        (deleteMember as EmailMember).Email = contact.Account;
+                    }
+                    break;
+
+                case IMAddressInfoType.Telephone:
+
+                    deleteMember = new PhoneMember();
+                    deleteMember.Type = (baseMember == null) ? MembershipType.Phone : baseMember.Type;
+                    deleteMember.State = (baseMember == null) ? MemberState.Accepted : baseMember.State;
+                    if (membershipId == 0)
+                    {
+                        (deleteMember as PhoneMember).PhoneNumber = contact.Account;
+                    }
+                    break;
+
+                case IMAddressInfoType.Circle:
+                    deleteMember = new CircleMember();
+                    deleteMember.Type = (baseMember == null) ? MembershipType.Circle : baseMember.Type;
+                    deleteMember.State = (baseMember == null) ? MemberState.Accepted : baseMember.State;
+                    (deleteMember as CircleMember).CircleId = contact.AddressBookId.ToString("D").ToLowerInvariant();
+                    break;
+            }
+
+            deleteMember.MembershipId = membershipId.ToString();
+
+            memberShip.Members = new BaseMember[] { deleteMember };
+            deleteMemberRequest.memberships = new Membership[] { memberShip };
+
+            MsnServiceState DeleteMemberObject = new MsnServiceState((list == RoleLists.Pending) ? PartnerScenario.ContactMsgrAPI : PartnerScenario.BlockUnblock, "DeleteMember", true);
+            SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, DeleteMemberObject);
+            sharingService.DeleteMemberCompleted += delegate(object service, DeleteMemberCompletedEventArgs e)
+            {
+                OnAfterCompleted(new ServiceOperationEventArgs(sharingService, MsnServiceType.Sharing, e));
+
+                if (e.Cancelled || NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
+
+                // Update AB
+                AddressBook.RemoveMemberhip(ServiceFilterType.Messenger, contact.Account, contact.ClientType, GetMemberRole(list), Scenario.ContactServeAPI);
+
+                if (callback != null)
+                {
+                    callback(service, e);
+                }
+            };
+
+            RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(sharingService, MsnServiceType.Sharing, DeleteMemberObject, deleteMemberRequest));
+        }
+
+
+
+        private void CreateCircleAsync(string circleName, CreateCircleCompletedEventHandler callback)
+        {
+            string addressBookId = string.Empty;
+
+            //This is M$ style, you will never guess out the meaning of these numbers.
+            ContentInfoType properties = new ContentInfoType();
+            properties.Domain = 1;
+            properties.HostedDomain = Contact.DefaultHostDomain;
+            properties.Type = 2;
+            properties.MembershipAccess = 0;
+            properties.IsPresenceEnabled = true;
+            properties.RequestMembershipOption = 2;
+            properties.DisplayName = circleName;
+
+            CreateCircleRequestType request = new CreateCircleRequestType();
+            request.properties = properties;
+            request.callerInfo = new callerInfoType();
+            request.callerInfo.PublicDisplayName = NSMessageHandler.Owner.Name == string.Empty ? NSMessageHandler.Owner.Account : NSMessageHandler.Owner.Name;
+
+            MsnServiceState createCircleObject = new MsnServiceState(PartnerScenario.CircleSave, "CreateCircle", true);
+            SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, createCircleObject);
+            sharingService.CreateCircleCompleted += delegate(object sender, CreateCircleCompletedEventArgs e)
+            {
+                OnAfterCompleted(new ServiceOperationEventArgs(sharingService, MsnServiceType.Sharing, e));
+
+                if (e.Cancelled || NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
+
+                if (callback != null)
+                {
+                    callback(sender, e);
+                }
+            };
+
+            RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(sharingService, MsnServiceType.Sharing, createCircleObject, request));
         }
 
         private void AddServiceAsync(string serviceName, AddServiceCompletedEventHandler callback)
@@ -434,7 +840,7 @@ namespace MSNPSharp
                 {
                     OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.Sharing, e));
 
-                    if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    if (e.Cancelled || NSMessageHandler.MSNTicket == MSNTicket.Empty)
                         return;
 
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
