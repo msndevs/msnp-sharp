@@ -608,7 +608,7 @@ namespace MSNPSharp
                         break;
 
                     case SSOTicketType.RPST:
-                        AuthenticationAdd("RPSTAuth.live.com", "MBI");
+                        AuthenticationAdd("rpstauth.live.com", "MBI");
                         break;
                 }
             }
@@ -939,7 +939,7 @@ namespace MSNPSharp
                     case "directory.services.live.com":
                         ticketype = SSOTicketType.Directory;
                         break;
-                    case "RPSTAuth.live.com":
+                    case "rpstauth.live.com":
                         ticketype = SSOTicketType.RPST;
                         break;
                 }
