@@ -58,6 +58,8 @@ namespace MSNPSharp.P2P
     /// </remarks>
     public class SDGBridge : P2PBridge
     {
+        private const int __queueSize = 5;
+
         private Dictionary<int, P2PMessageSessionEventArgs> p2pAckMessages = new Dictionary<int, P2PMessageSessionEventArgs>();
 
         public override bool IsOpen
@@ -107,7 +109,7 @@ namespace MSNPSharp.P2P
         }
 
         public SDGBridge(NSMessageHandler nsHandler)
-            : base(8, nsHandler)
+            : base(__queueSize, nsHandler)
         {
         }
 
