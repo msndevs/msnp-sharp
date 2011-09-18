@@ -838,18 +838,19 @@ namespace MSNPSharp
                         BinarySemaphore.WaitOne();
 
                         // Addressbook re-defined here, because the reference can be changed.
-                        // Findmembershipasync can delete addressbook if addressbook sync is required.
+                        // FindMembershipAsync can delete addressbook if addressbook sync is required.
                         XMLContactList xmlcl;
+                        FindMembershipResultType fmResult;
 
                         if ((null != (xmlcl = AddressBook)) &&
-                            (null != fmcea.Result.FindMembershipResult))
+                            (null != (fmResult = fmcea.Result.FindMembershipResult)))
                         {
                             BinarySemaphore.Release();
                             try
                             {
                                 // Following line is horrible for semaphore usage...
                                 xmlcl
-                                    .Merge(fmcea.Result.FindMembershipResult)
+                                    .Merge(fmResult)
                                     .Save();
                             }
                             catch (Exception unknownException)
@@ -936,7 +937,7 @@ namespace MSNPSharp
             }
 
             ABFindContactsPagedAsync(partnerScenario, abHandle,
-                // Register callback for success/error. e.Cancelled handled by FindMembershipAsync.
+                // Register callback for success/error. e.Cancelled handled by ABFindContactsPagedAsync.
                 delegate(object sender, ABFindContactsPagedCompletedEventArgs abfcpcea)
                 {
                     if (abfcpcea.Error == null /* No error */)
@@ -944,35 +945,31 @@ namespace MSNPSharp
                         BinarySemaphore.WaitOne();
 
                         // Addressbook re-defined here, because the reference can be changed.
-                        // Findmembershipasync can delete addressbook if addressbook sync is required.
+                        // ABFindContactsPagedAsync can delete addressbook if addressbook sync is required.
                         XMLContactList xmlcl;
+                        ABFindContactsPagedResultType forwardList;
+                        String circleResult = null;
 
-                        if (((xmlcl = AddressBook) != null) &&
-                            abfcpcea.Result.ABFindContactsPagedResult != null)
+                        if ((null != (xmlcl = AddressBook)) &&
+                            (null != (forwardList = abfcpcea.Result.ABFindContactsPagedResult)))
                         {
-                            string lowerId = WebServiceConstants.MessengerIndividualAddressBookId;
+                            // Following line is horrible for semaphore usage...
+                            xmlcl
+                                .Merge(forwardList)
+                                .Save();
 
-                            if (abfcpcea.Result.ABFindContactsPagedResult.Ab != null)
-                                lowerId = abfcpcea.Result.ABFindContactsPagedResult.Ab.abId.ToLowerInvariant();
-
-                            if (lowerId == WebServiceConstants.MessengerIndividualAddressBookId)
+                            if (forwardList.CircleResult != null)
                             {
-                                xmlcl.MergeIndividualAddressBook(abfcpcea.Result.ABFindContactsPagedResult);
-                            }
-                            else
-                            {
-                                xmlcl.MergeGroupAddressBook(abfcpcea.Result.ABFindContactsPagedResult);
-                            }
-
-                            xmlcl.Save();
-
-                            if (abfcpcea.Result.ABFindContactsPagedResult.CircleResult != null)
-                            {
-                                NSMessageHandler.SendSHAAMessage(abfcpcea.Result.ABFindContactsPagedResult.CircleResult.CircleTicket);
+                                circleResult = forwardList.CircleResult.CircleTicket;
                             }
                         }
 
                         BinarySemaphore.Release();
+
+                        if (!String.IsNullOrEmpty(circleResult))
+                        {
+                            NSMessageHandler.SendSHAAMessage(circleResult);
+                        }
 
                         if (onSuccess != null)
                         {
@@ -1163,7 +1160,7 @@ namespace MSNPSharp
                 Guid.Empty,
                 delegate(object service, CreateContactCompletedEventArgs cce)
                 {
-                    try
+                    if (cce.Error == null)
                     {
                         // Get windows live contact (yes)
                         Contact contact = NSMessageHandler.ContactList.GetContactWithCreate(account, IMAddressInfoType.WindowsLive);
@@ -1215,12 +1212,6 @@ namespace MSNPSharp
                                             });
                                     });
                             });
-                    }
-                    catch (Exception ex)
-                    {
-                        //Usually is Member does not exist.
-                        OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("CreateContactAsync", ex));
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "CreateContactAsync Error: " + ex.Message);
                     }
                 });
         }
@@ -2360,7 +2351,6 @@ namespace MSNPSharp
                 Deltas = null;
                 abSynchronized = false;
             }
-
             binarySemaphore.Release();
         }
     }

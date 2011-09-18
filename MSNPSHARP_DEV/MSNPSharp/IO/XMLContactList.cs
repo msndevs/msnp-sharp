@@ -239,7 +239,7 @@ namespace MSNPSharp.IO
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "[Initialize Error]: update contact error.");
                     }
                 }
-                
+
                 // Get all remote network contacts
                 CreateContactsFromShellContact();
             }
@@ -1001,27 +1001,20 @@ namespace MSNPSharp.IO
         private SerializableDictionary<string, string> myproperties = new SerializableDictionary<string, string>(0);
         private SerializableDictionary<Guid, GroupType> groups = new SerializableDictionary<Guid, GroupType>(0);
         private SerializableDictionary<string, SerializableDictionary<Guid, ContactType>> abcontacts = new SerializableDictionary<string, SerializableDictionary<Guid, ContactType>>(0);
-
         private SerializableDictionary<string, CircleInverseInfoType> circleResults = new SerializableDictionary<string, CircleInverseInfoType>(0);
-        private SerializableDictionary<long, string> wlConnections = new SerializableDictionary<long, string>(0);
-
-        private SerializableDictionary<string, ContactType> hiddenRepresentatives = new SerializableDictionary<string, ContactType>(0);
 
         [NonSerialized]
         private Dictionary<long, ContactType> contactTable = new Dictionary<long, ContactType>();
-
-        [NonSerialized]
-        private Dictionary<string, long> wlInverseConnections = new Dictionary<string, long>();
 
         [NonSerialized]
         private Dictionary<Guid, Contact> pendingAcceptionCircleList = new Dictionary<Guid, Contact>();
 
         [NonSerialized]
         private Dictionary<Guid, string> pendingCreateCircleList = new Dictionary<Guid, string>();
-        
+
         [NonSerialized]
         private Dictionary<Guid, KeyValuePair<Contact, ContactType>> messengerContactLink = new Dictionary<Guid, KeyValuePair<Contact, ContactType>>();
-        
+
         [NonSerialized]
         private Dictionary<Guid, List<ContactType>> shellContactLink = new Dictionary<Guid, List<ContactType>>();
 
@@ -1035,9 +1028,9 @@ namespace MSNPSharp.IO
         /// </summary>
         internal List<ContactType> IndividualShellContacts
         {
-            get 
-            { 
-                return individualShellContacts; 
+            get
+            {
+                return individualShellContacts;
             }
         }
 
@@ -1051,7 +1044,7 @@ namespace MSNPSharp.IO
                 return messengerContactLink;
             }
         }
-        
+
         /// <summary>
         /// These contacts are "Shells" of their corresponding messenger contact but in different network.
         /// For example, a user have both messenger and facebook account, then on his/her friend's contact list,
@@ -1087,46 +1080,6 @@ namespace MSNPSharp.IO
             get
             {
                 return pendingAcceptionCircleList;
-            }
-        }
-
-
-        /// <summary>
-        /// The relationship mapping from addressbook Ids to hidden represtative's CIDs.
-        /// </summary>
-        internal Dictionary<string, long> WLInverseConnections
-        {
-            get
-            {
-                return wlInverseConnections;
-            }
-        }
-
-        public SerializableDictionary<string, ContactType> HiddenRepresentatives
-        {
-            get
-            {
-                return hiddenRepresentatives;
-            }
-            set
-            {
-                hiddenRepresentatives = value;
-            }
-        }
-
-        /// <summary>
-        /// The relationship mapping from hidden represtative's CIDs to addressbook Ids.
-        /// </summary>
-        public SerializableDictionary<long, string> WLConnections
-        {
-            get
-            {
-                return wlConnections;
-            }
-
-            set
-            {
-                wlConnections = value;
             }
         }
 
@@ -1322,9 +1275,17 @@ namespace MSNPSharp.IO
         {
             Initialize();
 
-            MergeIndividualAddressBook(forwardList);
-
-            MergeGroupAddressBook(forwardList);
+            if (forwardList != null && forwardList.Ab != null)
+            {
+                if (WebServiceConstants.MessengerIndividualAddressBookId == forwardList.Ab.abId.ToLowerInvariant())
+                {
+                    MergeIndividualAddressBook(forwardList);
+                }
+                else
+                {
+                    MergeGroupAddressBook(forwardList);
+                }
+            }
 
             return this;
         }
@@ -1333,7 +1294,7 @@ namespace MSNPSharp.IO
         /// Update members for circles.
         /// </summary>
         /// <param name="forwardList"></param>
-        internal void MergeGroupAddressBook(ABFindContactsPagedResultType forwardList)
+        private void MergeGroupAddressBook(ABFindContactsPagedResultType forwardList)
         {
             lock (SyncObject)
             {
@@ -1648,16 +1609,15 @@ namespace MSNPSharp.IO
             return true;
         }
 
-        internal void MergeIndividualAddressBook(ABFindContactsPagedResultType forwardList)
+        private void MergeIndividualAddressBook(ABFindContactsPagedResultType forwardList)
         {
             lock (SyncObject)
             {
                 #region Get Default AddressBook Information
 
-                if (forwardList.Ab != null &&
+                if (forwardList.Ab != null && forwardList.Ab.abId == WebServiceConstants.MessengerIndividualAddressBookId &&
                         WebServiceDateTimeConverter.ConvertToDateTime(GetAddressBookLastChange(forwardList.Ab.abId)) <
-                        WebServiceDateTimeConverter.ConvertToDateTime(forwardList.Ab.lastChange)
-                        && forwardList.Ab.abId == WebServiceConstants.MessengerIndividualAddressBookId)
+                        WebServiceDateTimeConverter.ConvertToDateTime(forwardList.Ab.lastChange))
                 {
                     Scenario scene = Scenario.None;
 
@@ -1855,13 +1815,13 @@ namespace MSNPSharp.IO
                             }
                         }
                         #endregion
-                        
-                        
+
+
                         #region
                         CreateContactsFromShellContact();
-                        
+
                         #endregion
-                        
+
                     }
 
                     if (forwardList.Ab != null)
@@ -2316,7 +2276,7 @@ namespace MSNPSharp.IO
                 return gatewayContact;
             }
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, 
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                 "[Warning] Unknown Getway found, please implement this gateway:\r\n" +
                 "DomainTag: " + networkInfo.DomainTag + "\r\n" +
                 "DomainId: " + networkInfo.DomainId + "\r\n" +
@@ -2339,19 +2299,19 @@ namespace MSNPSharp.IO
 
             lock (IndividualShellContacts)
             {
-                foreach(ContactType individualShellContact in IndividualShellContacts)
+                foreach (ContactType individualShellContact in IndividualShellContacts)
                 {
                     CreateContactFromIndividualShellContact(individualShellContact);
                 }
             }
         }
-        
+
         private void CreateContactsFromLinkedShellContact(ContactType contactType)
         {
-            if(contactType.contactInfo.LinkInfo != null)
+            if (contactType.contactInfo.LinkInfo != null)
             {
                 Guid persionID = new Guid(contactType.contactInfo.LinkInfo.PersonID);
-                
+
                 CreateContactFromLinkedShellContact(persionID, SourceId.FaceBook);
                 CreateContactFromLinkedShellContact(persionID, SourceId.LinkedIn);
                 CreateContactFromLinkedShellContact(persionID, SourceId.MySpace);
@@ -2453,7 +2413,7 @@ namespace MSNPSharp.IO
 
             return facebookContact;
         }
-        
+
         /// <summary>
         /// Convert all shell contacts to their corresponding contacts in different networks. 
         /// </summary>
@@ -2469,14 +2429,14 @@ namespace MSNPSharp.IO
         private Contact CreateContactFromLinkedShellContact(Guid personID, string sourceID)
         {
 
-            if(!MessengerContactLink.ContainsKey(personID))
+            if (!MessengerContactLink.ContainsKey(personID))
             {
                 return null;
             }
 
             Contact messengerContact = MessengerContactLink[personID].Key;
 
-            if(messengerContact == null)
+            if (messengerContact == null)
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Create Contact from ShellContact error, Messenger Contact is null.");
                 return null;
@@ -2533,7 +2493,7 @@ namespace MSNPSharp.IO
                         }
                     }
 
-                    return null; 
+                    return null;
                 }
 
                 #endregion
@@ -2562,7 +2522,7 @@ namespace MSNPSharp.IO
                     }
                 }
             }
-            
+
             return null;
         }
 
@@ -2593,9 +2553,9 @@ namespace MSNPSharp.IO
             bool isDefaultAddressBook = (lowerId == null || lowerId == WebServiceConstants.MessengerIndividualAddressBookId);
             bool isHidden = contactType.contactInfo.IsHiddenSpecified ? contactType.contactInfo.IsHidden : false;
             bool isShellContact = contactType.contactInfo.IsShellContactSpecified ? contactType.contactInfo.IsShellContact : false;
-            
-            
-            if(isShellContact)
+
+
+            if (isShellContact)
             {
                 if (contactInfo.LinkInfo != null)
                 {
@@ -2622,7 +2582,7 @@ namespace MSNPSharp.IO
                     }
                 }
             }
-            
+
             if (contactInfo.emails != null && account == null && contactInfo != null)
             {
                 foreach (contactEmailType cet in contactInfo.emails)
@@ -2861,7 +2821,7 @@ namespace MSNPSharp.IO
                     {
                         foreach (NetworkInfoType networkInfo in contactInfo.NetworkInfoList)
                         {
-                            if (!String.IsNullOrEmpty(networkInfo.DomainTag) && 
+                            if (!String.IsNullOrEmpty(networkInfo.DomainTag) &&
                                 networkInfo.DomainTag != WebServiceConstants.NullDomainTag &&
                                 networkInfo.SourceId == SourceId.FaceBook &&
                                 networkInfo.DomainId == DomainIds.FaceBookDomain)
