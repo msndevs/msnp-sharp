@@ -131,6 +131,8 @@ namespace MSNPSharp
             set
             {
                 personalMessage = value;
+                if(MediaType != MediaType.None)
+                    MediaType = MediaType.None;
             }
         }
 
