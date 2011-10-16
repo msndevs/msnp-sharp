@@ -1287,7 +1287,7 @@ namespace MSNPSharp
                             {
                                 string account = contactNode.Attributes["n"].Value + "@" + domain;
                                 IMAddressInfoType type = (IMAddressInfoType)int.Parse(contactNode.Attributes["t"].Value);
-                                RoleLists list = (RoleLists)int.Parse(contactNode.Attributes["l"].Value);
+                                int list = int.Parse(contactNode.Attributes["l"].Value);
                                 string displayName = account;
                                 try
                                 {
@@ -1297,12 +1297,17 @@ namespace MSNPSharp
                                 {
                                 }
 
-                                if (list == RoleLists.Reverse)
+                                if (list == 8 /*RoleLists.Reverse*/)
                                 {
                                     Contact contact = ContactList.GetContact(account, displayName, type);
-                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "ADL received, ReverseAdded event fired. Contact is in list: " + contact.Lists.ToString());
-                                    contact.Lists |= RoleLists.Reverse;
-                                    ContactService.OnReverseAdded(new ContactEventArgs(contact));
+                                    if (!contact.OnPendingList)
+                                    {
+                                        contact.Lists |= RoleLists.Pending;
+                                        ContactService.OnFriendshipRequested(new ContactEventArgs(contact));
+                                    }
+
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "ADL received, FriendshipRequested event fired. Contact is in list: " + contact.Lists.ToString());
+                                    
                                 }
 
                                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, account + ":" + type + " was added to your " + list.ToString(), GetType().Name);

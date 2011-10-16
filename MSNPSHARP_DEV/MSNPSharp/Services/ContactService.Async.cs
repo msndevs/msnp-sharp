@@ -670,7 +670,7 @@ namespace MSNPSharp
             memberShip.Members = new BaseMember[] { member };
             addMemberRequest.memberships = new Membership[] { memberShip };
 
-            MsnServiceState AddMemberObject = new MsnServiceState((list == RoleLists.Reverse) ? PartnerScenario.ContactMsgrAPI : PartnerScenario.BlockUnblock, "AddMember", true);
+            MsnServiceState AddMemberObject = new MsnServiceState(PartnerScenario.ContactMsgrAPI, "AddMember", true);
             SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, AddMemberObject);
             sharingService.AddMemberCompleted += delegate(object service, AddMemberCompletedEventArgs e)
             {

@@ -918,7 +918,7 @@ namespace MSNPSharp
                         delegate  //If you don't add this, you can't see the contact online until your next login
                         {
                             Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(2);
-                            hashlist.Add(Hash, Lists ^ RoleLists.Reverse);
+                            hashlist.Add(Hash, Lists);
                             string payload = ContactService.ConstructLists(hashlist, false)[0];
                             NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
                         });
@@ -1820,9 +1820,6 @@ namespace MSNPSharp
             IMAddressInfoType addressType,
             ServiceShortNames service)
         {
-            // Delete Reverse and Block roles, no more supported.
-            currentContactList &= ~RoleLists.Reverse;
-
             // Don't send ADL if circle has only Hide role.
             if (addressType == IMAddressInfoType.Circle && currentContactList == RoleLists.Hide)
             {

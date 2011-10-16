@@ -860,12 +860,6 @@ namespace MSNPSharp.IO
                                     {
                                         contact.RemoveFromList(msnlist);
 
-                                        // Fire ReverseRemoved
-                                        if (msnlist == RoleLists.Reverse)
-                                        {
-                                            NSMessageHandler.ContactService.OnReverseRemoved(new ContactEventArgs(contact));
-                                        }
-
                                         // Send a list remove event
                                         NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, msnlist));
                                     }
@@ -903,7 +897,7 @@ namespace MSNPSharp.IO
                                     // At this phase, we requested all memberships including pending.
                                     else if (contact.OnPendingList)
                                     {
-                                        NSMessageHandler.ContactService.OnReverseAdded(new ContactEventArgs(contact));
+                                        NSMessageHandler.ContactService.OnFriendshipRequested(new ContactEventArgs(contact));
                                     }
                                 }
 

@@ -240,17 +240,6 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// All contacts who have you on their contactlist.
-        /// </summary>
-        public ContactList.ListEnumerator Reverse
-        {
-            get
-            {
-                return new ContactList.ListEnumerator(new Dictionary<string, Contact>(base[IMAddressInfoType.None]).GetEnumerator(), RoleLists.Reverse);
-            }
-        }
-
-        /// <summary>
         ///  All pending contacts.
         /// </summary>
         public ContactList.ListEnumerator Pending

@@ -125,10 +125,9 @@ namespace MSNPSharpClient
 
             // SynchronizationCompleted will fired after the updated operation for your contact list has completed.
             messenger.ContactService.SynchronizationCompleted += new EventHandler<EventArgs>(ContactService_SynchronizationCompleted);
-            // ReverseAdded will fired after a contact adds you to his/her contact list.
-            messenger.ContactService.ReverseAdded += new EventHandler<ContactEventArgs>(Nameserver_ReverseAdded);
+            // FriendshipRequested will fired after a contact adds you to his/her contact list (pending list)
+            messenger.ContactService.FriendshipRequested += new EventHandler<ContactEventArgs>(Nameserver_FriendshipRequested);
 
-            messenger.ContactService.ReverseRemoved += new EventHandler<ContactEventArgs>(ContactService_ReverseRemoved);
             // ContactAdded will fired after a contact added to any role list.
             messenger.ContactService.ContactAdded += new EventHandler<ListMutateEventArgs>(ContactService_ContactAdded);
             // ContactRemoved will fired after a contact removed from any role list.
@@ -720,16 +719,11 @@ namespace MSNPSharpClient
                 SortByGroup(e.Contact, e.Contact.Via);
         }
 
-        void ContactService_ReverseRemoved(object sender, ContactEventArgs e)
-        {
-            Trace.WriteLine(e.Contact.Hash + " removed you their contact (forward) list.");
-        }
-
-        void Nameserver_ReverseAdded(object sender, ContactEventArgs e)
+        void Nameserver_FriendshipRequested(object sender, ContactEventArgs e)
         {
             if (InvokeRequired)
             {
-                Invoke(new EventHandler<ContactEventArgs>(Nameserver_ReverseAdded), sender, e);
+                Invoke(new EventHandler<ContactEventArgs>(Nameserver_FriendshipRequested), sender, e);
                 return;
             }
 

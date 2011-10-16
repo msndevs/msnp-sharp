@@ -171,7 +171,7 @@ namespace MSNPSharp
         /// <summary>
         /// All contacts who have you on their contactlist.
         /// </summary>
-        //[Obsolete("",true)]
+        [Obsolete("",true)]
         Reverse = 8,
         /// <summary>
         /// All pending (for approval) contacts.
