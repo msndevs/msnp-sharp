@@ -120,8 +120,7 @@ namespace MSNPSharp
 
         private bool hasBlockList(RoleLists list)
         {
-            if ((list & RoleLists.Hide) != RoleLists.None ||
-                (list & RoleLists.Block) != RoleLists.None)
+            if ((list & RoleLists.Hide) != RoleLists.None)
             {
                 return true;
             }

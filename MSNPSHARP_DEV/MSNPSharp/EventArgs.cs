@@ -37,40 +37,7 @@ namespace MSNPSharp
     using MSNPSharp.Apps;
     using MSNPSharp.Core;
     using MSNPSharp.P2P;
-using MSNPSharp.LiveConnectAPI.Atom;
-
-    /// <summary>
-    /// Notify the client the blocked/unblocked status changed.
-    /// </summary>
-    public class ContactBlockedStatusChangedEventArgs : EventArgs
-    {
-        private bool isBlocked = false;
-
-        /// <summary>
-        /// The blocking status of the <see cref="Contact"/>.
-        /// </summary>
-        public bool IsBlocked
-        {
-            get { return isBlocked; }
-            private set { isBlocked = value; }
-        }
-
-        private Contact contact = null;
-        /// <summary>
-        /// The <see cref="Contact"/> which blocked/unblocked status has changed.
-        /// </summary>
-        public Contact Contact
-        {
-            get { return contact; }
-            private set { contact = value; }
-        }
-
-        public ContactBlockedStatusChangedEventArgs(Contact contact, bool isBlock)
-        {
-            Contact = contact;
-            IsBlocked = isBlocked;
-        }
-    }
+    using MSNPSharp.LiveConnectAPI.Atom;
 
     /// <summary>
     /// Used when a contact changed its status.

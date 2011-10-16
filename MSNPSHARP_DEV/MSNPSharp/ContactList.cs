@@ -229,17 +229,6 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// All contacts on your blocked list who CANNOT send instant messages.
-        /// </summary>
-        public ContactList.ListEnumerator Blocked
-        {
-            get
-            {
-                return new ContactList.ListEnumerator(new Dictionary<string, Contact>(base[IMAddressInfoType.None]).GetEnumerator(), RoleLists.Block);
-            }
-        }
-
-        /// <summary>
         /// All contacts on your hidden list who CANNOT see your status but CAN send offline messages.
         /// </summary>
         public ContactList.ListEnumerator Hidden

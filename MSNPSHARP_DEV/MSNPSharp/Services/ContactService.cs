@@ -86,10 +86,6 @@ namespace MSNPSharp
         }
 
         #region Events
-        /// <summary>
-        /// Fired after a contact has been blocked/unblocked.
-        /// </summary>
-        public event EventHandler<ContactBlockedStatusChangedEventArgs> ContactBlockedStatusChanged;
 
         /// <summary>
         /// Fires when a contact is added to any list (including reverse list)
@@ -183,16 +179,6 @@ namespace MSNPSharp
         {
             if (ReverseAdded != null)
                 ReverseAdded(this, e);
-        }
-
-        /// <summary>
-        /// Fire <see cref="ContactBlockedStatusChanged"/> event.
-        /// </summary>
-        /// <param name="e"></param>
-        internal void OnContactBlockedStatusChanged(ContactBlockedStatusChangedEventArgs e)
-        {
-            if (ContactBlockedStatusChanged != null)
-                ContactBlockedStatusChanged(this, e);
         }
 
         /// <summary>
@@ -1666,7 +1652,7 @@ namespace MSNPSharp
                     contact.AddToList(list);
                     NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, list));
 
-                    if ((list & RoleLists.Allow) == RoleLists.Allow || (list & RoleLists.Block) == RoleLists.Block)
+                    if ((list & RoleLists.Allow) == RoleLists.Allow)
                     {
                         NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
                     }
@@ -1733,7 +1719,7 @@ namespace MSNPSharp
                     contact.RemoveFromList(list);
                     NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, list));
 
-                    if ((list & RoleLists.Allow) == RoleLists.Allow || (list & RoleLists.Block) == RoleLists.Block)
+                    if ((list & RoleLists.Allow) == RoleLists.Allow)
                     {
                         NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML", payload));
                     }
@@ -1760,6 +1746,11 @@ namespace MSNPSharp
                 return;
             }
 
+            string memberRole = GetMemberRole(RoleLists.Hide);
+
+            if (String.IsNullOrEmpty(memberRole))
+                return;
+
             // check whether the update is necessary
             if (!contact.HasLists(RoleLists.Hide))
                 return;
@@ -1783,11 +1774,11 @@ namespace MSNPSharp
             deleteMemberRequest.serviceHandle.Type = ServiceFilterType.IMAvailability;
 
             Membership memberShip = new Membership();
-            memberShip.MemberRole = GetMemberRole(RoleLists.Hide);
+            memberShip.MemberRole = memberRole;
 
             BaseMember deleteMember = null; // BaseMember is an abstract type, so we cannot create a new instance.
             // If we have a MembershipId different from 0, just use it. Otherwise, use email or phone number. 
-            BaseMember baseMember = AddressBook.SelectBaseMember(ServiceFilterType.IMAvailability, contact.Account, contact.ClientType, GetMemberRole(RoleLists.Hide));
+            BaseMember baseMember = AddressBook.SelectBaseMember(ServiceFilterType.IMAvailability, contact.Account, contact.ClientType, memberRole);
             int membershipId = (baseMember == null || String.IsNullOrEmpty(baseMember.MembershipId)) ? 0 : int.Parse(baseMember.MembershipId);
 
             switch (contact.ClientType)
@@ -1859,7 +1850,7 @@ namespace MSNPSharp
                     }
 
                     contact.RemoveFromList(RoleLists.Hide);
-                    AddressBook.RemoveMemberhip(ServiceFilterType.IMAvailability, contact.Account, contact.ClientType, GetMemberRole(RoleLists.Hide), Scenario.ContactServeAPI);
+                    AddressBook.RemoveMemberhip(ServiceFilterType.IMAvailability, contact.Account, contact.ClientType, memberRole, Scenario.ContactServeAPI);
                     NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, RoleLists.Hide));
 
                     Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(2);
@@ -1882,6 +1873,11 @@ namespace MSNPSharp
                 OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("AppearOffline", new MSNPSharpException("You don't have access right on this action anymore.")));
                 return;
             }
+
+            string memberRole = GetMemberRole(RoleLists.Hide);
+
+            if (String.IsNullOrEmpty(memberRole))
+                return;
 
             // check whether the update is necessary
             if (contact.HasLists(RoleLists.Hide))
@@ -1907,7 +1903,7 @@ namespace MSNPSharp
             addMemberRequest.serviceHandle.Type = ServiceFilterType.IMAvailability;
 
             Membership memberShip = new Membership();
-            memberShip.MemberRole = RoleLists.Hide.ToString();
+            memberShip.MemberRole = memberRole;
             BaseMember member = new BaseMember();
 
             if (contact.ClientType == IMAddressInfoType.WindowsLive)
@@ -1966,7 +1962,7 @@ namespace MSNPSharp
                     }
 
                     contact.AddToList(RoleLists.Hide);
-                    AddressBook.AddMemberhip(ServiceFilterType.IMAvailability, contact.Account, contact.ClientType, GetMemberRole(RoleLists.Hide), member, Scenario.ContactServeAPI);
+                    AddressBook.AddMemberhip(ServiceFilterType.IMAvailability, contact.Account, contact.ClientType, memberRole, member, Scenario.ContactServeAPI);
                     NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, RoleLists.Hide));
 
                     Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(2);
@@ -2288,9 +2284,6 @@ namespace MSNPSharp
                 case RoleLists.Allow:
                     return MemberRole.Allow;
 
-                case RoleLists.Block:
-                    return MemberRole.Block;
-
                 case RoleLists.Pending:
                     return MemberRole.Pending;
 
@@ -2300,7 +2293,7 @@ namespace MSNPSharp
                 case RoleLists.Hide:
                     return MemberRole.Hide;
             }
-            return MemberRole.ProfilePersonalContact;
+            return null;
         }
 
         public RoleLists GetMSNList(string memberRole)
@@ -2309,8 +2302,6 @@ namespace MSNPSharp
             {
                 case MemberRole.Allow:
                     return RoleLists.Allow;
-                case MemberRole.Block:
-                    return RoleLists.Block;
                 case MemberRole.Reverse:
                     return RoleLists.Reverse;
                 case MemberRole.Pending:
@@ -2318,7 +2309,7 @@ namespace MSNPSharp
                 case MemberRole.Hide:
                     return RoleLists.Hide;
             }
-            throw new MSNPSharpException("Unknown MemberRole type");
+            return RoleLists.None;
         }
 
         public override void Clear()

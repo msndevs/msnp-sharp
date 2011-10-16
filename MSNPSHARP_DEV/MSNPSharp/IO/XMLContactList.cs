@@ -83,51 +83,55 @@ namespace MSNPSharp.IO
                 foreach (string role in ms.Keys)
                 {
                     RoleLists msnlist = NSMessageHandler.ContactService.GetMSNList(role);
-                    foreach (BaseMember bm in ms[role].Values)
+
+                    if (msnlist != RoleLists.None)
                     {
-                        long cid = 0;
-                        string account = null;
-                        IMAddressInfoType type = IMAddressInfoType.None;
-
-                        if (bm is PassportMember)
+                        foreach (BaseMember bm in ms[role].Values)
                         {
-                            type = IMAddressInfoType.WindowsLive;
-                            PassportMember pm = (PassportMember)bm;
-                            if (!pm.IsPassportNameHidden)
+                            long cid = 0;
+                            string account = null;
+                            IMAddressInfoType type = IMAddressInfoType.None;
+
+                            if (bm is PassportMember)
                             {
-                                account = pm.PassportName;
+                                type = IMAddressInfoType.WindowsLive;
+                                PassportMember pm = (PassportMember)bm;
+                                if (!pm.IsPassportNameHidden)
+                                {
+                                    account = pm.PassportName;
+                                }
+                                cid = Convert.ToInt64(pm.CID);
                             }
-                            cid = Convert.ToInt64(pm.CID);
-                        }
-                        else if (bm is EmailMember)
-                        {
-                            type = IMAddressInfoType.Yahoo;
-                            account = ((EmailMember)bm).Email;
-                        }
-                        else if (bm is PhoneMember)
-                        {
-                            type = IMAddressInfoType.Telephone;
-                            account = ((PhoneMember)bm).PhoneNumber;
-                        }
-                        else if (bm is CircleMember)
-                        {
-                            //type = IMAddressInfoType.Circle;
-                            //account = ((CircleMember)bm).CircleId + "@" + Contact.DefaultHostDomain;
-                        }
-                        else if (bm is ExternalIDMember)
-                        {
-                            type = IMAddressInfoType.RemoteNetwork;
-                            account = ((ExternalIDMember)bm).SourceID;
-                        }
+                            else if (bm is EmailMember)
+                            {
+                                type = IMAddressInfoType.Yahoo;
+                                account = ((EmailMember)bm).Email;
+                            }
+                            else if (bm is PhoneMember)
+                            {
+                                type = IMAddressInfoType.Telephone;
+                                account = ((PhoneMember)bm).PhoneNumber;
+                            }
+                            else if (bm is CircleMember)
+                            {
+                                //type = IMAddressInfoType.Circle;
+                                //account = ((CircleMember)bm).CircleId + "@" + Contact.DefaultHostDomain;
+                            }
+                            else if (bm is ExternalIDMember)
+                            {
+                                type = IMAddressInfoType.RemoteNetwork;
+                                account = ((ExternalIDMember)bm).SourceID;
+                            }
 
-                        if (account != null && type != IMAddressInfoType.None)
-                        {
-                            string displayname = bm.DisplayName == null ? account : bm.DisplayName;
-                            Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
-                            contact.Lists |= msnlist;
+                            if (account != null && type != IMAddressInfoType.None)
+                            {
+                                string displayname = bm.DisplayName == null ? account : bm.DisplayName;
+                                Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
+                                contact.Lists |= msnlist;
 
-                            if (cid != 0)
-                                contact.CID = cid;
+                                if (cid != 0)
+                                    contact.CID = cid;
+                            }
                         }
                     }
                 }
@@ -786,9 +790,11 @@ namespace MSNPSharp.IO
 
             foreach (Membership membership in messengerService.Memberships)
             {
-                if (null != membership.Members)
+                string memberrole = membership.MemberRole;
+                RoleLists msnlist = NSMessageHandler.ContactService.GetMSNList(memberrole);
+
+                if (null != membership.Members && msnlist != RoleLists.None)
                 {
-                    string memberrole = membership.MemberRole;
                     List<BaseMember> members = new List<BaseMember>(membership.Members);
                     members.Sort(CompareBaseMembers);
 
@@ -831,8 +837,7 @@ namespace MSNPSharp.IO
 
                         if (account != null && type != IMAddressInfoType.None)
                         {
-                            account = account.ToLowerInvariant();
-                            RoleLists msnlist = NSMessageHandler.ContactService.GetMSNList(memberrole);
+                            account = account.ToLowerInvariant();                            
 
                             if (bm.Deleted)
                             {
@@ -888,7 +893,6 @@ namespace MSNPSharp.IO
                                 if (!contact.HasLists(msnlist))
                                 {
                                     contact.AddToList(msnlist);
-                                    contact.Lists ^= Contact.GetConflictLists(contact.Lists, msnlist);
                                     NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, msnlist));
 
                                     // Added by other place, this place hasn't synchronized this contact yet.

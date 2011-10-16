@@ -123,8 +123,6 @@ namespace MSNPSharpClient
             messenger.Nameserver.ContactOnline += new EventHandler<ContactStatusChangedEventArgs>(Nameserver_ContactOnline);
             messenger.Nameserver.ContactOffline += new EventHandler<ContactStatusChangedEventArgs>(Nameserver_ContactOffline);
 
-            messenger.ContactService.ContactBlockedStatusChanged += new EventHandler<ContactBlockedStatusChangedEventArgs>(Nameserver_ContactBlockedStatusChanged);
-
             // SynchronizationCompleted will fired after the updated operation for your contact list has completed.
             messenger.ContactService.SynchronizationCompleted += new EventHandler<EventArgs>(ContactService_SynchronizationCompleted);
             // ReverseAdded will fired after a contact adds you to his/her contact list.
@@ -606,18 +604,6 @@ namespace MSNPSharpClient
 
             tableLayoutPanel3.BackgroundImage = e.NewSceneImage.Image;
 
-        }
-
-        void Nameserver_ContactBlockedStatusChanged(object sender, ContactBlockedStatusChangedEventArgs e)
-        {
-            if (InvokeRequired)
-            {
-                Invoke(new EventHandler<ContactBlockedStatusChangedEventArgs>(Nameserver_ContactBlockedStatusChanged), new object[] { sender, e });
-            }
-            else
-            {
-                UpdateContactlist(sender, e);
-            }
         }
 
         void Nameserver_ContactOnline(object sender, ContactStatusChangedEventArgs e)
@@ -2362,7 +2348,6 @@ namespace MSNPSharpClient
             if (circle != null)
             {
                 circle.AppearOnline = true;
-                circle.ContactUnBlocked += new EventHandler<ContactBlockedStatusChangedEventArgs>(circle_ContactUnBlocked);
                 Trace.WriteLine("Circle unblocked: " + circle.ToString());
             }
         }
