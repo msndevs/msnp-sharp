@@ -319,8 +319,6 @@ namespace MSNPSharp
 
         public event EventHandler<ContactGroupEventArgs> ContactGroupAdded;
         public event EventHandler<ContactGroupEventArgs> ContactGroupRemoved;
-        public event EventHandler<ContactBlockedStatusChangedEventArgs> ContactBlocked;
-        public event EventHandler<ContactBlockedStatusChangedEventArgs> ContactUnBlocked;
         public event EventHandler<StatusChangedEventArgs> ContactOnline;
         public event EventHandler<StatusChangedEventArgs> ContactOffline;
         public event EventHandler<StatusChangedEventArgs> StatusChanged;
@@ -1034,12 +1032,10 @@ namespace MSNPSharp
                     if (value)
                     {
                         NSMessageHandler.ContactService.AppearOffline(this, null);
-                        OnContactBlocked();
                     }
                     else
                     {
                         NSMessageHandler.ContactService.AppearOnline(this, null);
-                        OnContactUnBlocked();
                     }
                 }
             }
@@ -1605,22 +1601,6 @@ namespace MSNPSharp
                 ContactGroupRemoved(this, new ContactGroupEventArgs(group));
         }
 
-        protected virtual void OnContactBlocked()
-        {
-            ContactBlockedStatusChangedEventArgs eventArgs = new ContactBlockedStatusChangedEventArgs(this, true);
-            if (ContactBlocked != null)
-                ContactBlocked(this, eventArgs);
-            NSMessageHandler.ContactService.OnContactBlockedStatusChanged(eventArgs);
-        }
-
-        protected virtual void OnContactUnBlocked()
-        {
-            ContactBlockedStatusChangedEventArgs eventArgs = new ContactBlockedStatusChangedEventArgs(this, false);
-            if (ContactUnBlocked != null)
-                ContactUnBlocked(this, eventArgs);
-            NSMessageHandler.ContactService.OnContactBlockedStatusChanged(eventArgs);
-        }
-
         protected void OnDirectBridgeEstablished(EventArgs e)
         {
             if (DirectBridgeEstablished != null)
@@ -1669,11 +1649,6 @@ namespace MSNPSharp
             {
                 lists |= list;
 
-                if ((list & RoleLists.Block) == RoleLists.Block)
-                {
-                    OnContactBlocked();
-                }
-
                 NotifyManager();
             }
 
@@ -1713,11 +1688,6 @@ namespace MSNPSharp
                     contactGroups.Clear();
                 }
 
-                if ((list & RoleLists.Block) == RoleLists.Block)
-                {
-                    OnContactUnBlocked();
-                }
-
                 NotifyManager();
             }
 
@@ -1733,23 +1703,6 @@ namespace MSNPSharp
 
                 NotifyManager();
             }
-        }
-
-        internal static RoleLists GetConflictLists(RoleLists currentLists, RoleLists newLists)
-        {
-            RoleLists conflictLists = RoleLists.None;
-
-            if ((currentLists & RoleLists.Allow) != RoleLists.None && (newLists & RoleLists.Block) != RoleLists.None)
-            {
-                conflictLists |= RoleLists.Allow;
-            }
-
-            if ((currentLists & RoleLists.Block) != RoleLists.None && (newLists & RoleLists.Allow) != RoleLists.None)
-            {
-                conflictLists |= RoleLists.Block;
-            }
-
-            return conflictLists;
         }
 
         internal Guid SelectBestEndPointId()
@@ -1869,7 +1822,6 @@ namespace MSNPSharp
         {
             // Delete Reverse and Block roles, no more supported.
             currentContactList &= ~RoleLists.Reverse;
-            currentContactList &= ~RoleLists.Block;
 
             // Don't send ADL if circle has only Hide role.
             if (addressType == IMAddressInfoType.Circle && currentContactList == RoleLists.Hide)

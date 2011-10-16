@@ -166,7 +166,7 @@ namespace MSNPSharp
         /// <summary>
         /// All contacts who you have blocked.
         /// </summary>
-        //[Obsolete("", true)]
+        [Obsolete("", true)]
         Block = 4,
         /// <summary>
         /// All contacts who have you on their contactlist.

@@ -615,6 +615,11 @@ namespace MSNPSharp
                 return;
             }
 
+            string memberRole = GetMemberRole(list);
+
+            if (String.IsNullOrEmpty(memberRole))
+                return;
+
             AddMemberRequestType addMemberRequest = new AddMemberRequestType();
             addMemberRequest.serviceHandle = new HandleType();
 
@@ -623,7 +628,7 @@ namespace MSNPSharp
             addMemberRequest.serviceHandle.Type = messengerService.ServiceType;
 
             Membership memberShip = new Membership();
-            memberShip.MemberRole = GetMemberRole(list);
+            memberShip.MemberRole = memberRole;
             BaseMember member = new BaseMember();
 
             if (contact.ClientType == IMAddressInfoType.WindowsLive)
@@ -675,7 +680,7 @@ namespace MSNPSharp
                     return;
 
                 // Update AB
-                AddressBook.AddMemberhip(ServiceFilterType.Messenger, contact.Account, contact.ClientType, GetMemberRole(list), member, Scenario.ContactServeAPI);
+                AddressBook.AddMemberhip(ServiceFilterType.Messenger, contact.Account, contact.ClientType, memberRole, member, Scenario.ContactServeAPI);
 
                 if (callback != null)
                 {
@@ -696,6 +701,11 @@ namespace MSNPSharp
                 return;
             }
 
+            string memberRole = GetMemberRole(list);
+
+            if (String.IsNullOrEmpty(memberRole))
+                return;
+
             DeleteMemberRequestType deleteMemberRequest = new DeleteMemberRequestType();
             deleteMemberRequest.serviceHandle = new HandleType();
 
@@ -704,11 +714,11 @@ namespace MSNPSharp
             deleteMemberRequest.serviceHandle.Type = messengerService.ServiceType;
 
             Membership memberShip = new Membership();
-            memberShip.MemberRole = GetMemberRole(list);
+            memberShip.MemberRole = memberRole;
 
             BaseMember deleteMember = null; // BaseMember is an abstract type, so we cannot create a new instance.
             // If we have a MembershipId different from 0, just use it. Otherwise, use email or phone number. 
-            BaseMember baseMember = AddressBook.SelectBaseMember(ServiceFilterType.Messenger, contact.Account, contact.ClientType, GetMemberRole(list));
+            BaseMember baseMember = AddressBook.SelectBaseMember(ServiceFilterType.Messenger, contact.Account, contact.ClientType, memberRole);
             int membershipId = (baseMember == null || String.IsNullOrEmpty(baseMember.MembershipId)) ? 0 : int.Parse(baseMember.MembershipId);
 
             switch (contact.ClientType)
@@ -769,7 +779,7 @@ namespace MSNPSharp
                     return;
 
                 // Update AB
-                AddressBook.RemoveMemberhip(ServiceFilterType.Messenger, contact.Account, contact.ClientType, GetMemberRole(list), Scenario.ContactServeAPI);
+                AddressBook.RemoveMemberhip(ServiceFilterType.Messenger, contact.Account, contact.ClientType, memberRole, Scenario.ContactServeAPI);
 
                 if (callback != null)
                 {
