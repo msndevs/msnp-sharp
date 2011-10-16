@@ -88,6 +88,11 @@ namespace MSNPSharp
         #region Events
 
         /// <summary>
+        /// Fires when a contact is added to pending list
+        /// </summary>
+        public event EventHandler<ContactEventArgs> FriendshipRequested;
+
+        /// <summary>
         /// Fires when a contact is added to any list (including reverse list)
         /// </summary>
         public event EventHandler<ListMutateEventArgs> ContactAdded;
@@ -96,16 +101,6 @@ namespace MSNPSharp
         /// Fires when a contact is removed from any list (including reverse list)
         /// </summary>
         public event EventHandler<ListMutateEventArgs> ContactRemoved;
-
-        /// <summary>
-        /// Fires when another user adds us to their contactlist. A ContactAdded event with the reverse list as parameter will also be raised.
-        /// </summary>
-        public event EventHandler<ContactEventArgs> ReverseAdded;
-
-        /// <summary>
-        /// Fires when another user removes us from their contactlist. A ContactRemoved event with the reverse list as parameter will also be raised.
-        /// </summary>
-        public event EventHandler<ContactEventArgs> ReverseRemoved;
 
         /// <summary>
         /// Fires when a new contactgroup is created
@@ -157,182 +152,92 @@ namespace MSNPSharp
         /// Fired after the owner join a circle successfully.
         /// </summary>
         public event EventHandler<CircleEventArgs> JoinedCircleCompleted;
-        #endregion
 
-        #region Public members
+        #region Event triggers
 
-        /// <summary>
-        /// Fires the <see cref="ReverseRemoved"/> event.
-        /// </summary>
-        /// <param name="e"></param>
-        internal void OnReverseRemoved(ContactEventArgs e)
+        internal void OnFriendshipRequested(ContactEventArgs e)
         {
-            if (ReverseRemoved != null)
-                ReverseRemoved(this, e);
+            if (FriendshipRequested != null)
+                FriendshipRequested(this, e);
         }
 
-        /// <summary>
-        /// Fires the <see cref="ReverseAdded"/> event.
-        /// </summary>
-        /// <param name="e"></param>
-        internal void OnReverseAdded(ContactEventArgs e)
-        {
-            if (ReverseAdded != null)
-                ReverseAdded(this, e);
-        }
-
-        /// <summary>
-        /// Fires the <see cref="ContactAdded"/> event.
-        /// </summary>
-        /// <param name="e"></param>
         internal void OnContactAdded(ListMutateEventArgs e)
         {
             if (ContactAdded != null)
-            {
                 ContactAdded(this, e);
-            }
         }
 
-        /// <summary>
-        /// Fires the <see cref="ContactRemoved"/> event.
-        /// </summary>
-        /// <param name="e"></param>
         internal void OnContactRemoved(ListMutateEventArgs e)
         {
             if (ContactRemoved != null)
-            {
                 ContactRemoved(this, e);
-            }
         }
 
-        /// <summary>
-        /// Fires the <see cref="ContactGroupAdded"/> event.
-        /// </summary>
-        /// <param name="e"></param>
         internal void OnContactGroupAdded(ContactGroupEventArgs e)
         {
             if (ContactGroupAdded != null)
-            {
                 ContactGroupAdded(this, e);
-            }
         }
 
-        /// <summary>
-        /// Fires the <see cref="JoinCircleInvitationReceived"/> event.
-        /// </summary>
-        /// <param name="e"></param>
         internal void OnJoinCircleInvitationReceived(CircleEventArgs e)
         {
-            //if (e.Inviter != null)
-            //{
-            //    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-            //        e.Inviter.Name + "(" + e.Inviter.Account + ") invite you to join circle: "
-            //        + e.Circle.ToString() + "\r\nMessage: " + e.Inviter.Message);
-            //}
-
             if (JoinCircleInvitationReceived != null)
-            {
                 JoinCircleInvitationReceived(this, e);
-            }
         }
 
-        /// <summary>
-        /// Fires the <see cref="JoinedCircleCompleted"/> event.
-        /// </summary>
-        /// <param name="e"></param>
         internal void OnJoinedCircleCompleted(CircleEventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Circle invitation accepted: " + e.Circle.ToString());
 
             if (JoinedCircleCompleted != null)
-            {
                 JoinedCircleCompleted(this, e);
-            }
         }
 
-        /// <summary>
-        /// Fires the <see cref="ContactGroupRemoved"/> event.
-        /// </summary>
-        /// <param name="e"></param>
         internal void OnContactGroupRemoved(ContactGroupEventArgs e)
         {
             if (ContactGroupRemoved != null)
-            {
                 ContactGroupRemoved(this, e);
-            }
         }
 
-
-        /// <summary>
-        /// Fires the <see cref="CreateCircleCompleted"/> event.
-        /// </summary>
-        /// <param name="e"></param>
         internal void OnCreateCircleCompleted(CircleEventArgs e)
         {
             if (CreateCircleCompleted != null)
-            {
                 CreateCircleCompleted(this, e);
-            }
         }
 
-        /// <summary>
-        /// Fires the <see cref="ExitCircleCompleted"/> event.
-        /// </summary>
-        /// <param name="e"></param>
         internal void OnExitCircleCompleted(CircleEventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Exit circle completed: " + e.Circle.ToString());
 
             if (ExitCircleCompleted != null)
-            {
                 ExitCircleCompleted(this, e);
-            }
         }
 
-        /// <summary> 
-        /// Fires the <see cref="CircleMemberLeft"/> event.
-        /// </summary>
-        /// <param name="e"></param>
         internal void OnCircleMemberLeft(CircleMemberEventArgs e)
         {
             if (CircleMemberLeft != null)
-            {
                 CircleMemberLeft(this, e);
-            }
         }
 
-        /// <summary> 
-        /// Fires the <see cref="CircleMemberJoined"/> event.
-        /// </summary>
-        /// <param name="e"></param>
         internal void OnCircleMemberJoined(CircleMemberEventArgs e)
         {
             if (CircleMemberJoined != null)
-            {
                 CircleMemberJoined(this, e);
-            }
         }
 
-        /// <summary>
-        /// Fires the <see cref="SynchronizationCompleted"/> event.
-        /// </summary>
-        /// <param name="e"></param>
         internal void OnSynchronizationCompleted(EventArgs e)
         {
-
             if (SynchronizationCompleted != null)
                 SynchronizationCompleted(this, e);
         }
 
-        /// <summary>
-        /// Fires the <see cref="InviteCircleMemberCompleted"/>
-        /// </summary>
-        /// <param name="e"></param>
         private void OnInviteCircleMemberCompleted(CircleMemberEventArgs e)
         {
             if (InviteCircleMemberCompleted != null)
                 InviteCircleMemberCompleted(this, e);
         }
+
+        #endregion
 
         #endregion
 
@@ -770,30 +675,27 @@ namespace MSNPSharp
 
                     if (!AddressBookSynchronized)
                     {
-                        abSynchronized = true;
-                        OnSynchronizationCompleted(EventArgs.Empty);
-
                         if (NSMessageHandler.AutoSynchronize)
                         {
                             lock (NSMessageHandler.ContactList.SyncRoot)
                             {
-                                foreach (Contact contact in NSMessageHandler.ContactList.All)
+                                foreach (Contact contact in NSMessageHandler.ContactList.Pending)
                                 {
-                                    if (contact.OnPendingList)
+                                    // Added by other place, this place hasn't synchronized this contact yet.
+                                    if (contact.OnForwardList)
                                     {
-                                        // Added by other place, this place hasn't synchronized this contact yet.
-                                        if (contact.OnForwardList && contact.OnPendingList)
-                                        {
-                                            contact.OnPendingList = false;
-                                        }
-                                        else
-                                        {
-                                            NSMessageHandler.ContactService.OnReverseAdded(new ContactEventArgs(contact));
-                                        }
+                                        contact.OnPendingList = false;
+                                    }
+                                    else
+                                    {
+                                        NSMessageHandler.ContactService.OnFriendshipRequested(new ContactEventArgs(contact));
                                     }
                                 }
                             }
                         }
+
+                        abSynchronized = true;
+                        OnSynchronizationCompleted(EventArgs.Empty);
                     }
                 }
                 return true;
@@ -1685,9 +1587,6 @@ namespace MSNPSharp
                 return;
             }
 
-            if (list == RoleLists.Reverse) //this causes disconnect
-                return;
-
             // check whether the update is necessary
             if (!contact.HasLists(list))
                 return;
@@ -2287,9 +2186,6 @@ namespace MSNPSharp
                 case RoleLists.Pending:
                     return MemberRole.Pending;
 
-                case RoleLists.Reverse:
-                    return MemberRole.Reverse;
-
                 case RoleLists.Hide:
                     return MemberRole.Hide;
             }
@@ -2302,8 +2198,6 @@ namespace MSNPSharp
             {
                 case MemberRole.Allow:
                     return RoleLists.Allow;
-                case MemberRole.Reverse:
-                    return RoleLists.Reverse;
                 case MemberRole.Pending:
                     return RoleLists.Pending;
                 case MemberRole.Hide:
