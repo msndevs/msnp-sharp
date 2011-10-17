@@ -150,7 +150,7 @@ namespace MSNPSharp.IO
                 {
                     if (role == MemberRole.OneWayRelationship || role == MemberRole.TwoWayRelationship)
                     {
-                        foreach (BaseMember bm in ms[role].Values)
+                        foreach (BaseMember bm in fs[role].Values)
                         {
                             long cid = 0;
                             string account = null;
