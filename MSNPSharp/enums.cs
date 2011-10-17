@@ -192,6 +192,25 @@ namespace MSNPSharp
     }
 
     /// <summary>
+    /// Your relationship with your friend on social network.
+    /// </summary>
+    public enum FriendshipStatus
+    {
+        /// <summary>
+        /// No friendship
+        /// </summary>
+        None,
+        /// <summary>
+        /// You invited him/her to be your friend in your network
+        /// </summary>
+        OneWayRelationship,
+        /// <summary>
+        /// You are friends
+        /// </summary>
+        TwoWayRelationship
+    }
+
+    /// <summary>
     /// The functions a (remote) client supports.
     /// </summary>
     [Flags]

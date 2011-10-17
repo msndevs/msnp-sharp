@@ -677,19 +677,16 @@ namespace MSNPSharp
                     {
                         if (NSMessageHandler.AutoSynchronize)
                         {
-                            lock (NSMessageHandler.ContactList.SyncRoot)
+                            foreach (Contact contact in NSMessageHandler.ContactList.Pending)
                             {
-                                foreach (Contact contact in NSMessageHandler.ContactList.Pending)
+                                // Added by other place, this place hasn't synchronized this contact yet.
+                                if (contact.OnForwardList)
                                 {
-                                    // Added by other place, this place hasn't synchronized this contact yet.
-                                    if (contact.OnForwardList)
-                                    {
-                                        contact.OnPendingList = false;
-                                    }
-                                    else
-                                    {
-                                        NSMessageHandler.ContactService.OnFriendshipRequested(new ContactEventArgs(contact));
-                                    }
+                                    contact.OnPendingList = false;
+                                }
+                                else
+                                {
+                                    NSMessageHandler.ContactService.OnFriendshipRequested(new ContactEventArgs(contact));
                                 }
                             }
                         }
