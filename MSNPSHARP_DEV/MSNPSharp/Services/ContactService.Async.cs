@@ -80,12 +80,14 @@ namespace MSNPSharp
             request.serviceFilter.Types = new string[]
             {
                 ServiceFilterType.Messenger,
-                ServiceFilterType.IMAvailability
-                /*,ServiceFilterType.Profile,
-                ServiceFilterType.SocialNetwork,
+                ServiceFilterType.IMAvailability,
+                ServiceFilterType.SocialNetwork
+                /*
+                ,ServiceFilterType.Profile,                
                 ServiceFilterType.Invitation,
                 ServiceFilterType.Folder,
-                ServiceFilterType.OfficeLiveWebNotification*/
+                ServiceFilterType.OfficeLiveWebNotification
+                */
             };
 
             MsnServiceState FindMembershipObject = new MsnServiceState(partnerScenario, "FindMembership", true);

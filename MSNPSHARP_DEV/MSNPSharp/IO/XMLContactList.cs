@@ -139,6 +139,72 @@ namespace MSNPSharp.IO
 
             #endregion
 
+            #region Restore Friendship status
+
+            SerializableDictionary<string, SerializableDictionary<string, BaseMember>> fs =
+               SelectTargetMemberships(ServiceFilterType.SocialNetwork);
+
+            if (fs != null)
+            {
+                foreach (string role in fs.Keys)
+                {
+                    if (role == MemberRole.OneWayRelationship || role == MemberRole.TwoWayRelationship)
+                    {
+                        foreach (BaseMember bm in ms[role].Values)
+                        {
+                            long cid = 0;
+                            string account = null;
+                            IMAddressInfoType type = IMAddressInfoType.None;
+                            FriendshipStatus fsStatus = (role == MemberRole.OneWayRelationship) ?
+                                FriendshipStatus.OneWayRelationship : FriendshipStatus.TwoWayRelationship;
+
+                            if (bm is PassportMember)
+                            {
+                                type = IMAddressInfoType.WindowsLive;
+                                PassportMember pm = (PassportMember)bm;
+                                if (!pm.IsPassportNameHidden)
+                                {
+                                    account = pm.PassportName;
+                                }
+                                cid = Convert.ToInt64(pm.CID);
+                            }
+                            else if (bm is EmailMember)
+                            {
+                                type = IMAddressInfoType.Yahoo;
+                                account = ((EmailMember)bm).Email;
+                            }
+                            else if (bm is PhoneMember)
+                            {
+                                type = IMAddressInfoType.Telephone;
+                                account = ((PhoneMember)bm).PhoneNumber;
+                            }
+                            else if (bm is CircleMember)
+                            {
+                                //type = IMAddressInfoType.Circle;
+                                //account = ((CircleMember)bm).CircleId + "@" + Contact.DefaultHostDomain;
+                            }
+                            else if (bm is ExternalIDMember)
+                            {
+                                type = IMAddressInfoType.RemoteNetwork;
+                                account = ((ExternalIDMember)bm).SourceID;
+                            }
+
+                            if (account != null && type != IMAddressInfoType.None)
+                            {
+                                string displayname = bm.DisplayName == null ? account : bm.DisplayName;
+                                Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
+                                contact.SetFriendshipStatus(fsStatus, false);
+
+                                if (cid != 0)
+                                    contact.CID = cid;
+                            }
+                        }
+                    }
+                }
+            }
+
+            #endregion
+
             #region IMAvailability
 
             SerializableDictionary<string, SerializableDictionary<string, BaseMember>> hd =
@@ -974,10 +1040,38 @@ namespace MSNPSharp.IO
                             if (bm.Deleted)
                             {
                                 RemoveMemberhip(serviceClone.ServiceType, account, type, memberrole, Scenario.DeltaRequest);
+
+                                if (serviceClone.ServiceType == ServiceFilterType.SocialNetwork)
+                                {
+                                    Contact contact = NSMessageHandler.ContactList.GetContactWithCreate(account, type);
+
+                                    if (memberrole == MemberRole.OneWayRelationship)
+                                    {
+                                        contact.SetFriendshipStatus(FriendshipStatus.None, true);
+                                    }
+                                    if (memberrole == MemberRole.TwoWayRelationship)
+                                    {
+                                        contact.SetFriendshipStatus(FriendshipStatus.OneWayRelationship, true);
+                                    }
+                                }
                             }
                             else
                             {
                                 AddMemberhip(serviceClone.ServiceType, account, type, memberrole, bm, Scenario.DeltaRequest);
+
+                                if (serviceClone.ServiceType == ServiceFilterType.SocialNetwork)
+                                {
+                                    Contact contact = NSMessageHandler.ContactList.GetContactWithCreate(account, type);
+
+                                    if (memberrole == MemberRole.OneWayRelationship)
+                                    {
+                                        contact.SetFriendshipStatus(FriendshipStatus.OneWayRelationship, true);
+                                    }
+                                    if (memberrole == MemberRole.TwoWayRelationship)
+                                    {
+                                        contact.SetFriendshipStatus(FriendshipStatus.TwoWayRelationship, true);
+                                    }
+                                }
                             }
                         }
                     }

@@ -78,6 +78,7 @@ namespace MSNPSharp
         private IMAddressInfoType clientType = IMAddressInfoType.WindowsLive;
         private CirclePersonalMembershipRole circleRole = CirclePersonalMembershipRole.None;
         private RoleLists lists = RoleLists.None;
+        private FriendshipStatus friendshipStatus = FriendshipStatus.None;
 
         #endregion
 
@@ -272,6 +273,11 @@ namespace MSNPSharp
         }
 
         #region Events
+
+        /// <summary>
+        /// Fired when friendship with a contact changed.
+        /// </summary>
+        public event EventHandler<FriendshipStatusChangedEventArgs> FriendshipStatusChanged;
 
         /// <summary>
         /// Fired when contact places changed.
@@ -1125,6 +1131,14 @@ namespace MSNPSharp
             }
         }
 
+        public FriendshipStatus FriendshipStatus
+        {
+            get
+            {
+                return friendshipStatus;
+            }
+        }
+
         #endregion
 
         #region Internal setters
@@ -1144,6 +1158,20 @@ namespace MSNPSharp
         {
             lists = msnLists;
             NotifyManager();
+        }
+
+        internal void SetFriendshipStatus(FriendshipStatus fs, bool fireEvent)
+        {
+            if (friendshipStatus != fs)
+            {
+                FriendshipStatus oldFs = friendshipStatus;
+                friendshipStatus = fs;
+
+                if (fireEvent)
+                {
+                    OnFriendshipStatusChanged(new FriendshipStatusChangedEventArgs(this, oldFs, fs));
+                }
+            }
         }
 
         internal void SetMobileAccess(bool enabled)
@@ -1377,6 +1405,12 @@ namespace MSNPSharp
 
         #region Protected
 
+        protected virtual void OnFriendshipStatusChanged(FriendshipStatusChangedEventArgs e)
+        {
+            if (FriendshipStatusChanged != null)
+                FriendshipStatusChanged(this, e);
+        }
+            
         protected virtual void OnScreenNameChanged(string oldName)
         {
             if (ScreenNameChanged != null)

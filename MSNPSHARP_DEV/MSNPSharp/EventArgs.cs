@@ -39,6 +39,50 @@ namespace MSNPSharp
     using MSNPSharp.P2P;
     using MSNPSharp.LiveConnectAPI.Atom;
 
+
+    /// <summary>
+    /// Used for the relationship with your friend on your social network.
+    /// </summary>
+    [Serializable]
+    public class FriendshipStatusChangedEventArgs : EventArgs
+    {
+        private readonly FriendshipStatus oldStatus;
+        private readonly FriendshipStatus newStatus;
+        private readonly Contact contact;
+
+        public FriendshipStatus OldStatus
+        {
+            get
+            {
+                return oldStatus;
+            }
+        }
+
+        public FriendshipStatus NewStatus
+        {
+            get
+            {
+                return newStatus;
+            }
+        }
+
+        public Contact Contact
+        {
+            get
+            {
+                return contact;
+            }
+        }
+
+        public FriendshipStatusChangedEventArgs(Contact contact, FriendshipStatus oldStatus, FriendshipStatus newStatus)
+        {
+            this.contact = contact;
+            this.oldStatus = oldStatus;
+            this.newStatus = newStatus;
+        }
+    }
+
+
     /// <summary>
     /// Used when a contact changed its status.
     /// </summary>
