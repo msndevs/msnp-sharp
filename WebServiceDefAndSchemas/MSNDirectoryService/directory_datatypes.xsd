@@ -23,7 +23,7 @@
 	<xs:complexType name="AttributeType">
 		<xs:sequence>
 			<xs:element name="N" type="xs:string"/>
-			<xs:element name="V" type="xs:anySimpleType" minOccurs="0"/>
+			<xs:element name="V" type="xs:anyType" minOccurs="0"/>
 		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="IdType">
