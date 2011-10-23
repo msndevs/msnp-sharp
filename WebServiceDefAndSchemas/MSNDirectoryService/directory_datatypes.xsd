@@ -1,5 +1,5 @@
 <?xml version="1.0" standalone="yes"?>
-<!-- edited with XMLSpy v2011 rel. 2 (x64) (http://www.altova.com) by a (a) -->
+<!-- edited with XMLSpy v2009 sp1 (http://www.altova.com) by wp (freezingsoft) -->
 <xs:schema xmlns="http://profile.live.com/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" targetNamespace="http://profile.live.com/" elementFormDefault="qualified" attributeFormDefault="qualified">
 	<xs:complexType name="CallStatisticsType">
 		<xs:sequence>
@@ -23,7 +23,7 @@
 	<xs:complexType name="AttributeType">
 		<xs:sequence>
 			<xs:element name="N" type="xs:string"/>
-			<xs:element name="V" type="xs:string" minOccurs="0"/>
+			<xs:element name="V" type="xs:anySimpleType" minOccurs="0"/>
 		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="IdType">
