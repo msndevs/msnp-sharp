@@ -1506,9 +1506,10 @@ namespace MSNPSharp
         /// Send a request to the server to add this contact to a specific list.
         /// </summary>
         /// <param name="contact">The affected contact</param>
+        /// <param name="serviceName">Service name (e.g. Messenger)</param>
         /// <param name="list">The list to place the contact in</param>
         /// <param name="onSuccess"></param>
-        internal void AddContactToList(Contact contact, RoleLists list, EventHandler onSuccess)
+        internal void AddContactToList(Contact contact, string serviceName, RoleLists list, EventHandler onSuccess)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
@@ -1540,7 +1541,7 @@ namespace MSNPSharp
                 return;
             }
 
-            AddMemberAsync(contact, list,
+            AddMemberAsync(contact, serviceName, list,
                 delegate(object service, AddMemberCompletedEventArgs e)
                 {
                     if (null != e.Error && false == e.Error.Message.Contains("Member already exists"))
@@ -1551,7 +1552,7 @@ namespace MSNPSharp
                     contact.AddToList(list);
                     NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, list));
 
-                    if ((list & RoleLists.Allow) == RoleLists.Allow)
+                    if (((list & RoleLists.Allow) == RoleLists.Allow) || ((list & RoleLists.Hide) == RoleLists.Hide))
                     {
                         NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
                     }
@@ -1574,9 +1575,10 @@ namespace MSNPSharp
         /// Send a request to the server to remove a contact from a specific list.
         /// </summary> 
         /// <param name="contact">The affected contact</param>
+        /// <param name="serviceName">Service name</param>
         /// <param name="list">The list to remove the contact from</param>
         /// <param name="onSuccess"></param>
-        internal void RemoveContactFromList(Contact contact, RoleLists list, EventHandler onSuccess)
+        internal void RemoveContactFromList(Contact contact, string serviceName, RoleLists list, EventHandler onSuccess)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
@@ -1604,7 +1606,7 @@ namespace MSNPSharp
                 return;
             }
 
-            DeleteMemberAsync(contact, list,
+            DeleteMemberAsync(contact, serviceName, list,
                 delegate(object service, DeleteMemberCompletedEventArgs e)
                 {
                     if (null != e.Error && false == e.Error.Message.Contains("Member does not exist"))
@@ -1615,7 +1617,7 @@ namespace MSNPSharp
                     contact.RemoveFromList(list);
                     NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, list));
 
-                    if ((list & RoleLists.Allow) == RoleLists.Allow)
+                    if (((list & RoleLists.Allow) == RoleLists.Allow) || ((list & RoleLists.Hide) == RoleLists.Hide))
                     {
                         NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML", payload));
                     }
@@ -1628,249 +1630,6 @@ namespace MSNPSharp
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "DeleteMember completed: " + list, GetType().Name);
 
                 });
-        }
-
-        #endregion
-
-        #region AppearOnline
-
-        internal void AppearOnline(Contact contact, EventHandler onSuccess)
-        {
-            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
-            {
-                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("AppearOnline", new MSNPSharpException("You don't have access right on this action anymore.")));
-                return;
-            }
-
-            string memberRole = GetMemberRole(RoleLists.Hide);
-
-            if (String.IsNullOrEmpty(memberRole))
-                return;
-
-            // check whether the update is necessary
-            if (!contact.HasLists(RoleLists.Hide))
-                return;
-
-            Service imAvailabilityService = AddressBook.SelectTargetService(ServiceFilterType.IMAvailability);
-
-            if (imAvailabilityService == null)
-            {
-                AddServiceAsync(ServiceFilterType.IMAvailability,
-                    delegate
-                    {
-                        // RESURSIVE CALL
-                        AppearOnline(contact, onSuccess);
-                    });
-                return;
-            }
-
-            DeleteMemberRequestType deleteMemberRequest = new DeleteMemberRequestType();
-            deleteMemberRequest.serviceHandle = new HandleType();
-            deleteMemberRequest.serviceHandle.Id = imAvailabilityService.Id.ToString();
-            deleteMemberRequest.serviceHandle.Type = ServiceFilterType.IMAvailability;
-
-            Membership memberShip = new Membership();
-            memberShip.MemberRole = memberRole;
-
-            BaseMember deleteMember = null; // BaseMember is an abstract type, so we cannot create a new instance.
-            // If we have a MembershipId different from 0, just use it. Otherwise, use email or phone number. 
-            BaseMember baseMember = AddressBook.SelectBaseMember(ServiceFilterType.IMAvailability, contact.Account, contact.ClientType, memberRole);
-            int membershipId = (baseMember == null || String.IsNullOrEmpty(baseMember.MembershipId)) ? 0 : int.Parse(baseMember.MembershipId);
-
-            switch (contact.ClientType)
-            {
-                case IMAddressInfoType.WindowsLive:
-
-                    deleteMember = new PassportMember();
-                    deleteMember.Type = (baseMember == null) ? MembershipType.Passport : baseMember.Type;
-                    deleteMember.State = (baseMember == null) ? MemberState.Accepted : baseMember.State;
-                    if (membershipId == 0)
-                    {
-                        (deleteMember as PassportMember).PassportName = contact.Account;
-                    }
-                    break;
-
-                case IMAddressInfoType.Yahoo:
-
-                    deleteMember = new EmailMember();
-                    deleteMember.Type = (baseMember == null) ? MembershipType.Email : baseMember.Type;
-                    deleteMember.State = (baseMember == null) ? MemberState.Accepted : baseMember.State;
-                    if (membershipId == 0)
-                    {
-                        (deleteMember as EmailMember).Email = contact.Account;
-                    }
-                    break;
-
-                case IMAddressInfoType.Telephone:
-
-                    deleteMember = new PhoneMember();
-                    deleteMember.Type = (baseMember == null) ? MembershipType.Phone : baseMember.Type;
-                    deleteMember.State = (baseMember == null) ? MemberState.Accepted : baseMember.State;
-                    if (membershipId == 0)
-                    {
-                        (deleteMember as PhoneMember).PhoneNumber = contact.Account;
-                    }
-                    break;
-
-                case IMAddressInfoType.Circle:
-
-                    deleteMember = new CircleMember();
-                    deleteMember.Type = (baseMember == null) ? MembershipType.Circle : baseMember.Type;
-                    deleteMember.State = (baseMember == null) ? MemberState.Accepted : baseMember.State;
-                    if (membershipId == 0)
-                    {
-                        (deleteMember as CircleMember).CircleId = contact.AddressBookId.ToString("D");
-                    }
-                    break;
-            }
-
-            deleteMember.MembershipId = membershipId.ToString();
-
-            memberShip.Members = new BaseMember[] { deleteMember };
-            deleteMemberRequest.memberships = new Membership[] { memberShip };
-
-            MsnServiceState DeleteMemberObject = new MsnServiceState(PartnerScenario.BlockUnblock, "DeleteMember", true);
-            SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, DeleteMemberObject);
-            sharingService.DeleteMemberCompleted += delegate(object service, DeleteMemberCompletedEventArgs e)
-            {
-                OnAfterCompleted(new ServiceOperationEventArgs(sharingService, MsnServiceType.Sharing, e));
-
-                if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
-                    return;
-
-                if (!e.Cancelled)
-                {
-                    if (null != e.Error && false == e.Error.Message.Contains("Member does not exist"))
-                    {
-                        return;
-                    }
-
-                    contact.RemoveFromList(RoleLists.Hide);
-                    AddressBook.RemoveMemberhip(ServiceFilterType.IMAvailability, contact.Account, contact.ClientType, memberRole, Scenario.ContactServeAPI);
-                    NSMessageHandler.ContactService.OnContactRemoved(new ListMutateEventArgs(contact, RoleLists.Hide));
-
-                    Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(2);
-                    hashlist.Add(contact.Hash, RoleLists.Hide);
-                    string payload = ConstructLists(hashlist, false)[0];
-                    NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML", payload));
-
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "DeleteMember completed: " + RoleLists.Hide, GetType().Name);
-                }
-            };
-
-            RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(sharingService, MsnServiceType.Sharing, DeleteMemberObject, deleteMemberRequest));
-        }
-
-
-        internal void AppearOffline(Contact contact, EventHandler onSuccess)
-        {
-            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
-            {
-                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("AppearOffline", new MSNPSharpException("You don't have access right on this action anymore.")));
-                return;
-            }
-
-            string memberRole = GetMemberRole(RoleLists.Hide);
-
-            if (String.IsNullOrEmpty(memberRole))
-                return;
-
-            // check whether the update is necessary
-            if (contact.HasLists(RoleLists.Hide))
-                return;
-
-            Service imAvailabilityService = AddressBook.SelectTargetService(ServiceFilterType.IMAvailability);
-
-            if (imAvailabilityService == null)
-            {
-                AddServiceAsync(ServiceFilterType.IMAvailability,
-                    delegate
-                    {
-                        // RESURSIVE CALL
-                        AppearOffline(contact, onSuccess);
-                    });
-                return;
-            }
-
-
-            AddMemberRequestType addMemberRequest = new AddMemberRequestType();
-            addMemberRequest.serviceHandle = new HandleType();
-            addMemberRequest.serviceHandle.Id = imAvailabilityService.Id.ToString();
-            addMemberRequest.serviceHandle.Type = ServiceFilterType.IMAvailability;
-
-            Membership memberShip = new Membership();
-            memberShip.MemberRole = memberRole;
-            BaseMember member = new BaseMember();
-
-            if (contact.ClientType == IMAddressInfoType.WindowsLive)
-            {
-                member = new PassportMember();
-                PassportMember passportMember = member as PassportMember;
-                passportMember.PassportName = contact.Account;
-                passportMember.State = MemberState.Accepted;
-                passportMember.Type = MembershipType.Passport;
-            }
-            else if (contact.ClientType == IMAddressInfoType.Yahoo)
-            {
-                member = new EmailMember();
-                EmailMember emailMember = member as EmailMember;
-                emailMember.State = MemberState.Accepted;
-                emailMember.Type = MembershipType.Email;
-                emailMember.Email = contact.Account;
-                emailMember.Annotations = new Annotation[] { new Annotation() };
-                emailMember.Annotations[0].Name = AnnotationNames.MSN_IM_BuddyType;
-                emailMember.Annotations[0].Value = "32:";
-            }
-            else if (contact.ClientType == IMAddressInfoType.Telephone)
-            {
-                member = new PhoneMember();
-                PhoneMember phoneMember = member as PhoneMember;
-                phoneMember.State = MemberState.Accepted;
-                phoneMember.Type = MembershipType.Phone;
-                phoneMember.PhoneNumber = contact.Account;
-            }
-            else if (contact.ClientType == IMAddressInfoType.Circle)
-            {
-                member = new CircleMember();
-                CircleMember circleMember = member as CircleMember;
-                circleMember.State = MemberState.Accepted;
-                circleMember.Type = MembershipType.Circle;
-                circleMember.CircleId = contact.AddressBookId.ToString("D");
-            }
-
-            memberShip.Members = new BaseMember[] { member };
-            addMemberRequest.memberships = new Membership[] { memberShip };
-
-            MsnServiceState AddMemberObject = new MsnServiceState(PartnerScenario.BlockUnblock, "AddMember", true);
-            SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, AddMemberObject);
-            sharingService.AddMemberCompleted += delegate(object service, AddMemberCompletedEventArgs e)
-            {
-                OnAfterCompleted(new ServiceOperationEventArgs(sharingService, MsnServiceType.Sharing, e));
-
-                if (NSMessageHandler.MSNTicket == MSNTicket.Empty)
-                    return;
-
-                if (!e.Cancelled)
-                {
-                    if (null != e.Error && false == e.Error.Message.Contains("Member already exists"))
-                    {
-                        return;
-                    }
-
-                    contact.AddToList(RoleLists.Hide);
-                    AddressBook.AddMemberhip(ServiceFilterType.IMAvailability, contact.Account, contact.ClientType, memberRole, member, Scenario.ContactServeAPI);
-                    NSMessageHandler.ContactService.OnContactAdded(new ListMutateEventArgs(contact, RoleLists.Hide));
-
-                    Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(2);
-                    hashlist.Add(contact.Hash, RoleLists.Hide);
-                    string payload = ConstructLists(hashlist, false)[0];
-                    NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
-
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "AddMember completed: " + RoleLists.Hide, GetType().Name);
-                }
-            };
-
-            RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(sharingService, MsnServiceType.Sharing, AddMemberObject, addMemberRequest));
         }
 
         #endregion

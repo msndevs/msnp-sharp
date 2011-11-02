@@ -609,7 +609,7 @@ namespace MSNPSharp
         }
 
 
-        private void AddMemberAsync(Contact contact, RoleLists list, AddMemberCompletedEventHandler callback)
+        private void AddMemberAsync(Contact contact, string serviceName, RoleLists list, AddMemberCompletedEventHandler callback)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
@@ -617,17 +617,34 @@ namespace MSNPSharp
                 return;
             }
 
+            // check whether the update is necessary
+            if (contact.HasLists(list))
+                return;
+
             string memberRole = GetMemberRole(list);
 
             if (String.IsNullOrEmpty(memberRole))
                 return;
 
+
+            Service service = AddressBook.SelectTargetService(serviceName);
+
+            if (service == null)
+            {
+                AddServiceAsync(serviceName,
+                    delegate
+                    {
+                        // RESURSIVE CALL
+                        AddMemberAsync(contact, serviceName, list, callback);
+                    });
+                return;
+            }
+
+
             AddMemberRequestType addMemberRequest = new AddMemberRequestType();
             addMemberRequest.serviceHandle = new HandleType();
-
-            Service messengerService = AddressBook.SelectTargetService(ServiceFilterType.Messenger);
-            addMemberRequest.serviceHandle.Id = messengerService.Id.ToString();
-            addMemberRequest.serviceHandle.Type = messengerService.ServiceType;
+            addMemberRequest.serviceHandle.Id = service.Id.ToString();
+            addMemberRequest.serviceHandle.Type = serviceName;
 
             Membership memberShip = new Membership();
             memberShip.MemberRole = memberRole;
@@ -674,7 +691,7 @@ namespace MSNPSharp
 
             MsnServiceState AddMemberObject = new MsnServiceState(PartnerScenario.ContactMsgrAPI, "AddMember", true);
             SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, AddMemberObject);
-            sharingService.AddMemberCompleted += delegate(object service, AddMemberCompletedEventArgs e)
+            sharingService.AddMemberCompleted += delegate(object srv, AddMemberCompletedEventArgs e)
             {
                 OnAfterCompleted(new ServiceOperationEventArgs(sharingService, MsnServiceType.Sharing, e));
 
@@ -682,11 +699,11 @@ namespace MSNPSharp
                     return;
 
                 // Update AB
-                AddressBook.AddMemberhip(ServiceFilterType.Messenger, contact.Account, contact.ClientType, memberRole, member, Scenario.ContactServeAPI);
+                AddressBook.AddMemberhip(serviceName, contact.Account, contact.ClientType, memberRole, member);
 
                 if (callback != null)
                 {
-                    callback(service, e);
+                    callback(srv, e);
                 }
             };
 
@@ -695,7 +712,7 @@ namespace MSNPSharp
 
 
 
-        private void DeleteMemberAsync(Contact contact, RoleLists list, DeleteMemberCompletedEventHandler callback)
+        private void DeleteMemberAsync(Contact contact, string serviceName, RoleLists list, DeleteMemberCompletedEventHandler callback)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
@@ -703,24 +720,39 @@ namespace MSNPSharp
                 return;
             }
 
-            string memberRole = GetMemberRole(list);
+            // check whether the update is necessary
+            if (!contact.HasLists(list))
+                return;
 
+            string memberRole = GetMemberRole(list);
             if (String.IsNullOrEmpty(memberRole))
                 return;
 
+            Service service = AddressBook.SelectTargetService(serviceName);
+
+            if (service == null)
+            {
+                AddServiceAsync(serviceName,
+                    delegate
+                    {
+                        // RESURSIVE CALL
+                        DeleteMemberAsync(contact, serviceName, list, callback);
+                    });
+                return;
+            }
+
+
             DeleteMemberRequestType deleteMemberRequest = new DeleteMemberRequestType();
             deleteMemberRequest.serviceHandle = new HandleType();
-
-            Service messengerService = AddressBook.SelectTargetService(ServiceFilterType.Messenger);
-            deleteMemberRequest.serviceHandle.Id = messengerService.Id.ToString();   //Always set to 0 ??
-            deleteMemberRequest.serviceHandle.Type = messengerService.ServiceType;
+            deleteMemberRequest.serviceHandle.Id = service.Id.ToString();
+            deleteMemberRequest.serviceHandle.Type = serviceName;
 
             Membership memberShip = new Membership();
             memberShip.MemberRole = memberRole;
 
             BaseMember deleteMember = null; // BaseMember is an abstract type, so we cannot create a new instance.
             // If we have a MembershipId different from 0, just use it. Otherwise, use email or phone number. 
-            BaseMember baseMember = AddressBook.SelectBaseMember(ServiceFilterType.Messenger, contact.Account, contact.ClientType, memberRole);
+            BaseMember baseMember = AddressBook.SelectBaseMember(serviceName, contact.Account, contact.ClientType, memberRole);
             int membershipId = (baseMember == null || String.IsNullOrEmpty(baseMember.MembershipId)) ? 0 : int.Parse(baseMember.MembershipId);
 
             switch (contact.ClientType)
@@ -771,9 +803,9 @@ namespace MSNPSharp
             memberShip.Members = new BaseMember[] { deleteMember };
             deleteMemberRequest.memberships = new Membership[] { memberShip };
 
-            MsnServiceState DeleteMemberObject = new MsnServiceState((list == RoleLists.Pending) ? PartnerScenario.ContactMsgrAPI : PartnerScenario.BlockUnblock, "DeleteMember", true);
+            MsnServiceState DeleteMemberObject = new MsnServiceState(PartnerScenario.ContactMsgrAPI, "DeleteMember", true);
             SharingServiceBinding sharingService = (SharingServiceBinding)CreateService(MsnServiceType.Sharing, DeleteMemberObject);
-            sharingService.DeleteMemberCompleted += delegate(object service, DeleteMemberCompletedEventArgs e)
+            sharingService.DeleteMemberCompleted += delegate(object srv, DeleteMemberCompletedEventArgs e)
             {
                 OnAfterCompleted(new ServiceOperationEventArgs(sharingService, MsnServiceType.Sharing, e));
 
@@ -781,11 +813,11 @@ namespace MSNPSharp
                     return;
 
                 // Update AB
-                AddressBook.RemoveMemberhip(ServiceFilterType.Messenger, contact.Account, contact.ClientType, memberRole, Scenario.ContactServeAPI);
+                AddressBook.RemoveMemberhip(serviceName, contact.Account, contact.ClientType, memberRole);
 
                 if (callback != null)
                 {
-                    callback(service, e);
+                    callback(srv, e);
                 }
             };
 
@@ -855,16 +887,19 @@ namespace MSNPSharp
                     if (e.Cancelled || NSMessageHandler.MSNTicket == MSNTicket.Empty)
                         return;
 
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
-                        serviceName + "=" + e.Result.AddServiceResult + " created...");
+                    if (e.Error == null)
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                            serviceName + "=" + e.Result.AddServiceResult + " created...");
 
-                    // Update service membership...
-                    msRequest(PartnerScenario.BlockUnblock,
-                        delegate
-                        {
-                            if (callback != null)
-                                callback(abService, e);
-                        });
+                        // Update service membership...
+                        msRequest(PartnerScenario.BlockUnblock,
+                            delegate
+                            {
+                                if (callback != null)
+                                    callback(abService, e);
+                            });
+                    }
                 };
 
                 RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.Sharing, addServiceObject, r));

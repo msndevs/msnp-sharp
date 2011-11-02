@@ -391,9 +391,7 @@ namespace MSNPSharp.IO
         /// <param name="type"></param>
         /// <param name="memberrole"></param>
         /// <param name="member"></param>
-        /// <param name="scene"></param>
-        /// <remarks>Since AllowList and BlockList are mutally exclusive, adding a member to AllowList will lead to the remove of BlockList, revese is as the same.</remarks>
-        internal void AddMemberhip(string servicetype, string account, IMAddressInfoType type, string memberrole, BaseMember member, Scenario scene)
+        internal void AddMemberhip(string servicetype, string account, IMAddressInfoType type, string memberrole, BaseMember member)
         {
             lock (SyncObject)
             {
@@ -405,34 +403,18 @@ namespace MSNPSharp.IO
 
                     ms[memberrole][Contact.MakeHash(account, type)] = member;
                 }
-
-                switch (scene)
-                {
-                    case Scenario.DeltaRequest:
-                        if (memberrole == MemberRole.Allow)
-                        {
-                            RemoveMemberhip(servicetype, account, type, MemberRole.Block, Scenario.InternalCall);
-                        }
-
-                        if (memberrole == MemberRole.Block)
-                        {
-                            RemoveMemberhip(servicetype, account, type, MemberRole.Allow, Scenario.InternalCall);
-                        }
-
-                        break;
-                }
             }
         }
 
-        internal void RemoveMemberhip(string servicetype, string account, IMAddressInfoType type, string memberrole, Scenario scene)
+        internal void RemoveMemberhip(string servicetype, string account, IMAddressInfoType type, string memberrole)
         {
             lock (SyncObject)
             {
                 SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
-                if (ms != null)
+                if (ms != null && ms.ContainsKey(memberrole))
                 {
                     string hash = Contact.MakeHash(account, type);
-                    if (ms.ContainsKey(memberrole) && ms[memberrole].ContainsKey(hash))
+                    if (ms[memberrole].ContainsKey(hash))
                     {
                         ms[memberrole].Remove(hash);
                     }
@@ -913,7 +895,7 @@ namespace MSNPSharp.IO
                                     WebServiceDateTimeConverter.ConvertToDateTime(MembershipList[messengerServiceClone.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type)].LastChanged)
                                     < WebServiceDateTimeConverter.ConvertToDateTime(bm.LastChanged))
                                 {
-                                    RemoveMemberhip(messengerServiceClone.ServiceType, account, type, memberrole, Scenario.DeltaRequest);
+                                    RemoveMemberhip(messengerServiceClone.ServiceType, account, type, memberrole);
                                 }
 
                                 if (NSMessageHandler.ContactList.HasContact(account, type))
@@ -942,7 +924,7 @@ namespace MSNPSharp.IO
                                     /*probably membershipid=0*/ WebServiceDateTimeConverter.ConvertToDateTime(bm.LastChanged)
                                     > WebServiceDateTimeConverter.ConvertToDateTime(MembershipList[messengerServiceClone.ServiceType].Memberships[memberrole][Contact.MakeHash(account, type)].LastChanged))
                                 {
-                                    AddMemberhip(messengerServiceClone.ServiceType, account, type, memberrole, bm, Scenario.DeltaRequest);
+                                    AddMemberhip(messengerServiceClone.ServiceType, account, type, memberrole, bm);
                                 }
 
                                 string displayname = bm.DisplayName == null ? account : bm.DisplayName;
@@ -1039,7 +1021,7 @@ namespace MSNPSharp.IO
                         {
                             if (bm.Deleted)
                             {
-                                RemoveMemberhip(serviceClone.ServiceType, account, type, memberrole, Scenario.DeltaRequest);
+                                RemoveMemberhip(serviceClone.ServiceType, account, type, memberrole);
 
                                 if (serviceClone.ServiceType == ServiceFilterType.SocialNetwork)
                                 {
@@ -1057,7 +1039,7 @@ namespace MSNPSharp.IO
                             }
                             else
                             {
-                                AddMemberhip(serviceClone.ServiceType, account, type, memberrole, bm, Scenario.DeltaRequest);
+                                AddMemberhip(serviceClone.ServiceType, account, type, memberrole, bm);
 
                                 if (serviceClone.ServiceType == ServiceFilterType.SocialNetwork)
                                 {
