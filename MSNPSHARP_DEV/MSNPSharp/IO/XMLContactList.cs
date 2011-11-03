@@ -88,44 +88,13 @@ namespace MSNPSharp.IO
                     {
                         foreach (BaseMember bm in ms[role].Values)
                         {
-                            long cid = 0;
-                            string account = null;
-                            IMAddressInfoType type = IMAddressInfoType.None;
+                            long cid;
+                            string account;
+                            IMAddressInfoType type;
+                            string displayname;
 
-                            if (bm is PassportMember)
+                            if (DetectBaseMember(bm, out account, out type, out cid, out displayname))
                             {
-                                type = IMAddressInfoType.WindowsLive;
-                                PassportMember pm = (PassportMember)bm;
-                                if (!pm.IsPassportNameHidden)
-                                {
-                                    account = pm.PassportName;
-                                }
-                                cid = Convert.ToInt64(pm.CID);
-                            }
-                            else if (bm is EmailMember)
-                            {
-                                type = IMAddressInfoType.Yahoo;
-                                account = ((EmailMember)bm).Email;
-                            }
-                            else if (bm is PhoneMember)
-                            {
-                                type = IMAddressInfoType.Telephone;
-                                account = ((PhoneMember)bm).PhoneNumber;
-                            }
-                            else if (bm is CircleMember)
-                            {
-                                //type = IMAddressInfoType.Circle;
-                                //account = ((CircleMember)bm).CircleId + "@" + Contact.DefaultHostDomain;
-                            }
-                            else if (bm is ExternalIDMember)
-                            {
-                                type = IMAddressInfoType.RemoteNetwork;
-                                account = ((ExternalIDMember)bm).SourceID;
-                            }
-
-                            if (account != null && type != IMAddressInfoType.None)
-                            {
-                                string displayname = bm.DisplayName == null ? account : bm.DisplayName;
                                 Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
                                 contact.Lists |= msnlist;
 
@@ -152,51 +121,20 @@ namespace MSNPSharp.IO
                     {
                         foreach (BaseMember bm in fs[role].Values)
                         {
-                            long cid = 0;
-                            string account = null;
-                            IMAddressInfoType type = IMAddressInfoType.None;
-                            FriendshipStatus fsStatus = (role == MemberRole.OneWayRelationship) ?
-                                FriendshipStatus.OneWayRelationship : FriendshipStatus.TwoWayRelationship;
+                            long cid;
+                            string account;
+                            IMAddressInfoType type;
+                            string displayname;
 
-                            if (bm is PassportMember)
+                            if (DetectBaseMember(bm, out account, out type, out cid, out displayname))
                             {
-                                type = IMAddressInfoType.WindowsLive;
-                                PassportMember pm = (PassportMember)bm;
-                                if (!pm.IsPassportNameHidden)
-                                {
-                                    account = pm.PassportName;
-                                }
-                                cid = Convert.ToInt64(pm.CID);
-                            }
-                            else if (bm is EmailMember)
-                            {
-                                type = IMAddressInfoType.Yahoo;
-                                account = ((EmailMember)bm).Email;
-                            }
-                            else if (bm is PhoneMember)
-                            {
-                                type = IMAddressInfoType.Telephone;
-                                account = ((PhoneMember)bm).PhoneNumber;
-                            }
-                            else if (bm is CircleMember)
-                            {
-                                //type = IMAddressInfoType.Circle;
-                                //account = ((CircleMember)bm).CircleId + "@" + Contact.DefaultHostDomain;
-                            }
-                            else if (bm is ExternalIDMember)
-                            {
-                                type = IMAddressInfoType.RemoteNetwork;
-                                account = ((ExternalIDMember)bm).SourceID;
-                            }
-
-                            if (account != null && type != IMAddressInfoType.None)
-                            {
-                                string displayname = bm.DisplayName == null ? account : bm.DisplayName;
+                                FriendshipStatus fsStatus = (role == MemberRole.OneWayRelationship) ? FriendshipStatus.OneWayRelationship : FriendshipStatus.TwoWayRelationship;
                                 Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
-                                contact.SetFriendshipStatus(fsStatus, false);
 
                                 if (cid != 0)
                                     contact.CID = cid;
+
+                                contact.SetFriendshipStatus(fsStatus, false);
                             }
                         }
                     }
@@ -214,44 +152,13 @@ namespace MSNPSharp.IO
             {
                 foreach (BaseMember bm in hd[MemberRole.Hide].Values)
                 {
-                    long cid = 0;
-                    string account = null;
-                    IMAddressInfoType type = IMAddressInfoType.None;
+                    long cid;
+                    string account;
+                    IMAddressInfoType type;
+                    string displayname;
 
-                    if (bm is PassportMember)
+                    if (DetectBaseMember(bm, out account, out type, out cid, out displayname))
                     {
-                        type = IMAddressInfoType.WindowsLive;
-                        PassportMember pm = (PassportMember)bm;
-                        if (!pm.IsPassportNameHidden)
-                        {
-                            account = pm.PassportName;
-                        }
-                        cid = Convert.ToInt64(pm.CID);
-                    }
-                    else if (bm is EmailMember)
-                    {
-                        type = IMAddressInfoType.Yahoo;
-                        account = ((EmailMember)bm).Email;
-                    }
-                    else if (bm is PhoneMember)
-                    {
-                        type = IMAddressInfoType.Telephone;
-                        account = ((PhoneMember)bm).PhoneNumber;
-                    }
-                    else if (bm is CircleMember)
-                    {
-                        //type = IMAddressInfoType.Circle;
-                        //account = ((CircleMember)bm).CircleId + "@" + Contact.DefaultHostDomain;
-                    }
-                    else if (bm is ExternalIDMember)
-                    {
-                        type = IMAddressInfoType.RemoteNetwork;
-                        account = ((ExternalIDMember)bm).SourceID;
-                    }
-
-                    if (account != null && type != IMAddressInfoType.None)
-                    {
-                        string displayname = bm.DisplayName == null ? account : bm.DisplayName;
                         Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
                         contact.Lists |= RoleLists.Hide;
 
@@ -259,7 +166,6 @@ namespace MSNPSharp.IO
                             contact.CID = cid;
                     }
                 }
-
             }
 
 
@@ -848,44 +754,14 @@ namespace MSNPSharp.IO
 
                     foreach (BaseMember bm in members)
                     {
-                        long cid = 0;
-                        string account = null;
-                        IMAddressInfoType type = IMAddressInfoType.None;
+                        long cid;
+                        string account;
+                        IMAddressInfoType type;
+                        string displayname;
 
-                        if (bm is PassportMember)
+                        if (DetectBaseMember(bm, out account, out type, out cid, out displayname))
                         {
-                            type = IMAddressInfoType.WindowsLive;
-                            PassportMember pm = bm as PassportMember;
-                            if (!pm.IsPassportNameHidden)
-                            {
-                                account = pm.PassportName;
-                            }
-                            cid = Convert.ToInt64(pm.CID);
-                        }
-                        else if (bm is EmailMember)
-                        {
-                            type = IMAddressInfoType.Yahoo;
-                            account = ((EmailMember)bm).Email;
-                        }
-                        else if (bm is PhoneMember)
-                        {
-                            type = IMAddressInfoType.Telephone;
-                            account = ((PhoneMember)bm).PhoneNumber;
-                        }
-                        else if (bm is CircleMember)
-                        {
-                            type = IMAddressInfoType.Circle;
-                            account = ((CircleMember)bm).CircleId + "@" + Contact.DefaultHostDomain;
-                        }
-                        else if (bm is ExternalIDMember)
-                        {
-                            type = IMAddressInfoType.RemoteNetwork;
-                            account = ((ExternalIDMember)bm).SourceID;
-                        }
-
-                        if (account != null && type != IMAddressInfoType.None)
-                        {
-                            account = account.ToLowerInvariant();                            
+                            account = account.ToLowerInvariant();
 
                             if (bm.Deleted)
                             {
@@ -927,7 +803,6 @@ namespace MSNPSharp.IO
                                     AddMemberhip(messengerServiceClone.ServiceType, account, type, memberrole, bm);
                                 }
 
-                                string displayname = bm.DisplayName == null ? account : bm.DisplayName;
                                 Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
                                 if (cid != 0)
                                     contact.CID = cid;
@@ -968,56 +843,15 @@ namespace MSNPSharp.IO
                     string memberrole = membership.MemberRole;
                     List<BaseMember> members = new List<BaseMember>(membership.Members);
                     members.Sort(CompareBaseMembers);
+
                     foreach (BaseMember bm in members)
                     {
-                        string account = null;
-                        IMAddressInfoType type = IMAddressInfoType.None;
+                        long cid;
+                        string account;
+                        IMAddressInfoType type;
+                        string displayname;
 
-                        switch (bm.Type)
-                        {
-                            case MembershipType.Passport:
-                                type = IMAddressInfoType.WindowsLive;
-                                PassportMember pm = bm as PassportMember;
-                                if (!pm.IsPassportNameHidden)
-                                {
-                                    account = pm.PassportName;
-                                }
-                                break;
-
-                            case MembershipType.Email:
-                                type = IMAddressInfoType.Yahoo;
-                                account = ((EmailMember)bm).Email;
-                                break;
-
-                            case MembershipType.Phone:
-                                type = IMAddressInfoType.Telephone;
-                                account = ((PhoneMember)bm).PhoneNumber;
-                                break;
-
-                            case MembershipType.ExternalID:
-                                type = IMAddressInfoType.RemoteNetwork;
-                                account = ((ExternalIDMember)bm).SourceID;
-                                break;
-
-                            case MembershipType.Domain:
-                                account = ((DomainMember)bm).DomainName;
-                                break;
-
-                            case MembershipType.Circle:
-                                type = IMAddressInfoType.Circle;
-                                account = ((CircleMember)bm).CircleId + "@" + Contact.DefaultHostDomain;
-                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, service.Info.Handle.Type + " Membership " + bm.GetType().ToString() + ": " + memberrole + ":" + account);
-                                break;
-
-                            case MembershipType.Role:
-                            case MembershipType.Service:
-                            case MembershipType.Everyone:
-                            case MembershipType.Partner:
-                                account = bm.Type + "/" + bm.MembershipId;
-                                break;
-                        }
-
-                        if (account != null)
+                        if (DetectBaseMember(bm, out account, out type, out cid, out displayname))
                         {
                             if (bm.Deleted)
                             {
@@ -1064,6 +898,95 @@ namespace MSNPSharp.IO
         private static int CompareBaseMembers(BaseMember x, BaseMember y)
         {
             return x.LastChanged.CompareTo(y.LastChanged);
+        }
+
+
+        private bool DetectBaseMember(BaseMember bm,
+            out string account, out IMAddressInfoType type,
+            out long cid, out string displayname)
+        {
+
+            bool ret = false;
+
+            account = string.Empty;
+            displayname = string.Empty;
+            type = IMAddressInfoType.None;
+            cid = 0;
+
+            switch (bm.Type)
+            {
+                case MembershipType.Passport:
+                    PassportMember pm = bm as PassportMember;
+
+                    type = IMAddressInfoType.WindowsLive;
+                    cid = pm.CID;
+
+                    if (!pm.IsPassportNameHidden)
+                    {
+                        account = pm.PassportName;
+                    }
+
+                    break;
+
+                case MembershipType.Email:
+
+                    type = IMAddressInfoType.Yahoo;
+                    account = ((EmailMember)bm).Email;
+
+                    if (bm.Annotations != null)
+                    {
+                        foreach (Annotation anno in bm.Annotations)
+                        {
+                            switch (anno.Name)
+                            {
+                                case AnnotationNames.MSN_IM_BuddyType:
+                                    if (!String.IsNullOrEmpty(anno.Value) && anno.Value.Contains(":"))
+                                    {
+                                        type = (IMAddressInfoType)int.Parse(anno.Value.Split(':')[0]);
+                                    }
+                                    break;
+                            }
+                        }
+                    }
+
+                    break;
+
+                case MembershipType.Phone:
+                    type = IMAddressInfoType.Telephone;
+                    account = ((PhoneMember)bm).PhoneNumber;
+                    break;
+
+                case MembershipType.ExternalID:
+                    type = IMAddressInfoType.RemoteNetwork;
+                    account = ((ExternalIDMember)bm).SourceID;
+                    break;
+
+                case MembershipType.Domain:
+                    account = ((DomainMember)bm).DomainName;
+                    break;
+
+                case MembershipType.Circle:
+                    type = IMAddressInfoType.Circle;
+                    account = ((CircleMember)bm).CircleId + "@" + Contact.DefaultHostDomain;
+                    break;
+
+                case MembershipType.Role:
+                case MembershipType.Service:
+                case MembershipType.Everyone:
+                case MembershipType.Partner:
+                    type = IMAddressInfoType.None;
+                    account = bm.Type + "/" + bm.MembershipId;
+                    break;
+            }
+
+            if (!String.IsNullOrEmpty(account) && type != IMAddressInfoType.None)
+            {
+                account = account.ToLowerInvariant();
+                displayname = (bm.DisplayName == null) ? account : bm.DisplayName;
+                ret = true;
+            }
+
+            return ret;
         }
 
 

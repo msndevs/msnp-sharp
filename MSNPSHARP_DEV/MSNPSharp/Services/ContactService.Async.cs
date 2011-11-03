@@ -658,7 +658,8 @@ namespace MSNPSharp
                 passportMember.State = MemberState.Accepted;
                 passportMember.Type = MembershipType.Passport;
             }
-            else if (contact.ClientType == IMAddressInfoType.Yahoo)
+            else if (contact.ClientType == IMAddressInfoType.Yahoo ||
+                contact.ClientType == IMAddressInfoType.OfficeCommunicator)
             {
                 member = new EmailMember();
                 EmailMember emailMember = member as EmailMember;
@@ -667,7 +668,8 @@ namespace MSNPSharp
                 emailMember.Email = contact.Account;
                 emailMember.Annotations = new Annotation[] { new Annotation() };
                 emailMember.Annotations[0].Name = AnnotationNames.MSN_IM_BuddyType;
-                emailMember.Annotations[0].Value = "32:";
+                emailMember.Annotations[0].Value = (contact.ClientType == IMAddressInfoType.Yahoo) ?
+                    "32:" : "02:";
             }
             else if (contact.ClientType == IMAddressInfoType.Telephone)
             {
@@ -769,6 +771,7 @@ namespace MSNPSharp
                     break;
 
                 case IMAddressInfoType.Yahoo:
+                case IMAddressInfoType.OfficeCommunicator:
 
                     deleteMember = new EmailMember();
                     deleteMember.Type = (baseMember == null) ? MembershipType.Email : baseMember.Type;
