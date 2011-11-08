@@ -1452,6 +1452,7 @@ namespace MSNPSharpClient
                         appearOnlineMenuItem.Visible = false;
                     }
 
+                    liveProfileToolStripMenuItem.Visible = contact.CID != 0;
                     deleteMenuItem.Visible = contact.Guid != Guid.Empty;
                     leaveCircleToolStripMenuItem.Visible = contact.ClientType == IMAddressInfoType.Circle;
 
@@ -2528,6 +2529,16 @@ namespace MSNPSharpClient
             {
                 messenger.ContactService.ExitCircle(selectedContact);
             }
+
+        }
+
+        private void liveProfileToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+            Contact selectedContact = treeViewFavoriteList.SelectedNode.Tag as Contact;
+
+            Process.Start("http://profile.live.com/cid-" +
+                String.Format("{0:x}", selectedContact.CID) + "/");
 
         }
 
