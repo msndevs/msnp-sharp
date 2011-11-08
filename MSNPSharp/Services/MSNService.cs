@@ -806,6 +806,7 @@ namespace MSNPSharp
                     {
                         Dictionary<MsnServiceState, SoapHttpClientProtocol> copyStates = new Dictionary<MsnServiceState, SoapHttpClientProtocol>(asyncStates);
                         asyncStates = new Dictionary<MsnServiceState, SoapHttpClientProtocol>();
+                        asyncRequests = new Dictionary<MsnServiceState, object>();
 
                         foreach (KeyValuePair<MsnServiceState, SoapHttpClientProtocol> keyValue in copyStates)
                         {
