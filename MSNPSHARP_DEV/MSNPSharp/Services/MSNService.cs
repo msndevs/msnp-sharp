@@ -211,11 +211,25 @@ namespace MSNPSharp
     {
         private string method;
         private Exception exc;
+        private BeforeRunAsyncMethodEventArgs reinvokeArgs;
 
         public ServiceOperationFailedEventArgs(string methodname, Exception ex)
         {
             method = methodname;
             exc = ex;
+        }
+
+        internal ServiceOperationFailedEventArgs(string methodname, Exception ex, BeforeRunAsyncMethodEventArgs invokeArgs)
+        {
+            method = methodname;
+            exc = ex;
+            ReinvokeArgs = invokeArgs;
+        }
+
+        internal BeforeRunAsyncMethodEventArgs ReinvokeArgs
+        {
+            get { return reinvokeArgs; }
+            private set { reinvokeArgs = value; }
         }
 
         public string Method
@@ -256,6 +270,9 @@ namespace MSNPSharp
         private NSMessageHandler nsMessageHandler;
         private Dictionary<MsnServiceState, SoapHttpClientProtocol> asyncStates =
             new Dictionary<MsnServiceState, SoapHttpClientProtocol>(0);
+
+        private Dictionary<MsnServiceState, object> asyncRequests =
+            new Dictionary<MsnServiceState, object>(0); // This is just a work around, we should redesign it later.
 
         private MSNService()
         {
@@ -435,6 +452,11 @@ namespace MSNPSharp
 
                 ChangeCacheKeyAndPreferredHostForSpecifiedMethod(e.WebService, e.ServiceType, e.ServiceState, e.Request);
 
+                lock (asyncRequests)
+                {
+                    asyncRequests[e.ServiceState] = e.Request;
+                }
+
                 // Run async method now
                 e.WebService.GetType().InvokeMember(
                     e.ServiceState.MethodName + "Async",
@@ -444,6 +466,7 @@ namespace MSNPSharp
                     new object[] { e.Request, e.ServiceState }
                 );
             }
+
         }
 
         protected void ChangeCacheKeyAndPreferredHostForSpecifiedMethod(SoapHttpClientProtocol ws, MsnServiceType st, MsnServiceState ss, object request)
@@ -676,6 +699,16 @@ namespace MSNPSharp
 
         protected virtual void OnAfterCompleted(ServiceOperationEventArgs e)
         {
+            object request = null;
+            lock (asyncRequests)
+            {
+                if (asyncRequests.ContainsKey(e.MsnServiceState))
+                {
+                    request = asyncRequests[e.MsnServiceState];
+                    asyncRequests.Remove(e.MsnServiceState);
+                }
+            }
+
             if (e.MsnServiceState.AddToAsyncList)
             {
                 lock (asyncStates)
@@ -692,7 +725,39 @@ namespace MSNPSharp
             }
             else if (e.AsyncCompletedEventArgs.Error != null)
             {
-                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs(e.MsnServiceState.MethodName, e.AsyncCompletedEventArgs.Error));
+                BeforeRunAsyncMethodEventArgs reinvokeArgs = null;
+                if (e.AsyncCompletedEventArgs.Error is WebException)
+                {
+                    WebException webException = e.AsyncCompletedEventArgs.Error as WebException;
+                    HttpWebResponse webResponse = webException.Response as HttpWebResponse;
+
+                    if (webResponse != null && request != null)
+                    {
+                        if (webResponse.StatusCode == HttpStatusCode.MovedPermanently)
+                        {
+                            DeltasList deltas = NSMessageHandler.ContactService.Deltas;
+                            if (deltas == null)
+                            {
+                                throw new MSNPSharpException("Deltas is null.");
+                            }
+
+                            string redirctURL = webResponse.Headers[HttpResponseHeader.Location];
+                            string preferredHostKey = e.WebService.ToString() + "." + e.MsnServiceState.MethodName;
+
+                            lock (deltas.SyncObject)
+                            {
+                                deltas.PreferredHosts[preferredHostKey] = FetchHost(redirctURL);
+                                deltas.Save();
+                            }
+
+                            e.WebService.Url = redirctURL;
+
+                            reinvokeArgs = new BeforeRunAsyncMethodEventArgs(e.WebService, e.ServiceType, e.MsnServiceState, request);
+                        }
+                    }
+                }
+
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs(e.MsnServiceState.MethodName, e.AsyncCompletedEventArgs.Error, reinvokeArgs));
             }
             else
             {
@@ -718,8 +783,16 @@ namespace MSNPSharp
         /// <param name="e"></param>
         protected virtual void OnServiceOperationFailed(object sender, ServiceOperationFailedEventArgs e)
         {
-            if (ServiceOperationFailed != null)
-                ServiceOperationFailed(sender, e);
+            if (e.ReinvokeArgs != null)
+            {
+                RunAsyncMethod(e.ReinvokeArgs);
+            }
+            else
+            {
+
+                if (ServiceOperationFailed != null)
+                    ServiceOperationFailed(sender, e);
+            }
         }
 
 
@@ -733,6 +806,7 @@ namespace MSNPSharp
                     {
                         Dictionary<MsnServiceState, SoapHttpClientProtocol> copyStates = new Dictionary<MsnServiceState, SoapHttpClientProtocol>(asyncStates);
                         asyncStates = new Dictionary<MsnServiceState, SoapHttpClientProtocol>();
+                        asyncRequests = new Dictionary<MsnServiceState, object>();
 
                         foreach (KeyValuePair<MsnServiceState, SoapHttpClientProtocol> keyValue in copyStates)
                         {
