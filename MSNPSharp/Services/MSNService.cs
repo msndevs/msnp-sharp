@@ -679,6 +679,8 @@ namespace MSNPSharp
 
                 lock (NSMessageHandler.ContactService.Deltas.SyncObject)
                 {
+                    /*
+                    //This is not a correct implementation
                     if (!String.IsNullOrEmpty(sh.PreferredHostName))
                     {
                         string methodKey = ws.ToString() + "." + ss.MethodName;
@@ -690,8 +692,8 @@ namespace MSNPSharp
                                         "Original: " + FetchHost(ws.Url) + "\r\n " +
                                         "Redirect: " + preferredHost + "\r\n");
 
-                        NSMessageHandler.ContactService.Deltas.PreferredHosts[methodKey] = preferredHost;
-                    }
+                        //NSMessageHandler.ContactService.Deltas.PreferredHosts[methodKey] = preferredHost;
+                    }*/
 
                     NSMessageHandler.ContactService.Deltas.Save();
                 }
