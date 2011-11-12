@@ -678,6 +678,9 @@ namespace MSNPSharp
 
                 lock (NSMessageHandler.ContactService.Deltas.SyncObject)
                 {
+                    /*
+                    // The implementation here is incorrect, we should only believe in the Location header
+                    // from the http response.
                     if (!String.IsNullOrEmpty(sh.PreferredHostName))
                     {
                         string methodKey = ws.ToString() + "." + ss.MethodName;
@@ -691,6 +694,7 @@ namespace MSNPSharp
 
                         NSMessageHandler.ContactService.Deltas.PreferredHosts[methodKey] = preferredHost;
                     }
+                     */
 
                     NSMessageHandler.ContactService.Deltas.Save();
                 }
