@@ -54,7 +54,9 @@ namespace MSNPSharp
         /// <summary>A SOCKS4[A] proxy server.</summary>
         Socks4,
         /// <summary>A SOCKS5 proxy server.</summary>
-        Socks5
+        Socks5,
+        /// <summary>A HTTP proxy server.</summary>
+        Http,
     }
 
     /// <summary>
