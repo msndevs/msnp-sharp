@@ -123,9 +123,24 @@ namespace MSNPSharp.Core
             if (ConnectivitySettings.ProxyType != ProxyType.None)
             {
                 // set the proxy type
-                socket.ProxyType = (ConnectivitySettings.ProxyType == ProxyType.Socks4)
-                    ? Org.Mentalis.Network.ProxySocket.ProxyTypes.Socks4
-                    : Org.Mentalis.Network.ProxySocket.ProxyTypes.Socks5;
+                switch (ConnectivitySettings.ProxyType)
+                {
+                    case ProxyType.Socks4:
+                        socket.ProxyType = ProxyTypes.Socks4;
+                        break;
+
+                    case ProxyType.Socks5:
+                        socket.ProxyType = ProxyTypes.Socks5;
+                        break;
+
+                    case ProxyType.Http:
+                        socket.ProxyType = ProxyTypes.Http;
+                        break;
+
+                    case ProxyType.None:
+                        socket.ProxyType = ProxyTypes.None;
+                        break;
+                }
 
                 socket.ProxyUser = ConnectivitySettings.ProxyUsername;
                 socket.ProxyPass = ConnectivitySettings.ProxyPassword;
@@ -142,8 +157,7 @@ namespace MSNPSharp.Core
                     {
                         try
                         {
-                            System.Net.IPHostEntry ipHostEntry = System.Net.Dns.GetHostEntry(ConnectivitySettings.ProxyHost);
-                            System.Net.IPAddress ipAddress = ipHostEntry.AddressList[0];
+                            System.Net.IPAddress ipAddress = Network.DnsResolve(ConnectivitySettings.ProxyHost);
 
                             // assign to the connection object so other sockets can make use of it quickly
                             proxyEndPoint = new IPEndPoint(ipAddress, ConnectivitySettings.ProxyPort);

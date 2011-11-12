@@ -43,7 +43,9 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <summary>A SOCKS4[A] proxy server.</summary>
 		Socks4,
 		/// <summary>A SOCKS5 proxy server.</summary>
-		Socks5
+		Socks5,
+        /// <summary>A HTTP proxy server.</summary>
+        Http
 	}
 	/// <summary>
 	/// Implements a Socket class that can connect trough a SOCKS proxy server.
@@ -102,6 +104,8 @@ namespace Org.Mentalis.Network.ProxySocket {
 					(new Socks4Handler(this, ProxyUser)).Negotiate((IPEndPoint)remoteEP);
 				else if (ProxyType == ProxyTypes.Socks5)
 					(new Socks5Handler(this, ProxyUser, ProxyPass)).Negotiate((IPEndPoint)remoteEP);
+                else if (ProxyType == ProxyTypes.Http)
+                    (new HttpHandler(this, ProxyUser, ProxyPass)).Negotiate((IPEndPoint)remoteEP);
 			}
 		}
 		/// <summary>
@@ -121,13 +125,15 @@ namespace Org.Mentalis.Network.ProxySocket {
 			if (port <= 0 || port > 65535)
 				throw new ArgumentException("Invalid port.");
 			if (this.ProtocolType != ProtocolType.Tcp || ProxyType == ProxyTypes.None || ProxyEndPoint == null)
-				base.Connect(new IPEndPoint(Dns.GetHostEntry(host).AddressList[0], port));
+				base.Connect(new IPEndPoint(MSNPSharp.Core.Network.DnsResolve(host), port));
 			else {
 				base.Connect(ProxyEndPoint);
 				if (ProxyType == ProxyTypes.Socks4)
-					(new Socks4Handler(this, ProxyUser)).Negotiate(host, port);
-				else if (ProxyType == ProxyTypes.Socks5)
-					(new Socks5Handler(this, ProxyUser, ProxyPass)).Negotiate(host, port);
+                    (new Socks4Handler(this, ProxyUser)).Negotiate(host, port);
+                else if (ProxyType == ProxyTypes.Socks5)
+                    (new Socks5Handler(this, ProxyUser, ProxyPass)).Negotiate(host, port);
+                else if (ProxyType == ProxyTypes.Http)
+                    (new HttpHandler(this, ProxyUser, ProxyPass)).Negotiate(host, port);
 			}
 		}
 		/// <summary>
@@ -155,7 +161,10 @@ namespace Org.Mentalis.Network.ProxySocket {
 				} else if(ProxyType == ProxyTypes.Socks5) {
 					AsyncResult = (new Socks5Handler(this, ProxyUser, ProxyPass)).BeginNegotiate((IPEndPoint)remoteEP, new HandShakeComplete(this.OnHandShakeComplete), ProxyEndPoint);
 					return AsyncResult;
-				}
+                } else if (ProxyType == ProxyTypes.Http) {
+                    AsyncResult = (new HttpHandler(this, ProxyUser, ProxyPass)).BeginNegotiate((IPEndPoint)remoteEP, new HandShakeComplete(this.OnHandShakeComplete), ProxyEndPoint);
+                    return AsyncResult;
+                }
 				return null;
 			}
 		}
@@ -183,6 +192,11 @@ namespace Org.Mentalis.Network.ProxySocket {
                 else if (ProxyType == ProxyTypes.Socks5)
                 {
                     AsyncResult = (new Socks5Handler(this, ProxyUser, ProxyPass)).BeginNegotiate(remoteEP, new HandShakeComplete(this.OnHandShakeComplete), ProxyEndPoint);
+                    return AsyncResult;
+                }
+                else if (ProxyType == ProxyTypes.Http)
+                {
+                    AsyncResult = (new HttpHandler(this, ProxyUser, ProxyPass)).BeginNegotiate(remoteEP, new HandShakeComplete(this.OnHandShakeComplete), ProxyEndPoint);
                     return AsyncResult;
                 }
                 return null;
@@ -220,7 +234,10 @@ namespace Org.Mentalis.Network.ProxySocket {
 				} else if(ProxyType == ProxyTypes.Socks5) {
 					AsyncResult = (new Socks5Handler(this, ProxyUser, ProxyPass)).BeginNegotiate(host, port, new HandShakeComplete(this.OnHandShakeComplete), ProxyEndPoint);
 					return AsyncResult;
-				}
+                } else if (ProxyType == ProxyTypes.Http) {
+                    AsyncResult = (new HttpHandler(this, ProxyUser, ProxyPass)).BeginNegotiate(host, port, new HandShakeComplete(this.OnHandShakeComplete), ProxyEndPoint);
+                    return AsyncResult;
+                }
 				return null;
 			}
 		}

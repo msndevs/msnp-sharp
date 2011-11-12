@@ -58,6 +58,7 @@
     <Compile Include="Core\BitUtility.cs" />
     <Compile Include="Core\Converter.cs" />
     <Compile Include="Core\MultiMimeMessage.cs" />
+    <Compile Include="Core\Network.cs" />
     <Compile Include="Core\NSPayLoadMessage.cs" />
     <Compile Include="Core\PersistentStream.cs" />
     <Compile Include="Core\TextPayloadMessage.cs" />
@@ -74,6 +75,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Compile Include="ProxySocket\HttpHandler.cs" />
     <Compile Include="SceneImage.cs" />
     <Compile Include="Emoticon.cs" />
     <Compile Include="EmoticonMessage.cs" />
