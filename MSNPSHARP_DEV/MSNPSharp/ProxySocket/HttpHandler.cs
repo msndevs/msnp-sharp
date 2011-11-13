@@ -6,62 +6,58 @@ using System.Net.Sockets;
 
 namespace Org.Mentalis.Network.ProxySocket
 {
-    sealed class HttpHandler
+    sealed class HttpHandler : SocksHandler
     {
-        private enum HttpResponseCodes
-        {
-            None = 0,
-            Continue = 100,
-            SwitchingProtocols = 101,
-            OK = 200,
-            Created = 201,
-            Accepted = 202,
-            NonAuthoritiveInformation = 203,
-            NoContent = 204,
-            ResetContent = 205,
-            PartialContent = 206,
-            MultipleChoices = 300,
-            MovedPermanetly = 301,
-            Found = 302,
-            SeeOther = 303,
-            NotModified = 304,
-            UserProxy = 305,
-            TemporaryRedirect = 307,
-            BadRequest = 400,
-            Unauthorized = 401,
-            PaymentRequired = 402,
-            Forbidden = 403,
-            NotFound = 404,
-            MethodNotAllowed = 405,
-            NotAcceptable = 406,
-            ProxyAuthenticantionRequired = 407,
-            RequestTimeout = 408,
-            Conflict = 409,
-            Gone = 410,
-            PreconditionFailed = 411,
-            RequestEntityTooLarge = 413,
-            RequestURITooLong = 414,
-            UnsupportedMediaType = 415,
-            RequestedRangeNotSatisfied = 416,
-            ExpectationFailed = 417,
-            InternalServerError = 500,
-            NotImplemented = 501,
-            BadGateway = 502,
-            ServiceUnavailable = 503,
-            GatewayTimeout = 504,
-            HTTPVersionNotSupported = 505
-        }
-
         public HttpHandler(ProxySocket server, string user, string pass)
+            : base(server, user)
         {
-            m_Server = server;
-            m_Username = user;
             m_Password = pass;
         }
 
-        public void Negotiate(IPEndPoint remoteEP)
+        public override void Negotiate(IPEndPoint remoteEP)
         {
             Negotiate(remoteEP.Address.ToString(), remoteEP.Port);
+        }
+
+        public override void Negotiate(string host, int port)
+        {
+            Server.Send(ConnectCommand(host, port));
+
+            byte[] buffer = new byte[4096]; // 4K ought to be enough for anyone
+            int received = 0;
+            while (true)
+            {
+                received += Server.Receive(buffer, received, buffer.Length - received, SocketFlags.None);
+                if (ResponseReady(buffer, received))
+                {
+                    // end of the header
+                    break;
+                }
+
+                if (received == buffer.Length)
+                {
+                    throw new ProxyException("Unexpected HTTP proxy response");
+                }
+            }
+
+            ParseResponse(buffer, received);
+        }
+
+        public override IAsyncProxyResult BeginNegotiate(IPEndPoint remoteEP, HandShakeComplete callback, IPEndPoint proxyEndPoint)
+        {
+            return BeginNegotiate(remoteEP.Address.ToString(), remoteEP.Port, callback, proxyEndPoint);
+        }
+
+        public override IAsyncProxyResult BeginNegotiate(string host, int port, HandShakeComplete callback, IPEndPoint proxyEndPoint)
+        {
+            // ProtocolComplete = callback;
+            // Buffer = GetHostPortBytes(host, port);
+            Server.BeginConnect(proxyEndPoint, delegate(IAsyncResult ar)
+            {
+                this.OnConnect(ar, callback, host, port);
+            }, Server);
+            IAsyncProxyResult AsyncResult = new IAsyncProxyResult();
+            return AsyncResult;
         }
 
         private byte[] ConnectCommand(string host, int port)
@@ -102,57 +98,16 @@ namespace Org.Mentalis.Network.ProxySocket
             }
 
             int responseCode = int.Parse(responseTokens[1]);
-            HttpResponseCodes code = (HttpResponseCodes)Enum.ToObject(typeof(HttpResponseCodes), responseCode);
+            HttpStatusCode code = (HttpStatusCode)Enum.ToObject(typeof(HttpStatusCode), responseCode);
 
             switch (code)
             {
-                case HttpResponseCodes.OK:
+                case HttpStatusCode.OK:
                     return;
 
                 default:
                     throw new ProxyException(String.Format("HTTP proxy error: {0}", code));
             }
-        }
-
-        public void Negotiate(string host, int port)
-        {
-            Server.Send(ConnectCommand(host, port));
-
-            byte[] buffer = new byte[4096]; // 4K ought to be enough for anyone
-            int received = 0;
-            while (true)
-            {
-                received += Server.Receive(buffer, received, buffer.Length - received, SocketFlags.None);
-                if (ResponseReady(buffer, received))
-                {
-                    // end of the header
-                    break;
-                }
-
-                if (received == buffer.Length)
-                {
-                    throw new ProxyException("Unexpected HTTP proxy response");
-                }
-            }
-
-            ParseResponse(buffer, received);
-        }
-
-        public IAsyncProxyResult BeginNegotiate(IPEndPoint remoteEP, HandShakeComplete callback, IPEndPoint proxyEndPoint)
-        {
-            return BeginNegotiate(remoteEP.Address.ToString(), remoteEP.Port, callback, proxyEndPoint);
-        }
-
-        public IAsyncProxyResult BeginNegotiate(string host, int port, HandShakeComplete callback, IPEndPoint proxyEndPoint)
-        {
-            // ProtocolComplete = callback;
-            // Buffer = GetHostPortBytes(host, port);
-            Server.BeginConnect(proxyEndPoint, delegate(IAsyncResult ar)
-            {
-                this.OnConnect(ar, callback, host, port);
-            }, Server);
-            IAsyncProxyResult AsyncResult = new IAsyncProxyResult();
-            return AsyncResult;
         }
 
         private void OnConnect(IAsyncResult ar, HandShakeComplete ProtocolComplete, string host, int port)
@@ -246,34 +201,6 @@ namespace Org.Mentalis.Network.ProxySocket
 
         #region Properties
 
-        public Socket Server
-        {
-            get
-            {
-                return m_Server;
-            }
-            set
-            {
-                if (value == null)
-                    throw new ArgumentNullException();
-                m_Server = value;
-            }
-        }
-
-        public string Username
-        {
-            get
-            {
-                return m_Username;
-            }
-            set
-            {
-                if (value == null)
-                    throw new ArgumentNullException();
-                m_Username = value;
-            }
-        }
-
         private string Password
         {
             get
@@ -284,12 +211,11 @@ namespace Org.Mentalis.Network.ProxySocket
             {
                 if (value == null)
                     throw new ArgumentNullException();
+
                 m_Password = value;
             }
         }
 
-        private Socket m_Server;
-        private string m_Username;
         private string m_Password;
 
         #endregion
