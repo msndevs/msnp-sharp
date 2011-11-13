@@ -68,9 +68,22 @@ namespace Org.Mentalis.Network.ProxySocket
             if (port <= 0 || port > 65535)
                 throw new ArgumentOutOfRangeException("Bad port");
 
-            string template = "CONNECT {0}:{1} HTTP/1.0 \r\nHOST {0}:{1}\r\n\r\n";
+            string template = 
+                "CONNECT {0}:{1} HTTP/1.0\r\n" + 
+                "Host: {0}:{1}\r\n";
+
             string command = String.Format(template, host, port);
-            byte[] request = ASCIIEncoding.ASCII.GetBytes(command);
+
+            if (!String.IsNullOrEmpty(Username) && !String.IsNullOrEmpty(Password))
+            {
+                command += "Proxy-Authorization: Basic " +
+                    Convert.ToBase64String(Encoding.ASCII.GetBytes(Username + ":" + Password)) +
+                    "\r\n";
+            }
+
+            command += "\r\n";
+
+            byte[] request = Encoding.ASCII.GetBytes(command);
 
             return request;
         }
