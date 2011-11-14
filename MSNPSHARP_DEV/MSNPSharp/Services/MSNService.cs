@@ -211,25 +211,11 @@ namespace MSNPSharp
     {
         private string method;
         private Exception exc;
-        private BeforeRunAsyncMethodEventArgs reinvokeArgs;
 
         public ServiceOperationFailedEventArgs(string methodname, Exception ex)
         {
             method = methodname;
             exc = ex;
-        }
-
-        internal ServiceOperationFailedEventArgs(string methodname, Exception ex, BeforeRunAsyncMethodEventArgs invokeArgs)
-        {
-            method = methodname;
-            exc = ex;
-            ReinvokeArgs = invokeArgs;
-        }
-
-        internal BeforeRunAsyncMethodEventArgs ReinvokeArgs
-        {
-            get { return reinvokeArgs; }
-            private set { reinvokeArgs = value; }
         }
 
         public string Method
@@ -761,7 +747,14 @@ namespace MSNPSharp
                     }
                 }
 
-                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs(e.MsnServiceState.MethodName, e.AsyncCompletedEventArgs.Error, reinvokeArgs));
+                if (reinvokeArgs == null)
+                {
+                    OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs(e.MsnServiceState.MethodName, e.AsyncCompletedEventArgs.Error));
+                }
+                else
+                {
+                    RunAsyncMethod(reinvokeArgs);
+                }
             }
             else
             {
@@ -787,18 +780,9 @@ namespace MSNPSharp
         /// <param name="e"></param>
         protected virtual void OnServiceOperationFailed(object sender, ServiceOperationFailedEventArgs e)
         {
-            if (e.ReinvokeArgs != null)
-            {
-                RunAsyncMethod(e.ReinvokeArgs);
-            }
-            else
-            {
-
-                if (ServiceOperationFailed != null)
-                    ServiceOperationFailed(sender, e);
-            }
+            if (ServiceOperationFailed != null)
+                ServiceOperationFailed(sender, e);
         }
-
 
         private void CancelAndDisposeAysncMethods()
         {
