@@ -318,6 +318,36 @@ namespace MSNPSharp
             RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, createContactObject, request));
         }
 
+        private void DeleteContactAsync(Contact contact,
+            DeleteContactCompletedEventHandler callback)
+        {
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
+            {
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("DeleteContact", new MSNPSharpException("You don't have access right on this action anymore.")));
+                return;
+            }
+
+            DeleteContactRequestType request = new DeleteContactRequestType();
+            request.contactId = contact.Guid.ToString("D").ToLowerInvariant();
+
+            MsnServiceState deleteContactObject = new MsnServiceState(PartnerScenario.Timer, "DeleteContact", true);
+            ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, deleteContactObject);
+            abService.DeleteContactCompleted += delegate(object service, DeleteContactCompletedEventArgs e)
+            {
+                OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
+
+                if (e.Cancelled || NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
+
+                if (callback != null)
+                {
+                    callback(service, e);
+                }
+            };
+
+            RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, deleteContactObject, request));
+        }
+
         private void UpdateContactAsync(ContactType contact, string abId, ABContactUpdateCompletedEventHandler callback)
         {
             ABContactUpdateRequestType request = new ABContactUpdateRequestType();
