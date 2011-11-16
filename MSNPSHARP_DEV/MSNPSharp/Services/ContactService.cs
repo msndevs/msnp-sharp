@@ -1163,21 +1163,42 @@ namespace MSNPSharp
             if (contact.Guid == Guid.Empty)
                 return;
 
-            BreakConnectionAsync(contact.Guid, Guid.Empty, block, true,
-                delegate(object sender, BreakConnectionCompletedEventArgs e)
-                {
-                    if (e.Error != null)
+            if (contact.ClientType == IMAddressInfoType.WindowsLive)
+            {
+                BreakConnectionAsync(contact.Guid, Guid.Empty, block, true,
+                    delegate(object sender, BreakConnectionCompletedEventArgs e)
                     {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Break connection: " + contact.Guid.ToString("D") + " failed, error: " + e.Error.Message);
-                        return;
-                    }
-
-                    abRequest(PartnerScenario.ContactSave,
-                        delegate
+                        if (e.Error != null)
                         {
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Delete contact :" + contact.Hash + " completed.");
-                        });
-                });
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Break connection: " + contact.Guid.ToString("D") + " failed, error: " + e.Error.Message);
+                            return;
+                        }
+
+                        abRequest(PartnerScenario.ContactSave,
+                            delegate
+                            {
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Delete contact :" + contact.Hash + " completed.");
+                            });
+                    });
+            }
+            else
+            {
+                DeleteContactAsync(contact,
+                    delegate(object sender, DeleteContactCompletedEventArgs e)
+                    {
+                        if (e.Error != null)
+                        {
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Delete contact: " + contact.Guid.ToString("D") + " failed, error: " + e.Error.Message);
+                            return;
+                        }
+
+                        abRequest(PartnerScenario.ContactSave,
+                            delegate
+                            {
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Delete contact :" + contact.Hash + " completed.");
+                            });
+                    });
+            }
         }
 
         /// <summary>

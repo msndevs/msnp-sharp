@@ -213,6 +213,13 @@
     </xsd:sequence>
   </xsd:complexType>
   <xsd:element name="ABContactDeleteResponse" />
+  <xsd:element name="DeleteContact" type="msnab:DeleteContactRequestType" />
+  <xsd:complexType name="DeleteContactRequestType">
+    <xsd:sequence>
+      <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="contactId" type="msnab:Guid" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="DeleteContactResponse" />
   <xsd:element name="ABGroupContactAdd" type="msnab:ABGroupContactAddRequestType" />
   <xsd:complexType name="ABGroupContactAddRequestType">
     <xsd:sequence>
