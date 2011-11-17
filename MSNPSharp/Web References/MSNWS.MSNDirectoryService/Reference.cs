@@ -412,7 +412,7 @@ namespace MSNPSharp.MSNWS.MSNDirectoryService {
         
         private string viewNameField;
         
-        private byte[] viewVersionField;
+        private string viewVersionField;
         
         private AttributeType[] attributesField;
         
@@ -427,8 +427,7 @@ namespace MSNPSharp.MSNWS.MSNDirectoryService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="base64Binary")]
-        public byte[] ViewVersion {
+        public string ViewVersion {
             get {
                 return this.viewVersionField;
             }
