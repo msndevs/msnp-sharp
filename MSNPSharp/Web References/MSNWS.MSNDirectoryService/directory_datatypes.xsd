@@ -9,7 +9,7 @@
   <xs:complexType name="ViewType">
     <xs:sequence>
       <xs:element name="ViewName" type="xs:string" />
-      <xs:element minOccurs="0" name="ViewVersion" type="xs:base64Binary" />
+      <xs:element minOccurs="0" name="ViewVersion" type="xs:string" />
       <xs:element minOccurs="0" name="Attributes">
         <xs:complexType>
           <xs:sequence>
