@@ -23,15 +23,7 @@
 	<xs:complexType name="AttributeType">
 		<xs:sequence>
 			<xs:element name="N" type="xs:string"/>
-			<xs:element name="V" minOccurs="0">
-				<xs:complexType>
-					<xs:simpleContent>
-						<xs:extension base="xs:string">
-							<xs:attribute name="type"/>
-						</xs:extension>
-					</xs:simpleContent>
-				</xs:complexType>
-			</xs:element>
+			<xs:element name="V" type="xs:anyType" minOccurs="0"/>
 		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="IdType">
