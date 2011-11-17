@@ -127,10 +127,17 @@ namespace MSNPSharp.Services
             newStream.Position = 0;
 
             StreamReader reader = new StreamReader(newStream);
-
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose && Settings.TraceSoap,
-                FormatXML(reader.ReadToEnd()),
-                GetType().Name + ":SOAP-REQUEST(" + message.Url + ")");
+   
+            if(!Settings.IsMono)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose && Settings.TraceSoap,
+                    FormatXML(reader.ReadToEnd()),
+                    GetType().Name + ":SOAP-REQUEST(" + message.Url + ")");
+            }else{
+                if(Settings.TraceSwitch.TraceVerbose && Settings.TraceSoap){
+                    Console.WriteLine(GetType().Name + ":SOAP-REQUEST(" + message.Url + ") " + FormatXML(reader.ReadToEnd()));
+                }
+            }
 
             newStream.Position = 0;
             Copy(newStream, oldStream);
@@ -143,10 +150,17 @@ namespace MSNPSharp.Services
             newStream.Position = 0;
 
             StreamReader reader = new StreamReader(newStream);
-
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose && Settings.TraceSoap,
-                FormatXML(reader.ReadToEnd()),
-                GetType().Name + ":SOAP-RESPONSE(" + message.Url + ")");
+   
+            if(!Settings.IsMono)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose && Settings.TraceSoap,
+                    FormatXML(reader.ReadToEnd()),
+                    GetType().Name + ":SOAP-RESPONSE(" + message.Url + ")");
+            }else{
+                if(Settings.TraceSwitch.TraceVerbose && Settings.TraceSoap){
+                    Console.WriteLine(GetType().Name + ":SOAP-RESPONSE(" + message.Url + ") " + FormatXML(reader.ReadToEnd()));
+                }
+            }
 
             newStream.Position = 0;
         }
