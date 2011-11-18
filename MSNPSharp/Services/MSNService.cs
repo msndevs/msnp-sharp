@@ -257,6 +257,9 @@ namespace MSNPSharp
         private NSMessageHandler nsMessageHandler;
         private Dictionary<SoapHttpClientProtocol, MsnServiceState> asyncStates =
             new Dictionary<SoapHttpClientProtocol, MsnServiceState>(0);
+        
+        private Dictionary<MsnServiceState, object> asyncRequests =
+            new Dictionary<MsnServiceState, object>(0);
 
         private MSNService()
         {
@@ -460,6 +463,12 @@ namespace MSNPSharp
 
                 ChangeCacheKeyAndPreferredHostForSpecifiedMethod(e.WebService, e.ServiceType, e.ServiceState, e.Request);
 
+                lock (asyncRequests)
+                {
+                    asyncRequests[e.ServiceState] = e.Request;
+                }
+
+                
                 // Run async method now
                 e.WebService.GetType().InvokeMember(
                     e.ServiceState.MethodName + "Async",
@@ -542,7 +551,11 @@ namespace MSNPSharp
                                         getHost = true;
 
                                         lock (deltas.SyncObject)
+                                        {
                                             deltas.PreferredHosts[preferredHostKey] = FetchHost(redirectUrl);
+                                            deltas.Save();
+                                        }
+                                        
                                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Get redirect URL by HTTP error succeed, method " + methodName + ":\r\n " +
                                             "Original: " + FetchHost(ws.Url) + "\r\n " +
                                             "Redirect: " + FetchHost(redirectUrl) + "\r\n");
@@ -681,6 +694,7 @@ namespace MSNPSharp
 
                 lock (NSMessageHandler.ContactService.Deltas.SyncObject)
                 {
+                    /*
                     if (!String.IsNullOrEmpty(sh.PreferredHostName))
                     {
                         string methodKey = ws.ToString() + "." + ss.MethodName;
@@ -693,7 +707,7 @@ namespace MSNPSharp
                                         "Redirect: " + preferredHost + "\r\n");
 
                         NSMessageHandler.ContactService.Deltas.PreferredHosts[methodKey] = preferredHost;
-                    }
+                    }*/
 
                     NSMessageHandler.ContactService.Deltas.Save();
                 }
@@ -702,6 +716,17 @@ namespace MSNPSharp
 
         protected virtual void OnAfterCompleted(ServiceOperationEventArgs e)
         {
+            object request = null;
+            lock (asyncRequests)
+            {
+                if (asyncRequests.ContainsKey(e.MsnServiceState))
+                {
+                    request = asyncRequests[e.MsnServiceState];
+                    asyncRequests.Remove(e.MsnServiceState);
+                }
+            }
+
+            
             if (e.MsnServiceState.AddToAsyncList)
             {
                 lock (asyncStates)
@@ -718,7 +743,47 @@ namespace MSNPSharp
             }
             else if (e.AsyncCompletedEventArgs.Error != null)
             {
-                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs(e.MsnServiceState.MethodName, e.AsyncCompletedEventArgs.Error));
+                BeforeRunAsyncMethodEventArgs reinvokeArgs = null;
+                if (e.AsyncCompletedEventArgs.Error is WebException)
+                {
+                    WebException webException = e.AsyncCompletedEventArgs.Error as WebException;
+                    HttpWebResponse webResponse = webException.Response as HttpWebResponse;
+
+                    if (webResponse != null && request != null)
+                    {
+                        if (webResponse.StatusCode == HttpStatusCode.MovedPermanently)
+                        {
+                            DeltasList deltas = NSMessageHandler.ContactService.Deltas;
+                            if (deltas == null)
+                            {
+                                throw new MSNPSharpException("Deltas is null.");
+                            }
+
+                            string redirctURL = webResponse.Headers[HttpResponseHeader.Location];
+                            string preferredHostKey = e.WebService.ToString() + "." + e.MsnServiceState.MethodName;
+
+                            lock (deltas.SyncObject)
+                            {
+                                deltas.PreferredHosts[preferredHostKey] = FetchHost(redirctURL);
+                                deltas.Save();
+                            }
+
+                            e.WebService.Url = redirctURL;
+
+                            reinvokeArgs = new BeforeRunAsyncMethodEventArgs(e.WebService, e.ServiceType, e.MsnServiceState, request);
+                        }
+                    }
+                }
+
+                if (reinvokeArgs == null)
+                {
+                    OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs(e.MsnServiceState.MethodName, e.AsyncCompletedEventArgs.Error));
+                }
+                else
+                {
+                    RunAsyncMethod(reinvokeArgs);
+                }
+   
             }
             else
             {
@@ -759,6 +824,7 @@ namespace MSNPSharp
                     {
                         Dictionary<SoapHttpClientProtocol, MsnServiceState> copyStates = new Dictionary<SoapHttpClientProtocol, MsnServiceState>(asyncStates);
                         asyncStates = new Dictionary<SoapHttpClientProtocol, MsnServiceState>();
+                        asyncRequests = new Dictionary<MsnServiceState, object>();
 
                         foreach (KeyValuePair<SoapHttpClientProtocol, MsnServiceState> state in copyStates)
                         {
