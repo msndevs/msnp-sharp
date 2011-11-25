@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -168,6 +168,21 @@
     <Compile Include="Services\ContactService.Async.cs">
       <DependentUpon>ContactService.cs</DependentUpon>
     </Compile>
+    <Compile Include="Web References\com.googlecode.msnpsharp.ab\Reference.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Reference.map</DependentUpon>
+    </Compile>
+    <Compile Include="Web References\com.googlecode.msnpsharp.schematizedstore\Reference.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Reference.map</DependentUpon>
+    </Compile>
+    <Compile Include="Web References\com.googlecode.msnpsharp.sharing\Reference.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Reference.map</DependentUpon>
+    </Compile>
     <Compile Include="Web References\MSNWS.MSNDirectoryService\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -326,6 +341,39 @@
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>MSNPSharp_MSNWS_MSNStorageService_StorageService</CachedSettingsPropName>
     </WebReferenceUrl>
+    <WebReferenceUrl Include="http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WSDL/ab.wsdl">
+      <UrlBehavior>Static</UrlBehavior>
+      <RelPath>Web References\com.googlecode.msnpsharp.ab\</RelPath>
+      <UpdateFromURL>http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WSDL/ab.wsdl</UpdateFromURL>
+      <ServiceLocationURL>
+      </ServiceLocationURL>
+      <CachedDynamicPropName>
+      </CachedDynamicPropName>
+      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+      <CachedSettingsPropName>MSNPSharp_com_googlecode_msnpsharp_ab_ABService</CachedSettingsPropName>
+    </WebReferenceUrl>
+    <WebReferenceUrl Include="http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WSDL/schematizedstore.wsdl">
+      <UrlBehavior>Static</UrlBehavior>
+      <RelPath>Web References\com.googlecode.msnpsharp.schematizedstore\</RelPath>
+      <UpdateFromURL>http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WSDL/schematizedstore.wsdl</UpdateFromURL>
+      <ServiceLocationURL>
+      </ServiceLocationURL>
+      <CachedDynamicPropName>
+      </CachedDynamicPropName>
+      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+      <CachedSettingsPropName>MSNPSharp_com_googlecode_msnpsharp_schematizedstore_MSN_x0020_Schematized_x0020_Store_x0020_Service</CachedSettingsPropName>
+    </WebReferenceUrl>
+    <WebReferenceUrl Include="http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WSDL/sharing.wsdl">
+      <UrlBehavior>Static</UrlBehavior>
+      <RelPath>Web References\com.googlecode.msnpsharp.sharing\</RelPath>
+      <UpdateFromURL>http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WSDL/sharing.wsdl</UpdateFromURL>
+      <ServiceLocationURL>
+      </ServiceLocationURL>
+      <CachedDynamicPropName>
+      </CachedDynamicPropName>
+      <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
+      <CachedSettingsPropName>MSNPSharp_com_googlecode_msnpsharp_sharing_SharingService</CachedSettingsPropName>
+    </WebReferenceUrl>
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\msnpsharp.snk" />
@@ -374,6 +422,216 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <None Include="Resources\MSNPSharp_logo_128.png" />
+    <None Include="Web References\com.googlecode.msnpsharp.ab\AB.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.ab\ab.wsdl" />
+    <None Include="Web References\com.googlecode.msnpsharp.ab\Category.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.ab\Contact.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.ab\ContactFindResult.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.ab\ContactHandle.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.ab\ContactLink.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.ab\FilterEmail.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.ab\FindContactLinksResult.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.ab\FindContactResult.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.ab\FindContactsPagedResult.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.ab\FindResult.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.ab\FriendsInCommonResult.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.ab\GeoLocation.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.ab\Group.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.ab\MergeResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.ab\NetworkInfo.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.ab\NotificationResponse.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.ab\QuotaIdentifier.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.ab\Reference.map">
+      <Generator>MSDiscoCodeGenerator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\Acl.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\Alias.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\CommentHierarchy.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\ComponentHierarchy.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\Document.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\DocumentStreamVersion.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\DynamicQueryResult.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\FindChangesResult.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\FindPeopleTaggedPhotosResult.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\Folder.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\GeoLocationInfo.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\HierarchyNode.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\IdentitySummary.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\Item.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\List.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\ListEntry.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\ListEntryResult.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\Member.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\Message.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\MessageContainer.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\MessageHierarchy.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\NotificationSubscription.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\ObjectHandle.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\Photo.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\Profile.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\Reference.map">
+      <Generator>MSDiscoCodeGenerator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\Relationship.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\Restriction.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\schematizedstore.wsdl" />
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\SearchResultSet.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\SetPeopleTagApprovalsResult.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\Space.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\SpaceVersion.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\StorageUser.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\TagResult.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\UserFact.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.schematizedstore\XSchemaItemFindResult.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.sharing\BatchSetServiceResult.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.sharing\CircleContent.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.sharing\CircleHandle.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.sharing\CountInfo.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.sharing\FindInverseServiceResult.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.sharing\FindMailingListResult.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.sharing\HasRoleResults.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.sharing\MembershipResult.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.sharing\Namespace.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.sharing\Principal.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.sharing\Reference.map">
+      <Generator>MSDiscoCodeGenerator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.sharing\Rolemap.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.sharing\Service.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\com.googlecode.msnpsharp.sharing\sharing.wsdl" />
     <None Include="Web References\MSNWS.MSNABSharingService\GetBatchRecentActivityResultType.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
