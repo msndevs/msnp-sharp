@@ -258,6 +258,57 @@ namespace MSNPSharp
             RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, ABFindContactsPagedObject, request));
         }
 
+        private void FindFriendsInCommonAsync(Guid abId, long cid, int count,
+            FindFriendsInCommonCompletedEventHandler callback)
+        {
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
+            {
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindFriendsInCommon", new MSNPSharpException("You don't have access right on this action anymore.")));
+                return;
+            }
+
+            if (cid == NSMessageHandler.Owner.CID)
+                return;
+
+            abHandleType abHandle = new abHandleType();
+            abHandle.Puid = 0;
+
+            if (abId != Guid.Empty)
+            {
+                // Find in circle
+                abHandle.ABId = abId.ToString("D").ToLowerInvariant();
+            }
+            else if (cid != 0)
+            {
+                // Find by CID
+                abHandle.Cid = cid;
+            }
+
+            FindFriendsInCommonRequestType request = new FindFriendsInCommonRequestType();
+            request.domainID = DomainIds.WindowsLiveDomain;
+            request.maxResults = count;
+            request.options = "List Count Matched Unmatched "; // IncludeInfo
+
+            request.targetAB = abHandle;
+
+            MsnServiceState findFriendsInCommonObject = new MsnServiceState(PartnerScenario.Timer, "FindFriendsInCommon", true);
+            ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, findFriendsInCommonObject);
+            abService.FindFriendsInCommonCompleted += delegate(object service, FindFriendsInCommonCompletedEventArgs e)
+            {
+                OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
+
+                if (e.Cancelled || NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
+
+                if (callback != null)
+                {
+                    callback(service, e);
+                }
+            };
+
+            RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, findFriendsInCommonObject, request));
+        }
+
         private void CreateContactAsync(string account, IMAddressInfoType network, Guid abId,
             CreateContactCompletedEventHandler callback)
         {

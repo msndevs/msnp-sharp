@@ -373,6 +373,9 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <None Include="Resources\MSNPSharp_logo_128.png" />
+    <None Include="Web References\MSNWS.MSNABSharingService\FindFriendsInCommonResponse1.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
     <None Include="Web References\MSNWS.MSNABSharingService\GetBatchRecentActivityResultType.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>

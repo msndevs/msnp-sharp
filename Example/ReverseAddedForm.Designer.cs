@@ -28,6 +28,7 @@ namespace MSNPSharpClient
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.lblAdded = new System.Windows.Forms.Label();
             this.gbMembership = new System.Windows.Forms.GroupBox();
             this.rbBlock2 = new System.Windows.Forms.RadioButton();
@@ -35,16 +36,20 @@ namespace MSNPSharpClient
             this.rbAllow = new System.Windows.Forms.RadioButton();
             this.btnOK = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
+            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.gbMembership.SuspendLayout();
+            this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
             // lblAdded
             // 
             this.lblAdded.AutoSize = true;
-            this.lblAdded.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.lblAdded.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
             this.lblAdded.Location = new System.Drawing.Point(12, 9);
             this.lblAdded.Name = "lblAdded";
-            this.lblAdded.Size = new System.Drawing.Size(189, 20);
+            this.lblAdded.Size = new System.Drawing.Size(172, 17);
             this.lblAdded.TabIndex = 0;
             this.lblAdded.Text = "{0} wants to be friends";
             // 
@@ -95,7 +100,7 @@ namespace MSNPSharpClient
             // btnOK
             // 
             this.btnOK.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.btnOK.Location = new System.Drawing.Point(266, 147);
+            this.btnOK.Location = new System.Drawing.Point(252, 320);
             this.btnOK.Name = "btnOK";
             this.btnOK.Size = new System.Drawing.Size(104, 39);
             this.btnOK.TabIndex = 3;
@@ -106,7 +111,7 @@ namespace MSNPSharpClient
             // btnCancel
             // 
             this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btnCancel.Location = new System.Drawing.Point(382, 147);
+            this.btnCancel.Location = new System.Drawing.Point(362, 320);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(75, 39);
             this.btnCancel.TabIndex = 4;
@@ -114,11 +119,38 @@ namespace MSNPSharpClient
             this.btnCancel.UseVisualStyleBackColor = true;
             this.btnCancel.Click += new System.EventHandler(this.btn_Click);
             // 
+            // groupBox1
+            // 
+            this.groupBox1.Controls.Add(this.tableLayoutPanel1);
+            this.groupBox1.Location = new System.Drawing.Point(15, 156);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(441, 147);
+            this.groupBox1.TabIndex = 5;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "Friends in common";
+            this.groupBox1.Visible = false;
+            // 
+            // tableLayoutPanel1
+            // 
+            this.tableLayoutPanel1.ColumnCount = 4;
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 48.24121F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 51.75879F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 98F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 107F));
+            this.tableLayoutPanel1.Location = new System.Drawing.Point(16, 19);
+            this.tableLayoutPanel1.Name = "tableLayoutPanel1";
+            this.tableLayoutPanel1.RowCount = 1;
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 75F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 25F));
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(405, 101);
+            this.tableLayoutPanel1.TabIndex = 0;
+            // 
             // ReverseAddedForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(470, 202);
+            this.ClientSize = new System.Drawing.Size(470, 375);
+            this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnOK);
             this.Controls.Add(this.gbMembership);
@@ -127,8 +159,10 @@ namespace MSNPSharpClient
             this.MinimizeBox = false;
             this.Name = "ReverseAddedForm";
             this.Text = "Pending Contact {0}";
+            this.Load += new System.EventHandler(this.ReverseAddedForm_Load);
             this.gbMembership.ResumeLayout(false);
             this.gbMembership.PerformLayout();
+            this.groupBox1.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -143,5 +177,8 @@ namespace MSNPSharpClient
         private System.Windows.Forms.Button btnOK;
         private System.Windows.Forms.Button btnCancel;
         private System.Windows.Forms.RadioButton rbBlock2;
+        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
+        private System.Windows.Forms.ToolTip toolTip1;
     }
 }
