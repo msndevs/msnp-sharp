@@ -460,6 +460,44 @@
       </xsd:sequence>
     </xsd:complexType>
   </xsd:element>
+  <xsd:element name="FindFriendsInCommon" type="msnab:FindFriendsInCommonRequestType" />
+  <xsd:complexType name="FindFriendsInCommonRequestType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="1" name="targetAB" type="msnab:abHandleType" />
+      <xsd:element minOccurs="1" maxOccurs="1" name="domainID" type="xsd:int" />
+      <xsd:element minOccurs="1" maxOccurs="1" name="view" type="xsd:string" />
+      <xsd:element minOccurs="1" maxOccurs="1" name="maxResults" type="xsd:int" />
+      <xsd:element minOccurs="1" maxOccurs="1" name="options" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="FindFriendsInCommonResponse">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element minOccurs="0" maxOccurs="1" name="FindFriendsInCommonResult" type="msnab:FindFriendsInCommonResult" />
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:complexType name="FindFriendsInCommonResult">
+    <xsd:sequence>
+      <xsd:element name="MatchedList">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Contact" type="msnab:ContactType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="UnmatchedList">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Contact" type="msnab:ContactType" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element minOccurs="1" maxOccurs="1" name="MatchedCount" type="xsd:int" />
+      <xsd:element minOccurs="1" maxOccurs="1" name="UnmatchedCount" type="xsd:int" />
+      <xsd:element minOccurs="0" maxOccurs="1" name="TargetContact" type="msnab:ContactType" />
+    </xsd:sequence>
+  </xsd:complexType>
   <xsd:complexType name="WNApplicationHeaderType">
     <xsd:sequence>
       <xsd:element name="ApplicationId" type="msnab:Guid" />
