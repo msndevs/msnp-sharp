@@ -462,17 +462,15 @@
 		</xsd:complexType>
 	</xsd:element>
 	<xsd:element name="FindFriendsInCommon" type="msnab:FindFriendsInCommonRequestType"/>
-	<xsd:element name="FindFriendsInCommonRequestType">
-		<xsd:complexType>
-			<xsd:sequence>
-				<xsd:element minOccurs="0" maxOccurs="1" name="targetAB" type="msnab:abHandleType" />
-				<xsd:element minOccurs="1" maxOccurs="1" name="domainID" type="xsd:int" />
-				<xsd:element minOccurs="1" maxOccurs="1" name="view" type="xsd:string" />
-				<xsd:element minOccurs="1" maxOccurs="1" name="maxResults" type="xsd:int" />
-				<xsd:element minOccurs="1" maxOccurs="1" name="options" type="xsd:string" />
-			</xsd:sequence>
-		</xsd:complexType>
-	</xsd:element>
+	<xsd:complexType name="FindFriendsInCommonRequestType">
+		<xsd:sequence>
+			<xsd:element minOccurs="0" maxOccurs="1" name="targetAB" type="msnab:abHandleType" />
+			<xsd:element minOccurs="1" maxOccurs="1" name="domainID" type="xsd:int" />
+			<xsd:element minOccurs="1" maxOccurs="1" name="view" type="xsd:string" />
+			<xsd:element minOccurs="1" maxOccurs="1" name="maxResults" type="xsd:int" />
+			<xsd:element minOccurs="1" maxOccurs="1" name="options" type="xsd:string" />
+		</xsd:sequence>
+	</xsd:complexType>
 	<xsd:element name="FindFriendsInCommonResponse">
 		<xsd:complexType>
 			<xsd:sequence>
