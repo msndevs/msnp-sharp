@@ -117,6 +117,12 @@
   <message name="ABFindContactsPagedResponseMessage">
     <part name="ABFindContactsPagedResponse" element="msnab:ABFindContactsPagedResponse" />
   </message>
+  <message name="FindFriendsInCommonMessage">
+    <part name="FindFriendsInCommonRequest" element="msnab:FindFriendsInCommon" />
+  </message>
+  <message name="FindFriendsInCommonResponseMessage">
+    <part name="FindFriendsInCommonResponse" element="msnab:FindFriendsInCommonResponse" />
+  </message>
   <message name="GetContactsRecentActivityMessage">
     <part name="GetContactsRecentActivityRequest" element="msnab:GetContactsRecentActivity" />
   </message>
@@ -203,22 +209,18 @@
     <operation name="ABContactAdd">
       <input message="msnab:ABContactAddMessage" />
       <output message="msnab:ABContactAddResponseMessage" />
-      <fault name="InvalidPassportUserException" message="msnab:InvalidPassportUserMessage" />
     </operation>
     <operation name="ABContactDelete">
       <input message="msnab:ABContactDeleteMessage" />
       <output message="msnab:ABContactDeleteResponseMessage" />
-      <fault name="InvalidPassportUserException" message="msnab:InvalidPassportUserMessage" />
     </operation>
     <operation name="DeleteContact">
       <input message="msnab:DeleteContactMessage" />
       <output message="msnab:DeleteContactResponseMessage" />
-      <fault name="InvalidPassportUserException" message="msnab:InvalidPassportUserMessage" />
     </operation>
     <operation name="ABGroupContactAdd">
       <input message="msnab:ABGroupContactAddMessage" />
       <output message="msnab:ABGroupContactAddResponseMessage" />
-      <fault name="InvalidPassportUserException" message="msnab:InvalidPassportUserMessage" />
     </operation>
     <operation name="ABGroupAdd">
       <input message="msnab:ABGroupAddMessage" />
@@ -251,6 +253,10 @@
     <operation name="ABFindContactsPaged">
       <input message="msnab:ABFindContactsPagedMessage" />
       <output message="msnab:ABFindContactsPagedResponseMessage" />
+    </operation>
+    <operation name="FindFriendsInCommon">
+      <input message="msnab:FindFriendsInCommonMessage" />
+      <output message="msnab:FindFriendsInCommonResponseMessage" />
     </operation>
     <operation name="CreateContact">
       <input message="msnab:CreateContactMessage" />
@@ -371,9 +377,6 @@
         <soap:header message="msnab:ServiceHeader" part="ServiceHeader" use="literal" />
         <soap:body use="literal" />
       </output>
-      <fault name="InvalidPassportUserException">
-        <soap:fault use="literal" name="InvalidPassportUserException" namespace="" />
-      </fault>
     </operation>
     <operation name="ABContactDelete">
       <soap:operation soapAction="http://www.msn.com/webservices/AddressBook/ABContactDelete" />
@@ -386,9 +389,6 @@
         <soap:header message="msnab:ServiceHeader" part="ServiceHeader" use="literal" />
         <soap:body use="literal" />
       </output>
-      <fault name="InvalidPassportUserException">
-        <soap:fault use="literal" name="InvalidPassportUserException" namespace="" />
-      </fault>
     </operation>
     <operation name="DeleteContact">
       <soap:operation soapAction="http://www.msn.com/webservices/AddressBook/DeleteContact" />
@@ -401,9 +401,6 @@
         <soap:header message="msnab:ServiceHeader" part="ServiceHeader" use="literal" />
         <soap:body use="literal" />
       </output>
-      <fault name="InvalidPassportUserException">
-        <soap:fault use="literal" name="InvalidPassportUserException" namespace="" />
-      </fault>
     </operation>
     <operation name="ABGroupContactAdd">
       <soap:operation soapAction="http://www.msn.com/webservices/AddressBook/ABGroupContactAdd" />
@@ -416,9 +413,6 @@
         <soap:header message="msnab:ServiceHeader" part="ServiceHeader" use="literal" />
         <soap:body use="literal" />
       </output>
-      <fault name="InvalidPassportUserException">
-        <soap:fault use="literal" name="InvalidPassportUserException" namespace="" />
-      </fault>
     </operation>
     <operation name="ABGroupAdd">
       <soap:operation soapAction="http://www.msn.com/webservices/AddressBook/ABGroupAdd" />
@@ -506,6 +500,18 @@
     </operation>
     <operation name="ABFindContactsPaged">
       <soap:operation soapAction="http://www.msn.com/webservices/AddressBook/ABFindContactsPaged" />
+      <input>
+        <soap:body use="literal" />
+        <soap:header message="msnab:ABHeader" part="ApplicationHeader" use="literal" />
+        <soap:header message="msnab:ABHeader" part="AuthHeader" use="literal" />
+      </input>
+      <output>
+        <soap:body use="literal" />
+        <soap:header message="msnab:ServiceHeader" part="ServiceHeader" use="literal" />
+      </output>
+    </operation>
+    <operation name="FindFriendsInCommon">
+      <soap:operation soapAction="http://www.msn.com/webservices/AddressBook/FindFriendsInCommon" />
       <input>
         <soap:body use="literal" />
         <soap:header message="msnab:ABHeader" part="ApplicationHeader" use="literal" />
@@ -659,6 +665,9 @@
       <soap:address location="https://contacts.msn.com/abservice/abservice.asmx" />
     </port>
     <port name="ABFindContactsPagedPort" binding="msnab:ABServiceBinding">
+      <soap:address location="https://contacts.msn.com/abservice/abservice.asmx" />
+    </port>
+    <port name="FindFriendsInCommonPort" binding="msnab:ABServiceBinding">
       <soap:address location="https://contacts.msn.com/abservice/abservice.asmx" />
     </port>
     <port name="CreateContactPort" binding="msnab:ABServiceBinding">
