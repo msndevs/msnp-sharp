@@ -733,7 +733,7 @@ namespace MSNPSharpClient
                 // Show pending window if it is necessary.
                 if (contact.OnPendingList)
                 {
-                    ReverseAddedForm form = new ReverseAddedForm(contact);
+                    ReverseAddedForm form = new ReverseAddedForm(contact, messenger);
                     form.FormClosed += delegate(object f, FormClosedEventArgs fce)
                     {
                         form = f as ReverseAddedForm;

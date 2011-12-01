@@ -1035,6 +1035,23 @@ namespace MSNPSharp
 
         #region Contact & Group Operations
 
+        #region FindFriendsInCommon
+
+        public void FindFriendsInCommon(Contact contact, int count, FindFriendsInCommonCompletedEventHandler onSuccess)
+        {
+            FindFriendsInCommonAsync(Guid.Empty, contact.CID, count,
+                delegate(object service, FindFriendsInCommonCompletedEventArgs ffincea)
+                {
+                    if (ffincea.Error == null && ffincea.Result != null && ffincea.Result.FindFriendsInCommonResult != null)
+                    {
+                        if (onSuccess != null)
+                            onSuccess(service, ffincea);
+                    }
+                });
+        }
+
+        #endregion
+
         #region Add Contact
 
         private void CreateContactAndManageWLConnection(string account, IMAddressInfoType network, string invitation)
