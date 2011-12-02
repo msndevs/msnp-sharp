@@ -199,7 +199,7 @@ namespace MSNPSharp.IO
     public class ServiceMembership
     {
         private Service service;
-        private SerializableDictionary<string, SerializableDictionary<string, BaseMember>> memberships = new SerializableDictionary<string, SerializableDictionary<string, BaseMember>>(0);
+        private SerializableDictionary<RoleId, SerializableDictionary<string, BaseMember>> memberships = new SerializableDictionary<RoleId, SerializableDictionary<string, BaseMember>>(0);
 
         public Service Service
         {
@@ -213,7 +213,7 @@ namespace MSNPSharp.IO
             }
         }
 
-        public SerializableDictionary<string, SerializableDictionary<string, BaseMember>> Memberships
+        public SerializableDictionary<RoleId, SerializableDictionary<string, BaseMember>> Memberships
         {
             get
             {
@@ -286,7 +286,7 @@ namespace MSNPSharp.IO
     {
         private string preAthURL;
         private string name = string.Empty;
-        private SerializableMemoryStream displayImage;        
+        private SerializableMemoryStream displayImage;
 
         public string PreAthURL
         {
@@ -349,14 +349,14 @@ namespace MSNPSharp.IO
         /// </summary>
         public bool HasExpressionProfile
         {
-            get 
-            { 
-                return hasExpressionProfile; 
+            get
+            {
+                return hasExpressionProfile;
             }
 
-            set 
-            { 
-                hasExpressionProfile = value; 
+            set
+            {
+                hasExpressionProfile = value;
             }
         }
 
@@ -425,11 +425,11 @@ namespace MSNPSharp.IO
     [Serializable()]
     public class CircleInfo
     {
-        private string memberRole = MSNPSharp.MemberRole.Allow;
+        private RoleId memberRole = RoleId.Allow;
         private ContactType circleMember = null;
         private CircleInverseInfoType circleResultInfo = null;
 
-        public string MemberRole
+        public RoleId MemberRole
         {
             get { return memberRole; }
             set { memberRole = value; }

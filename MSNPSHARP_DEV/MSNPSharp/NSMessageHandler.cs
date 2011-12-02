@@ -48,6 +48,7 @@ namespace MSNPSharp
 {
     using MSNPSharp.Core;
     using MSNPSharp.P2P;
+    using MSNPSharp.MSNWS.MSNABSharingService;
     using MSNPSharp.MSNWS.MSNDirectoryService;
 
     /// <summary>
@@ -1038,10 +1039,10 @@ namespace MSNPSharp
                     string abId = node.InnerText;
                     node = xmlDoc.SelectSingleNode(@"//NotificationData/Role");
 
-                    CirclePersonalMembershipRole role = CirclePersonalMembershipRole.Member;
+                    RoleId role = RoleId.Member;
                     if (node != null)
                     {
-                        role = (CirclePersonalMembershipRole)Enum.Parse(typeof(CirclePersonalMembershipRole), node.InnerText);
+                        role = (RoleId)Enum.Parse(typeof(RoleId), node.InnerText);
                     }
 
                     object[] param = new object[] { abId, role };
