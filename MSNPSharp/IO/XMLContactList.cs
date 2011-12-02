@@ -2910,7 +2910,7 @@ namespace MSNPSharp.IO
 
             foreach (NetworkInfoType info in contact.contactInfo.NetworkInfoList)
             {
-                if (info.DomainIdSpecified && info.DomainId == domainId)
+                if (info.DomainId != 0 && info.DomainId == domainId)
                 {
                     if (!string.IsNullOrEmpty(info.UserTileURL))
                     {
@@ -2947,7 +2947,7 @@ namespace MSNPSharp.IO
 
             foreach (NetworkInfoType info in infoList)
             {
-                if (info.RelationshipTypeSpecified && info.DomainIdSpecified && info.RelationshipStateSpecified)
+                if (info.RelationshipType != 0 && info.DomainId != 0 && info.RelationshipState != 0)
                 {
                     if (info.DomainId == domainId && info.RelationshipType == relationshipType)
                     {
@@ -2971,7 +2971,7 @@ namespace MSNPSharp.IO
 
             foreach (NetworkInfoType info in infoList)
             {
-                if (info.RelationshipTypeSpecified && info.DomainIdSpecified && !string.IsNullOrEmpty(info.DisplayName))
+                if (info.RelationshipType != 0 && info.DomainId != 0 && !string.IsNullOrEmpty(info.DisplayName))
                 {
                     if (info.DomainId == domainId && info.RelationshipType == relationshipType)
                     {
@@ -2989,14 +2989,14 @@ namespace MSNPSharp.IO
             return (RoleId)GetContactRelationshipRoleFromNetworkInfo(infoList, DomainIds.WindowsLiveDomain, RelationshipTypes.CircleGroup);
         }
 
-        private int GetContactRelationshipRoleFromNetworkInfo(NetworkInfoType[] infoList, int domainId, int relationshipType)
+        private long GetContactRelationshipRoleFromNetworkInfo(NetworkInfoType[] infoList, int domainId, int relationshipType)
         {
             if (infoList == null)
                 return 0;
 
             foreach (NetworkInfoType info in infoList)
             {
-                if (info.RelationshipTypeSpecified && info.DomainIdSpecified && info.RelationshipRoleSpecified)
+                if (info.RelationshipType != 0 && info.DomainId != 0 && info.RelationshipRole != 0)
                 {
                     if (info.DomainId == domainId && info.RelationshipType == relationshipType)
                     {
@@ -3031,7 +3031,7 @@ namespace MSNPSharp.IO
 
             foreach (NetworkInfoType info in infoList)
             {
-                if (info.DomainIdSpecified && !string.IsNullOrEmpty(info.DomainTag))
+                if (info.DomainId != 0 && !string.IsNullOrEmpty(info.DomainTag))
                 {
                     if (info.DomainId == domainId)
                         return info.DomainTag;
