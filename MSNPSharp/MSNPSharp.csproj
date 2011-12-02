@@ -167,12 +167,12 @@
     <Compile Include="Services\ContactService.Async.cs">
       <DependentUpon>ContactService.cs</DependentUpon>
     </Compile>
-    <Compile Include="Web References\MSNWS.MSNDirectoryService\Reference.cs">
+    <Compile Include="Web References\MSNWS.MSNABSharingService\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Reference.map</DependentUpon>
     </Compile>
-    <Compile Include="Web References\MSNWS.MSNABSharingService\Reference.cs">
+    <Compile Include="Web References\MSNWS.MSNDirectoryService\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Reference.map</DependentUpon>
@@ -222,9 +222,6 @@
     </None>
     <None Include="Web References\MSNWS.MSNABSharingService\DeleteMemberResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
-    </None>
-    <None Include="Web References\MSNWS.MSNABSharingService\msnab_datatypes.xsd">
-      <SubType>Designer</SubType>
     </None>
     <None Include="Web References\MSNWS.MSNABSharingService\msnab_servicetypes.xsd">
       <SubType>Designer</SubType>
@@ -378,6 +375,9 @@
     </None>
     <None Include="Web References\MSNWS.MSNABSharingService\GetBatchRecentActivityResultType.datasource">
       <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNABSharingService\msnab_datatypes.xsd">
+      <SubType>Designer</SubType>
     </None>
     <None Include="Web References\MSNWS.MSNDirectoryService\directory_datatypes.xsd">
       <SubType>Designer</SubType>

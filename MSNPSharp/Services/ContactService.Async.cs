@@ -702,11 +702,10 @@ namespace MSNPSharp
             if (contact.HasLists(list))
                 return;
 
-            string memberRole = GetMemberRole(list);
+            RoleId memberRole = GetMemberRole(list);
 
-            if (String.IsNullOrEmpty(memberRole))
+            if (memberRole == RoleId.None)
                 return;
-
 
             Service service = AddressBook.SelectTargetService(serviceName);
 
@@ -729,7 +728,7 @@ namespace MSNPSharp
 
             Membership memberShip = new Membership();
             memberShip.MemberRole = memberRole;
-            BaseMember member = new BaseMember();
+            BaseMember member = null; // Abstract
 
             if (contact.ClientType == IMAddressInfoType.WindowsLive)
             {
@@ -769,6 +768,9 @@ namespace MSNPSharp
                 circleMember.CircleId = contact.AddressBookId.ToString("D").ToLowerInvariant();
             }
 
+            if (member == null)
+                return;
+
             memberShip.Members = new BaseMember[] { member };
             addMemberRequest.memberships = new Membership[] { memberShip };
 
@@ -807,8 +809,8 @@ namespace MSNPSharp
             if (!contact.HasLists(list))
                 return;
 
-            string memberRole = GetMemberRole(list);
-            if (String.IsNullOrEmpty(memberRole))
+            RoleId memberRole = GetMemberRole(list);
+            if (memberRole == RoleId.None)
                 return;
 
             Service service = AddressBook.SelectTargetService(serviceName);
@@ -836,7 +838,7 @@ namespace MSNPSharp
             BaseMember deleteMember = null; // BaseMember is an abstract type, so we cannot create a new instance.
             // If we have a MembershipId different from 0, just use it. Otherwise, use email or phone number. 
             BaseMember baseMember = AddressBook.SelectBaseMember(serviceName, contact.Account, contact.ClientType, memberRole);
-            int membershipId = (baseMember == null || String.IsNullOrEmpty(baseMember.MembershipId)) ? 0 : int.Parse(baseMember.MembershipId);
+            int membershipId = (baseMember == null) ? 0 : baseMember.MembershipId;
 
             switch (contact.ClientType)
             {
@@ -849,40 +851,53 @@ namespace MSNPSharp
                     {
                         (deleteMember as PassportMember).PassportName = contact.Account;
                     }
+                    else
+                    {
+                        deleteMember.MembershipId = membershipId;
+                        deleteMember.MembershipIdSpecified = true;
+                    }
                     break;
 
                 case IMAddressInfoType.Yahoo:
                 case IMAddressInfoType.OfficeCommunicator:
 
                     deleteMember = new EmailMember();
-                    deleteMember.Type = (baseMember == null) ? MembershipType.Email : baseMember.Type;
+                    deleteMember.Type = MembershipType.Email;
                     deleteMember.State = (baseMember == null) ? MemberState.Accepted : baseMember.State;
                     if (membershipId == 0)
                     {
                         (deleteMember as EmailMember).Email = contact.Account;
+                    }
+                    else
+                    {
+                        deleteMember.MembershipId = membershipId;
+                        deleteMember.MembershipIdSpecified = true;
                     }
                     break;
 
                 case IMAddressInfoType.Telephone:
 
                     deleteMember = new PhoneMember();
-                    deleteMember.Type = (baseMember == null) ? MembershipType.Phone : baseMember.Type;
+                    deleteMember.Type = MembershipType.Phone;
                     deleteMember.State = (baseMember == null) ? MemberState.Accepted : baseMember.State;
                     if (membershipId == 0)
                     {
                         (deleteMember as PhoneMember).PhoneNumber = contact.Account;
                     }
+                    else
+                    {
+                        deleteMember.MembershipId = membershipId;
+                        deleteMember.MembershipIdSpecified = true;
+                    }
                     break;
 
                 case IMAddressInfoType.Circle:
                     deleteMember = new CircleMember();
-                    deleteMember.Type = (baseMember == null) ? MembershipType.Circle : baseMember.Type;
+                    deleteMember.Type = MembershipType.Circle;
                     deleteMember.State = (baseMember == null) ? MemberState.Accepted : baseMember.State;
                     (deleteMember as CircleMember).CircleId = contact.AddressBookId.ToString("D").ToLowerInvariant();
                     break;
-            }
-
-            deleteMember.MembershipId = membershipId.ToString();
+            }            
 
             memberShip.Members = new BaseMember[] { deleteMember };
             deleteMemberRequest.memberships = new Membership[] { memberShip };

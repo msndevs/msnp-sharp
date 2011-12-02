@@ -38,7 +38,7 @@ namespace MSNPSharp
     using MSNPSharp.Core;
     using MSNPSharp.P2P;
     using MSNPSharp.LiveConnectAPI.Atom;
-
+    using MSNPSharp.MSNWS.MSNABSharingService;
 
     /// <summary>
     /// Used for the relationship with your friend on your social network.
@@ -46,11 +46,11 @@ namespace MSNPSharp
     [Serializable]
     public class FriendshipStatusChangedEventArgs : EventArgs
     {
-        private readonly FriendshipStatus oldStatus;
-        private readonly FriendshipStatus newStatus;
+        private readonly RoleId oldStatus;
+        private readonly RoleId newStatus;
         private readonly Contact contact;
 
-        public FriendshipStatus OldStatus
+        public RoleId OldStatus
         {
             get
             {
@@ -58,7 +58,7 @@ namespace MSNPSharp
             }
         }
 
-        public FriendshipStatus NewStatus
+        public RoleId NewStatus
         {
             get
             {
@@ -74,7 +74,7 @@ namespace MSNPSharp
             }
         }
 
-        public FriendshipStatusChangedEventArgs(Contact contact, FriendshipStatus oldStatus, FriendshipStatus newStatus)
+        public FriendshipStatusChangedEventArgs(Contact contact, RoleId oldStatus, RoleId newStatus)
         {
             this.contact = contact;
             this.oldStatus = oldStatus;

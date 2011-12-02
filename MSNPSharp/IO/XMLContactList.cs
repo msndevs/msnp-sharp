@@ -75,12 +75,12 @@ namespace MSNPSharp.IO
 
             #region Restore Memberships
 
-            SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms =
+            SerializableDictionary<RoleId, SerializableDictionary<string, BaseMember>> ms =
                 SelectTargetMemberships(ServiceFilterType.Messenger);
 
             if (ms != null)
             {
-                foreach (string role in ms.Keys)
+                foreach (RoleId role in ms.Keys)
                 {
                     RoleLists msnlist = NSMessageHandler.ContactService.GetMSNList(role);
 
@@ -110,14 +110,14 @@ namespace MSNPSharp.IO
 
             #region Restore Friendship status
 
-            SerializableDictionary<string, SerializableDictionary<string, BaseMember>> fs =
+            SerializableDictionary<RoleId, SerializableDictionary<string, BaseMember>> fs =
                SelectTargetMemberships(ServiceFilterType.SocialNetwork);
 
             if (fs != null)
             {
-                foreach (string role in fs.Keys)
+                foreach (RoleId role in fs.Keys)
                 {
-                    if (role == MemberRole.OneWayRelationship || role == MemberRole.TwoWayRelationship)
+                    if (role == RoleId.OneWayRelationship || role == RoleId.TwoWayRelationship)
                     {
                         foreach (BaseMember bm in fs[role].Values)
                         {
@@ -128,13 +128,12 @@ namespace MSNPSharp.IO
 
                             if (DetectBaseMember(bm, out account, out type, out cid, out displayname))
                             {
-                                FriendshipStatus fsStatus = (role == MemberRole.OneWayRelationship) ? FriendshipStatus.OneWayRelationship : FriendshipStatus.TwoWayRelationship;
                                 Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
 
                                 if (cid != 0)
                                     contact.CID = cid;
 
-                                contact.SetFriendshipStatus(fsStatus, false);
+                                contact.SetFriendshipStatus(role, false);
                             }
                         }
                     }
@@ -145,12 +144,12 @@ namespace MSNPSharp.IO
 
             #region IMAvailability
 
-            SerializableDictionary<string, SerializableDictionary<string, BaseMember>> hd =
+            SerializableDictionary<RoleId, SerializableDictionary<string, BaseMember>> hd =
               SelectTargetMemberships(ServiceFilterType.IMAvailability);
 
-            if (hd != null && hd.ContainsKey(MemberRole.Hide))
+            if (hd != null && hd.ContainsKey(RoleId.Hide))
             {
-                foreach (BaseMember bm in hd[MemberRole.Hide].Values)
+                foreach (BaseMember bm in hd[RoleId.Hide].Values)
                 {
                     long cid;
                     string account;
@@ -281,7 +280,7 @@ namespace MSNPSharp.IO
             return null;
         }
 
-        internal SerializableDictionary<string, SerializableDictionary<string, BaseMember>> SelectTargetMemberships(string serviceFilterType)
+        internal SerializableDictionary<RoleId, SerializableDictionary<string, BaseMember>> SelectTargetMemberships(string serviceFilterType)
         {
             if (MembershipList.ContainsKey(serviceFilterType))
                 return MembershipList[serviceFilterType].Memberships;
@@ -297,11 +296,11 @@ namespace MSNPSharp.IO
         /// <param name="type"></param>
         /// <param name="memberrole"></param>
         /// <param name="member"></param>
-        internal void AddMemberhip(string servicetype, string account, IMAddressInfoType type, string memberrole, BaseMember member)
+        internal void AddMemberhip(string servicetype, string account, IMAddressInfoType type, RoleId memberrole, BaseMember member)
         {
             lock (SyncObject)
             {
-                SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
+                SerializableDictionary<RoleId, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
                 if (ms != null)
                 {
                     if (!ms.ContainsKey(memberrole))
@@ -312,11 +311,11 @@ namespace MSNPSharp.IO
             }
         }
 
-        internal void RemoveMemberhip(string servicetype, string account, IMAddressInfoType type, string memberrole)
+        internal void RemoveMemberhip(string servicetype, string account, IMAddressInfoType type, RoleId memberrole)
         {
             lock (SyncObject)
             {
-                SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
+                SerializableDictionary<RoleId, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
                 if (ms != null && ms.ContainsKey(memberrole))
                 {
                     string hash = Contact.MakeHash(account, type);
@@ -503,9 +502,9 @@ namespace MSNPSharp.IO
             }
         }
 
-        private bool HasMemberhip(string servicetype, string account, IMAddressInfoType type, string memberrole)
+        private bool HasMemberhip(string servicetype, string account, IMAddressInfoType type, RoleId memberrole)
         {
-            SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
+            SerializableDictionary<RoleId, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
             return (ms != null) && ms.ContainsKey(memberrole) && ms[memberrole].ContainsKey(Contact.MakeHash(account, type));
         }
 
@@ -517,10 +516,10 @@ namespace MSNPSharp.IO
         /// <param name="type"></param>
         /// <param name="memberrole"></param>
         /// <returns>If the member not exist, return null.</returns>
-        public BaseMember SelectBaseMember(string servicetype, string account, IMAddressInfoType type, string memberrole)
+        public BaseMember SelectBaseMember(string servicetype, string account, IMAddressInfoType type, RoleId memberrole)
         {
             string hash = Contact.MakeHash(account, type);
-            SerializableDictionary<string, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
+            SerializableDictionary<RoleId, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
             if ((ms != null) && ms.ContainsKey(memberrole) && ms[memberrole].ContainsKey(hash))
             {
                 return ms[memberrole][hash];
@@ -544,14 +543,14 @@ namespace MSNPSharp.IO
 
         public virtual void Add(
             Dictionary<Service,
-            Dictionary<string,
+            Dictionary<RoleId,
             Dictionary<string, BaseMember>>> range)
         {
             lock (SyncObject)
             {
                 foreach (Service svc in range.Keys)
                 {
-                    foreach (string role in range[svc].Keys)
+                    foreach (RoleId role in range[svc].Keys)
                     {
                         foreach (string hash in range[svc][role].Keys)
                         {
@@ -744,7 +743,7 @@ namespace MSNPSharp.IO
 
             foreach (Membership membership in messengerService.Memberships)
             {
-                string memberrole = membership.MemberRole;
+                RoleId memberrole = membership.MemberRole;
                 RoleLists msnlist = NSMessageHandler.ContactService.GetMSNList(memberrole);
 
                 if (null != membership.Members && msnlist != RoleLists.None)
@@ -761,8 +760,6 @@ namespace MSNPSharp.IO
 
                         if (DetectBaseMember(bm, out account, out type, out cid, out displayname))
                         {
-                            account = account.ToLowerInvariant();
-
                             if (bm.Deleted)
                             {
                                 #region Members deleted in other clients.
@@ -840,7 +837,7 @@ namespace MSNPSharp.IO
             {
                 if (null != membership.Members)
                 {
-                    string memberrole = membership.MemberRole;
+                    RoleId memberrole = membership.MemberRole;
                     List<BaseMember> members = new List<BaseMember>(membership.Members);
                     members.Sort(CompareBaseMembers);
 
@@ -861,13 +858,13 @@ namespace MSNPSharp.IO
                                 {
                                     Contact contact = NSMessageHandler.ContactList.GetContactWithCreate(account, type);
 
-                                    if (memberrole == MemberRole.OneWayRelationship)
+                                    if (memberrole == RoleId.OneWayRelationship)
                                     {
-                                        contact.SetFriendshipStatus(FriendshipStatus.None, true);
+                                        contact.SetFriendshipStatus(RoleId.None, true);
                                     }
-                                    if (memberrole == MemberRole.TwoWayRelationship)
+                                    if (memberrole == RoleId.TwoWayRelationship)
                                     {
-                                        contact.SetFriendshipStatus(FriendshipStatus.OneWayRelationship, true);
+                                        contact.SetFriendshipStatus(RoleId.OneWayRelationship, true);
                                     }
                                 }
                             }
@@ -879,13 +876,13 @@ namespace MSNPSharp.IO
                                 {
                                     Contact contact = NSMessageHandler.ContactList.GetContactWithCreate(account, type);
 
-                                    if (memberrole == MemberRole.OneWayRelationship)
+                                    if (memberrole == RoleId.OneWayRelationship)
                                     {
-                                        contact.SetFriendshipStatus(FriendshipStatus.OneWayRelationship, true);
+                                        contact.SetFriendshipStatus(RoleId.OneWayRelationship, true);
                                     }
-                                    if (memberrole == MemberRole.TwoWayRelationship)
+                                    if (memberrole == RoleId.TwoWayRelationship)
                                     {
-                                        contact.SetFriendshipStatus(FriendshipStatus.TwoWayRelationship, true);
+                                        contact.SetFriendshipStatus(RoleId.TwoWayRelationship, true);
                                     }
                                 }
                             }
@@ -1314,13 +1311,13 @@ namespace MSNPSharp.IO
                         UpdateCircleMembersFromAddressBookContactPage(targetCircle, Scenario.Initial);
                         switch (targetCircle.CircleRole)
                         {
-                            case CirclePersonalMembershipRole.Admin:
-                            case CirclePersonalMembershipRole.AssistantAdmin:
-                            case CirclePersonalMembershipRole.Member:
+                            case RoleId.Admin:
+                            case RoleId.AssistantAdmin:
+                            case RoleId.Member:
                                 AddCircleToCircleList(targetCircle);
                                 break;
 
-                            case CirclePersonalMembershipRole.StatePendingOutbound:
+                            case RoleId.StatePendingOutbound:
                                 FireJoinCircleInvitationReceivedEvents(targetCircle);
 
                                 break;
@@ -2224,12 +2221,12 @@ namespace MSNPSharp.IO
 
             switch (circle.CircleRole)
             {
-                case CirclePersonalMembershipRole.Admin:
-                case CirclePersonalMembershipRole.AssistantAdmin:
-                case CirclePersonalMembershipRole.Member:
+                case RoleId.Admin:
+                case RoleId.AssistantAdmin:
+                case RoleId.Member:
                     AddCircleToCircleList(circle);
                     break;
-                case CirclePersonalMembershipRole.StatePendingOutbound:
+                case RoleId.StatePendingOutbound:
                     FireJoinCircleInvitationReceivedEvents(circle);
                     break;
             }
@@ -2652,7 +2649,7 @@ namespace MSNPSharp.IO
                             return ReturnState.UpdateError;
                         }
 
-                        CirclePersonalMembershipRole membershipRole = GetCircleMemberRoleFromNetworkInfo(contactInfo.NetworkInfoList);
+                        RoleId membershipRole = GetCircleMemberRoleFromNetworkInfo(contactInfo.NetworkInfoList);
                         contact = circle.ContactList.GetContactWithCreate(account, type);
                         contactList = circle.ContactList;
                         contact.CircleRole = membershipRole;
@@ -2987,9 +2984,9 @@ namespace MSNPSharp.IO
         }
 
 
-        private CirclePersonalMembershipRole GetCircleMemberRoleFromNetworkInfo(NetworkInfoType[] infoList)
+        private RoleId GetCircleMemberRoleFromNetworkInfo(NetworkInfoType[] infoList)
         {
-            return (CirclePersonalMembershipRole)GetContactRelationshipRoleFromNetworkInfo(infoList, DomainIds.WindowsLiveDomain, RelationshipTypes.CircleGroup);
+            return (RoleId)GetContactRelationshipRoleFromNetworkInfo(infoList, DomainIds.WindowsLiveDomain, RelationshipTypes.CircleGroup);
         }
 
         private int GetContactRelationshipRoleFromNetworkInfo(NetworkInfoType[] infoList, int domainId, int relationshipType)
