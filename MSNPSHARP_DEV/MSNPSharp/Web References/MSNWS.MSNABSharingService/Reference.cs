@@ -27,7 +27,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Web.Services.WebServiceBindingAttribute(Name="SharingServiceBinding", Namespace="http://www.msn.com/webservices/AddressBook")]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Annotation[]))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(ContactIdType))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(Membership[]))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(string[]))]
     public partial class SharingServiceBinding : System.Web.Services.Protocols.SoapHttpClientProtocol {
@@ -317,7 +317,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Web.Services.WebServiceBindingAttribute(Name="ABServiceBinding", Namespace="http://www.msn.com/webservices/AddressBook")]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Annotation[]))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(ContactIdType))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(Membership[]))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(string[]))]
     public partial class ABServiceBinding : System.Web.Services.Protocols.SoapHttpClientProtocol {
@@ -1139,7 +1139,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Web.Services.WebServiceBindingAttribute(Name="WhatsUpServiceBinding", Namespace="http://www.msn.com/webservices/AddressBook")]
-    [System.Xml.Serialization.XmlIncludeAttribute(typeof(Annotation[]))]
+    [System.Xml.Serialization.XmlIncludeAttribute(typeof(ContactIdType))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(Membership[]))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(string[]))]
     public partial class WhatsUpServiceBinding : System.Web.Services.Protocols.SoapHttpClientProtocol {
@@ -2335,7 +2335,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute(IsNullable=false)]
         public Annotation[] Annotations {
             get {
                 return this.annotationsField;
@@ -3521,7 +3520,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         private ContactURLType[] uRLsField;
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("ContactEmail", IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("ContactEmail")]
         public contactEmailType[] emails {
             get {
                 return this.emailsField;
@@ -3532,7 +3531,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("ContactPhone", IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("ContactPhone")]
         public contactPhoneType[] phones {
             get {
                 return this.phonesField;
@@ -3543,7 +3542,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("ContactLocation", IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("ContactLocation")]
         public contactLocationType[] locations {
             get {
                 return this.locationsField;
@@ -3554,7 +3553,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("ContactWebSite", IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("ContactWebSite")]
         public contactWebSiteType[] webSites {
             get {
                 return this.webSitesField;
@@ -3565,7 +3564,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute(IsNullable=false)]
         public Annotation[] annotations {
             get {
                 return this.annotationsField;
@@ -3576,7 +3574,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("guid", IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("guid")]
         public string[] groupIds {
             get {
                 return this.groupIdsField;
@@ -3587,7 +3585,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("guid", IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("guid")]
         public string[] groupIdsDeleted {
             get {
                 return this.groupIdsDeletedField;
@@ -4590,43 +4588,37 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
     public partial class NetworkInfoType {
         
+        private Annotation[] annotationsField;
+        
         private int domainIdField;
         
-        private bool domainIdFieldSpecified;
+        private string sourceIdField;
         
         private string domainTagField;
-        
-        private string displayNameField;
         
         private string userTileURLField;
         
         private string profileURLField;
         
-        private int relationshipTypeField;
+        private string displayNameField;
         
-        private bool relationshipTypeFieldSpecified;
+        private int relationshipTypeField;
         
         private int relationshipStateField;
         
-        private bool relationshipStateFieldSpecified;
+        private System.DateTime relationshipStateDateField;
         
-        private string relationshipStateDateField;
+        private long relationshipRoleField;
         
-        private int relationshipRoleField;
-        
-        private bool relationshipRoleFieldSpecified;
+        private string extendedDataField;
         
         private int nDRCountField;
-        
-        private bool nDRCountFieldSpecified;
-        
-        private string inviterNameField;
         
         private string inviterMessageField;
         
         private long inviterCIDField;
         
-        private bool inviterCIDFieldSpecified;
+        private string inviterNameField;
         
         private string inviterEmailField;
         
@@ -4634,9 +4626,23 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string lastChangedField;
         
-        private object propertiesChangedField;
+        private string propertiesChangedField;
         
-        private string sourceIdField;
+        private string forwardingEmailField;
+        
+        private int settingsField;
+        
+        private string accountNameField;
+        
+        /// <remarks/>
+        public Annotation[] Annotations {
+            get {
+                return this.annotationsField;
+            }
+            set {
+                this.annotationsField = value;
+            }
+        }
         
         /// <remarks/>
         public int DomainId {
@@ -4649,13 +4655,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool DomainIdSpecified {
+        public string SourceId {
             get {
-                return this.domainIdFieldSpecified;
+                return this.sourceIdField;
             }
             set {
-                this.domainIdFieldSpecified = value;
+                this.sourceIdField = value;
             }
         }
         
@@ -4666,16 +4671,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.domainTagField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string DisplayName {
-            get {
-                return this.displayNameField;
-            }
-            set {
-                this.displayNameField = value;
             }
         }
         
@@ -4700,23 +4695,22 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
+        public string DisplayName {
+            get {
+                return this.displayNameField;
+            }
+            set {
+                this.displayNameField = value;
+            }
+        }
+        
+        /// <remarks/>
         public int RelationshipType {
             get {
                 return this.relationshipTypeField;
             }
             set {
                 this.relationshipTypeField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool RelationshipTypeSpecified {
-            get {
-                return this.relationshipTypeFieldSpecified;
-            }
-            set {
-                this.relationshipTypeFieldSpecified = value;
             }
         }
         
@@ -4731,18 +4725,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool RelationshipStateSpecified {
-            get {
-                return this.relationshipStateFieldSpecified;
-            }
-            set {
-                this.relationshipStateFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string RelationshipStateDate {
+        public System.DateTime RelationshipStateDate {
             get {
                 return this.relationshipStateDateField;
             }
@@ -4752,7 +4735,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public int RelationshipRole {
+        public long RelationshipRole {
             get {
                 return this.relationshipRoleField;
             }
@@ -4762,13 +4745,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool RelationshipRoleSpecified {
+        public string ExtendedData {
             get {
-                return this.relationshipRoleFieldSpecified;
+                return this.extendedDataField;
             }
             set {
-                this.relationshipRoleFieldSpecified = value;
+                this.extendedDataField = value;
             }
         }
         
@@ -4779,27 +4761,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.nDRCountField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool NDRCountSpecified {
-            get {
-                return this.nDRCountFieldSpecified;
-            }
-            set {
-                this.nDRCountFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string InviterName {
-            get {
-                return this.inviterNameField;
-            }
-            set {
-                this.inviterNameField = value;
             }
         }
         
@@ -4824,13 +4785,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool InviterCIDSpecified {
+        public string InviterName {
             get {
-                return this.inviterCIDFieldSpecified;
+                return this.inviterNameField;
             }
             set {
-                this.inviterCIDFieldSpecified = value;
+                this.inviterNameField = value;
             }
         }
         
@@ -4865,7 +4825,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public object PropertiesChanged {
+        public string PropertiesChanged {
             get {
                 return this.propertiesChangedField;
             }
@@ -4875,12 +4835,32 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public string SourceId {
+        public string ForwardingEmail {
             get {
-                return this.sourceIdField;
+                return this.forwardingEmailField;
             }
             set {
-                this.sourceIdField = value;
+                this.forwardingEmailField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int Settings {
+            get {
+                return this.settingsField;
+            }
+            set {
+                this.settingsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string AccountName {
+            get {
+                return this.accountNameField;
+            }
+            set {
+                this.accountNameField = value;
             }
         }
     }
@@ -4898,7 +4878,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         private string displayNameField;
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute(IsNullable=false)]
         public Annotation[] PendingAnnotations {
             get {
                 return this.pendingAnnotationsField;
@@ -5149,7 +5128,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute(IsNullable=false)]
         public Annotation[] annotations {
             get {
                 return this.annotationsField;
@@ -6164,7 +6142,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         private ContactType targetContactField;
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("Contact", IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("Contact")]
         public ContactType[] MatchedList {
             get {
                 return this.matchedListField;
@@ -6175,7 +6153,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("Contact", IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("Contact")]
         public ContactType[] UnmatchedList {
             get {
                 return this.unmatchedListField;
@@ -6433,7 +6411,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("Contact", IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("Contact")]
         public ContactType[] Contacts {
             get {
                 return this.contactsField;
@@ -6581,7 +6559,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute(IsNullable=false)]
         public Annotation[] annotations {
             get {
                 return this.annotationsField;
@@ -7219,11 +7196,15 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
     public partial class abInfoType {
         
+        private short migratedToField;
+        
+        private string betaStatusField;
+        
         private string nameField;
         
-        private string ownerPuidField;
+        private long ownerPuidField;
         
-        private string ownerCIDField;
+        private long ownerCIDField;
         
         private string ownerEmailField;
         
@@ -7231,37 +7212,47 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private bool joinedNamespaceField;
         
-        private bool joinedNamespaceFieldSpecified;
-        
         private bool isBotField;
-        
-        private bool isBotFieldSpecified;
         
         private bool isParentManagedField;
         
-        private bool isParentManagedFieldSpecified;
+        private string accountTierField;
+        
+        private System.DateTime accountTierLastChangedField;
+        
+        private int profileVersionField;
         
         private bool subscribeExternalPartnerField;
         
-        private bool subscribeExternalPartnerFieldSpecified;
-        
         private bool notifyExternalPartnerField;
-        
-        private bool notifyExternalPartnerFieldSpecified;
         
         private string addressBookTypeField;
         
         private bool messengerApplicationServiceCreatedField;
         
-        private bool messengerApplicationServiceCreatedFieldSpecified;
-        
         private bool isBetaMigratedField;
         
-        private bool isBetaMigratedFieldSpecified;
+        private System.DateTime lastRelevanceUpdateField;
         
-        private int migratedToField;
+        /// <remarks/>
+        public short MigratedTo {
+            get {
+                return this.migratedToField;
+            }
+            set {
+                this.migratedToField = value;
+            }
+        }
         
-        private bool migratedToFieldSpecified;
+        /// <remarks/>
+        public string BetaStatus {
+            get {
+                return this.betaStatusField;
+            }
+            set {
+                this.betaStatusField = value;
+            }
+        }
         
         /// <remarks/>
         public string name {
@@ -7274,7 +7265,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public string ownerPuid {
+        public long ownerPuid {
             get {
                 return this.ownerPuidField;
             }
@@ -7284,8 +7275,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
-        public string OwnerCID {
+        public long OwnerCID {
             get {
                 return this.ownerCIDField;
             }
@@ -7325,34 +7315,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool joinedNamespaceSpecified {
-            get {
-                return this.joinedNamespaceFieldSpecified;
-            }
-            set {
-                this.joinedNamespaceFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
         public bool IsBot {
             get {
                 return this.isBotField;
             }
             set {
                 this.isBotField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool IsBotSpecified {
-            get {
-                return this.isBotFieldSpecified;
-            }
-            set {
-                this.isBotFieldSpecified = value;
             }
         }
         
@@ -7367,13 +7335,32 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool IsParentManagedSpecified {
+        public string AccountTier {
             get {
-                return this.isParentManagedFieldSpecified;
+                return this.accountTierField;
             }
             set {
-                this.isParentManagedFieldSpecified = value;
+                this.accountTierField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.DateTime AccountTierLastChanged {
+            get {
+                return this.accountTierLastChangedField;
+            }
+            set {
+                this.accountTierLastChangedField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int ProfileVersion {
+            get {
+                return this.profileVersionField;
+            }
+            set {
+                this.profileVersionField = value;
             }
         }
         
@@ -7388,34 +7375,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool SubscribeExternalPartnerSpecified {
-            get {
-                return this.subscribeExternalPartnerFieldSpecified;
-            }
-            set {
-                this.subscribeExternalPartnerFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
         public bool NotifyExternalPartner {
             get {
                 return this.notifyExternalPartnerField;
             }
             set {
                 this.notifyExternalPartnerField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool NotifyExternalPartnerSpecified {
-            get {
-                return this.notifyExternalPartnerFieldSpecified;
-            }
-            set {
-                this.notifyExternalPartnerFieldSpecified = value;
             }
         }
         
@@ -7440,17 +7405,6 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool MessengerApplicationServiceCreatedSpecified {
-            get {
-                return this.messengerApplicationServiceCreatedFieldSpecified;
-            }
-            set {
-                this.messengerApplicationServiceCreatedFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
         public bool IsBetaMigrated {
             get {
                 return this.isBetaMigratedField;
@@ -7461,34 +7415,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool IsBetaMigratedSpecified {
+        public System.DateTime LastRelevanceUpdate {
             get {
-                return this.isBetaMigratedFieldSpecified;
+                return this.lastRelevanceUpdateField;
             }
             set {
-                this.isBetaMigratedFieldSpecified = value;
-            }
-        }
-        
-        /// <remarks/>
-        public int MigratedTo {
-            get {
-                return this.migratedToField;
-            }
-            set {
-                this.migratedToField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlIgnoreAttribute()]
-        public bool MigratedToSpecified {
-            get {
-                return this.migratedToFieldSpecified;
-            }
-            set {
-                this.migratedToFieldSpecified = value;
+                this.lastRelevanceUpdateField = value;
             }
         }
     }
@@ -7791,7 +7723,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("Contact", IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("Contact")]
         public ContactType[] contacts {
             get {
                 return this.contactsField;
@@ -7823,7 +7755,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         private string[] groupIdsField;
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("guid", IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("guid")]
         public string[] groupIds {
             get {
                 return this.groupIdsField;
@@ -7863,7 +7795,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("Contact", IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("Contact")]
         public ContactType[] contacts {
             get {
                 return this.contactsField;
@@ -8180,7 +8112,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("Contact", IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("Contact")]
         public ContactType[] contacts {
             get {
                 return this.contactsField;
@@ -8295,7 +8227,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string abIdField;
         
-        private ContactIdType[] contactsField;
+        private ContactType[] contactsField;
         
         public ABContactDeleteRequestType() {
             this.abIdField = "00000000-0000-0000-0000-000000000000";
@@ -8312,34 +8244,13 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("Contact", IsNullable=false)]
-        public ContactIdType[] contacts {
+        [System.Xml.Serialization.XmlArrayItemAttribute("Contact")]
+        public ContactType[] contacts {
             get {
                 return this.contactsField;
             }
             set {
                 this.contactsField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.5420")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class ContactIdType {
-        
-        private string contactIdField;
-        
-        /// <remarks/>
-        public string contactId {
-            get {
-                return this.contactIdField;
-            }
-            set {
-                this.contactIdField = value;
             }
         }
     }
@@ -8394,7 +8305,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("Contact", IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("Contact")]
         public ContactType[] contacts {
             get {
                 return this.contactsField;
@@ -8449,7 +8360,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         private abType abField;
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("Contact", IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("Contact")]
         public ContactType[] contacts {
             get {
                 return this.contactsField;
@@ -8598,7 +8509,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("guid", IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("guid")]
         public string[] contactIds {
             get {
                 return this.contactIdsField;
@@ -8639,7 +8550,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("Contact", IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("Contact")]
         public ContactType[] contacts {
             get {
                 return this.contactsField;
@@ -8904,6 +8815,27 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             }
             set {
                 this.publicDisplayNameField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.5420")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class ContactIdType {
+        
+        private string contactIdField;
+        
+        /// <remarks/>
+        public string contactId {
+            get {
+                return this.contactIdField;
+            }
+            set {
+                this.contactIdField = value;
             }
         }
     }
