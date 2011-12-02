@@ -130,7 +130,7 @@
 			<xsd:extension base="msnab:BaseMember">
 				<xsd:sequence>
 					<xsd:element minOccurs="1" maxOccurs="1" name="Id" type="msnab:RoleId"/>
-					<xsd:element minOccurs="0" maxOccurs="1" name="DefiningService" type="msnab:HandleType">
+					<xsd:element minOccurs="0" maxOccurs="1" name="DefiningService" type="msnab:HandleType"/>
 					<xsd:element name="MaxRoleRecursionDepth" type="xsd:integer"/>
 					<xsd:element name="MaxDegreesSeparation" type="xsd:integer"/>
 				</xsd:sequence>
