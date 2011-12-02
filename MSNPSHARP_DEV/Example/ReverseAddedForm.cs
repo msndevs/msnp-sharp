@@ -30,7 +30,7 @@ namespace MSNPSharpClient
             this.messenger = messenger;
 
             Text = String.Format(Text, contact.Account);
-            lblAdded.Text = String.Format(lblAdded.Text, contact.Name + " (" + contact.Account + ")");
+            lblAdded.Text = String.Format(lblAdded.Text, contact.PublicProfileName + " (" + contact.Account + ")");
         }
 
         public bool AddAsFriend
@@ -62,8 +62,39 @@ namespace MSNPSharpClient
             Close();
         }
 
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+            Process.Start("http://profile.live.com/cid-" + String.Format("{0:x}", pendingContact.CID) + "/");
+        }
+
         private void ReverseAddedForm_Load(object sender, EventArgs e)
         {
+
+            pictureBox1.Image = DisplayImage.DefaultImage;
+
+            messenger.DirectoryService.Get(pendingContact.CID,
+                delegate
+                {
+                    if (pendingContact.CoreProfile.ContainsKey(CoreProfileAttributeName.PublicProfile_DisplayLastName))
+                    {
+                        lblAdded.Text = pendingContact.PublicProfileName + " (" + pendingContact.Account + ")";
+                    }
+
+                    if (pendingContact.CoreProfile.ContainsKey(CoreProfileAttributeName.UserTileStaticUrl))
+                    {
+                        HttpAsyncDataDownloader.BeginDownload(
+                            pendingContact.CoreProfile[CoreProfileAttributeName.UserTileStaticUrl] + "?t=" + System.Web.HttpUtility.UrlEncode(messenger.StorageTicket),
+                            delegate(object s, ObjectEventArgs oea)
+                            {
+                                pictureBox1.Image = Image.FromStream(new MemoryStream(oea.Object as byte[]));
+                            },
+
+                            messenger.ConnectivitySettings.WebProxy);
+                    }
+                },
+                null);
+
+
             messenger.ContactService.FindFriendsInCommon(pendingContact, 4,
                 delegate(object service, FindFriendsInCommonCompletedEventArgs ffincea)
                 {
