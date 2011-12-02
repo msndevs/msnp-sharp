@@ -327,34 +327,6 @@ namespace MSNPSharp
     }
 
     /// <summary>
-    /// The relationship between a contact and circle.
-    /// </summary>
-    public enum CirclePersonalMembershipRole : int
-    {
-        None = 0,
-
-        /// <summary>
-        /// The contact is the circle admin, the value of RelationshipRole field in NetworkInfoType is 1.
-        /// </summary>
-        Admin = 1,
-
-        /// <summary>
-        /// The contact is a circle co-admin, the value of RelationshipRole field in NetworkInfoType is 2.
-        /// </summary>
-        AssistantAdmin = 2,
-
-        /// <summary>
-        /// The contact is a circle member, the value of RelationshipRole field in NetworkInfoType is 3.
-        /// </summary>
-        Member = 3,
-
-        /// <summary>
-        /// The contact is pending to the circle, the value of RelationshipRole field in NetworkInfoType is 4.
-        /// </summary>
-        StatePendingOutbound = 4
-    }
-
-    /// <summary>
     /// This is the value of different domain type of Network info list.
     /// </summary>
     internal static class DomainIds

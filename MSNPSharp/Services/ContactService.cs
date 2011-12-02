@@ -1738,8 +1738,8 @@ namespace MSNPSharp
                 throw new InvalidOperationException("Circle is on your block list.");
             }
 
-            if (circle.CircleRole != CirclePersonalMembershipRole.Admin &&
-                circle.CircleRole != CirclePersonalMembershipRole.AssistantAdmin)
+            if (circle.CircleRole != RoleId.Admin &&
+                circle.CircleRole != RoleId.AssistantAdmin)
             {
                 throw new InvalidOperationException("The owner is not the administrator of this circle.");
             }
@@ -1761,7 +1761,7 @@ namespace MSNPSharp
                         false,
                         1,
                         RelationshipTypes.CircleGroup,
-                        (int)CirclePersonalMembershipRole.Member,
+                        3 /*member*/,
                         delegate(object wlcSender, ManageWLConnectionCompletedEventArgs e)
                         {
                             if (e.Error != null)
@@ -1790,7 +1790,7 @@ namespace MSNPSharp
                 throw new ArgumentNullException("circle");
 
             ManageWLConnectionAsync(circle.Guid, Guid.Empty, String.Empty, true, false, 2,
-                RelationshipTypes.CircleGroup, (int)CirclePersonalMembershipRole.None,
+                RelationshipTypes.CircleGroup, 0,
                 delegate(object wlcSender, ManageWLConnectionCompletedEventArgs e)
                 {
                     if (e.Error != null)
@@ -1872,11 +1872,11 @@ namespace MSNPSharp
             if (circle == null)
                 throw new ArgumentNullException("circle");
 
-            if (circle.CircleRole != CirclePersonalMembershipRole.StatePendingOutbound)
+            if (circle.CircleRole != RoleId.StatePendingOutbound)
                 throw new InvalidOperationException("This is not a pending circle.");
 
             ManageWLConnectionAsync(circle.Guid, Guid.Empty, String.Empty, true, false, 1,
-                RelationshipTypes.CircleGroup, (int)CirclePersonalMembershipRole.None,
+                RelationshipTypes.CircleGroup, 0,
                 delegate(object wlcSender, ManageWLConnectionCompletedEventArgs e)
                 {
                     if (e.Error != null)
@@ -1970,31 +1970,31 @@ namespace MSNPSharp
 
         #endregion
 
-        public string GetMemberRole(RoleLists list)
+        public RoleId GetMemberRole(RoleLists list)
         {
             switch (list)
             {
                 case RoleLists.Allow:
-                    return MemberRole.Allow;
+                    return RoleId.Allow;
 
                 case RoleLists.Pending:
-                    return MemberRole.Pending;
+                    return RoleId.Pending;
 
                 case RoleLists.Hide:
-                    return MemberRole.Hide;
+                    return RoleId.Hide;
             }
-            return null;
+            return RoleId.None;
         }
 
-        public RoleLists GetMSNList(string memberRole)
+        public RoleLists GetMSNList(RoleId memberRole)
         {
             switch (memberRole)
             {
-                case MemberRole.Allow:
+                case RoleId.Allow:
                     return RoleLists.Allow;
-                case MemberRole.Pending:
+                case RoleId.Pending:
                     return RoleLists.Pending;
-                case MemberRole.Hide:
+                case RoleId.Hide:
                     return RoleLists.Hide;
             }
             return RoleLists.None;
