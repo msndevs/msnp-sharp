@@ -612,86 +612,17 @@
 		</operation>
 	</binding>
 	<service name="SharingService">
-		<port name="FindMembershipPort" binding="msnab:SharingServiceBinding">
-			<soap:address location="https://contacts.msn.com/abservice/SharingService.asmx"/>
-		</port>
-		<port name="AddMemberPort" binding="msnab:SharingServiceBinding">
-			<soap:address location="https://contacts.msn.com/abservice/SharingService.asmx"/>
-		</port>
-		<port name="DeleteMemberPort" binding="msnab:SharingServiceBinding">
-			<soap:address location="https://contacts.msn.com/abservice/SharingService.asmx"/>
-		</port>
-		<port name="CreateCirclePort" binding="msnab:SharingServiceBinding">
-			<soap:address location="https://contacts.msn.com/abservice/SharingService.asmx"/>
-		</port>
-		<port name="AddServicePort" binding="msnab:SharingServiceBinding">
+		<port name="SharingServiceBinding" binding="msnab:SharingServiceBinding">
 			<soap:address location="https://contacts.msn.com/abservice/SharingService.asmx"/>
 		</port>
 	</service>
 	<service name="ABService">
-		<port name="ABFindAllPort" binding="msnab:ABServiceBinding">
-			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
-		</port>
-		<port name="ABContactAddPort" binding="msnab:ABServiceBinding">
-			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
-		</port>
-		<port name="ABContactDeletePort" binding="msnab:ABServiceBinding">
-			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
-		</port>
-		<port name="DeleteContactPort" binding="msnab:ABServiceBinding">
-			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
-		</port>
-		<port name="ABGroupContactAddPort" binding="msnab:ABServiceBinding">
-			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
-		</port>
-		<port name="ABGroupAddPort" binding="msnab:ABServiceBinding">
-			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
-		</port>
-		<port name="ABGroupUpdatePort" binding="msnab:ABServiceBinding">
-			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
-		</port>
-		<port name="ABGroupDeletePort" binding="msnab:ABServiceBinding">
-			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
-		</port>
-		<port name="ABGroupContactDeletePort" binding="msnab:ABServiceBinding">
-			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
-		</port>
-		<port name="ABContactUpdatePort" binding="msnab:ABServiceBinding">
-			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
-		</port>
-		<port name="ABAddPort" binding="msnab:ABServiceBinding">
-			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
-		</port>
-		<port name="UpdateDynamicItemPort" binding="msnab:ABServiceBinding">
-			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
-		</port>
-		<port name="ABFindContactsPagedPort" binding="msnab:ABServiceBinding">
-			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
-		</port>
-		<port name="FindFriendsInCommonPort" binding="msnab:ABServiceBinding">
-			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
-		</port>
-		<port name="CreateContactPort" binding="msnab:ABServiceBinding">
-			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
-		</port>
-		<port name="ManageWLConnectionPort" binding="msnab:ABServiceBinding">
-			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
-		</port>
-		<port name="BreakConnectionPort" binding="msnab:ABServiceBinding">
-			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
-		</port>
-		<port name="AddDynamicItemPort" binding="msnab:ABServiceBinding">
-			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
-		</port>
-		<port name="ABFindByContactsPort" binding="msnab:ABServiceBinding">
+		<port name="ABServiceBinding" binding="msnab:ABServiceBinding">
 			<soap:address location="https://contacts.msn.com/abservice/abservice.asmx"/>
 		</port>
 	</service>
 	<service name="WhatsUpService">
-		<port name="GetContactsRecentActivityPort" binding="msnab:WhatsUpServiceBinding">
-			<soap:address location="http://sup.live.com/whatsnew/whatsnewservice.asmx"/>
-		</port>
-		<port name="GetBatchRecentActivityPort" binding="msnab:WhatsUpServiceBinding">
+		<port name="WhatsUpServiceBinding" binding="msnab:WhatsUpServiceBinding">
 			<soap:address location="http://sup.live.com/whatsnew/whatsnewservice.asmx"/>
 		</port>
 	</service>
