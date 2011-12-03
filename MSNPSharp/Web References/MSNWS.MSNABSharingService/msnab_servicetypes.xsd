@@ -91,13 +91,7 @@
           </xsd:sequence>
         </xsd:complexType>
       </xsd:element>
-      <xsd:element name="contacts">
-        <xsd:complexType>
-          <xsd:sequence>
-            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Contact" type="msnab:ContactType" />
-          </xsd:sequence>
-        </xsd:complexType>
-      </xsd:element>
+      <xsd:element minOccurs="0" maxOccurs="1" name="contacts" type="msnab:ArrayOfContactType" />
       <xsd:element minOccurs="0" name="DynamicItems">
         <xsd:complexType>
           <xsd:sequence>
@@ -138,24 +132,12 @@
     <xsd:sequence>
       <xsd:element name="abId" type="xsd:string" />
       <xsd:element name="abView" type="xsd:string" />
-      <xsd:element name="contactIds">
-        <xsd:complexType>
-          <xsd:sequence>
-            <xsd:element maxOccurs="unbounded" name="guid" type="xsd:string" />
-          </xsd:sequence>
-        </xsd:complexType>
-      </xsd:element>
+      <xsd:element minOccurs="0" maxOccurs="1" name="contactIds" type="msnab:ArrayOfGuid" />
     </xsd:sequence>
   </xsd:complexType>
   <xsd:complexType name="ABFindByContactsResponseType">
     <xsd:sequence>
-      <xsd:element name="contacts">
-        <xsd:complexType>
-          <xsd:sequence>
-            <xsd:element maxOccurs="unbounded" name="Contact" type="msnab:ContactType" />
-          </xsd:sequence>
-        </xsd:complexType>
-      </xsd:element>
+      <xsd:element minOccurs="0" maxOccurs="1" name="contacts" type="msnab:ArrayOfContactType" />
       <xsd:element name="ab" type="msnab:abType" />
     </xsd:sequence>
   </xsd:complexType>
@@ -171,13 +153,7 @@
   <xsd:complexType name="ABContactAddRequestType">
     <xsd:sequence>
       <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
-      <xsd:element name="contacts">
-        <xsd:complexType>
-          <xsd:sequence>
-            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Contact" type="msnab:ContactType" />
-          </xsd:sequence>
-        </xsd:complexType>
-      </xsd:element>
+      <xsd:element minOccurs="0" maxOccurs="1" name="contacts" type="msnab:ArrayOfContactType" />
       <xsd:element minOccurs="0" name="options">
         <xsd:complexType>
           <xsd:sequence>
@@ -203,13 +179,7 @@
   <xsd:complexType name="ABContactDeleteRequestType">
     <xsd:sequence>
       <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
-      <xsd:element name="contacts">
-        <xsd:complexType>
-          <xsd:sequence>
-            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Contact" type="msnab:ContactIdType" />
-          </xsd:sequence>
-        </xsd:complexType>
-      </xsd:element>
+      <xsd:element minOccurs="0" maxOccurs="1" name="contacts" type="msnab:ArrayOfContactType" />
     </xsd:sequence>
   </xsd:complexType>
   <xsd:element name="ABContactDeleteResponse" />
@@ -225,13 +195,7 @@
     <xsd:sequence>
       <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
       <xsd:element name="groupFilter" type="msnab:groupFilterType" />
-      <xsd:element name="contacts">
-        <xsd:complexType>
-          <xsd:sequence>
-            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Contact" type="msnab:ContactType" />
-          </xsd:sequence>
-        </xsd:complexType>
-      </xsd:element>
+      <xsd:element minOccurs="0" maxOccurs="1" name="contacts" type="msnab:ArrayOfContactType" />
       <xsd:element minOccurs="0" name="groupContactAddOptions">
         <xsd:complexType>
           <xsd:sequence>
@@ -316,13 +280,7 @@
   <xsd:complexType name="ABContactUpdateRequestType">
     <xsd:sequence>
       <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
-      <xsd:element name="contacts">
-        <xsd:complexType>
-          <xsd:sequence>
-            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Contact" type="msnab:ContactType" />
-          </xsd:sequence>
-        </xsd:complexType>
-      </xsd:element>
+      <xsd:element minOccurs="0" maxOccurs="1" name="contacts" type="msnab:ArrayOfContactType" />
       <xsd:element minOccurs="0" name="options">
         <xsd:complexType>
           <xsd:sequence>
@@ -339,13 +297,7 @@
   <xsd:complexType name="ABGroupContactDeleteRequestType">
     <xsd:sequence>
       <xsd:element fixed="00000000-0000-0000-0000-000000000000" name="abId" type="msnab:Guid" />
-      <xsd:element name="contacts">
-        <xsd:complexType>
-          <xsd:sequence>
-            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Contact" type="msnab:ContactType" />
-          </xsd:sequence>
-        </xsd:complexType>
-      </xsd:element>
+      <xsd:element minOccurs="0" maxOccurs="1" name="contacts" type="msnab:ArrayOfContactType" />
       <xsd:element name="groupFilter" type="msnab:groupFilterType" />
     </xsd:sequence>
   </xsd:complexType>
@@ -430,13 +382,7 @@
           </xsd:sequence>
         </xsd:complexType>
       </xsd:element>
-      <xsd:element name="Contacts">
-        <xsd:complexType>
-          <xsd:sequence>
-            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Contact" type="msnab:ContactType" />
-          </xsd:sequence>
-        </xsd:complexType>
-      </xsd:element>
+      <xsd:element minOccurs="0" maxOccurs="1" name="Contacts" type="msnab:ArrayOfContactType" />
       <xsd:element name="CircleResult" type="msnab:CircleResultType" />
       <xsd:element name="Ab">
         <xsd:complexType>
@@ -479,20 +425,8 @@
   </xsd:element>
   <xsd:complexType name="FindFriendsInCommonResult">
     <xsd:sequence>
-      <xsd:element name="MatchedList">
-        <xsd:complexType>
-          <xsd:sequence>
-            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Contact" type="msnab:ContactType" />
-          </xsd:sequence>
-        </xsd:complexType>
-      </xsd:element>
-      <xsd:element name="UnmatchedList">
-        <xsd:complexType>
-          <xsd:sequence>
-            <xsd:element minOccurs="0" maxOccurs="unbounded" name="Contact" type="msnab:ContactType" />
-          </xsd:sequence>
-        </xsd:complexType>
-      </xsd:element>
+      <xsd:element minOccurs="0" maxOccurs="1" name="MatchedList" type="msnab:ArrayOfContactType" />
+      <xsd:element minOccurs="0" maxOccurs="1" name="UnmatchedList" type="msnab:ArrayOfContactType" />
       <xsd:element minOccurs="1" maxOccurs="1" name="MatchedCount" type="xsd:int" />
       <xsd:element minOccurs="1" maxOccurs="1" name="UnmatchedCount" type="xsd:int" />
       <xsd:element minOccurs="0" maxOccurs="1" name="TargetContact" type="msnab:ContactType" />
@@ -600,13 +534,7 @@
       <xsd:element name="action" type="xsd:int" />
       <xsd:element name="relationshipType" type="xsd:int" />
       <xsd:element name="relationshipRole" type="xsd:int" />
-      <xsd:element minOccurs="0" name="annotations">
-        <xsd:complexType>
-          <xsd:sequence>
-            <xsd:element maxOccurs="unbounded" name="Annotation" type="msnab:Annotation" />
-          </xsd:sequence>
-        </xsd:complexType>
-      </xsd:element>
+      <xsd:element minOccurs="0" maxOccurs="1" name="annotations" type="msnab:ArrayOfAnnotation" />
     </xsd:sequence>
   </xsd:complexType>
   <xsd:element name="ManageWLConnectionResponse">

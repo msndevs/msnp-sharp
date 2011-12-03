@@ -115,7 +115,7 @@ namespace MSNPSharp
                         ABAddRequestType abAddRequest = new ABAddRequestType();
                         abAddRequest.abInfo = new abInfoType();
                         abAddRequest.abInfo.ownerEmail = NSMessageHandler.Owner.Account;
-                        abAddRequest.abInfo.ownerPuid = "0";
+                        abAddRequest.abInfo.ownerPuid = 0;
                         abAddRequest.abInfo.fDefault = true;
 
                         MsnServiceState ABAddObject = new MsnServiceState(partnerScenario, "ABAdd", true);
