@@ -69,12 +69,5 @@ namespace MSNPSharp.Services
             return request;
         }
 
-        protected object[] Invoke(string methodName, object[] parameters)
-        {
-            object[] objArray = base.Invoke(methodName, parameters);
-            return objArray;
-        }
-
-
     }
 };
