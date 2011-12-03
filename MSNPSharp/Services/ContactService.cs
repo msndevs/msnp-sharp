@@ -319,6 +319,7 @@ namespace MSNPSharp
                 }
                 catch (Exception)
                 {
+                    DeleteRecordFile(); // InvalidOperationException: Serialize error. Re-init addressbook.
                 }
 
                 try
