@@ -5,6 +5,10 @@
       <xs:import schemaLocation="directory_servicetypes.xsd" namespace="http://profile.live.com/" />
     </xs:schema>
   </wsdl:types>
+  <wsdl:message name="SOAPHeaders">
+    <wsdl:part name="SOAPApplicationHeader" element="tns:SOAPApplicationHeader" />
+    <wsdl:part name="SOAPUserHeader" element="tns:SOAPUserHeader" />
+  </wsdl:message>
   <wsdl:message name="GetMessage">
     <wsdl:part name="GetRequest" element="tns:Get" />
   </wsdl:message>
@@ -17,12 +21,8 @@
   <wsdl:message name="GetManyResponseMessage">
     <wsdl:part name="GetManyResponse" element="tns:GetManyResponse" />
   </wsdl:message>
-  <wsdl:message name="SOAPHeaders">
-    <wsdl:part name="SOAPApplicationHeader" element="tns:SOAPApplicationHeader" />
-    <wsdl:part name="SOAPUserHeader" element="tns:SOAPUserHeader" />
-  </wsdl:message>
   <wsdl:message name="SetMessage">
-    <wsdl:part name="SetReauest" element="tns:Set" />
+    <wsdl:part name="SetRequest" element="tns:Set" />
   </wsdl:message>
   <wsdl:message name="SetResponseMessage">
     <wsdl:part name="SetResponse" element="tns:SetResponse" />
@@ -78,13 +78,7 @@
     </wsdl:operation>
   </wsdl:binding>
   <wsdl:service name="DirectoryService">
-    <wsdl:port name="GetPort" binding="tns:DirectoryServiceBinding">
-      <soap:address location="https://directory.services.live.com/profile/profile.asmx" />
-    </wsdl:port>
-    <wsdl:port name="GetManyPort" binding="tns:DirectoryServiceBinding">
-      <soap:address location="https://directory.services.live.com/profile/profile.asmx" />
-    </wsdl:port>
-    <wsdl:port name="SetPort" binding="tns:DirectoryServiceBinding">
+    <wsdl:port name="DirectoryServiceBinding" binding="tns:DirectoryServiceBinding">
       <soap:address location="https://directory.services.live.com/profile/profile.asmx" />
     </wsdl:port>
   </wsdl:service>
