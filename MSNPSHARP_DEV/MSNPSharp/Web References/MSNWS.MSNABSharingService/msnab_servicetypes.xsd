@@ -40,7 +40,7 @@
             <xsd:element name="Types">
               <xsd:complexType>
                 <xsd:sequence>
-                  <xsd:element maxOccurs="unbounded" name="ServiceType" type="xsd:string" />
+                  <xsd:element maxOccurs="unbounded" name="ServiceType" type="msnab:ServiceName" />
                 </xsd:sequence>
               </xsd:complexType>
             </xsd:element>

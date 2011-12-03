@@ -76,7 +76,7 @@ namespace MSNPSharp.IO
             #region Restore Memberships
 
             SerializableDictionary<RoleId, SerializableDictionary<string, BaseMember>> ms =
-                SelectTargetMemberships(ServiceFilterType.Messenger);
+                SelectTargetMemberships(ServiceName.Messenger);
 
             if (ms != null)
             {
@@ -111,7 +111,7 @@ namespace MSNPSharp.IO
             #region Restore Friendship status
 
             SerializableDictionary<RoleId, SerializableDictionary<string, BaseMember>> fs =
-               SelectTargetMemberships(ServiceFilterType.SocialNetwork);
+               SelectTargetMemberships(ServiceName.SocialNetwork);
 
             if (fs != null)
             {
@@ -145,7 +145,7 @@ namespace MSNPSharp.IO
             #region IMAvailability
 
             SerializableDictionary<RoleId, SerializableDictionary<string, BaseMember>> hd =
-              SelectTargetMemberships(ServiceFilterType.IMAvailability);
+              SelectTargetMemberships(ServiceName.IMAvailability);
 
             if (hd != null && hd.ContainsKey(RoleId.Hide))
             {
@@ -243,8 +243,8 @@ namespace MSNPSharp.IO
 
         #region New MembershipList
 
-        private SerializableDictionary<string, ServiceMembership> mslist = new SerializableDictionary<string, ServiceMembership>(0);
-        public SerializableDictionary<string, ServiceMembership> MembershipList
+        private SerializableDictionary<ServiceName, ServiceMembership> mslist = new SerializableDictionary<ServiceName, ServiceMembership>(0);
+        public SerializableDictionary<ServiceName, ServiceMembership> MembershipList
         {
             get
             {
@@ -264,7 +264,7 @@ namespace MSNPSharp.IO
                     return WebServiceConstants.ZeroTime;
 
                 List<Service> services = new List<Service>();
-                foreach (string sft in MembershipList.Keys)
+                foreach (ServiceName sft in MembershipList.Keys)
                     services.Add(new Service(MembershipList[sft].Service));
 
                 services.Sort();
@@ -272,7 +272,7 @@ namespace MSNPSharp.IO
             }
         }
 
-        internal Service SelectTargetService(string type)
+        internal Service SelectTargetService(ServiceName type)
         {
             if (MembershipList.ContainsKey(type))
                 return MembershipList[type].Service;
@@ -280,7 +280,7 @@ namespace MSNPSharp.IO
             return null;
         }
 
-        internal SerializableDictionary<RoleId, SerializableDictionary<string, BaseMember>> SelectTargetMemberships(string serviceFilterType)
+        internal SerializableDictionary<RoleId, SerializableDictionary<string, BaseMember>> SelectTargetMemberships(ServiceName serviceFilterType)
         {
             if (MembershipList.ContainsKey(serviceFilterType))
                 return MembershipList[serviceFilterType].Memberships;
@@ -296,7 +296,7 @@ namespace MSNPSharp.IO
         /// <param name="type"></param>
         /// <param name="memberrole"></param>
         /// <param name="member"></param>
-        internal void AddMemberhip(string servicetype, string account, IMAddressInfoType type, RoleId memberrole, BaseMember member)
+        internal void AddMemberhip(ServiceName servicetype, string account, IMAddressInfoType type, RoleId memberrole, BaseMember member)
         {
             lock (SyncObject)
             {
@@ -311,7 +311,7 @@ namespace MSNPSharp.IO
             }
         }
 
-        internal void RemoveMemberhip(string servicetype, string account, IMAddressInfoType type, RoleId memberrole)
+        internal void RemoveMemberhip(ServiceName servicetype, string account, IMAddressInfoType type, RoleId memberrole)
         {
             lock (SyncObject)
             {
@@ -502,7 +502,7 @@ namespace MSNPSharp.IO
             }
         }
 
-        private bool HasMemberhip(string servicetype, string account, IMAddressInfoType type, RoleId memberrole)
+        private bool HasMemberhip(ServiceName servicetype, string account, IMAddressInfoType type, RoleId memberrole)
         {
             SerializableDictionary<RoleId, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
             return (ms != null) && ms.ContainsKey(memberrole) && ms[memberrole].ContainsKey(Contact.MakeHash(account, type));
@@ -516,7 +516,7 @@ namespace MSNPSharp.IO
         /// <param name="type"></param>
         /// <param name="memberrole"></param>
         /// <returns>If the member not exist, return null.</returns>
-        public BaseMember SelectBaseMember(string servicetype, string account, IMAddressInfoType type, RoleId memberrole)
+        public BaseMember SelectBaseMember(ServiceName servicetype, string account, IMAddressInfoType type, RoleId memberrole)
         {
             string hash = Contact.MakeHash(account, type);
             SerializableDictionary<RoleId, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
@@ -715,8 +715,8 @@ namespace MSNPSharp.IO
 
                                 if (null != serviceType.Memberships)
                                 {
-                                    if (ServiceFilterType.Messenger == serviceType.Info.Handle.Type ||
-                                        ServiceFilterType.IMAvailability == serviceType.Info.Handle.Type)
+                                    if (ServiceName.Messenger == serviceType.Info.Handle.Type ||
+                                        ServiceName.IMAvailability == serviceType.Info.Handle.Type)
                                     {
                                         ProcessMessengerAndIMAvailabilityMemberships(serviceType, ref updatedService);
                                     }
@@ -854,7 +854,7 @@ namespace MSNPSharp.IO
                             {
                                 RemoveMemberhip(serviceClone.ServiceType, account, type, memberrole);
 
-                                if (serviceClone.ServiceType == ServiceFilterType.SocialNetwork)
+                                if (serviceClone.ServiceType == ServiceName.SocialNetwork)
                                 {
                                     Contact contact = NSMessageHandler.ContactList.GetContactWithCreate(account, type);
 
@@ -872,7 +872,7 @@ namespace MSNPSharp.IO
                             {
                                 AddMemberhip(serviceClone.ServiceType, account, type, memberrole, bm);
 
-                                if (serviceClone.ServiceType == ServiceFilterType.SocialNetwork)
+                                if (serviceClone.ServiceType == ServiceName.SocialNetwork)
                                 {
                                     Contact contact = NSMessageHandler.ContactList.GetContactWithCreate(account, type);
 

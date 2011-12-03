@@ -1521,7 +1521,7 @@ namespace MSNPSharp
         /// <param name="serviceName">Service name (e.g. Messenger)</param>
         /// <param name="list">The list to place the contact in</param>
         /// <param name="onSuccess"></param>
-        internal void AddContactToList(Contact contact, string serviceName, RoleLists list, EventHandler onSuccess)
+        internal void AddContactToList(Contact contact, ServiceName serviceName, RoleLists list, EventHandler onSuccess)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
@@ -1590,7 +1590,7 @@ namespace MSNPSharp
         /// <param name="serviceName">Service name</param>
         /// <param name="list">The list to remove the contact from</param>
         /// <param name="onSuccess"></param>
-        internal void RemoveContactFromList(Contact contact, string serviceName, RoleLists list, EventHandler onSuccess)
+        internal void RemoveContactFromList(Contact contact, ServiceName serviceName, RoleLists list, EventHandler onSuccess)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {

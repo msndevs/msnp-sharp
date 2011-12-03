@@ -68,19 +68,6 @@ namespace MSNPSharp
         public const string Circle = "Circle";
     }
 
-    public static class ServiceFilterType
-    {
-        public const string Messenger = "Messenger";
-        public const string IMAvailability = "IMAvailability";
-        public const string Invitation = "Invitation";
-        public const string SocialNetwork = "SocialNetwork";
-        public const string Profile = "Profile";
-        public const string Folder = "Folder";
-        public const string Event = "Event";
-        public const string OfficeLiveWebNotification = "OfficeLiveWebNotification";
-        public const string CommunityQuestionAnswer = "CommunityQuestionAnswer";
-    }
-
     [Flags]
     public enum ServiceShortNames
     {
