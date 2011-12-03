@@ -61,11 +61,113 @@
 	</xsd:complexType>
 	<xsd:complexType name="HandleType">
 		<xsd:sequence>
-			<xsd:element name="Id" type="xsd:integer"/>
-			<xsd:element name="Type" type="xsd:string" default="Messenger"/>
-			<xsd:element name="ForeignId" type="xsd:string"/>
+			<xsd:element name="Id" type="xsd:integer" minOccurs="1" maxOccurs="1"/>
+			<xsd:element name="Type" type="msnab:ServiceName" minOccurs="1" maxOccurs="1"/>
+			<xsd:element name="ForeignId" type="xsd:string" minOccurs="0" maxOccurs="1"/>
 		</xsd:sequence>
 	</xsd:complexType>
+	<xsd:simpleType name="ServiceName">
+		<xsd:restriction base="xsd:string">
+		<xsd:enumeration value="Namespace" />
+		<xsd:enumeration value="Calendar" />
+		<xsd:enumeration value="Folder" />
+		<xsd:enumeration value="ContactInfo" />
+		<xsd:enumeration value="AddressBook" />
+		<xsd:enumeration value="Favorites" />
+		<xsd:enumeration value="Messenger" />
+		<xsd:enumeration value="Space" />
+		<xsd:enumeration value="MessageContainer" />
+		<xsd:enumeration value="PhotoAlbum" />
+		<xsd:enumeration value="List" />
+		<xsd:enumeration value="ABCHInternal" />
+		<xsd:enumeration value="Invitation" />
+		<xsd:enumeration value="SocialNetwork" />
+		<xsd:enumeration value="Profile" />
+		<xsd:enumeration value="EmailNotifications" />
+		<xsd:enumeration value="BlindEmail" />
+		<xsd:enumeration value="Classifieds" />
+		<xsd:enumeration value="CommunityQuestionAnswer" />
+		<xsd:enumeration value="OfficeLiveWebNotification" />
+		<xsd:enumeration value="SharedCircles" />
+		<xsd:enumeration value="Custom" />
+		<xsd:enumeration value="Email" />
+		<xsd:enumeration value="Subscriber" />
+		<xsd:enumeration value="ContentSet" />
+		<xsd:enumeration value="TryStar" />
+		<xsd:enumeration value="MessengerApplications" />
+		<xsd:enumeration value="MailingList" />
+		<xsd:enumeration value="MessengerPrivate" />
+		<xsd:enumeration value="Event" />
+		<xsd:enumeration value="Match" />
+		<xsd:enumeration value="Contoso" />
+		<xsd:enumeration value="Cumulus" />
+		<xsd:enumeration value="MessengerPlatform01" />
+		<xsd:enumeration value="MessengerPlatform02" />
+		<xsd:enumeration value="MessengerPlatform03" />
+		<xsd:enumeration value="MessengerPlatform04" />
+		<xsd:enumeration value="MessengerPlatform05" />
+		<xsd:enumeration value="MessengerPlatform06" />
+		<xsd:enumeration value="MessengerPlatform07" />
+		<xsd:enumeration value="MessengerPlatform08" />
+		<xsd:enumeration value="WLCalendar" />
+		<xsd:enumeration value="MessengerPlatform09" />
+		<xsd:enumeration value="MessengerPlatform10" />
+		<xsd:enumeration value="MessengerPlatform11" />
+		<xsd:enumeration value="MessengerPlatform12" />
+		<xsd:enumeration value="MessengerPlatform13" />
+		<xsd:enumeration value="MessengerPlatform14" />
+		<xsd:enumeration value="MessengerPlatform15" />
+		<xsd:enumeration value="MessengerPlatform16" />
+		<xsd:enumeration value="MessengerPlatform17" />
+		<xsd:enumeration value="MessengerPlatform18" />
+		<xsd:enumeration value="GroupSpace" />
+		<xsd:enumeration value="GleamNotifications" />
+		<xsd:enumeration value="PopFly" />
+		<xsd:enumeration value="AppStorage" />
+		<xsd:enumeration value="SkyDrive" />
+		<xsd:enumeration value="VideoMail" />
+		<xsd:enumeration value="XboxLive" />
+		<xsd:enumeration value="Zune" />
+		<xsd:enumeration value="PrivateNetwork" />
+		<xsd:enumeration value="PhotoTagging" />
+		<xsd:enumeration value="Reserved1" />
+		<xsd:enumeration value="Reserved2" />
+		<xsd:enumeration value="Reserved3" />
+		<xsd:enumeration value="Reserved4" />
+		<xsd:enumeration value="Reserved5" />
+		<xsd:enumeration value="Reserved6" />
+		<xsd:enumeration value="EduBlog" />
+		<xsd:enumeration value="EduMessageBoard" />
+		<xsd:enumeration value="EduWiki" />
+		<xsd:enumeration value="EduTasks" />
+		<xsd:enumeration value="EduCoursePlan" />
+		<xsd:enumeration value="EduEPortfolio" />
+		<xsd:enumeration value="EduStudentTracker" />
+		<xsd:enumeration value="EduMarketplaceListing" />
+		<xsd:enumeration value="EduEntity" />
+		<xsd:enumeration value="EduList" />
+		<xsd:enumeration value="EduContentSet" />
+		<xsd:enumeration value="EduFolder" />
+		<xsd:enumeration value="EduProfile" />
+		<xsd:enumeration value="EduReserved1" />
+		<xsd:enumeration value="EduReserved2" />
+		<xsd:enumeration value="EduReserved3" />
+		<xsd:enumeration value="EduReserved4" />
+		<xsd:enumeration value="EduReserved5" />
+		<xsd:enumeration value="LiveMobile" />
+		<xsd:enumeration value="SNAPIFramework" />
+		<xsd:enumeration value="Polaris" />
+		<xsd:enumeration value="OfficeLive" />
+		<xsd:enumeration value="WebActivity" />
+		<xsd:enumeration value="MsnGamer" />
+		<xsd:enumeration value="CanComment" />
+		<xsd:enumeration value="Vine" />
+		<xsd:enumeration value="IMAvailability" />
+		<xsd:enumeration value="LiveFX" />
+		<xsd:enumeration value="Notifications" />
+		<xsd:enumeration value="ZuneMigrations" />
+	</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="ServiceType">
 		<xsd:sequence>
 			<xsd:element name="Memberships" minOccurs="0">
