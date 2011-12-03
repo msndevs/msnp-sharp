@@ -176,7 +176,7 @@ namespace MSNPSharp.IO
         /// <param name="filename"></param>
         public virtual void Save(string filename)
         {
-            SaveToMCL(filename, false);
+            SaveToMCL(filename);
         }
 
         protected static MCLSerializer LoadFromFile(string filename, MclSerialization st, Type targettype, NSMessageHandler handler, bool useCache)
@@ -221,9 +221,7 @@ namespace MSNPSharp.IO
             return ret;
         }
 
-
-
-        private void SaveToMCL(string filename, bool saveToHiddenFile)
+        private void SaveToMCL(string filename)
         {
             int beginTime = Environment.TickCount;
             if (!Settings.NoSave)
@@ -238,7 +236,7 @@ namespace MSNPSharp.IO
 
                 MclFile file = MclFile.Open(filename, FileAccess.Write, SerializationType, NSMessageHandler.Credentials.Password, UseCache);
                 file.Content = ms.ToArray();
-                file.Save(filename, saveToHiddenFile);
+                file.Save(filename);
                 ms.Close();
             }
 

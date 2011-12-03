@@ -181,11 +181,9 @@ namespace MSNPSharp.IO
         }
 
         #region Public method
-        public void Save(string filename)
-        {
-            WriteAllBytes(filename, FillFileStruct(xmlData));
-        }
-
+        /// <summary>
+        /// Save the file
+        /// </summary>
         public void Save()
         {
             Save(fileName);
@@ -195,25 +193,9 @@ namespace MSNPSharp.IO
         /// Save the file and set its hidden attribute to true
         /// </summary>
         /// <param name="filename"></param>
-        /// <param name="saveToHiddenFile"></param>
-        public void Save(string filename, bool saveToHiddenFile)
+        public void Save(string filename)
         {
             WriteAllBytes(filename, FillFileStruct(xmlData));
-            if (saveToHiddenFile)
-            {
-                lock (this)
-                {
-                    File.SetAttributes(filename, FileAttributes.Hidden);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Save the file and set its hidden attribute to true
-        /// </summary>
-        public void SaveAndHide()
-        {
-            Save(fileName, true);
         }
 
         #endregion
@@ -276,9 +258,6 @@ namespace MSNPSharp.IO
                 {
                     try
                     {
-                        if (File.Exists(filename))
-                            File.SetAttributes(filename, FileAttributes.Normal);
-
                         File.WriteAllBytes(filename, content);
                     }
                     catch (Exception ex)
@@ -596,6 +575,41 @@ namespace MSNPSharp.IO
             {
                 return new MclFile(filePath, st, access, password);
             }
+        }
+
+        public static bool Delete(string filePath, bool removeFromCache)
+        {
+            bool deleted = false;
+
+            // Remove from cache
+            if (removeFromCache)
+            {
+                if (storage.ContainsKey(filePath))
+                {
+                    lock (SyncObject)
+                    {
+                        if (storage.ContainsKey(filePath))
+                        {
+                            deleted |= storage.Remove(filePath);
+                        }
+                    }
+                }
+            }
+
+            // Remove from disk
+            if (File.Exists(filePath))
+            {
+                try
+                {
+                    File.Delete(filePath);
+                    deleted |= true;
+                }
+                catch (Exception)
+                {
+                }
+            }
+
+            return deleted;
         }
 
         #endregion
