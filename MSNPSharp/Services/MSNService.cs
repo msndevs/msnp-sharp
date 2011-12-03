@@ -332,7 +332,7 @@ namespace MSNPSharp
                     abService.ABApplicationHeaderValue.ApplicationId = NSMessageHandler.Credentials.ClientInfo.ApplicationId;
                     abService.ABApplicationHeaderValue.IsMigration = false;
                     abService.ABApplicationHeaderValue.PartnerScenario = Convert.ToString(asyncObject.PartnerScenario);
-                    abService.ABApplicationHeaderValue.CacheKey = NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey];
+                    abService.ABApplicationHeaderValue.CacheKey = NSMessageHandler.ContactService.Deltas.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey];
                     abService.ABAuthHeaderValue = new ABAuthHeader();
                     abService.ABAuthHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Contact].Ticket;
                     abService.ABAuthHeaderValue.ManagedGroupRequest = false;
@@ -351,7 +351,7 @@ namespace MSNPSharp
                     sharingService.ABApplicationHeaderValue.IsMigration = false;
                     sharingService.ABApplicationHeaderValue.PartnerScenario = Convert.ToString(asyncObject.PartnerScenario);
                     sharingService.ABApplicationHeaderValue.BrandId = NSMessageHandler.MSNTicket.MainBrandID;
-                    sharingService.ABApplicationHeaderValue.CacheKey = NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey];
+                    sharingService.ABApplicationHeaderValue.CacheKey = NSMessageHandler.ContactService.Deltas.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey];
                     sharingService.ABAuthHeaderValue = new ABAuthHeader();
                     sharingService.ABAuthHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Contact].Ticket;
                     sharingService.ABAuthHeaderValue.ManagedGroupRequest = false;
@@ -370,8 +370,7 @@ namespace MSNPSharp
                     storageService.StorageUserHeaderValue.Puid = 0;
                     storageService.StorageUserHeaderValue.TicketToken = NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.Storage].Ticket;
                     storageService.AffinityCacheHeaderValue = new AffinityCacheHeader();
-                    storageService.AffinityCacheHeaderValue.CacheKey = NSMessageHandler.ContactService.Deltas.CacheKeys.ContainsKey(CacheKeyType.StorageServiceCacheKey)
-                        ? NSMessageHandler.ContactService.Deltas.CacheKeys[CacheKeyType.StorageServiceCacheKey] : String.Empty;
+                    storageService.AffinityCacheHeaderValue.CacheKey = NSMessageHandler.ContactService.Deltas.CacheKeys[CacheKeyType.StorageServiceCacheKey];
 
                     service = storageService;
                     break;
@@ -486,7 +485,6 @@ namespace MSNPSharp
 
                 if (needRequest)
                 {
-
                     try
                     {
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, ws.GetType().ToString() + " is requesting a cachekey and preferred host for calling " + methodName);
@@ -496,6 +494,7 @@ namespace MSNPSharp
                             case CacheKeyType.OmegaContactServiceCacheKey:
                                 ws.Url = ws.Url.Replace(originalHost, MSNService.ContactServiceRedirectionHost);
                                 break;
+
                             case CacheKeyType.StorageServiceCacheKey:
                                 ws.Url = ws.Url.Replace(originalHost, MSNService.StorageServiceRedirectionHost);
                                 break;
@@ -521,12 +520,14 @@ namespace MSNPSharp
                                     webResponse.StatusCode == HttpStatusCode.RedirectKeepVerb)
                                 {
                                     string redirectUrl = webResponse.Headers[HttpResponseHeader.Location];
+
                                     if (!string.IsNullOrEmpty(redirectUrl))
                                     {
                                         getHost = true;
 
                                         lock (deltas.SyncObject)
                                             deltas.PreferredHosts[preferredHostKey] = FetchHost(redirectUrl);
+
                                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Get redirect URL by HTTP error succeed, method " + methodName + ":\r\n " +
                                             "Original: " + FetchHost(ws.Url) + "\r\n " +
                                             "Redirect: " + FetchHost(redirectUrl) + "\r\n");
@@ -548,20 +549,18 @@ namespace MSNPSharp
                                         errdoc.LoadXml(xmlstr);
 
                                         XmlNodeList findnodelist = errdoc.GetElementsByTagName("CacheKey");
-                                        if (findnodelist.Count > 0)
+                                        if (findnodelist.Count > 0 && !String.IsNullOrEmpty(findnodelist[0].InnerText))
                                         {
                                             deltas.CacheKeys[keyType] = findnodelist[0].InnerText;
                                         }
                                     }
                                     catch (Exception exc)
                                     {
-                                        Trace.WriteLineIf(
-                                            Settings.TraceSwitch.TraceError,
+                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
                                             "An error occured while getting CacheKey:\r\n" +
                                             "Service:    " + ws.GetType().ToString() + "\r\n" +
                                             "MethodName: " + methodName + "\r\n" +
                                             "Message:    " + exc.Message);
-
                                     }
 
                                     #endregion
@@ -571,12 +570,12 @@ namespace MSNPSharp
 
                         if (!getHost)
                         {
-                            Trace.WriteLineIf(
-                                Settings.TraceSwitch.TraceError,
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
                                 "An error occured while getting CacheKey and Preferred host:\r\n" +
                                 "Service:    " + ws.GetType().ToString() + "\r\n" +
                                 "MethodName: " + methodName + "\r\n" +
                                 "Message:    " + ex.Message);
+
                             lock (deltas.SyncObject)
                                 deltas.PreferredHosts[preferredHostKey] = originalHost; //If there's an error, we must set the host back to its original value.
                         }
@@ -659,7 +658,7 @@ namespace MSNPSharp
             {
                 if (sh.CacheKeyChanged)
                 {
-                    NSMessageHandler.MSNTicket.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey] = sh.CacheKey;
+                    NSMessageHandler.ContactService.Deltas.CacheKeys[CacheKeyType.OmegaContactServiceCacheKey] = sh.CacheKey;
                 }
 
                 lock (NSMessageHandler.ContactService.Deltas.SyncObject)

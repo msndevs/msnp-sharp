@@ -304,13 +304,11 @@ namespace MSNPSharp
             {
                 AddressBook = XMLContactList.LoadFromFile(addressbookFile, st, NSMessageHandler, false);
                 Deltas = DeltasList.LoadFromFile(deltasResultsFile, st, NSMessageHandler, true);
-
-                NSMessageHandler.MSNTicket.CacheKeys = Deltas.CacheKeys;
             }
             catch (Exception)
             {
                 // InvalidOperationException: Struct changed (Serialize error)
-                DeleteRecordFile(); // Reset addressbook.
+                DeleteRecordFile(true); // Reset addressbook.
             }
             finally
             {
@@ -327,7 +325,7 @@ namespace MSNPSharp
                         "\r\nAddressBook Version Required: " + Properties.Resources.XMLContactListVersion +
                         "\r\nThe old mcl files for this account will be deleted and a new request for getting full addressbook list will be post.");
 
-                    DeleteRecordFile(); // Addressbook version changed. Reset addressbook.
+                    DeleteRecordFile(true); // Addressbook version changed. Reset addressbook.
                     // SOFT ERROR(continue).
                 }
             }
@@ -1894,56 +1892,6 @@ namespace MSNPSharp
 
         #endregion
 
-        #region DeleteRecordFile
-
-        /// <summary>
-        /// Delete the record file that contains the contactlist of owner.
-        /// </summary>
-        public void DeleteRecordFile()
-        {
-            if (NSMessageHandler.Owner != null && NSMessageHandler.Owner.Account != null)
-            {
-                MclSerialization st = Settings.SerializationType;
-                string addressbookFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Account.GetHashCode() + ".mcl");
-                string deltasResultFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Account.GetHashCode() + "d" + ".mcl");
-
-                if (File.Exists(addressbookFile))
-                {
-                    File.SetAttributes(addressbookFile, FileAttributes.Normal);  //By default, the file is hidden.
-                    File.Delete(addressbookFile);
-                }
-
-                // Re-init addressbook
-                AddressBook = XMLContactList.LoadFromFile(addressbookFile, st, NSMessageHandler, false);
-                AddressBook.Save();
-
-                if (File.Exists(deltasResultFile))
-                {
-                    //If we saved cachekey and preferred host in it, deltas can't be deleted.
-                    if (Deltas != null)
-                    {
-                        Deltas.Truncate();
-                    }
-                    else
-                    {
-                        File.SetAttributes(deltasResultFile, FileAttributes.Normal);  //By default, the file is hidden.
-                        File.Delete(deltasResultFile);
-
-                        Deltas = DeltasList.LoadFromFile(deltasResultFile, st, NSMessageHandler, true);
-                        Deltas.Save(true);
-
-                        if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
-                        {
-                            NSMessageHandler.MSNTicket.CacheKeys = Deltas.CacheKeys;
-                        }
-                    }
-                }
-                abSynchronized = false;
-            }
-        }
-
-        #endregion
-
         public RoleId GetMemberRole(RoleLists list)
         {
             switch (list)
@@ -2005,5 +1953,56 @@ namespace MSNPSharp
             }
             binarySemaphore.Release();
         }
+
+        #region DeleteRecordFile
+
+        /// <summary>
+        /// Delete the record file that contains the contactlist of owner.
+        /// </summary>
+        public void DeleteRecordFile()
+        {
+            DeleteRecordFile(false);
+        }
+
+        private void DeleteRecordFile(bool reCreate)
+        {
+            if (NSMessageHandler.Owner != null && NSMessageHandler.Owner.Account != null)
+            {
+                MclSerialization st = Settings.SerializationType;
+                string addressbookFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Account.GetHashCode() + ".mcl");
+                string deltasResultFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Account.GetHashCode() + "d" + ".mcl");
+
+                // Re-init addressbook
+                {
+                    MclFile.Delete(addressbookFile, true);
+
+                    if (reCreate)
+                    {
+                        AddressBook = XMLContactList.LoadFromFile(addressbookFile, st, NSMessageHandler, false);
+                        AddressBook.Save();
+                    }
+                }
+
+                //If we saved cachekey and preferred host in it, deltas can't be deleted.
+                if (Deltas != null && reCreate)
+                {
+                    Deltas.Truncate();
+                }
+                else
+                {
+                    MclFile.Delete(deltasResultFile, true);
+
+                    if (reCreate)
+                    {
+                        Deltas = DeltasList.LoadFromFile(deltasResultFile, st, NSMessageHandler, true);
+                        Deltas.Save(true);
+                    }
+                }
+
+                abSynchronized = false;
+            }
+        }
+
+        #endregion
     }
 };

@@ -101,7 +101,7 @@ namespace MSNPSharp
                         || e.Error.Message.ToLowerInvariant().Contains("full sync required"))
                     {
                         // recursive Call -----------------------------
-                        DeleteRecordFile();
+                        DeleteRecordFile(true);
                         FindMembershipAsync(partnerScenario, findMembershipCallback);
                     }
                     else if (e.Error.Message.ToLowerInvariant().Contains("address book does not exist"))
@@ -124,7 +124,7 @@ namespace MSNPSharp
                             if (abadd_e.Error == null)
                             {
                                 // recursive Call -----------------------------
-                                DeleteRecordFile();
+                                DeleteRecordFile(true);
                                 FindMembershipAsync(partnerScenario, findMembershipCallback);
                             }
                         };
@@ -216,7 +216,7 @@ namespace MSNPSharp
                             abHandle.ABId == WebServiceConstants.MessengerIndividualAddressBookId)
                         {
                             // Default addressbook
-                            DeleteRecordFile();
+                            DeleteRecordFile(true);
                         }
                         else
                         {
