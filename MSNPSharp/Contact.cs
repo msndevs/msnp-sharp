@@ -1037,11 +1037,11 @@ namespace MSNPSharp
                 {
                     if (value)
                     {
-                        NSMessageHandler.ContactService.AddContactToList(this, ServiceFilterType.IMAvailability, RoleLists.Hide, null);
+                        NSMessageHandler.ContactService.AddContactToList(this, ServiceName.IMAvailability, RoleLists.Hide, null);
                     }
                     else
                     {
-                        NSMessageHandler.ContactService.RemoveContactFromList(this, ServiceFilterType.IMAvailability, RoleLists.Hide, null);
+                        NSMessageHandler.ContactService.RemoveContactFromList(this, ServiceName.IMAvailability, RoleLists.Hide, null);
                     }
                 }
             }
@@ -1059,11 +1059,11 @@ namespace MSNPSharp
                 {
                     if (value)
                     {
-                        NSMessageHandler.ContactService.AddContactToList(this, ServiceFilterType.Messenger, RoleLists.Forward, null);
+                        NSMessageHandler.ContactService.AddContactToList(this, ServiceName.Messenger, RoleLists.Forward, null);
                     }
                     else
                     {
-                        NSMessageHandler.ContactService.RemoveContactFromList(this, ServiceFilterType.Messenger, RoleLists.Forward, null);
+                        NSMessageHandler.ContactService.RemoveContactFromList(this, ServiceName.Messenger, RoleLists.Forward, null);
                     }
                 }
             }
@@ -1086,11 +1086,11 @@ namespace MSNPSharp
                 {
                     if (value)
                     {
-                        NSMessageHandler.ContactService.AddContactToList(this, ServiceFilterType.Messenger, RoleLists.Allow, null);
+                        NSMessageHandler.ContactService.AddContactToList(this, ServiceName.Messenger, RoleLists.Allow, null);
                     }
                     else
                     {
-                        NSMessageHandler.ContactService.RemoveContactFromList(this, ServiceFilterType.Messenger, RoleLists.Allow, null);
+                        NSMessageHandler.ContactService.RemoveContactFromList(this, ServiceName.Messenger, RoleLists.Allow, null);
                     }
                 }
             }
@@ -1109,7 +1109,7 @@ namespace MSNPSharp
             {
                 if (value != OnPendingList && value == false)
                 {
-                    NSMessageHandler.ContactService.RemoveContactFromList(this, ServiceFilterType.Messenger, RoleLists.Pending, null);
+                    NSMessageHandler.ContactService.RemoveContactFromList(this, ServiceName.Messenger, RoleLists.Pending, null);
                 }
             }
         }

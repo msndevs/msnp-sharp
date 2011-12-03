@@ -61,8 +61,8 @@ namespace MSNPSharp.IO
             }
         }
 
-        private string serviceType;
-        public string ServiceType
+        private ServiceName serviceType;
+        public ServiceName ServiceType
         {
             get
             {

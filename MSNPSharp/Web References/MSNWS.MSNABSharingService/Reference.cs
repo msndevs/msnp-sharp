@@ -1487,13 +1487,9 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private string idField;
         
-        private string typeField;
+        private ServiceName typeField;
         
         private string foreignIdField;
-        
-        public HandleType() {
-            this.typeField = "Messenger";
-        }
         
         /// <remarks/>
         [System.Xml.Serialization.XmlElementAttribute(DataType="integer")]
@@ -1507,7 +1503,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public string Type {
+        public ServiceName Type {
             get {
                 return this.typeField;
             }
@@ -1525,6 +1521,307 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
                 this.foreignIdField = value;
             }
         }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.5420")]
+    [System.SerializableAttribute()]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public enum ServiceName {
+        
+        /// <remarks/>
+        Namespace,
+        
+        /// <remarks/>
+        Calendar,
+        
+        /// <remarks/>
+        Folder,
+        
+        /// <remarks/>
+        ContactInfo,
+        
+        /// <remarks/>
+        AddressBook,
+        
+        /// <remarks/>
+        Favorites,
+        
+        /// <remarks/>
+        Messenger,
+        
+        /// <remarks/>
+        Space,
+        
+        /// <remarks/>
+        MessageContainer,
+        
+        /// <remarks/>
+        PhotoAlbum,
+        
+        /// <remarks/>
+        List,
+        
+        /// <remarks/>
+        ABCHInternal,
+        
+        /// <remarks/>
+        Invitation,
+        
+        /// <remarks/>
+        SocialNetwork,
+        
+        /// <remarks/>
+        Profile,
+        
+        /// <remarks/>
+        EmailNotifications,
+        
+        /// <remarks/>
+        BlindEmail,
+        
+        /// <remarks/>
+        Classifieds,
+        
+        /// <remarks/>
+        CommunityQuestionAnswer,
+        
+        /// <remarks/>
+        OfficeLiveWebNotification,
+        
+        /// <remarks/>
+        SharedCircles,
+        
+        /// <remarks/>
+        Custom,
+        
+        /// <remarks/>
+        Email,
+        
+        /// <remarks/>
+        Subscriber,
+        
+        /// <remarks/>
+        ContentSet,
+        
+        /// <remarks/>
+        TryStar,
+        
+        /// <remarks/>
+        MessengerApplications,
+        
+        /// <remarks/>
+        MailingList,
+        
+        /// <remarks/>
+        MessengerPrivate,
+        
+        /// <remarks/>
+        Event,
+        
+        /// <remarks/>
+        Match,
+        
+        /// <remarks/>
+        Contoso,
+        
+        /// <remarks/>
+        Cumulus,
+        
+        /// <remarks/>
+        MessengerPlatform01,
+        
+        /// <remarks/>
+        MessengerPlatform02,
+        
+        /// <remarks/>
+        MessengerPlatform03,
+        
+        /// <remarks/>
+        MessengerPlatform04,
+        
+        /// <remarks/>
+        MessengerPlatform05,
+        
+        /// <remarks/>
+        MessengerPlatform06,
+        
+        /// <remarks/>
+        MessengerPlatform07,
+        
+        /// <remarks/>
+        MessengerPlatform08,
+        
+        /// <remarks/>
+        WLCalendar,
+        
+        /// <remarks/>
+        MessengerPlatform09,
+        
+        /// <remarks/>
+        MessengerPlatform10,
+        
+        /// <remarks/>
+        MessengerPlatform11,
+        
+        /// <remarks/>
+        MessengerPlatform12,
+        
+        /// <remarks/>
+        MessengerPlatform13,
+        
+        /// <remarks/>
+        MessengerPlatform14,
+        
+        /// <remarks/>
+        MessengerPlatform15,
+        
+        /// <remarks/>
+        MessengerPlatform16,
+        
+        /// <remarks/>
+        MessengerPlatform17,
+        
+        /// <remarks/>
+        MessengerPlatform18,
+        
+        /// <remarks/>
+        GroupSpace,
+        
+        /// <remarks/>
+        GleamNotifications,
+        
+        /// <remarks/>
+        PopFly,
+        
+        /// <remarks/>
+        AppStorage,
+        
+        /// <remarks/>
+        SkyDrive,
+        
+        /// <remarks/>
+        VideoMail,
+        
+        /// <remarks/>
+        XboxLive,
+        
+        /// <remarks/>
+        Zune,
+        
+        /// <remarks/>
+        PrivateNetwork,
+        
+        /// <remarks/>
+        PhotoTagging,
+        
+        /// <remarks/>
+        Reserved1,
+        
+        /// <remarks/>
+        Reserved2,
+        
+        /// <remarks/>
+        Reserved3,
+        
+        /// <remarks/>
+        Reserved4,
+        
+        /// <remarks/>
+        Reserved5,
+        
+        /// <remarks/>
+        Reserved6,
+        
+        /// <remarks/>
+        EduBlog,
+        
+        /// <remarks/>
+        EduMessageBoard,
+        
+        /// <remarks/>
+        EduWiki,
+        
+        /// <remarks/>
+        EduTasks,
+        
+        /// <remarks/>
+        EduCoursePlan,
+        
+        /// <remarks/>
+        EduEPortfolio,
+        
+        /// <remarks/>
+        EduStudentTracker,
+        
+        /// <remarks/>
+        EduMarketplaceListing,
+        
+        /// <remarks/>
+        EduEntity,
+        
+        /// <remarks/>
+        EduList,
+        
+        /// <remarks/>
+        EduContentSet,
+        
+        /// <remarks/>
+        EduFolder,
+        
+        /// <remarks/>
+        EduProfile,
+        
+        /// <remarks/>
+        EduReserved1,
+        
+        /// <remarks/>
+        EduReserved2,
+        
+        /// <remarks/>
+        EduReserved3,
+        
+        /// <remarks/>
+        EduReserved4,
+        
+        /// <remarks/>
+        EduReserved5,
+        
+        /// <remarks/>
+        LiveMobile,
+        
+        /// <remarks/>
+        SNAPIFramework,
+        
+        /// <remarks/>
+        Polaris,
+        
+        /// <remarks/>
+        OfficeLive,
+        
+        /// <remarks/>
+        WebActivity,
+        
+        /// <remarks/>
+        MsnGamer,
+        
+        /// <remarks/>
+        CanComment,
+        
+        /// <remarks/>
+        Vine,
+        
+        /// <remarks/>
+        IMAvailability,
+        
+        /// <remarks/>
+        LiveFX,
+        
+        /// <remarks/>
+        Notifications,
+        
+        /// <remarks/>
+        ZuneMigrations,
     }
     
     /// <remarks/>
@@ -9316,11 +9613,11 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
     public partial class FindMembershipRequestTypeServiceFilter {
         
-        private string[] typesField;
+        private ServiceName[] typesField;
         
         /// <remarks/>
         [System.Xml.Serialization.XmlArrayItemAttribute("ServiceType", IsNullable=false)]
-        public string[] Types {
+        public ServiceName[] Types {
             get {
                 return this.typesField;
             }
