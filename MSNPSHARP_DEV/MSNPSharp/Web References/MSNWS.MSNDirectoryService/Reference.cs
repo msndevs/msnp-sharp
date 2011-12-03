@@ -437,7 +437,7 @@ namespace MSNPSharp.MSNWS.MSNDirectoryService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("A", IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("A")]
         public AttributeType[] Attributes {
             get {
                 return this.attributesField;
@@ -585,7 +585,7 @@ namespace MSNPSharp.MSNWS.MSNDirectoryService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("ProfileId", IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("ProfileId")]
         public IdType[] Ids {
             get {
                 return this.idsField;
@@ -596,58 +596,13 @@ namespace MSNPSharp.MSNWS.MSNDirectoryService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("View", IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("View")]
         public ViewType[] Views {
             get {
                 return this.viewsField;
             }
             set {
                 this.viewsField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.5420")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://profile.live.com/")]
-    public partial class GetResultType {
-        
-        private CallStatisticsType callStatisticsField;
-        
-        private IdType idField;
-        
-        private ViewType viewField;
-        
-        /// <remarks/>
-        public CallStatisticsType CallStatistics {
-            get {
-                return this.callStatisticsField;
-            }
-            set {
-                this.callStatisticsField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public IdType Id {
-            get {
-                return this.idField;
-            }
-            set {
-                this.idField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public ViewType View {
-            get {
-                return this.viewField;
-            }
-            set {
-                this.viewField = value;
             }
         }
     }
@@ -696,13 +651,58 @@ namespace MSNPSharp.MSNWS.MSNDirectoryService {
         }
         
         /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("ProfileId", IsNullable=false)]
+        [System.Xml.Serialization.XmlArrayItemAttribute("ProfileId")]
         public IdType[] Ids {
             get {
                 return this.idsField;
             }
             set {
                 this.idsField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.5420")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://profile.live.com/")]
+    public partial class GetResultType {
+        
+        private CallStatisticsType callStatisticsField;
+        
+        private IdType idField;
+        
+        private ViewType viewField;
+        
+        /// <remarks/>
+        public CallStatisticsType CallStatistics {
+            get {
+                return this.callStatisticsField;
+            }
+            set {
+                this.callStatisticsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public IdType Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public ViewType View {
+            get {
+                return this.viewField;
+            }
+            set {
+                this.viewField = value;
             }
         }
     }
