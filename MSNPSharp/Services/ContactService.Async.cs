@@ -77,17 +77,11 @@ namespace MSNPSharp
             request.deltasOnly = msdeltasOnly;
             request.lastChange = strLastChange;
             request.serviceFilter = new FindMembershipRequestTypeServiceFilter();
-            request.serviceFilter.Types = new string[]
+            request.serviceFilter.Types = new ServiceName[]
             {
-                ServiceFilterType.Messenger,
-                ServiceFilterType.IMAvailability,
-                ServiceFilterType.SocialNetwork
-                /*
-                ,ServiceFilterType.Profile,                
-                ServiceFilterType.Invitation,
-                ServiceFilterType.Folder,
-                ServiceFilterType.OfficeLiveWebNotification
-                */
+                ServiceName.Messenger,
+                ServiceName.IMAvailability,
+                ServiceName.SocialNetwork
             };
 
             MsnServiceState FindMembershipObject = new MsnServiceState(partnerScenario, "FindMembership", true);
@@ -107,7 +101,7 @@ namespace MSNPSharp
                         || e.Error.Message.ToLowerInvariant().Contains("full sync required"))
                     {
                         // recursive Call -----------------------------
-                        DeleteRecordFile();
+                        DeleteRecordFile(true);
                         FindMembershipAsync(partnerScenario, findMembershipCallback);
                     }
                     else if (e.Error.Message.ToLowerInvariant().Contains("address book does not exist"))
@@ -115,7 +109,7 @@ namespace MSNPSharp
                         ABAddRequestType abAddRequest = new ABAddRequestType();
                         abAddRequest.abInfo = new abInfoType();
                         abAddRequest.abInfo.ownerEmail = NSMessageHandler.Owner.Account;
-                        abAddRequest.abInfo.ownerPuid = "0";
+                        abAddRequest.abInfo.ownerPuid = 0;
                         abAddRequest.abInfo.fDefault = true;
 
                         MsnServiceState ABAddObject = new MsnServiceState(partnerScenario, "ABAdd", true);
@@ -130,7 +124,7 @@ namespace MSNPSharp
                             if (abadd_e.Error == null)
                             {
                                 // recursive Call -----------------------------
-                                DeleteRecordFile();
+                                DeleteRecordFile(true);
                                 FindMembershipAsync(partnerScenario, findMembershipCallback);
                             }
                         };
@@ -222,7 +216,7 @@ namespace MSNPSharp
                             abHandle.ABId == WebServiceConstants.MessengerIndividualAddressBookId)
                         {
                             // Default addressbook
-                            DeleteRecordFile();
+                            DeleteRecordFile(true);
                         }
                         else
                         {
@@ -256,6 +250,57 @@ namespace MSNPSharp
             };
 
             RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, ABFindContactsPagedObject, request));
+        }
+
+        private void FindFriendsInCommonAsync(Guid abId, long cid, int count,
+            FindFriendsInCommonCompletedEventHandler callback)
+        {
+            if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
+            {
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindFriendsInCommon", new MSNPSharpException("You don't have access right on this action anymore.")));
+                return;
+            }
+
+            if (cid == NSMessageHandler.Owner.CID)
+                return;
+
+            abHandleType abHandle = new abHandleType();
+            abHandle.Puid = 0;
+
+            if (abId != Guid.Empty)
+            {
+                // Find in circle
+                abHandle.ABId = abId.ToString("D").ToLowerInvariant();
+            }
+            else if (cid != 0)
+            {
+                // Find by CID
+                abHandle.Cid = cid;
+            }
+
+            FindFriendsInCommonRequestType request = new FindFriendsInCommonRequestType();
+            request.domainID = DomainIds.WindowsLiveDomain;
+            request.maxResults = count;
+            request.options = "List Count Matched Unmatched "; // IncludeInfo
+
+            request.targetAB = abHandle;
+
+            MsnServiceState findFriendsInCommonObject = new MsnServiceState(PartnerScenario.Timer, "FindFriendsInCommon", true);
+            ABServiceBinding abService = (ABServiceBinding)CreateService(MsnServiceType.AB, findFriendsInCommonObject);
+            abService.FindFriendsInCommonCompleted += delegate(object service, FindFriendsInCommonCompletedEventArgs e)
+            {
+                OnAfterCompleted(new ServiceOperationEventArgs(abService, MsnServiceType.AB, e));
+
+                if (e.Cancelled || NSMessageHandler.MSNTicket == MSNTicket.Empty)
+                    return;
+
+                if (callback != null)
+                {
+                    callback(service, e);
+                }
+            };
+
+            RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(abService, MsnServiceType.AB, findFriendsInCommonObject, request));
         }
 
         private void CreateContactAsync(string account, IMAddressInfoType network, Guid abId,
@@ -639,7 +684,7 @@ namespace MSNPSharp
         }
 
 
-        private void AddMemberAsync(Contact contact, string serviceName, RoleLists list, AddMemberCompletedEventHandler callback)
+        private void AddMemberAsync(Contact contact, ServiceName serviceName, RoleLists list, AddMemberCompletedEventHandler callback)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
@@ -651,11 +696,10 @@ namespace MSNPSharp
             if (contact.HasLists(list))
                 return;
 
-            string memberRole = GetMemberRole(list);
+            RoleId memberRole = GetMemberRole(list);
 
-            if (String.IsNullOrEmpty(memberRole))
+            if (memberRole == RoleId.None)
                 return;
-
 
             Service service = AddressBook.SelectTargetService(serviceName);
 
@@ -678,7 +722,7 @@ namespace MSNPSharp
 
             Membership memberShip = new Membership();
             memberShip.MemberRole = memberRole;
-            BaseMember member = new BaseMember();
+            BaseMember member = null; // Abstract
 
             if (contact.ClientType == IMAddressInfoType.WindowsLive)
             {
@@ -718,6 +762,9 @@ namespace MSNPSharp
                 circleMember.CircleId = contact.AddressBookId.ToString("D").ToLowerInvariant();
             }
 
+            if (member == null)
+                return;
+
             memberShip.Members = new BaseMember[] { member };
             addMemberRequest.memberships = new Membership[] { memberShip };
 
@@ -744,7 +791,7 @@ namespace MSNPSharp
 
 
 
-        private void DeleteMemberAsync(Contact contact, string serviceName, RoleLists list, DeleteMemberCompletedEventHandler callback)
+        private void DeleteMemberAsync(Contact contact, ServiceName serviceName, RoleLists list, DeleteMemberCompletedEventHandler callback)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
@@ -756,8 +803,8 @@ namespace MSNPSharp
             if (!contact.HasLists(list))
                 return;
 
-            string memberRole = GetMemberRole(list);
-            if (String.IsNullOrEmpty(memberRole))
+            RoleId memberRole = GetMemberRole(list);
+            if (memberRole == RoleId.None)
                 return;
 
             Service service = AddressBook.SelectTargetService(serviceName);
@@ -785,7 +832,7 @@ namespace MSNPSharp
             BaseMember deleteMember = null; // BaseMember is an abstract type, so we cannot create a new instance.
             // If we have a MembershipId different from 0, just use it. Otherwise, use email or phone number. 
             BaseMember baseMember = AddressBook.SelectBaseMember(serviceName, contact.Account, contact.ClientType, memberRole);
-            int membershipId = (baseMember == null || String.IsNullOrEmpty(baseMember.MembershipId)) ? 0 : int.Parse(baseMember.MembershipId);
+            int membershipId = (baseMember == null) ? 0 : baseMember.MembershipId;
 
             switch (contact.ClientType)
             {
@@ -798,40 +845,53 @@ namespace MSNPSharp
                     {
                         (deleteMember as PassportMember).PassportName = contact.Account;
                     }
+                    else
+                    {
+                        deleteMember.MembershipId = membershipId;
+                        deleteMember.MembershipIdSpecified = true;
+                    }
                     break;
 
                 case IMAddressInfoType.Yahoo:
                 case IMAddressInfoType.OfficeCommunicator:
 
                     deleteMember = new EmailMember();
-                    deleteMember.Type = (baseMember == null) ? MembershipType.Email : baseMember.Type;
+                    deleteMember.Type = MembershipType.Email;
                     deleteMember.State = (baseMember == null) ? MemberState.Accepted : baseMember.State;
                     if (membershipId == 0)
                     {
                         (deleteMember as EmailMember).Email = contact.Account;
+                    }
+                    else
+                    {
+                        deleteMember.MembershipId = membershipId;
+                        deleteMember.MembershipIdSpecified = true;
                     }
                     break;
 
                 case IMAddressInfoType.Telephone:
 
                     deleteMember = new PhoneMember();
-                    deleteMember.Type = (baseMember == null) ? MembershipType.Phone : baseMember.Type;
+                    deleteMember.Type = MembershipType.Phone;
                     deleteMember.State = (baseMember == null) ? MemberState.Accepted : baseMember.State;
                     if (membershipId == 0)
                     {
                         (deleteMember as PhoneMember).PhoneNumber = contact.Account;
                     }
+                    else
+                    {
+                        deleteMember.MembershipId = membershipId;
+                        deleteMember.MembershipIdSpecified = true;
+                    }
                     break;
 
                 case IMAddressInfoType.Circle:
                     deleteMember = new CircleMember();
-                    deleteMember.Type = (baseMember == null) ? MembershipType.Circle : baseMember.Type;
+                    deleteMember.Type = MembershipType.Circle;
                     deleteMember.State = (baseMember == null) ? MemberState.Accepted : baseMember.State;
                     (deleteMember as CircleMember).CircleId = contact.AddressBookId.ToString("D").ToLowerInvariant();
                     break;
-            }
-
-            deleteMember.MembershipId = membershipId.ToString();
+            }            
 
             memberShip.Members = new BaseMember[] { deleteMember };
             deleteMemberRequest.memberships = new Membership[] { memberShip };
@@ -896,7 +956,7 @@ namespace MSNPSharp
             RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(sharingService, MsnServiceType.Sharing, createCircleObject, request));
         }
 
-        private void AddServiceAsync(string serviceName, AddServiceCompletedEventHandler callback)
+        private void AddServiceAsync(ServiceName serviceName, AddServiceCompletedEventHandler callback)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {

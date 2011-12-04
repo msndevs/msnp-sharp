@@ -36,30 +36,6 @@ namespace MSNPSharp
 {
     using MSNPSharp.Core;
 
-    public static class MemberRole
-    {
-        public const string Allow = "Allow";
-        public const string Block = "Block";
-        public const string Reverse = "Reverse";
-        public const string Pending = "Pending";
-        public const string Hide = "Hide";
-        public const string Admin = "Admin";
-        public const string Contributor = "Contributor";
-        public const string ProfileGeneral = "ProfileGeneral";
-        public const string ProfilePersonalContact = "ProfilePersonalContact";
-        public const string ProfileProfessionalContact = "ProfileProfessionalContact";
-        public const string ProfileSocial = "ProfileSocial";
-        public const string ProfileExpression = "ProfileExpression";
-        public const string ProfileEducation = "ProfileEducation";
-        public const string ProfilePicture = "ProfilePicture";
-        public const string ProfileStatus = "ProfileStatus";
-        public const string ProfilePage = "ProfilePage";
-        public const string OneWayRelationship = "OneWayRelationship";
-        public const string TwoWayRelationship = "TwoWayRelationship";
-        public const string WebProfileList = "WebProfileList";
-        public const string ApplicationRead = "ApplicationRead";
-        public const string ApplicationWrite = "ApplicationWrite";
-    }
 
     /// <summary>
     /// Membership type. The values of fields in this class is just as the same as their names.
@@ -75,6 +51,8 @@ namespace MSNPSharp
         public const string Partner = "Partner";
         public const string Domain = "Domain";
         public const string Circle = "Circle";
+        public const string Group = "Group";
+        public const string Guid = "Guid";
         public const string ExternalID = "ExternalID";
     }
 
@@ -88,19 +66,6 @@ namespace MSNPSharp
         public const string LiveRejected = "LiveRejected";
         public const string LiveDropped = "LiveDropped";
         public const string Circle = "Circle";
-    }
-
-    public static class ServiceFilterType
-    {
-        public const string Messenger = "Messenger";
-        public const string IMAvailability = "IMAvailability";
-        public const string Invitation = "Invitation";
-        public const string SocialNetwork = "SocialNetwork";
-        public const string Profile = "Profile";
-        public const string Folder = "Folder";
-        public const string Event = "Event";
-        public const string OfficeLiveWebNotification = "OfficeLiveWebNotification";
-        public const string CommunityQuestionAnswer = "CommunityQuestionAnswer";
     }
 
     [Flags]
@@ -346,34 +311,6 @@ namespace MSNPSharp
         /// Default addressbook.
         /// </summary>
         public const string Individual = "Individual";
-    }
-
-    /// <summary>
-    /// The relationship between a contact and circle.
-    /// </summary>
-    public enum CirclePersonalMembershipRole : int
-    {
-        None = 0,
-
-        /// <summary>
-        /// The contact is the circle admin, the value of RelationshipRole field in NetworkInfoType is 1.
-        /// </summary>
-        Admin = 1,
-
-        /// <summary>
-        /// The contact is a circle co-admin, the value of RelationshipRole field in NetworkInfoType is 2.
-        /// </summary>
-        AssistantAdmin = 2,
-
-        /// <summary>
-        /// The contact is a circle member, the value of RelationshipRole field in NetworkInfoType is 3.
-        /// </summary>
-        Member = 3,
-
-        /// <summary>
-        /// The contact is pending to the circle, the value of RelationshipRole field in NetworkInfoType is 4.
-        /// </summary>
-        StatePendingOutbound = 4
     }
 
     /// <summary>

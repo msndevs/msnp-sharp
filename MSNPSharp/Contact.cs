@@ -76,9 +76,9 @@ namespace MSNPSharp
 
         private PresenceStatus status = PresenceStatus.Offline;
         private IMAddressInfoType clientType = IMAddressInfoType.WindowsLive;
-        private CirclePersonalMembershipRole circleRole = CirclePersonalMembershipRole.None;
+        private RoleId circleRole = RoleId.None;
         private RoleLists lists = RoleLists.None;
-        private FriendshipStatus friendshipStatus = FriendshipStatus.None;
+        private RoleId friendshipStatus = RoleId.None;
 
         #endregion
 
@@ -263,7 +263,7 @@ namespace MSNPSharp
             this.circleInfo = circleInfo;
 
             HostDomain = circleInfo.Content.Info.HostedDomain.ToLowerInvariant();
-            CircleRole = (CirclePersonalMembershipRole)Enum.Parse(typeof(CirclePersonalMembershipRole), circleInfo.PersonalInfo.MembershipInfo.CirclePersonalMembership.Role);
+            CircleRole = circleInfo.PersonalInfo.MembershipInfo.CirclePersonalMembership.Role;
 
             SetName(circleInfo.Content.Info.DisplayName);
             SetNickName(Name);
@@ -993,7 +993,7 @@ namespace MSNPSharp
         /// <summary>
         /// The role of a contact in the addressbook.
         /// </summary>
-        public CirclePersonalMembershipRole CircleRole
+        public RoleId CircleRole
         {
             get
             {
@@ -1037,11 +1037,11 @@ namespace MSNPSharp
                 {
                     if (value)
                     {
-                        NSMessageHandler.ContactService.AddContactToList(this, ServiceFilterType.IMAvailability, RoleLists.Hide, null);
+                        NSMessageHandler.ContactService.AddContactToList(this, ServiceName.IMAvailability, RoleLists.Hide, null);
                     }
                     else
                     {
-                        NSMessageHandler.ContactService.RemoveContactFromList(this, ServiceFilterType.IMAvailability, RoleLists.Hide, null);
+                        NSMessageHandler.ContactService.RemoveContactFromList(this, ServiceName.IMAvailability, RoleLists.Hide, null);
                     }
                 }
             }
@@ -1059,11 +1059,11 @@ namespace MSNPSharp
                 {
                     if (value)
                     {
-                        NSMessageHandler.ContactService.AddContactToList(this, ServiceFilterType.Messenger, RoleLists.Forward, null);
+                        NSMessageHandler.ContactService.AddContactToList(this, ServiceName.Messenger, RoleLists.Forward, null);
                     }
                     else
                     {
-                        NSMessageHandler.ContactService.RemoveContactFromList(this, ServiceFilterType.Messenger, RoleLists.Forward, null);
+                        NSMessageHandler.ContactService.RemoveContactFromList(this, ServiceName.Messenger, RoleLists.Forward, null);
                     }
                 }
             }
@@ -1086,11 +1086,11 @@ namespace MSNPSharp
                 {
                     if (value)
                     {
-                        NSMessageHandler.ContactService.AddContactToList(this, ServiceFilterType.Messenger, RoleLists.Allow, null);
+                        NSMessageHandler.ContactService.AddContactToList(this, ServiceName.Messenger, RoleLists.Allow, null);
                     }
                     else
                     {
-                        NSMessageHandler.ContactService.RemoveContactFromList(this, ServiceFilterType.Messenger, RoleLists.Allow, null);
+                        NSMessageHandler.ContactService.RemoveContactFromList(this, ServiceName.Messenger, RoleLists.Allow, null);
                     }
                 }
             }
@@ -1109,7 +1109,7 @@ namespace MSNPSharp
             {
                 if (value != OnPendingList && value == false)
                 {
-                    NSMessageHandler.ContactService.RemoveContactFromList(this, ServiceFilterType.Messenger, RoleLists.Pending, null);
+                    NSMessageHandler.ContactService.RemoveContactFromList(this, ServiceName.Messenger, RoleLists.Pending, null);
                 }
             }
         }
@@ -1131,7 +1131,7 @@ namespace MSNPSharp
             }
         }
 
-        public FriendshipStatus FriendshipStatus
+        public RoleId FriendshipStatus
         {
             get
             {
@@ -1160,11 +1160,11 @@ namespace MSNPSharp
             NotifyManager();
         }
 
-        internal void SetFriendshipStatus(FriendshipStatus fs, bool fireEvent)
+        internal void SetFriendshipStatus(RoleId fs, bool fireEvent)
         {
             if (friendshipStatus != fs)
             {
-                FriendshipStatus oldFs = friendshipStatus;
+                RoleId oldFs = friendshipStatus;
                 friendshipStatus = fs;
 
                 if (fireEvent)
@@ -1854,12 +1854,6 @@ namespace MSNPSharp
             IMAddressInfoType addressType,
             ServiceShortNames service)
         {
-            // Don't send ADL if circle has only Hide role.
-            if (addressType == IMAddressInfoType.Circle && currentContactList == RoleLists.Hide)
-            {
-                currentContactList &= ~RoleLists.Hide;
-            }
-
             if (service == ServiceShortNames.PE)
             {
                 currentContactList &= ~RoleLists.Hide;

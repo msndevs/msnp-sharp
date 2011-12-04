@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -170,12 +170,12 @@
     <Compile Include="Services\ContactService.Async.cs">
       <DependentUpon>ContactService.cs</DependentUpon>
     </Compile>
-    <Compile Include="Web References\MSNWS.MSNDirectoryService\Reference.cs">
+    <Compile Include="Web References\MSNWS.MSNABSharingService\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Reference.map</DependentUpon>
     </Compile>
-    <Compile Include="Web References\MSNWS.MSNABSharingService\Reference.cs">
+    <Compile Include="Web References\MSNWS.MSNDirectoryService\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Reference.map</DependentUpon>
@@ -225,9 +225,6 @@
     </None>
     <None Include="Web References\MSNWS.MSNABSharingService\DeleteMemberResponse.datasource">
       <DependentUpon>Reference.map</DependentUpon>
-    </None>
-    <None Include="Web References\MSNWS.MSNABSharingService\msnab_datatypes.xsd">
-      <SubType>Designer</SubType>
     </None>
     <None Include="Web References\MSNWS.MSNABSharingService\msnab_servicetypes.xsd">
       <SubType>Designer</SubType>
@@ -376,8 +373,14 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <None Include="Resources\MSNPSharp_logo_128.png" />
+    <None Include="Web References\MSNWS.MSNABSharingService\FindFriendsInCommonResponse1.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
     <None Include="Web References\MSNWS.MSNABSharingService\GetBatchRecentActivityResultType.datasource">
       <DependentUpon>Reference.map</DependentUpon>
+    </None>
+    <None Include="Web References\MSNWS.MSNABSharingService\msnab_datatypes.xsd">
+      <SubType>Designer</SubType>
     </None>
     <None Include="Web References\MSNWS.MSNDirectoryService\directory_datatypes.xsd">
       <SubType>Designer</SubType>

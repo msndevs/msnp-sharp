@@ -163,7 +163,7 @@ namespace MSNPSharp
             HandleType srvHandle = new HandleType();
             srvHandle.ForeignId = "MyProfile";
             srvHandle.Id = "0";
-            srvHandle.Type = ServiceFilterType.Profile;
+            srvHandle.Type = ServiceName.Profile;
             if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
             {
                 MsnServiceState serviceState = new MsnServiceState(scenario, "AddMember", false);
@@ -174,18 +174,18 @@ namespace MSNPSharp
                 addMemberRequest.serviceHandle = srvHandle;
 
                 Membership memberShip = new Membership();
-                memberShip.MemberRole = MemberRole.ProfileExpression;
+                memberShip.MemberRole = RoleId.ProfileExpression;
                 RoleMember roleMember = new RoleMember();
                 roleMember.Type = "Role";
-                roleMember.Id = "Allow";
+                roleMember.Id = RoleId.Allow;
                 roleMember.State = MemberState.Accepted;
                 roleMember.MaxRoleRecursionDepth = "0";
                 roleMember.MaxDegreesSeparation = "0";
 
-                RoleMemberDefiningService defService = new RoleMemberDefiningService();
+                HandleType defService = new HandleType();
                 defService.ForeignId = "";
                 defService.Id = "0";
-                defService.Type = "Messenger";
+                defService.Type = ServiceName.Messenger;
 
                 roleMember.DefiningService = defService;
                 memberShip.Members = new RoleMember[] { roleMember };
@@ -658,7 +658,7 @@ namespace MSNPSharp
                 HandleType srvHandle = new HandleType();
                 srvHandle.ForeignId = "MyProfile";
                 srvHandle.Id = "0";
-                srvHandle.Type = ServiceFilterType.Profile;
+                srvHandle.Type = ServiceName.Profile;
 
                 InfoType info = new InfoType();
                 info.Handle = srvHandle;

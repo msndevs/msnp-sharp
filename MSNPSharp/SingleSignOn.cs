@@ -83,7 +83,6 @@ namespace MSNPSharp
 
         [NonSerialized]
         private SerializableDictionary<SSOTicketType, SSOTicket> ssoTickets = new SerializableDictionary<SSOTicketType, SSOTicket>();
-        private SerializableDictionary<CacheKeyType, string> cacheKeys = new SerializableDictionary<CacheKeyType, string>(0);
 
         [NonSerialized]
         private int hashcode;
@@ -104,40 +103,6 @@ namespace MSNPSharp
         }
 
         #region Properties
-
-        #region CacheKey
-
-
-        private void InitializeCacheKeys()
-        {
-            if (!cacheKeys.ContainsKey(CacheKeyType.OmegaContactServiceCacheKey))
-            {
-                cacheKeys.Add(CacheKeyType.OmegaContactServiceCacheKey, String.Empty);
-            }
-
-            if (!cacheKeys.ContainsKey(CacheKeyType.StorageServiceCacheKey))
-            {
-                cacheKeys.Add(CacheKeyType.StorageServiceCacheKey, String.Empty);
-            }
-        }
-
-        /// <summary>
-        /// CacheKeys for webservices.
-        /// </summary>
-        public SerializableDictionary<CacheKeyType, string> CacheKeys
-        {
-            get
-            {
-                InitializeCacheKeys();
-                return cacheKeys;
-            }
-            set
-            {
-                cacheKeys = value;
-            }
-        }
-
-        #endregion
 
         public SerializableDictionary<SSOTicketType, SSOTicket> SSOTickets
         {

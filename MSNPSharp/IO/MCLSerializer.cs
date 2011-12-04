@@ -176,13 +176,14 @@ namespace MSNPSharp.IO
         /// <param name="filename"></param>
         public virtual void Save(string filename)
         {
-            SaveToMCL(filename, false);
+            SaveToMCL(filename);
         }
 
         protected static MCLSerializer LoadFromFile(string filename, MclSerialization st, Type targettype, NSMessageHandler handler, bool useCache)
         {
             int beginTick = Environment.TickCount;
             MCLSerializer ret = (MCLSerializer)Activator.CreateInstance(targettype);
+
             if (Settings.NoSave == false && File.Exists(filename))
             {
                 MclFile file = MclFile.Open(filename, FileAccess.Read, st, handler.Credentials.Password, useCache);
@@ -193,7 +194,15 @@ namespace MSNPSharp.IO
                 {
                     using (MemoryStream ms = new MemoryStream(file.Content))
                     {
-                        ret = (MCLSerializer)new XmlSerializer(targettype).Deserialize(ms);
+                        try
+                        {
+                            ret = (MCLSerializer)new XmlSerializer(targettype).Deserialize(ms);
+                        }
+                        catch (Exception)
+                        {
+                            // Deserialize error: XML struct changed, so create a empty mcl serializer.
+                            ret = (MCLSerializer)Activator.CreateInstance(targettype);
+                        }
                     }
                 }
 
@@ -212,9 +221,7 @@ namespace MSNPSharp.IO
             return ret;
         }
 
-
-
-        private void SaveToMCL(string filename, bool saveToHiddenFile)
+        private void SaveToMCL(string filename)
         {
             int beginTime = Environment.TickCount;
             if (!Settings.NoSave)
@@ -229,7 +236,7 @@ namespace MSNPSharp.IO
 
                 MclFile file = MclFile.Open(filename, FileAccess.Write, SerializationType, NSMessageHandler.Credentials.Password, UseCache);
                 file.Content = ms.ToArray();
-                file.Save(filename, saveToHiddenFile);
+                file.Save(filename);
                 ms.Close();
             }
 
