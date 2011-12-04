@@ -47,7 +47,7 @@ namespace MSNPSharp
 
         protected internal NSMessageProcessor(ConnectivitySettings connectivitySettings)
         {
-            Processor = new SocketMessageProcessor(connectivitySettings,
+            Processor = new TcpSocketMessageProcessor(connectivitySettings,
                 this.OnMessageReceived,
                 new NSMessagePool());
         }

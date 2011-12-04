@@ -106,8 +106,9 @@ namespace MSNPSharp.P2P
             }
         }
 
-        SocketMessageProcessor processor = null;
-        private SocketMessageProcessor Processor
+        // Only transport over TCP is supported; no HTTP poll support
+        TcpSocketMessageProcessor processor = null;
+        private TcpSocketMessageProcessor Processor
         {
             get
             {
@@ -193,7 +194,7 @@ namespace MSNPSharp.P2P
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object - " + p2pVersion, GetType().Name);
 
-            Processor = new SocketMessageProcessor(connectivitySettings, 
+            Processor = new TcpSocketMessageProcessor(connectivitySettings, 
                 this.OnMessageReceived, 
                 new P2PDCPool());
             Processor.ConnectionEstablished += new EventHandler<EventArgs>(OnConnected);
