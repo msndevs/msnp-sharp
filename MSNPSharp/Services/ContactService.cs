@@ -57,7 +57,6 @@ namespace MSNPSharp
     {
         #region Fields
 
-        private int recursiveCall;
         private string applicationId = String.Empty;
 
         private bool abSynchronized;
@@ -296,168 +295,140 @@ namespace MSNPSharp
                 return;
             }
 
-            if (recursiveCall != 0)
-            {
-                DeleteRecordFile();
-            }
-
             MclSerialization st = Settings.SerializationType;
             string addressbookFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Account.GetHashCode() + ".mcl");
             string deltasResultsFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Account.GetHashCode() + "d" + ".mcl");
 
-            //lock (SyncObject)
+            BinarySemaphore.WaitOne();
+            try
             {
+                AddressBook = XMLContactList.LoadFromFile(addressbookFile, st, NSMessageHandler, false);
+                Deltas = DeltasList.LoadFromFile(deltasResultsFile, st, NSMessageHandler, true);
+            }
+            catch (Exception)
+            {
+                // InvalidOperationException: Struct changed (Serialize error)
+                DeleteRecordFile(true); // Reset addressbook.
+            }
+            finally
+            {
+                BinarySemaphore.Release();
+            }
 
+            try
+            {
+                if (NSMessageHandler.AutoSynchronize &&
+                    (AddressBook.Version != Properties.Resources.XMLContactListVersion || Deltas.Version != Properties.Resources.DeltasListVersion))
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                        "Your MCL addressbook version is outdated: " + AddressBook.Version.ToString() +
+                        "\r\nAddressBook Version Required: " + Properties.Resources.XMLContactListVersion +
+                        "\r\nThe old mcl files for this account will be deleted and a new request for getting full addressbook list will be post.");
+
+                    DeleteRecordFile(true); // Addressbook version changed. Reset addressbook.
+                    // SOFT ERROR(continue).
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Couldn't delete addressbook: " + ex.Message, GetType().Name);
+                return; // HARD ERROR. Don't continue. I am dead.
+            }
+
+            // Should has no lock here.
+            if (NSMessageHandler.AutoSynchronize)
+            {
                 BinarySemaphore.WaitOne();
-
-                try
+                if (AddressBook != null)
                 {
-                    AddressBook = XMLContactList.LoadFromFile(addressbookFile, st, NSMessageHandler, false);
-                    Deltas = DeltasList.LoadFromFile(deltasResultsFile, st, NSMessageHandler, true);
-
-                    NSMessageHandler.MSNTicket.CacheKeys = Deltas.CacheKeys;
-                }
-                catch (Exception)
-                {
-                    DeleteRecordFile(); // InvalidOperationException: Serialize error. Re-init addressbook.
-                }
-
-                try
-                {
-                    if (NSMessageHandler.AutoSynchronize &&
-                        recursiveCall == 0 &&
-                        (AddressBook.Version != Properties.Resources.XMLContactListVersion || Deltas.Version != Properties.Resources.DeltasListVersion))
+                    try
                     {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "AddressBook Version not match:\r\nMCL AddressBook Version: " +
-                            AddressBook.Version.ToString() + "\r\nAddressBook Version Required:\r\nContactListVersion " +
-                            Properties.Resources.XMLContactListVersion + ", DeltasList Version " +
-                            Properties.Resources.DeltasListVersion +
-                            "\r\nThe old mcl files for this account will be deleted and a new request for getting addressbook list will be post.");
-
-                        recursiveCall++;
-                        BinarySemaphore.Release();
-                        SynchronizeContactList();
-                        return;
+                        AddressBook.Initialize();
                     }
+                    catch (Exception)
+                    {
+                    }
+                }
+                BinarySemaphore.Release();
 
-                    BinarySemaphore.Release();
+                if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)) == DateTime.MinValue)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your membership list for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
+                }
+
+                // Should be no lock here, let the msRequest take care of the locks.
+                try
+                {
+                    msRequest(
+                        PartnerScenario.Initial,
+                        delegate
+                        {
+                            BinarySemaphore.WaitOne();
+                            {
+                                if (AddressBook != null && Deltas != null)
+                                {
+                                    BinarySemaphore.Release();
+
+                                    if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)) == DateTime.MinValue)
+                                    {
+                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your address book for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
+                                    }
+
+                                    // Should be no lock here, let the abRequest take care of the locks.
+                                    try
+                                    {
+                                        abRequest(PartnerScenario.Initial,
+                                            delegate
+                                            {
+                                                // Should be no lock here, let the SetDefaults take care of the locks.
+                                                SetDefaults();
+                                            }
+                                        );
+                                    }
+                                    catch (Exception abRequestEception)
+                                    {
+                                        OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged",
+                                            new MSNPSharpException(abRequestEception.Message, abRequestEception)));
+
+                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                                            "An error occured while getting membership list: " + abRequestEception.Message, GetType().Name);
+                                        return;
+                                    }
+                                }
+                                else
+                                {
+                                    //If addressbook is null, we are still locking.
+                                    BinarySemaphore.Release();
+                                }
+                            }
+                            // Should has no lock here.
+                        }
+                    );
                 }
                 catch (Exception ex)
                 {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occured while getting addressbook: " + ex.Message +
-                        "\r\nA new request for getting addressbook list will be post again.", GetType().Name);
-
-                    return;
+                    OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership", new MSNPSharpException(ex.Message, ex)));
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occured while getting membership list: " + ex.Message, GetType().Name);
                 }
-
-
-
-                //Should has no lock here.
-
-                if (NSMessageHandler.AutoSynchronize)
+            }
+            else
+            {
+                // Set lastchanged and roaming profile last change to get display picture and personal message
+                BinarySemaphore.WaitOne();
+                if (AddressBook != null)
                 {
-
-                    BinarySemaphore.WaitOne();
-                    if (AddressBook != null)
-                    {
-                        try
-                        {
-                            AddressBook.Initialize();
-                        }
-                        catch (Exception)
-                        {
-                        }
-
-                        if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)) == DateTime.MinValue)
-                        {
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your membership list for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
-                        }
-                    }
-                    BinarySemaphore.Release();
-
-                    //should be no lock here, let the msRequest take care of the locks.
-                    try
-                    {
-                        msRequest(
-                            PartnerScenario.Initial,
-                            delegate
-                            {
-                                //lock (SyncObject)
-                                BinarySemaphore.WaitOne();
-                                {
-                                    if (AddressBook != null && Deltas != null)
-                                    {
-                                        if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)) == DateTime.MinValue)
-                                        {
-                                            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your address book for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
-                                        }
-
-                                        BinarySemaphore.Release();
-
-                                        //should be no lock here, let the abRequest take care of the locks.
-                                        try
-                                        {
-                                            abRequest(PartnerScenario.Initial,
-                                                delegate
-                                                {
-                                                    //should be no lock here, let the SetDefaults take care of the locks.
-                                                    SetDefaults();
-                                                }
-                                            );
-                                        }
-                                        catch (Exception abRequestEception)
-                                        {
-                                            OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged",
-                                                new MSNPSharpException(abRequestEception.Message, abRequestEception)));
-                                            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occured while getting membership list: " +
-                                                          abRequestEception.Message +
-                                                "\r\nA new request for getting addressbook list will be post again.", GetType().Name);
-                                            return;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        //If addressbook is null, we are still locking.
-                                        BinarySemaphore.Release();
-                                    }
-                                }
-
-                                //Should has no lock here.
-                            }
-                        );
-                    }
-                    catch (Exception ex)
-                    {
-                        OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership",
-                               new MSNPSharpException(ex.Message, ex)));
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occured while getting membership list: " + ex.Message +
-                            "\r\nA new request for getting addressbook list will be post again.", GetType().Name);
-                    }
+                    AddressBook.MyProperties[AnnotationNames.Live_Profile_Expression_LastChanged] = XmlConvert.ToString(DateTime.MinValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
                 }
-                else
-                {
-                    // Set lastchanged and roaming profile last change to get display picture and personal message
+                BinarySemaphore.Release();
 
-                    BinarySemaphore.WaitOne();
+                SetDefaults();
 
-                    if (AddressBook != null)
-                    {
-                        AddressBook.MyProperties[AnnotationNames.Live_Profile_Expression_LastChanged] = XmlConvert.ToString(DateTime.MinValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
-                    }
-                    BinarySemaphore.Release();
-
-                    SetDefaults();
-
-                    NSMessageHandler.OnSignedIn(EventArgs.Empty);
-                }
+                NSMessageHandler.OnSignedIn(EventArgs.Empty);
             }
         }
 
         private void SetDefaults()
         {
-            // Reset
-            recursiveCall = 0;
-
             BinarySemaphore.WaitOne();
             {
                 if (NSMessageHandler.AutoSynchronize && AddressBook != null)
@@ -1548,7 +1519,7 @@ namespace MSNPSharp
         /// <param name="serviceName">Service name (e.g. Messenger)</param>
         /// <param name="list">The list to place the contact in</param>
         /// <param name="onSuccess"></param>
-        internal void AddContactToList(Contact contact, string serviceName, RoleLists list, EventHandler onSuccess)
+        internal void AddContactToList(Contact contact, ServiceName serviceName, RoleLists list, EventHandler onSuccess)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
@@ -1617,7 +1588,7 @@ namespace MSNPSharp
         /// <param name="serviceName">Service name</param>
         /// <param name="list">The list to remove the contact from</param>
         /// <param name="onSuccess"></param>
-        internal void RemoveContactFromList(Contact contact, string serviceName, RoleLists list, EventHandler onSuccess)
+        internal void RemoveContactFromList(Contact contact, ServiceName serviceName, RoleLists list, EventHandler onSuccess)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
@@ -1921,56 +1892,6 @@ namespace MSNPSharp
 
         #endregion
 
-        #region DeleteRecordFile
-
-        /// <summary>
-        /// Delete the record file that contains the contactlist of owner.
-        /// </summary>
-        public void DeleteRecordFile()
-        {
-            if (NSMessageHandler.Owner != null && NSMessageHandler.Owner.Account != null)
-            {
-                MclSerialization st = Settings.SerializationType;
-                string addressbookFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Account.GetHashCode() + ".mcl");
-                string deltasResultFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Account.GetHashCode() + "d" + ".mcl");
-
-                if (File.Exists(addressbookFile))
-                {
-                    File.SetAttributes(addressbookFile, FileAttributes.Normal);  //By default, the file is hidden.
-                    File.Delete(addressbookFile);
-                }
-
-                // Re-init addressbook
-                AddressBook = XMLContactList.LoadFromFile(addressbookFile, st, NSMessageHandler, false);
-                AddressBook.Save();
-
-                if (File.Exists(deltasResultFile))
-                {
-                    //If we saved cachekey and preferred host in it, deltas can't be deleted.
-                    if (Deltas != null)
-                    {
-                        Deltas.Truncate();
-                    }
-                    else
-                    {
-                        File.SetAttributes(deltasResultFile, FileAttributes.Normal);  //By default, the file is hidden.
-                        File.Delete(deltasResultFile);
-
-                        Deltas = DeltasList.LoadFromFile(deltasResultFile, st, NSMessageHandler, true);
-                        Deltas.Save(true);
-
-                        if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
-                        {
-                            NSMessageHandler.MSNTicket.CacheKeys = Deltas.CacheKeys;
-                        }
-                    }
-                }
-                abSynchronized = false;
-            }
-        }
-
-        #endregion
-
         public RoleId GetMemberRole(RoleLists list)
         {
             switch (list)
@@ -2007,7 +1928,6 @@ namespace MSNPSharp
             {
                 base.Clear();
 
-                recursiveCall = 0;
                 serviceADL = 0;
                 ignoredSenario = Scenario.None;
                 contactADLProcessed = false;
@@ -2033,5 +1953,56 @@ namespace MSNPSharp
             }
             binarySemaphore.Release();
         }
+
+        #region DeleteRecordFile
+
+        /// <summary>
+        /// Delete the record file that contains the contactlist of owner.
+        /// </summary>
+        public void DeleteRecordFile()
+        {
+            DeleteRecordFile(false);
+        }
+
+        private void DeleteRecordFile(bool reCreate)
+        {
+            if (NSMessageHandler.Owner != null && NSMessageHandler.Owner.Account != null)
+            {
+                MclSerialization st = Settings.SerializationType;
+                string addressbookFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Account.GetHashCode() + ".mcl");
+                string deltasResultFile = Path.Combine(Settings.SavePath, NSMessageHandler.Owner.Account.GetHashCode() + "d" + ".mcl");
+
+                // Re-init addressbook
+                {
+                    MclFile.Delete(addressbookFile, true);
+
+                    if (reCreate)
+                    {
+                        AddressBook = XMLContactList.LoadFromFile(addressbookFile, st, NSMessageHandler, false);
+                        AddressBook.Save();
+                    }
+                }
+
+                //If we saved cachekey and preferred host in it, deltas can't be deleted.
+                if (Deltas != null && reCreate)
+                {
+                    Deltas.Truncate();
+                }
+                else
+                {
+                    MclFile.Delete(deltasResultFile, true);
+
+                    if (reCreate)
+                    {
+                        Deltas = DeltasList.LoadFromFile(deltasResultFile, st, NSMessageHandler, true);
+                        Deltas.Save(true);
+                    }
+                }
+
+                abSynchronized = false;
+            }
+        }
+
+        #endregion
     }
 };

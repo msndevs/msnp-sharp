@@ -62,27 +62,51 @@ namespace MSNPSharp.IO
 
         public SerializableDictionary<string, string> UserImageRelationships
         {
-            get { return userImageRelationships; }
-            set { userImageRelationships = value; }
+            get
+            {
+                return userImageRelationships;
+            }
+            set
+            {
+                userImageRelationships = value;
+            }
         }
 
         public SerializableDictionary<string, string> UserSceneRelationships
         {
-            get { return userSceneRelationships; }
-            set { userSceneRelationships = value; }
+            get
+            {
+                return userSceneRelationships;
+            }
+            set
+            {
+                userSceneRelationships = value;
+            }
         }
 
 
         public SerializableDictionary<string, uint> VisitCount
         {
-            get { return visitCount; }
-            set { visitCount = value; }
+            get
+            {
+                return visitCount;
+            }
+            set
+            {
+                visitCount = value;
+            }
         }
 
         public SerializableDictionary<string, uint> VisitCountScene
         {
-            get { return visitCountScene; }
-            set { visitCountScene = value; }
+            get
+            {
+                return visitCountScene;
+            }
+            set
+            {
+                visitCountScene = value;
+            }
         }
 
         /// <summary>
@@ -90,8 +114,14 @@ namespace MSNPSharp.IO
         /// </summary>
         public SerializableDictionary<string, byte[]> UserTileSlots
         {
-            get { return userTileSlots; }
-            set { userTileSlots = value; }
+            get
+            {
+                return userTileSlots;
+            }
+            set
+            {
+                userTileSlots = value;
+            }
         }
 
         /// <summary>
@@ -99,8 +129,14 @@ namespace MSNPSharp.IO
         /// </summary>
         public SerializableDictionary<string, byte[]> UserSceneSlots
         {
-            get { return userSceneSlots; }
-            set { userSceneSlots = value; }
+            get
+            {
+                return userSceneSlots;
+            }
+            set
+            {
+                userSceneSlots = value;
+            }
         }
 
         /// <summary>
@@ -423,8 +459,23 @@ namespace MSNPSharp.IO
 
         public static DeltasList LoadFromFile(string filename, MclSerialization st, NSMessageHandler handler, bool useCache)
         {
-            return (DeltasList)LoadFromFile(filename, st, typeof(DeltasList), handler, useCache);
-        } 
+            DeltasList deltas = (DeltasList)LoadFromFile(filename, st, typeof(DeltasList), handler, useCache);
+            deltas.InitializeCacheKeys();
+            return deltas;
+        }
+
+        private void InitializeCacheKeys()
+        {
+            if (!cacheKeys.ContainsKey(CacheKeyType.OmegaContactServiceCacheKey))
+            {
+                cacheKeys.Add(CacheKeyType.OmegaContactServiceCacheKey, String.Empty);
+            }
+
+            if (!cacheKeys.ContainsKey(CacheKeyType.StorageServiceCacheKey))
+            {
+                cacheKeys.Add(CacheKeyType.StorageServiceCacheKey, String.Empty);
+            }
+        }
 
         #endregion
 

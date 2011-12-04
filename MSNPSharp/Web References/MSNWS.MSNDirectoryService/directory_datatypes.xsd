@@ -6,23 +6,32 @@
       <xs:element minOccurs="0" name="ElapsedMilliseconds" type="xs:string" />
     </xs:sequence>
   </xs:complexType>
-  <xs:complexType name="ViewType">
+  <xs:complexType name="ArrayOfAttributeType">
     <xs:sequence>
-      <xs:element name="ViewName" type="xs:string" />
-      <xs:element minOccurs="0" name="ViewVersion" type="xs:string" />
-      <xs:element minOccurs="0" name="Attributes">
-        <xs:complexType>
-          <xs:sequence>
-            <xs:element minOccurs="0" maxOccurs="unbounded" name="A" type="AttributeType" />
-          </xs:sequence>
-        </xs:complexType>
-      </xs:element>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="A" nillable="true" type="AttributeType" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ArrayOfViewType">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="View" nillable="true" type="ViewType" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ArrayOfIdType">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="ProfileId" nillable="true" type="IdType" />
     </xs:sequence>
   </xs:complexType>
   <xs:complexType name="AttributeType">
     <xs:sequence>
       <xs:element name="N" type="xs:string" />
       <xs:element minOccurs="0" name="V" type="xs:anyType" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ViewType">
+    <xs:sequence>
+      <xs:element name="ViewName" type="xs:string" />
+      <xs:element minOccurs="0" name="ViewVersion" type="xs:string" />
+      <xs:element minOccurs="0" maxOccurs="1" name="Attributes" type="ArrayOfAttributeType" />
     </xs:sequence>
   </xs:complexType>
   <xs:complexType name="IdType">

@@ -77,17 +77,11 @@ namespace MSNPSharp
             request.deltasOnly = msdeltasOnly;
             request.lastChange = strLastChange;
             request.serviceFilter = new FindMembershipRequestTypeServiceFilter();
-            request.serviceFilter.Types = new string[]
+            request.serviceFilter.Types = new ServiceName[]
             {
-                ServiceFilterType.Messenger,
-                ServiceFilterType.IMAvailability,
-                ServiceFilterType.SocialNetwork
-                /*
-                ,ServiceFilterType.Profile,                
-                ServiceFilterType.Invitation,
-                ServiceFilterType.Folder,
-                ServiceFilterType.OfficeLiveWebNotification
-                */
+                ServiceName.Messenger,
+                ServiceName.IMAvailability,
+                ServiceName.SocialNetwork
             };
 
             MsnServiceState FindMembershipObject = new MsnServiceState(partnerScenario, "FindMembership", true);
@@ -107,7 +101,7 @@ namespace MSNPSharp
                         || e.Error.Message.ToLowerInvariant().Contains("full sync required"))
                     {
                         // recursive Call -----------------------------
-                        DeleteRecordFile();
+                        DeleteRecordFile(true);
                         FindMembershipAsync(partnerScenario, findMembershipCallback);
                     }
                     else if (e.Error.Message.ToLowerInvariant().Contains("address book does not exist"))
@@ -130,7 +124,7 @@ namespace MSNPSharp
                             if (abadd_e.Error == null)
                             {
                                 // recursive Call -----------------------------
-                                DeleteRecordFile();
+                                DeleteRecordFile(true);
                                 FindMembershipAsync(partnerScenario, findMembershipCallback);
                             }
                         };
@@ -222,7 +216,7 @@ namespace MSNPSharp
                             abHandle.ABId == WebServiceConstants.MessengerIndividualAddressBookId)
                         {
                             // Default addressbook
-                            DeleteRecordFile();
+                            DeleteRecordFile(true);
                         }
                         else
                         {
@@ -690,7 +684,7 @@ namespace MSNPSharp
         }
 
 
-        private void AddMemberAsync(Contact contact, string serviceName, RoleLists list, AddMemberCompletedEventHandler callback)
+        private void AddMemberAsync(Contact contact, ServiceName serviceName, RoleLists list, AddMemberCompletedEventHandler callback)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
@@ -797,7 +791,7 @@ namespace MSNPSharp
 
 
 
-        private void DeleteMemberAsync(Contact contact, string serviceName, RoleLists list, DeleteMemberCompletedEventHandler callback)
+        private void DeleteMemberAsync(Contact contact, ServiceName serviceName, RoleLists list, DeleteMemberCompletedEventHandler callback)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
@@ -962,7 +956,7 @@ namespace MSNPSharp
             RunAsyncMethod(new BeforeRunAsyncMethodEventArgs(sharingService, MsnServiceType.Sharing, createCircleObject, request));
         }
 
-        private void AddServiceAsync(string serviceName, AddServiceCompletedEventHandler callback)
+        private void AddServiceAsync(ServiceName serviceName, AddServiceCompletedEventHandler callback)
         {
             if (NSMessageHandler.MSNTicket == MSNTicket.Empty || AddressBook == null)
             {
