@@ -183,6 +183,7 @@ namespace MSNPSharp.IO
         {
             int beginTick = Environment.TickCount;
             MCLSerializer ret = (MCLSerializer)Activator.CreateInstance(targettype);
+
             if (Settings.NoSave == false && File.Exists(filename))
             {
                 MclFile file = MclFile.Open(filename, FileAccess.Read, st, handler.Credentials.Password, useCache);
@@ -193,7 +194,15 @@ namespace MSNPSharp.IO
                 {
                     using (MemoryStream ms = new MemoryStream(file.Content))
                     {
-                        ret = (MCLSerializer)new XmlSerializer(targettype).Deserialize(ms);
+                        try
+                        {
+                            ret = (MCLSerializer)new XmlSerializer(targettype).Deserialize(ms);
+                        }
+                        catch (Exception)
+                        {
+                            // Deserialize error: XML struct changed, so create a empty mcl serializer.
+                            ret = (MCLSerializer)Activator.CreateInstance(targettype);
+                        }
                     }
                 }
 
