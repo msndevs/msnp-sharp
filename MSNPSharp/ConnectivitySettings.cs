@@ -338,6 +338,7 @@ namespace MSNPSharp
         private string proxyPassword = string.Empty;
         private ProxyType proxyType = ProxyType.None;
         private WebProxy webProxy = null;
+        private bool httpPoll = false;
 
         #endregion
 
@@ -505,6 +506,21 @@ namespace MSNPSharp
             set
             {
                 webProxy = value;
+            }
+        }
+
+        /// <summary>
+        /// Whether we should use the HTTP Poll transport layer.
+        /// </summary>
+        public bool HttpPoll
+        {
+            get
+            {
+                return httpPoll;
+            }
+            set
+            {
+                httpPoll = value;
             }
         }
 

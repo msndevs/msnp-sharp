@@ -47,9 +47,18 @@ namespace MSNPSharp
 
         protected internal NSMessageProcessor(ConnectivitySettings connectivitySettings)
         {
-            Processor = new HttpSocketMessageProcessor(connectivitySettings,
-                this.OnMessageReceived,
-                new NSMessagePool());
+            if (connectivitySettings.HttpPoll)
+            {
+                Processor = new HttpSocketMessageProcessor(connectivitySettings,
+                    this.OnMessageReceived,
+                    new NSMessagePool());
+            }
+            else
+            {
+                Processor = new TcpSocketMessageProcessor(connectivitySettings,
+                    this.OnMessageReceived,
+                    new NSMessagePool());
+            }
         }
 
         public int TransactionID
