@@ -249,14 +249,15 @@ namespace MSNPSharp.Core
 
         protected virtual void EndReceiveCallback(IAsyncResult ar)
         {
-            int cnt = 0;
+            int count = 0;
+
             try
             {
                 System.Diagnostics.Debug.Assert(messagePool != null, "Field messagepool must be defined in derived class of SocketMessageProcessor.");
 
                 Socket socket = (Socket)ar.AsyncState;
-                cnt = socket.EndReceive(ar);
-                if (cnt == 0)
+                count = socket.EndReceive(ar);
+                if (count == 0)
                 {
                     // No data is received. We are disconnected.
                     OnDisconnected();
@@ -264,7 +265,7 @@ namespace MSNPSharp.Core
                 }
 
                 // read the messages and dispatch to handlers
-                using (BinaryReader reader = new BinaryReader(new MemoryStream(socketBuffer, 0, cnt)))
+                using (BinaryReader reader = new BinaryReader(new MemoryStream(socketBuffer, 0, count)))
                 {
                     messagePool.BufferData(reader);
                 }

@@ -18,11 +18,14 @@ namespace MSNPSharp.Core
     public class HttpSocketMessageProcessor : SocketMessageProcessor, IDisposable
     {
         private bool connected = false;
-        private bool Opened = false; // first call to server has Action=open
-        private bool VerCommand = false;
-        private bool CvrCommand = false;
-        private bool UsrCommand = false;
-        private byte[] OpenCommand = null;
+        private bool opened = false; // first call to server has Action=open
+        private bool verCommand = false;
+        private bool cvrCommand = false;
+        private bool usrCommand = false;
+        private byte[] openCommand = null;
+
+        private string sessionID;
+        private string gatewayIP;
 
         private byte[] socketBuffer = new byte[8192];
 
@@ -61,13 +64,14 @@ namespace MSNPSharp.Core
             get { return connected; }
         }
 
-        private string sessionID;
+        
+
         private string SessionID
         {
             get { lock (this) { return sessionID; } }
             set { lock (this) { sessionID = value; } }
         }
-        private string gatewayIP;
+        
         private string GatewayIP
         {
             get { lock (this) { return gatewayIP; } }
@@ -109,7 +113,7 @@ namespace MSNPSharp.Core
         public override void SendSocketData(byte[] data, object userState)
         {
             // the simple and normal case
-            if (Opened)
+            if (opened)
             {
                 Trace.WriteLine("***** Send socket data: opened.");
 
@@ -132,45 +136,45 @@ namespace MSNPSharp.Core
             Trace.WriteLine("***** Send socket data: not yet opened.");
 
             // connection has not been established yet; concat data to the end of OpenCommand
-            if (OpenCommand == null)
+            if (openCommand == null)
             {
-                OpenCommand = (byte[]) data.Clone();
+                openCommand = (byte[]) data.Clone();
             }
             else
             {
-                byte[] NewOpenCommand = new byte[OpenCommand.Length + data.Length];
-                OpenCommand.CopyTo(NewOpenCommand, 0);
-                data.CopyTo(NewOpenCommand, OpenCommand.Length);
-                OpenCommand = NewOpenCommand;
+                byte[] NewOpenCommand = new byte[openCommand.Length + data.Length];
+                openCommand.CopyTo(NewOpenCommand, 0);
+                data.CopyTo(NewOpenCommand, openCommand.Length);
+                openCommand = NewOpenCommand;
             }
 
             if (data.Length > 4 && data[3] == ' ')
             {
                 if (data[0] == 'V' && data[1] == 'E' && data[2] == 'R')
-                    VerCommand = true;
+                    verCommand = true;
                 else if (data[0] == 'C' && data[1] == 'V' && data[2] == 'R')
-                    CvrCommand = true;
+                    cvrCommand = true;
                 else if (data[0] == 'U' && data[1] == 'S' && data[2] == 'R')
-                    UsrCommand = true;
+                    usrCommand = true;
             }
 
-            if (VerCommand && CvrCommand && UsrCommand)
+            if (verCommand && cvrCommand && usrCommand)
             {
                 // we've collected enought to get started. Let's go
                 WebRequest request = WebRequest.Create(OpenUrl);
                 request.Proxy = null; // TODO: don't disable proxy
                 request.Method = "POST";
                 request.ContentType = "text/xml; charset=utf-8";
-                request.ContentLength = OpenCommand.Length;
+                request.ContentLength = openCommand.Length;
 
                 Stream requestStream = request.GetRequestStream();
-                requestStream.Write(OpenCommand, 0, OpenCommand.Length);
+                requestStream.Write(openCommand, 0, openCommand.Length);
                 requestStream.Close();
 
                 request.BeginGetResponse(EndGetResponseCallback,
                     new HttpResponseState(request, null, null, userState, true));
 
-                OpenCommand = null;
+                openCommand = null;
             }
             else
             {
@@ -205,7 +209,7 @@ namespace MSNPSharp.Core
                 }
             }
 
-            Opened = true;
+            opened = true;
             state.responseStream = state.response.GetResponseStream();
             state.responseStream.BeginRead(state.buffer, 0, state.buffer.Length, EndRead, state);
         }
