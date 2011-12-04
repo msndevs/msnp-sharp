@@ -150,7 +150,6 @@ namespace MSNPSharp.Core
 
         public abstract void SendSocketData(byte[] data);
         public abstract void SendSocketData(byte[] data, object userState);
-        public abstract void SendSocketData(Socket psocket, byte[] data, object userState);
 
         public ConnectivitySettings ConnectivitySettings
         {

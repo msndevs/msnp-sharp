@@ -58,6 +58,7 @@
     <Compile Include="ContactManager.cs" />
     <Compile Include="Core\BitUtility.cs" />
     <Compile Include="Core\Converter.cs" />
+    <Compile Include="Core\HttpSocketMessageProcessor.cs" />
     <Compile Include="Core\MultiMimeMessage.cs" />
     <Compile Include="Core\Network.cs" />
     <Compile Include="Core\NSPayLoadMessage.cs" />

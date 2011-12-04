@@ -44,12 +44,11 @@ namespace MSNPSharp.Core
 {
     using MSNPSharp;
 
-    public class TcpSocketMessageProcessor : SocketMessageProcessor
+    public class TcpSocketMessageProcessor : SocketMessageProcessor, IDisposable
     {
         private byte[] socketBuffer = new byte[8192];
         private IPEndPoint proxyEndPoint = null;
         private ProxySocket socket = null;
-        private List<IMessageHandler> messageHandlers = new List<IMessageHandler>();
 
         public TcpSocketMessageProcessor(ConnectivitySettings connectivitySettings, 
             MessageReceiver messageReceiver,
@@ -210,7 +209,7 @@ namespace MSNPSharp.Core
             SendSocketData(socket, data, userState);
         }
 
-        public override void SendSocketData(Socket psocket, byte[] data, object userState)
+        public void SendSocketData(Socket psocket, byte[] data, object userState)
         {
             try
             {
