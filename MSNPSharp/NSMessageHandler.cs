@@ -124,7 +124,7 @@ namespace MSNPSharp
         private Credentials credentials = new Credentials(MsnProtocol.MSNP21);
         private IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, 0);
         private IPEndPoint externalEndPoint;
-        private SocketMessageProcessor messageProcessor;
+        private NSMessageProcessor messageProcessor;
         private P2PHandler p2pHandler;
         private int hopCount = 0;
 
@@ -388,7 +388,7 @@ namespace MSNPSharp
                     messageProcessor.SendCompleted -= OnProcessorSendCompletedCallback;
                 }
 
-                messageProcessor = value as SocketMessageProcessor;
+                messageProcessor = (NSMessageProcessor) value;
 
                 if (messageProcessor != null)
                 {
@@ -936,7 +936,7 @@ namespace MSNPSharp
             if ((string)message.CommandValues[0] == "NS")
             {
                 // switch to a new notification server. That means reconnecting our current message processor.
-                SocketMessageProcessor processor = (SocketMessageProcessor)MessageProcessor;
+                NSMessageProcessor processor = (NSMessageProcessor)MessageProcessor;
 
                 // disconnect first
                 processor.Disconnect();

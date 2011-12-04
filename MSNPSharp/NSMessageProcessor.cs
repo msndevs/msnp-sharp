@@ -39,16 +39,17 @@ namespace MSNPSharp
 {
     using MSNPSharp.Core;
 
-    public class NSMessageProcessor : SocketMessageProcessor
+    public class NSMessageProcessor : IMessageProcessor
     {
         private int transactionID = 0;
 
         public event EventHandler<ExceptionEventArgs> HandlerException;
 
         protected internal NSMessageProcessor(ConnectivitySettings connectivitySettings)
-            : base(connectivitySettings)
         {
-            MessagePool = new NSMessagePool();
+            Processor = new SocketMessageProcessor(connectivitySettings,
+                this.OnMessageReceived,
+                new NSMessagePool());
         }
 
         public int TransactionID
@@ -60,6 +61,20 @@ namespace MSNPSharp
             private set
             {
                 transactionID = value;
+            }
+        }
+
+        SocketMessageProcessor processor = null;
+
+        private SocketMessageProcessor Processor
+        {
+            get
+            {
+                return processor;
+            }
+            set
+            {
+                processor = value;
             }
         }
 
@@ -76,7 +91,7 @@ namespace MSNPSharp
             return ++transactionID;
         }
 
-        protected override void OnMessageReceived(byte[] data)
+        protected void OnMessageReceived(byte[] data)
         {
             NSMessage message = new NSMessage();
 
@@ -85,7 +100,7 @@ namespace MSNPSharp
             DispatchMessage(message);
         }
 
-        public override void SendMessage(NetworkMessage message)
+        public void SendMessage(NetworkMessage message)
         {
             SendMessage(message, IncreaseTransactionID());
         }
@@ -108,20 +123,69 @@ namespace MSNPSharp
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + nsMessage.ToDebugString() + "\r\n", GetType().Name);
 
             // convert to bytes and send it over the socket
-            SendSocketData(nsMessage.GetBytes(), transactionID);
+            Processor.SendSocketData(nsMessage.GetBytes(), transactionID);
         }
 
-        public override void Disconnect()
+        public void Connect()
+        {
+            Processor.Connect();
+        }
+
+        public void Disconnect()
         {
             SendMessage(new NSMessage("OUT", new string[] { }));
-            base.Disconnect();
+            Processor.Disconnect();
+        }
+
+        public bool Connected
+        {
+            get
+            {
+                return Processor.Connected;
+            }
+        }
+
+        public ConnectivitySettings ConnectivitySettings
+        {
+            get { return Processor.ConnectivitySettings; }
+            set { Processor.ConnectivitySettings = value; }
+        }
+
+        public event EventHandler<EventArgs> ConnectionEstablished
+        {
+            add { Processor.ConnectionEstablished += value; }
+            remove { Processor.ConnectionEstablished -= value; }
+        }
+
+        public event EventHandler<EventArgs> ConnectionClosed
+        {
+            add { Processor.ConnectionClosed += value; }
+            remove { Processor.ConnectionClosed -= value; }
+        }
+
+        public event EventHandler<ExceptionEventArgs> ConnectingException
+        {
+            add { Processor.ConnectingException += value; }
+            remove { Processor.ConnectingException -= value; }
+        }
+
+        public event EventHandler<ExceptionEventArgs> ConnectionException
+        {
+            add { Processor.ConnectionException += value; }
+            remove { Processor.ConnectionException -= value; }
+        }
+
+        public event EventHandler<ObjectEventArgs> SendCompleted
+        {
+            add { Processor.SendCompleted += value; }
+            remove { Processor.SendCompleted -= value; }
         }
 
         protected virtual void DispatchMessage(NetworkMessage message)
         {
             // copy the messageHandlers array because the collection can be 
             // modified during the message handling. (Handlers are registered/unregistered)
-            IMessageHandler[] handlers = MessageHandlers.ToArray();
+            IMessageHandler[] handlers = Processor.MessageHandlers.ToArray();
 
             // now give the handlers the opportunity to handle the message
             foreach (IMessageHandler handler in handlers)
@@ -133,7 +197,7 @@ namespace MSNPSharp
                     //Mabe we need to review all HandleMessage calling.
                     ICloneable imessageClone = (message as NSMessage) as ICloneable;
                     NSMessage messageClone = imessageClone.Clone() as NSMessage;
-                    handler.HandleMessage(this, messageClone);
+                    handler.HandleMessage(Processor, messageClone);
                 }
                 catch (Exception e)
                 {
@@ -141,6 +205,16 @@ namespace MSNPSharp
                         HandlerException(this, new ExceptionEventArgs(new MSNPSharpException("An exception occured while handling a nameserver message. See inner exception for more details.", e)));
                 }
             }
+        }
+
+        public void RegisterHandler(IMessageHandler handler)
+        {
+            Processor.RegisterHandler(handler);
+        }
+
+        public void UnregisterHandler(IMessageHandler handler)
+        {
+            Processor.UnregisterHandler(handler);
         }
     }
 };

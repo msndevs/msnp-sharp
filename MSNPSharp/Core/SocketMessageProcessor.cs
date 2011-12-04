@@ -62,7 +62,7 @@ namespace MSNPSharp.Core
         }
     };
 
-    public abstract class SocketMessageProcessor : IMessageProcessor, IDisposable
+    public class SocketMessageProcessor : IMessageProcessor, IDisposable
     {
         private ConnectivitySettings connectivitySettings = new ConnectivitySettings();
         private byte[] socketBuffer = new byte[8192];
@@ -79,9 +79,13 @@ namespace MSNPSharp.Core
 
         public event EventHandler<ObjectEventArgs> SendCompleted;
 
-        public SocketMessageProcessor(ConnectivitySettings connectivitySettings)
+        public SocketMessageProcessor(ConnectivitySettings connectivitySettings, 
+            MessageReceiver messageReceiver,
+            MessagePool messagePool)
         {
             ConnectivitySettings = connectivitySettings;
+            m_MessageReceiver = messageReceiver;
+            MessagePool = messagePool;
         }
 
         ~SocketMessageProcessor()
@@ -113,7 +117,7 @@ namespace MSNPSharp.Core
             }
         }
 
-        protected virtual ProxySocket GetPreparedSocket(IPAddress address, int port)
+        public virtual ProxySocket GetPreparedSocket(IPAddress address, int port)
         {
             //Creates the Socket for sending data over TCP.
             ProxySocket socket = new ProxySocket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -231,12 +235,12 @@ namespace MSNPSharp.Core
             }
         }
 
-        protected void SendSocketData(byte[] data)
+        public void SendSocketData(byte[] data)
         {
             SendSocketData(socket, data, null);
         }
 
-        protected void SendSocketData(byte[] data, object userState)
+        public void SendSocketData(byte[] data, object userState)
         {
             if (socket == null || !Connected)
             {
@@ -248,7 +252,7 @@ namespace MSNPSharp.Core
             SendSocketData(socket, data, userState);
         }
 
-        protected void SendSocketData(Socket psocket, byte[] data, object userState)
+        public void SendSocketData(Socket psocket, byte[] data, object userState)
         {
             try
             {
@@ -314,7 +318,7 @@ namespace MSNPSharp.Core
 
 
                     // call the virtual method to perform polymorphism, descendant classes can take care of it
-                    OnMessageReceived(incomingMessage);
+                    m_MessageReceiver(incomingMessage);
                 }
 
                 // start a new read				
@@ -384,7 +388,7 @@ namespace MSNPSharp.Core
             }
         }
 
-        protected virtual void BeginDataReceive(Socket socket)
+        public virtual void BeginDataReceive(Socket socket)
         {
             try
             {
@@ -534,7 +538,7 @@ namespace MSNPSharp.Core
             }
         }
 
-        protected List<IMessageHandler> MessageHandlers
+        public List<IMessageHandler> MessageHandlers
         {
             get
             {
@@ -651,10 +655,18 @@ namespace MSNPSharp.Core
             }
         }
 
-        public abstract void SendMessage(NetworkMessage message);
-        protected abstract void OnMessageReceived(byte[] data);
+        public void SendMessage(NetworkMessage message)
+        {
+            // TODO: WTF?
+            throw new NotSupportedException();
+        }
 
-        protected virtual void Dispose(bool disposing)
+        // protected abstract void OnMessageReceived(byte[] data);
+
+        public delegate void MessageReceiver(byte[] data);
+        private MessageReceiver m_MessageReceiver;
+
+        public virtual void Dispose(bool disposing)
         {
             if (disposing)
             {

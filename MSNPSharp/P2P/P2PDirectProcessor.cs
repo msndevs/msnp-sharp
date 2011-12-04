@@ -55,7 +55,7 @@ namespace MSNPSharp.P2P
     /// <summary>
     /// Handles the direct connections in P2P sessions.
     /// </summary>
-    public class P2PDirectProcessor : SocketMessageProcessor, IDisposable
+    public class P2PDirectProcessor : IMessageProcessor, IDisposable
     {
         public event EventHandler<EventArgs> DirectNegotiationTimedOut;
         public event EventHandler<EventArgs> HandshakeCompleted;
@@ -106,6 +106,59 @@ namespace MSNPSharp.P2P
             }
         }
 
+        SocketMessageProcessor processor = null;
+        private SocketMessageProcessor Processor
+        {
+            get
+            {
+                return processor;
+            }
+            set
+            {
+                processor = value;
+            }
+        }
+
+        public bool Connected
+        {
+            get { return Processor.Connected; }
+        }
+
+        public event EventHandler<EventArgs> ConnectionEstablished
+        {
+            add { Processor.ConnectionEstablished += value; }
+            remove { Processor.ConnectionEstablished -= value; }
+        }
+
+        public event EventHandler<EventArgs> ConnectionClosed
+        {
+            add { Processor.ConnectionClosed += value; }
+            remove { Processor.ConnectionClosed -= value; }
+        }
+
+        public event EventHandler<ExceptionEventArgs> ConnectingException
+        {
+            add { Processor.ConnectingException += value; }
+            remove { Processor.ConnectingException -= value; }
+        }
+
+        public event EventHandler<ExceptionEventArgs> ConnectionException
+        {
+            add { Processor.ConnectionException += value; }
+            remove { Processor.ConnectionException -= value; }
+        }
+
+        public event EventHandler<ObjectEventArgs> SendCompleted
+        {
+            add { Processor.SendCompleted += value; }
+            remove { Processor.SendCompleted -= value; }
+        }
+
+        public EndPoint LocalEndPoint
+        {
+            get { return Processor.LocalEndPoint; }
+        }
+
         /// <summary>
         /// Returns whether this processor was initiated as listening (true) or connecting (false).
         /// </summary>
@@ -117,14 +170,14 @@ namespace MSNPSharp.P2P
             }
         }
 
-        public override EndPoint RemoteEndPoint
+        public EndPoint RemoteEndPoint
         {
             get
             {
                 if (dcSocket != null)
                     return dcSocket.RemoteEndPoint;
 
-                return base.RemoteEndPoint;
+                return Processor.RemoteEndPoint;
             }
         }
         Guid reply = Guid.Empty;
@@ -137,9 +190,14 @@ namespace MSNPSharp.P2P
             Guid reply, Guid authNonce, bool isNeedHash,
             P2PSession p2pMessageSession,
             NSMessageHandler nsMessageHandler)
-            : base(connectivitySettings)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object - " + p2pVersion, GetType().Name);
+
+            Processor = new SocketMessageProcessor(connectivitySettings, 
+                this.OnMessageReceived, 
+                new P2PDCPool());
+            Processor.ConnectionEstablished += new EventHandler<EventArgs>(OnConnected);
+            Processor.ConnectionClosed += new EventHandler<EventArgs>(OnDisconnected);
 
             this.version = p2pVersion;
             this.nonce = authNonce;
@@ -147,7 +205,6 @@ namespace MSNPSharp.P2P
             this.needHash = isNeedHash;
             this.startupSession = p2pMessageSession;
             this.nsMessageHandler = nsMessageHandler;
-            this.MessagePool = new P2PDCPool();
         }
 
         ~P2PDirectProcessor()
@@ -161,7 +218,7 @@ namespace MSNPSharp.P2P
         /// </summary>
         public void Listen(IPAddress address, int port)
         {
-            ProxySocket socket = GetPreparedSocket(address, port);
+            ProxySocket socket = Processor.GetPreparedSocket(address, port);
 
             // Begin waiting for the incoming connection
             socket.Listen(1);
@@ -174,10 +231,10 @@ namespace MSNPSharp.P2P
             socket.BeginAccept(new AsyncCallback(EndAcceptCallback), socket);
         }
 
-        public override void Connect()
+        public void Connect()
         {
             SetupTimer();
-            base.Connect();
+            Processor.Connect();
         }
 
         private void SetupTimer()
@@ -236,7 +293,7 @@ namespace MSNPSharp.P2P
                 StopListening();
 
                 // Begin accepting messages
-                BeginDataReceive(dcSocket);
+                Processor.BeginDataReceive(dcSocket);
 
                 OnConnected();
             }
@@ -250,9 +307,9 @@ namespace MSNPSharp.P2P
         /// <summary>
         /// Closes the socket connection.
         /// </summary>
-        public override void Disconnect()
+        public void Disconnect()
         {
-            base.Disconnect();
+            Processor.Disconnect();
 
             StopListening();
 
@@ -276,14 +333,18 @@ namespace MSNPSharp.P2P
             }
         }
 
+        protected void OnConnected(object sender, EventArgs e)
+        {
+            OnConnected();
+        }
 
-        protected override void OnConnected()
+        protected void OnConnected()
         {
             if (!IsListener && DCState == DirectConnectionState.Closed)
             {
                 // Send foo
                 DCState = DirectConnectionState.Foo;
-                SendSocketData(new byte[] { 0x04, 0x00, 0x00, 0x00, 0x66, 0x6f, 0x6f, 0x00 });
+                Processor.SendSocketData(new byte[] { 0x04, 0x00, 0x00, 0x00, 0x66, 0x6f, 0x6f, 0x00 });
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "foo0 sent", GetType().Name);
 
                 // Send NONCE
@@ -301,17 +362,14 @@ namespace MSNPSharp.P2P
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Sending handshake message:\r\n " +
                     hm.ToDebugString(), GetType().Name);
 
-                SendSocketData(hm.GetBytes());
+                Processor.SendSocketData(hm.GetBytes());
                 DCState = DirectConnectionState.HandshakeReply;
             }
-
-            base.OnConnected();
         }
 
-        protected override void OnDisconnected()
+        protected void OnDisconnected(object sender, EventArgs e)
         {
             DCState = DirectConnectionState.Closed;
-            base.OnDisconnected();
         }
 
         private P2PDCHandshakeMessage VerifyHandshake(byte[] data)
@@ -379,7 +437,7 @@ namespace MSNPSharp.P2P
         /// Discards the foo message and sends the message to all handlers as a P2PDCMessage object.
         /// </summary>
         /// <param name="data"></param>
-        protected override void OnMessageReceived(byte[] data)
+        protected void OnMessageReceived(byte[] data)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                 "Analyzing message in DC state <" + dcState + ">", GetType().Name);
@@ -394,9 +452,9 @@ namespace MSNPSharp.P2P
 
                         OnP2PMessageReceived(new P2PMessageEventArgs(dcMessage));
 
-                        lock (MessageHandlers)
+                        lock (Processor.MessageHandlers)
                         {
-                            foreach (IMessageHandler handler in MessageHandlers)
+                            foreach (IMessageHandler handler in Processor.MessageHandlers)
                             {
                                 handler.HandleMessage(this, dcMessage);
                             }
@@ -479,7 +537,7 @@ namespace MSNPSharp.P2P
         /// Sends the P2PMessage directly over the socket. Accepts P2PDCMessage and P2PMessage objects.
         /// </summary>
         /// <param name="message"></param>
-        public override void SendMessage(NetworkMessage message)
+        public void SendMessage(NetworkMessage message)
         {
             // if it is a regular message convert it
             P2PDCMessage p2pMessage = message as P2PDCMessage;
@@ -507,9 +565,9 @@ namespace MSNPSharp.P2P
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + p2pMessage.ToDebugString(), GetType().Name);
 
             if (dcSocket != null)
-                SendSocketData(dcSocket, p2pMessage.GetBytes(), se);
+                Processor.SendSocketData(dcSocket, p2pMessage.GetBytes(), se);
             else
-                SendSocketData(p2pMessage.GetBytes(), se);
+                Processor.SendSocketData(p2pMessage.GetBytes(), se);
         }
 
         protected virtual void OnDirectNegotiationTimedOut(EventArgs e)
@@ -533,20 +591,30 @@ namespace MSNPSharp.P2P
                 P2PMessageReceived(this, e);
         }
 
-        protected override void Dispose(bool disposing)
+        protected void Dispose(bool disposing)
         {
             if (disposing)
             {
                 Disconnect();
             }
 
-            base.Dispose(disposing);
+            Processor.Dispose(disposing);
         }
 
-        public new void Dispose()
+        public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        public void RegisterHandler(IMessageHandler handler)
+        {
+            Processor.RegisterHandler(handler);
+        }
+
+        public void UnregisterHandler(IMessageHandler handler)
+        {
+            Processor.UnregisterHandler(handler);
         }
     }
 };
