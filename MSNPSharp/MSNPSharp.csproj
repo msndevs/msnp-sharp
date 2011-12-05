@@ -374,6 +374,9 @@
     <None Include="Web References\MSNWS.MSNABSharingService\FindFriendsInCommonResponse1.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>
+    <None Include="Web References\MSNWS.MSNABSharingService\FindMembershipByRoleResponse1.datasource">
+      <DependentUpon>Reference.map</DependentUpon>
+    </None>
     <None Include="Web References\MSNWS.MSNABSharingService\GetBatchRecentActivityResultType.datasource">
       <DependentUpon>Reference.map</DependentUpon>
     </None>

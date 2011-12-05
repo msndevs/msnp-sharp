@@ -73,10 +73,10 @@ namespace MSNPSharp
             }
 
             FindMembershipRequestType request = new FindMembershipRequestType();
-            request.View = "Full";  // NO default!
+            request.view = "Full";  // NO default!
             request.deltasOnly = msdeltasOnly;
             request.lastChange = strLastChange;
-            request.serviceFilter = new FindMembershipRequestTypeServiceFilter();
+            request.serviceFilter = new ServiceFilter();
             request.serviceFilter.Types = new ServiceName[]
             {
                 ServiceName.Messenger,
