@@ -697,7 +697,7 @@ namespace MSNPSharp
                         // Addressbook re-defined here, because the reference can be changed.
                         // FindMembershipAsync can delete addressbook if addressbook sync is required.
                         XMLContactList xmlcl;
-                        FindMembershipResultType fmResult;
+                        MembershipResult fmResult;
 
                         if ((null != (xmlcl = AddressBook)) &&
                             (null != (fmResult = fmcea.Result.FindMembershipResult)))

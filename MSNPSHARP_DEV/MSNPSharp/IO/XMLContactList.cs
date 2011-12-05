@@ -676,7 +676,7 @@ namespace MSNPSharp.IO
                 return contactTable[CID];
         }
 
-        public XMLContactList Merge(FindMembershipResultType findMembership)
+        public XMLContactList Merge(MembershipResult findMembership)
         {
             lock (SyncObject)
             {
