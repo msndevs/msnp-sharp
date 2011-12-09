@@ -57,10 +57,6 @@ namespace MSNPSharp
             {
                 return transactionID;
             }
-            private set
-            {
-                transactionID = value;
-            }
         }
 
         /// <summary>
@@ -68,20 +64,21 @@ namespace MSNPSharp
         /// </summary>
         internal void ResetTransactionID()
         {
-            TransactionID = 0;
+            System.Threading.Interlocked.Exchange(ref transactionID, 0);
         }
 
         protected internal int IncreaseTransactionID()
         {
-            return ++transactionID;
+            return System.Threading.Interlocked.Increment(ref transactionID);
         }
 
         protected override void OnMessageReceived(byte[] data)
         {
-            NSMessage message = new NSMessage();
-
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming NS command...", GetType().Name);
+
+            NSMessage message = new NSMessage();
             message.ParseBytes(data);
+
             DispatchMessage(message);
         }
 
@@ -97,15 +94,15 @@ namespace MSNPSharp
             if (nsMessage == null)
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                    "Cannot use this Message Processor to send a " + message.GetType().ToString() + " message.",
-                    GetType().Name);
+                    "Cannot use this Message Processor to send a " + message.GetType().ToString() + " message.", GetType().Name);
                 return;
             }
 
             nsMessage.TransactionID = transactionID;
             nsMessage.PrepareMessage();
 
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Outgoing message:\r\n" + nsMessage.ToDebugString() + "\r\n", GetType().Name);
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
+                "Outgoing message:\r\n" + nsMessage.ToDebugString() + "\r\n", GetType().Name);
 
             // convert to bytes and send it over the socket
             SendSocketData(nsMessage.GetBytes(), transactionID);
@@ -131,9 +128,11 @@ namespace MSNPSharp
                     //I think the person who first write this make a big mistake, C# is NOT C++,
                     //message class passes as reference, one change, all changed.
                     //Mabe we need to review all HandleMessage calling.
-                    ICloneable imessageClone = (message as NSMessage) as ICloneable;
-                    NSMessage messageClone = imessageClone.Clone() as NSMessage;
-                    handler.HandleMessage(this, messageClone);
+                    ICloneable imessageClone = message as ICloneable;
+                    if (imessageClone != null)
+                    {
+                        handler.HandleMessage(this, imessageClone.Clone() as NSMessage);
+                    }
                 }
                 catch (Exception e)
                 {
