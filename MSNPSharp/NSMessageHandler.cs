@@ -958,17 +958,9 @@ namespace MSNPSharp
 
                 // set new connectivity settings
                 ConnectivitySettings newSettings = new ConnectivitySettings(processor.ConnectivitySettings);
-
-                if (!isGateway)
-                {
-                    newSettings.Host = hostAndPort[0];
-                    newSettings.Port = int.Parse(hostAndPort[1], System.Globalization.CultureInfo.InvariantCulture);
-                }
-                else
-                {
-                    newSettings.Host = ConnectivitySettings.DefaultHost;
-                    newSettings.Port = ConnectivitySettings.DefaultPort;
-                }
+                newSettings.HttpPoll = isGateway;
+                newSettings.Host = hostAndPort[0];
+                newSettings.Port = int.Parse(hostAndPort[1], System.Globalization.CultureInfo.InvariantCulture);
 
                 processor.ConnectivitySettings = newSettings;
 

@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
+using System.Diagnostics;
+using System.Net;
+using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace MSNPSharp.Core
 {
     using MSNPSharp;
-    using System.Diagnostics;
-    using System.Net;
-    using System.IO;
-    using System.Runtime.CompilerServices;
 
     /// <summary>
     /// HTTP polling transport layer.
@@ -61,24 +60,51 @@ namespace MSNPSharp.Core
 
         public override bool Connected
         {
-            get { return connected; }
+            get
+            {
+                return connected;
+            }
         }
 
-        
+
 
         private string SessionID
         {
-            get { lock (this) { return sessionID; } }
-            set { lock (this) { sessionID = value; } }
-        }
-        
-        private string GatewayIP
-        {
-            get { lock (this) { return gatewayIP; } }
-            set { lock (this) { gatewayIP = value; } }
+            get
+            {
+                lock (this)
+                {
+                    return sessionID;
+                }
+            }
+            set
+            {
+                lock (this)
+                {
+                    sessionID = value;
+                }
+            }
         }
 
-        public HttpSocketMessageProcessor(ConnectivitySettings connectivitySettings, 
+        private string GatewayIP
+        {
+            get
+            {
+                lock (this)
+                {
+                    return gatewayIP;
+                }
+            }
+            set
+            {
+                lock (this)
+                {
+                    gatewayIP = value;
+                }
+            }
+        }
+
+        public HttpSocketMessageProcessor(ConnectivitySettings connectivitySettings,
             MessageReceiver messageReceiver,
             MessagePool messagePool)
             : base(connectivitySettings, messageReceiver, messagePool)
@@ -100,13 +126,14 @@ namespace MSNPSharp.Core
 
         public override void SendMessage(NetworkMessage message)
         {
-            // TODO: WTF?
-            throw new NotSupportedException();
+            //int transid = NSMessageProcessor.IncreaseTransactionID();
+            SendSocketData(message.GetBytes() /*, transid */);
         }
 
         public override void SendSocketData(byte[] data)
         {
-            SendSocketData(data, null);
+            //int transid = NSMessageProcessor.IncreaseTransactionID();
+            SendSocketData(data, null/*transid*/);
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
@@ -127,7 +154,7 @@ namespace MSNPSharp.Core
                 requestStream.Write(data, 0, data.Length);
                 requestStream.Close();
 
-                request.BeginGetResponse(EndGetResponseCallback, 
+                request.BeginGetResponse(EndGetResponseCallback,
                     new HttpResponseState(request, null, null, userState, false));
 
                 return;
@@ -138,7 +165,7 @@ namespace MSNPSharp.Core
             // connection has not been established yet; concat data to the end of OpenCommand
             if (openCommand == null)
             {
-                openCommand = (byte[]) data.Clone();
+                openCommand = (byte[])data.Clone();
             }
             else
             {
@@ -188,7 +215,7 @@ namespace MSNPSharp.Core
             state.response = state.request.EndGetResponse(ar);
 
             string[] messengerHeaders = state.response.Headers.GetValues("X-MSN-Messenger");
-            foreach (var messengerHeader in messengerHeaders)
+            foreach (string messengerHeader in messengerHeaders)
             {
                 foreach (string token in messengerHeader.Split(new char[] { ';', ' ' }))
                 {
@@ -286,7 +313,7 @@ namespace MSNPSharp.Core
 
             public byte[] buffer;
 
-            public HttpResponseState(WebRequest request, WebResponse response, Stream responseStream, 
+            public HttpResponseState(WebRequest request, WebResponse response, Stream responseStream,
                 object userData,
                 bool pollWhenDone)
             {
@@ -299,4 +326,4 @@ namespace MSNPSharp.Core
             }
         }
     }
-}
+};
