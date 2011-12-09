@@ -696,7 +696,7 @@ namespace MSNPSharp
             if (contact.HasLists(list))
                 return;
 
-            RoleId memberRole = GetMemberRole(list);
+            RoleId memberRole = ContactList.GetMemberRole(list);
 
             if (memberRole == RoleId.None)
                 return;
@@ -803,7 +803,7 @@ namespace MSNPSharp
             if (!contact.HasLists(list))
                 return;
 
-            RoleId memberRole = GetMemberRole(list);
+            RoleId memberRole = ContactList.GetMemberRole(list);
             if (memberRole == RoleId.None)
                 return;
 

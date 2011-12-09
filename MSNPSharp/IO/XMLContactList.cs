@@ -82,7 +82,7 @@ namespace MSNPSharp.IO
             {
                 foreach (RoleId role in ms.Keys)
                 {
-                    RoleLists msnlist = NSMessageHandler.ContactService.GetMSNList(role);
+                    RoleLists msnlist = ContactList.GetMSNList(role);
 
                     if (msnlist != RoleLists.None)
                     {
@@ -744,7 +744,7 @@ namespace MSNPSharp.IO
             foreach (Membership membership in messengerService.Memberships)
             {
                 RoleId memberrole = membership.MemberRole;
-                RoleLists msnlist = NSMessageHandler.ContactService.GetMSNList(memberrole);
+                RoleLists msnlist = ContactList.GetMSNList(memberrole);
 
                 if (null != membership.Members && msnlist != RoleLists.None)
                 {
@@ -1356,7 +1356,7 @@ namespace MSNPSharp.IO
                                 );
 
                                 Save();
-                                NSMessageHandler.ContactService.SendInitialADL(Scenario.SendInitialCirclesADL);
+                                NSMessageHandler.SendInitialADL(Scenario.SendInitialCirclesADL);
                             }
                         }
                     }

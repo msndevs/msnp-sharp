@@ -923,10 +923,12 @@ namespace MSNPSharp
                     NSMessageHandler.ContactService.UpdateContact(this, AddressBookId,
                         delegate  //If you don't add this, you can't see the contact online until your next login
                         {
-                            Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(2);
-                            hashlist.Add(Hash, Lists);
-                            string payload = ContactService.ConstructLists(hashlist, false)[0];
-                            NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
+                            string payload = ContactList.GenerateMailListForAdl(this, Lists, false);
+
+                            if (value)
+                                NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
+                            else
+                                NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("RML", payload));
                         });
                 }
 
@@ -1410,7 +1412,7 @@ namespace MSNPSharp
             if (FriendshipStatusChanged != null)
                 FriendshipStatusChanged(this, e);
         }
-            
+
         protected virtual void OnScreenNameChanged(string oldName)
         {
             if (ScreenNameChanged != null)
@@ -1848,20 +1850,6 @@ namespace MSNPSharp
         {
             return ((lists & msnlists) == msnlists);
         }
-
-        internal static RoleLists GetListForADL(
-            RoleLists currentContactList,
-            IMAddressInfoType addressType,
-            ServiceShortNames service)
-        {
-            if (service == ServiceShortNames.PE)
-            {
-                currentContactList &= ~RoleLists.Hide;
-            }
-
-            return currentContactList;
-        }
-
 
         #endregion
 

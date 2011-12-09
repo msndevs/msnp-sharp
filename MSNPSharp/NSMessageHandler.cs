@@ -62,6 +62,40 @@ namespace MSNPSharp
         /// </summary>
         public static readonly Guid MachineGuid = Guid.NewGuid();
 
+        #region AdlState
+
+        private class AdlState
+        {
+            /// <summary>
+            /// The indicator of whether the initial contact ADL has been processed.
+            /// If the contact ADL was not processed, ignore the circle ADL.
+            /// </summary>
+            internal bool ContactADLProcessed;
+            internal int ServiceADL;
+            internal Scenario IgnoredSenario;
+            internal Dictionary<int, NSPayLoadMessage> InitialADLs = new Dictionary<int, NSPayLoadMessage>();
+
+            internal AdlState()
+            {
+                Reset();
+            }
+
+            internal void Reset()
+            {
+                lock (this)
+                {
+                    ContactADLProcessed = false;
+                    ServiceADL = 0;
+                    IgnoredSenario = Scenario.None;
+
+                    lock (InitialADLs)
+                        InitialADLs.Clear();
+                }
+            }
+        }
+
+        #endregion
+
         #region Public Events
 
         /// <summary>
@@ -139,6 +173,7 @@ namespace MSNPSharp
 
         private bool isSignedIn = false;
         private MSNTicket msnTicket = MSNTicket.Empty;
+        private AdlState adlState = new AdlState();
 
         private ContactService contactService;
         private MSNStorageService storageService;
@@ -493,7 +528,7 @@ namespace MSNPSharp
             if (Owner == null)
                 throw new MSNPSharpException("Not a valid owner");
 
-            if(string.IsNullOrEmpty(newName))
+            if (string.IsNullOrEmpty(newName))
             {
                 newName = Owner.Account;
             }
@@ -554,33 +589,9 @@ namespace MSNPSharp
 
         #region Circle
 
-        internal void SendBlockCircleNSCommands(Guid circleId, string hostDomain)
+        internal int SendCircleNotifyRML(Guid circleId, string hostDomain, RoleLists lists)
         {
-            SendCircleNotifyRML(circleId, hostDomain, RoleLists.Allow, true);
-            SendCircleNotifyADL(circleId, hostDomain, RoleLists.Hide, true);
-        }
-
-        internal void SendUnBlockCircleNSCommands(Guid circleId, string hostDomain)
-        {
-            SendCircleNotifyRML(circleId, hostDomain, RoleLists.Hide, true);
-            SendCircleNotifyADL(circleId, hostDomain, RoleLists.Allow, true);
-        }
-
-        internal int SendCircleNotifyADL(Guid circleId, string hostDomain, RoleLists lists, bool blockUnBlock)
-        {
-            string payload = "<ml" + (blockUnBlock == true ? "" : " l=\"1\"") + "><d n=\""
-            + hostDomain + "\"><c n=\"" + circleId.ToString("D") + "\" l=\"" +
-            ((int)lists).ToString() + "\" t=\"" +
-            ((int)IMAddressInfoType.Circle).ToString() + "\"/></d></ml>";
-
-            NSPayLoadMessage nsMessage = new NSPayLoadMessage("ADL", payload);
-            MessageProcessor.SendMessage(nsMessage);
-            return nsMessage.TransactionID;
-        }
-
-        internal int SendCircleNotifyRML(Guid circleId, string hostDomain, RoleLists lists, bool blockUnBlock)
-        {
-            string payload = "<ml" + (blockUnBlock == true ? "" : " l=\"1\"") + "><d n=\""
+            string payload = "<ml><d n=\""
             + hostDomain + "\"><c n=\"" + circleId.ToString("D") + "\" l=\"" +
             ((int)lists).ToString() + "\" t=\"" +
             ((int)IMAddressInfoType.Circle).ToString() + "\"/></d></ml>";
@@ -752,7 +763,7 @@ namespace MSNPSharp
                 {
                     // set the owner's name and CID
                     ContactList.SetOwner(new Owner(WebServiceConstants.MessengerIndividualAddressBookId, message.CommandValues[1].ToString(), msnTicket.OwnerCID, this));
-                    
+
                     Owner.GetCoreProfile(
                         delegate(object sender1, EventArgs arg)
                         {
@@ -1257,7 +1268,7 @@ namespace MSNPSharp
             if (message.TransactionID != 0 &&
                 message.CommandValues[0].ToString() == "OK")
             {
-                if (ContactService.ProcessADL(message.TransactionID))
+                if (ProcessADL(message.TransactionID))
                 {
                 }
             }
@@ -1308,7 +1319,7 @@ namespace MSNPSharp
                                     }
 
                                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "ADL received, FriendshipRequested event fired. Contact is in list: " + contact.Lists.ToString());
-                                    
+
                                 }
 
                                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, account + ":" + type + " was added to your " + list.ToString(), GetType().Name);
@@ -1442,6 +1453,236 @@ namespace MSNPSharp
 
         #endregion
 
+        #region ADL Processor
+
+        internal void SetDefaults()
+        {
+            // Set display name, personal status and photo
+            PersonalMessage pm = Owner.PersonalMessage;
+
+            string psmMessage = ContactService.Deltas.Profile.PersonalMessage;
+            string mydispName = String.IsNullOrEmpty(ContactService.Deltas.Profile.DisplayName) ?
+                Owner.NickName : ContactService.Deltas.Profile.DisplayName;
+
+            Color colorScheme = ColorTranslator.FromOle(ContactService.Deltas.Profile.ColorScheme);
+            Owner.SetColorScheme(colorScheme);
+            pm.ColorScheme = colorScheme;
+
+            SceneImage sceneImage = Owner.SceneImage;
+            if (sceneImage != null && !sceneImage.IsDefaultImage)
+            {
+                pm.Scene = sceneImage.ContextPlain;
+            }
+
+            Owner.CreateDefaultDisplayImage(ContactService.Deltas.Profile.Photo.DisplayImage);
+            pm.UserTileLocation = Owner.DisplayImage.IsDefaultImage ? string.Empty : Owner.DisplayImage.ContextPlain;
+            Owner.PersonalMessage = pm;
+
+            if (AutoSynchronize)
+            {
+                SendInitialServiceADL();
+            }
+        }
+
+        private void SendInitialServiceADL()
+        {
+            NSMessageProcessor nsmp = MessageProcessor as NSMessageProcessor;
+
+            if (nsmp == null)
+                return;
+
+            if (adlState.ServiceADL == 0)
+            {
+                adlState.ServiceADL = nsmp.IncreaseTransactionID();
+
+                string[] ownerAccount = Owner.Account.Split('@');
+                string payload = "<ml><d n=\"" + ownerAccount[1] + "\"><c n=\"" + ownerAccount[0] + "\" t=\"1\"><s l=\"3\" n=\"IM\" /><s l=\"3\" n=\"PE\" /><s l=\"3\" n=\"PD\" /><s l=\"3\" n=\"PF\"/></c></d></ml>";
+
+                NSPayLoadMessage nsPayload = new NSPayLoadMessage("ADL", payload);
+                nsPayload.TransactionID = adlState.ServiceADL;
+                nsmp.SendMessage(nsPayload, nsPayload.TransactionID);
+            }
+        }
+
+        /// <summary>
+        /// Send the initial ADL command to NS server. 
+        /// </summary>
+        /// <param name="scene">
+        /// A <see cref="Scenario"/>
+        /// </param>
+        /// <remarks>
+        /// The first ADL command MUST be a contact ADL. If you send a circle ADL instead,
+        /// you will receive 201 server error for the following circle PUT command.
+        /// </remarks>
+        internal void SendInitialADL(Scenario scene)
+        {
+            if (scene == Scenario.None)
+                return;
+
+            NSMessageProcessor nsmp = (NSMessageProcessor)MessageProcessor;
+
+            if (nsmp == null)
+                return;
+
+            Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>();
+
+            #region Process Contacts
+
+            if ((scene & Scenario.SendInitialContactsADL) != Scenario.None)
+            {
+                // Combine initial ADL for Contacts
+                hashlist = new Dictionary<string, RoleLists>(ContactList.Count);
+                lock (ContactList.SyncRoot)
+                {
+                    foreach (Contact contact in ContactList.All)
+                    {
+                        if (contact.ADLCount == 0)
+                            continue;
+
+                        contact.ADLCount--;
+
+                        string ch = contact.Hash;
+                        RoleLists l = RoleLists.None;
+
+                        if (contact.OnForwardList)
+                            l |= RoleLists.Forward;
+
+                        if (contact.OnAllowedList)
+                            l |= RoleLists.Allow;
+
+                        if (contact.AppearOffline)
+                            l |= RoleLists.Hide;
+
+                        if (l != RoleLists.None && !hashlist.ContainsKey(ch))
+                            hashlist.Add(ch, l);
+                    }
+                }
+                string[] adls = ContactList.GenerateMailListForAdl(hashlist, true);
+
+                if (adls.Length > 0)
+                {
+                    foreach (string payload in adls)
+                    {
+                        NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
+                        message.TransactionID = nsmp.IncreaseTransactionID();
+                        adlState.InitialADLs.Add(message.TransactionID, message);
+                    }
+                }
+                scene |= adlState.IgnoredSenario;
+                adlState.ContactADLProcessed = true;
+            }
+
+            #endregion
+
+            #region Process Circles
+
+            if ((scene & Scenario.SendInitialCirclesADL) != Scenario.None)
+            {
+                if (adlState.ContactADLProcessed)
+                {
+                    // Combine initial ADL for Circles
+                    if (CircleList.Count > 0)
+                    {
+                        hashlist = new Dictionary<string, RoleLists>(CircleList.Count);
+                        lock (ContactList.SyncRoot)
+                        {
+                            foreach (Contact circle in CircleList.Values)
+                            {
+                                if (circle.ADLCount == 0)
+                                    continue;
+
+                                circle.ADLCount--;
+                                string ch = circle.Hash;
+                                RoleLists l = circle.Lists;
+                                hashlist.Add(ch, l);
+                            }
+                        }
+
+                        string[] circleadls = ContactList.GenerateMailListForAdl(hashlist, true);
+
+                        if (circleadls.Length > 0)
+                        {
+                            foreach (string payload in circleadls)
+                            {
+                                NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
+                                message.TransactionID = nsmp.IncreaseTransactionID();
+                                adlState.InitialADLs.Add(message.TransactionID, message);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    adlState.IgnoredSenario |= Scenario.SendInitialCirclesADL;
+                }
+            }
+
+            #endregion
+
+            // Send All Initial ADLs...
+            lock (adlState.InitialADLs)
+            {
+                Dictionary<int, NSPayLoadMessage> initialADLsCopy = new Dictionary<int, NSPayLoadMessage>(adlState.InitialADLs);
+
+                foreach (NSPayLoadMessage nsPayload in initialADLsCopy.Values)
+                {
+                    nsmp.SendMessage(nsPayload, nsPayload.TransactionID);
+                }
+            }
+        }
+
+        private bool ProcessADL(int transid)
+        {
+            if (transid == adlState.ServiceADL)
+            {
+                SendInitialADL(Scenario.SendInitialContactsADL | Scenario.SendInitialCirclesADL);
+                return true;
+            }
+            else if (adlState.InitialADLs.ContainsKey(transid))
+            {
+                lock (adlState.InitialADLs)
+                {
+                    adlState.InitialADLs.Remove(transid);
+                }
+
+                if (adlState.InitialADLs.Count <= 0)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "All initial ADLs have processed.", GetType().Name);
+
+                    if (AutoSynchronize)
+                    {
+                        OnSignedIn(EventArgs.Empty);
+                    }
+
+                    if (!AddressBookSynchronized)
+                    {
+                        if (AutoSynchronize)
+                        {
+                            foreach (Contact contact in ContactList.Pending)
+                            {
+                                // Added by other place, this place hasn't synchronized this contact yet.
+                                if (contact.OnForwardList)
+                                {
+                                    contact.OnPendingList = false;
+                                }
+                                else
+                                {
+                                    ContactService.OnFriendshipRequested(new ContactEventArgs(contact));
+                                }
+                            }
+                        }
+
+                        ContactService.OnSynchronizationCompleted(EventArgs.Empty);
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+        #endregion
+
+
         #region Command handler
 
         /// <summary>
@@ -1469,6 +1710,7 @@ namespace MSNPSharp
             isSignedIn = false;
             externalEndPoint = null;
             Interlocked.Exchange(ref canSendPing, 1);
+            adlState.Reset();
 
             // 4. Clear contact lists and circle list.
             ContactList.Reset();

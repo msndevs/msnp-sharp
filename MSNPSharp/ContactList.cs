@@ -31,6 +31,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #endregion
 
 using System;
+using System.Xml;
 using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
@@ -39,6 +40,7 @@ using System.Globalization;
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
+    using MSNPSharp.MSNWS.MSNABSharingService;
 
     [Serializable]
     public class ContactList : Dictionary<IMAddressInfoType, Dictionary<string, Contact>>
@@ -598,6 +600,198 @@ namespace MSNPSharp
                 return array;
             }
         }
+
+        public static RoleId GetMemberRole(RoleLists list)
+        {
+            switch (list)
+            {
+                case RoleLists.Allow:
+                    return RoleId.Allow;
+
+                case RoleLists.Pending:
+                    return RoleId.Pending;
+
+                case RoleLists.Hide:
+                    return RoleId.Hide;
+            }
+            return RoleId.None;
+        }
+
+        public static RoleLists GetMSNList(RoleId memberRole)
+        {
+            switch (memberRole)
+            {
+                case RoleId.Allow:
+                    return RoleLists.Allow;
+                case RoleId.Pending:
+                    return RoleLists.Pending;
+                case RoleId.Hide:
+                    return RoleLists.Hide;
+            }
+            return RoleLists.None;
+        }
+
+        public static string GenerateMailListForAdl(Contact contact, RoleLists lists, bool initial)
+        {
+            Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(1);
+            hashlist.Add(contact.Hash, lists);
+            return GenerateMailListForAdl(hashlist, initial)[0];
+        }
+
+        public static string[] GenerateMailListForAdl(Dictionary<string, RoleLists> contacts, bool initial)
+        {
+            List<string> mls = new List<string>();
+            XmlDocument xmlDoc = new XmlDocument();
+            XmlElement mlElement = xmlDoc.CreateElement("ml");
+            if (initial)
+                mlElement.SetAttribute("l", "1");
+
+            if (contacts == null || contacts.Count == 0)
+            {
+                mls.Add(mlElement.OuterXml);
+                return mls.ToArray();
+            }
+
+            List<string> sortedContacts = new List<string>(contacts.Keys);
+            sortedContacts.Sort(CompareContactsHash);
+
+            int domaincontactcount = 0;
+            string currentDomain = null;
+            XmlElement domtelElement = null;
+
+            foreach (string contact_hash in sortedContacts)
+            {
+                String name;
+                String domain;
+                string[] arr = contact_hash.Split(new string[] { ":", ";via=" }, StringSplitOptions.RemoveEmptyEntries);
+                String type = IMAddressInfoType.Yahoo.ToString();
+                if (arr.Length > 0)
+                    type = arr[0];
+
+                IMAddressInfoType clitype = (IMAddressInfoType)Enum.Parse(typeof(IMAddressInfoType), type);
+                type = ((int)clitype).ToString();
+                RoleLists imlist = contacts[contact_hash];
+                RoleLists pelist = imlist;
+                pelist &= ~RoleLists.Hide; // Remove Hide role from PE service
+
+                if (clitype == IMAddressInfoType.Telephone)
+                {
+                    if (!arr[1].StartsWith("+"))
+                        continue;
+
+                    domain = String.Empty;
+                    name = "tel:" + arr[1];
+                }
+                else if (clitype == IMAddressInfoType.RemoteNetwork)
+                {
+                    domain = String.Empty;
+                    name = arr[1];
+                }
+                else
+                {
+                    String[] usernameanddomain = arr[1].Split('@');
+                    domain = usernameanddomain[1];
+                    name = usernameanddomain[0];
+                }
+
+                if (imlist != RoleLists.None)
+                {
+                    if (currentDomain != domain)
+                    {
+                        currentDomain = domain;
+                        domaincontactcount = 0;
+
+                        if (clitype == IMAddressInfoType.Telephone)
+                        {
+                            domtelElement = xmlDoc.CreateElement("t");
+                        }
+                        else if (clitype == IMAddressInfoType.RemoteNetwork)
+                        {
+                            domtelElement = xmlDoc.CreateElement("n");
+                        }
+                        else
+                        {
+                            domtelElement = xmlDoc.CreateElement("d");
+                            domtelElement.SetAttribute("n", currentDomain);
+                        }
+                        mlElement.AppendChild(domtelElement);
+                    }
+
+                    XmlElement contactElement = xmlDoc.CreateElement("c");
+                    contactElement.SetAttribute("n", name);
+
+                    if (clitype != IMAddressInfoType.Telephone && clitype != IMAddressInfoType.RemoteNetwork)
+                        contactElement.SetAttribute("t", type);
+
+                    // IM
+                    XmlElement IMservice = xmlDoc.CreateElement("s");
+                    IMservice.SetAttribute("l", ((int)imlist).ToString());
+                    IMservice.SetAttribute("n", ServiceShortNames.IM.ToString());
+                    contactElement.AppendChild(IMservice);
+
+                    // PE
+                    if (pelist != RoleLists.None)
+                    {
+                        XmlElement PEservice = xmlDoc.CreateElement("s");
+                        PEservice.SetAttribute("l", ((int)pelist).ToString());
+                        PEservice.SetAttribute("n", ServiceShortNames.PE.ToString());
+                        contactElement.AppendChild(PEservice);
+                    }
+
+                    domtelElement.AppendChild(contactElement);
+                    domaincontactcount++;
+
+                }
+
+                if (mlElement.OuterXml.Length > 7300)
+                {
+                    mlElement.AppendChild(domtelElement);
+                    mls.Add(mlElement.OuterXml);
+
+                    mlElement = xmlDoc.CreateElement("ml");
+                    if (initial)
+                        mlElement.SetAttribute("l", "1");
+
+                    currentDomain = null;
+                    domaincontactcount = 0;
+                }
+            }
+
+            if (domaincontactcount > 0 && domtelElement != null)
+                mlElement.AppendChild(domtelElement);
+
+            mls.Add(mlElement.OuterXml);
+            return mls.ToArray();
+        }
+
+
+        private static int CompareContactsHash(string hash1, string hash2)
+        {
+            string[] str_arr1 = hash1.Split(new string[] { ":", ";via=" }, StringSplitOptions.RemoveEmptyEntries);
+            string[] str_arr2 = hash2.Split(new string[] { ":", ";via=" }, StringSplitOptions.RemoveEmptyEntries);
+
+            if (str_arr1.Length == 0)
+                return 1;
+
+            else if (str_arr2.Length == 0)
+                return -1;
+
+            string xContact, yContact;
+
+            if (str_arr1[1].IndexOf("@") == -1)
+                xContact = str_arr1[1];
+            else
+                xContact = str_arr1[1].Substring(str_arr1[1].IndexOf("@") + 1);
+
+            if (str_arr2[1].IndexOf("@") == -1)
+                yContact = str_arr2[1];
+            else
+                yContact = str_arr2[1].Substring(str_arr2[1].IndexOf("@") + 1);
+
+            return String.Compare(xContact, yContact, true, CultureInfo.InvariantCulture);
+        }
+
+
 
         #region Internal
 

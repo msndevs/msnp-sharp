@@ -63,15 +63,6 @@ namespace MSNPSharp
         private object syncObject = new object();
         private Semaphore binarySemaphore = new Semaphore(1, 1);
 
-        /// <summary>
-        /// The indicator of whether the initial contact ADL has been processed. <br/>
-        /// If the contact ADL was not processed, ignore the circle ADL.
-        /// </summary>
-        private bool contactADLProcessed = false;
-        private int serviceADL = 0;
-        private Scenario ignoredSenario = Scenario.None;
-        private Dictionary<int, NSPayLoadMessage> initialADLs = new Dictionary<int, NSPayLoadMessage>();
-
         internal XMLContactList AddressBook;
         internal DeltasList Deltas;
 
@@ -226,6 +217,8 @@ namespace MSNPSharp
 
         internal void OnSynchronizationCompleted(EventArgs e)
         {
+            abSynchronized = true;
+
             if (SynchronizationCompleted != null)
                 SynchronizationCompleted(this, e);
         }
@@ -338,22 +331,28 @@ namespace MSNPSharp
             // Should has no lock here.
             if (NSMessageHandler.AutoSynchronize)
             {
+                bool firstTime = false;
                 BinarySemaphore.WaitOne();
-                if (AddressBook != null)
+                try
                 {
-                    try
+                    if (AddressBook != null)
                     {
                         AddressBook.Initialize();
-                    }
-                    catch (Exception)
-                    {
+                        firstTime = (DateTime.MinValue == WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)));
                     }
                 }
-                BinarySemaphore.Release();
-
-                if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)) == DateTime.MinValue)
+                catch (Exception)
                 {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your membership list for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
+                }
+                finally
+                {
+                    BinarySemaphore.Release();
+                }
+
+                if (firstTime)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                        "Getting your membership list for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
                 }
 
                 // Should be no lock here, let the msRequest take care of the locks.
@@ -369,9 +368,10 @@ namespace MSNPSharp
                                 {
                                     BinarySemaphore.Release();
 
-                                    if (WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)) == DateTime.MinValue)
+                                    if (firstTime)
                                     {
-                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Getting your address book for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
+                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                                            "Getting your address book for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
                                     }
 
                                     // Should be no lock here, let the abRequest take care of the locks.
@@ -380,8 +380,8 @@ namespace MSNPSharp
                                         abRequest(PartnerScenario.Initial,
                                             delegate
                                             {
-                                                // Should be no lock here, let the SetDefaults take care of the locks.
-                                                SetDefaults();
+                                                // Should be no lock here, let the InitialABRequestCompleted take care of the locks.
+                                                InitialMembershipAndAbRequestCompleted();
                                             }
                                         );
                                     }
@@ -413,263 +413,31 @@ namespace MSNPSharp
             }
             else
             {
-                // Set lastchanged and roaming profile last change to get display picture and personal message
-                BinarySemaphore.WaitOne();
-                if (AddressBook != null)
-                {
-                    AddressBook.MyProperties[AnnotationNames.Live_Profile_Expression_LastChanged] = XmlConvert.ToString(DateTime.MinValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
-                }
-                BinarySemaphore.Release();
-
-                SetDefaults();
+                InitialMembershipAndAbRequestCompleted();
 
                 NSMessageHandler.OnSignedIn(EventArgs.Empty);
             }
         }
 
-        private void SetDefaults()
+        private void InitialMembershipAndAbRequestCompleted()
         {
             BinarySemaphore.WaitOne();
-            {
-                if (NSMessageHandler.AutoSynchronize && AddressBook != null)
-                {
-                    AddressBook.InitializeMyProperties();
-                }
-            }
-            BinarySemaphore.Release();
-
-            // Set display name, personal status and photo
-            PersonalMessage pm = NSMessageHandler.Owner.PersonalMessage;
-
-            string mydispName = String.IsNullOrEmpty(Deltas.Profile.DisplayName) ? NSMessageHandler.Owner.NickName : Deltas.Profile.DisplayName;
-            string psmMessage = Deltas.Profile.PersonalMessage;
-
-            Color colorScheme = ColorTranslator.FromOle(Deltas.Profile.ColorScheme);
-            NSMessageHandler.Owner.SetColorScheme(colorScheme);
-            pm.ColorScheme = colorScheme;
-
-            SceneImage sceneImage = NSMessageHandler.Owner.SceneImage;
-            if (sceneImage != null && !sceneImage.IsDefaultImage)
-            {
-                pm.Scene = sceneImage.ContextPlain;
-            }
-
-            NSMessageHandler.Owner.CreateDefaultDisplayImage(Deltas.Profile.Photo.DisplayImage);
-            pm.UserTileLocation = NSMessageHandler.Owner.DisplayImage.IsDefaultImage ? string.Empty : NSMessageHandler.Owner.DisplayImage.ContextPlain;
-            NSMessageHandler.Owner.PersonalMessage = pm;
-
-            BinarySemaphore.WaitOne();
+            try
             {
                 if (AddressBook != null && Deltas != null)
                 {
                     // Save addressbook and then truncate deltas file.
+                    AddressBook.InitializeMyProperties();
                     AddressBook.Save();
                     Deltas.Truncate();
                 }
             }
-            BinarySemaphore.Release();
-
-            if (NSMessageHandler.AutoSynchronize)
+            finally
             {
-                SendInitialServiceADL();
-            }
-        }
-
-        private void SendInitialServiceADL()
-        {
-            NSMessageProcessor nsmp = NSMessageHandler.MessageProcessor as NSMessageProcessor;
-
-            if (nsmp == null)
-                return;
-
-            if (serviceADL == 0)
-            {
-                serviceADL = nsmp.IncreaseTransactionID();
-
-                string[] ownerAccount = NSMessageHandler.Owner.Account.Split('@');
-                string payload = "<ml><d n=\"" + ownerAccount[1] + "\"><c n=\"" + ownerAccount[0] + "\" t=\"1\"><s l=\"3\" n=\"IM\" /><s l=\"3\" n=\"PE\" /><s l=\"3\" n=\"PD\" /><s l=\"3\" n=\"PF\"/></c></d></ml>";
-
-                NSPayLoadMessage nsPayload = new NSPayLoadMessage("ADL", payload);
-                nsPayload.TransactionID = serviceADL;
-                nsmp.SendMessage(nsPayload, serviceADL);
-            }
-        }
-
-        /// <summary>
-        /// Send the initial ADL command to NS server. 
-        /// </summary>
-        /// <param name="scene">
-        /// A <see cref="Scenario"/>
-        /// </param>
-        /// <remarks>
-        /// The first ADL command MUST be a contact ADL. If you send a circle ADL instead,
-        /// you will receive 201 server error for the following circle PUT command.
-        /// </remarks>
-        internal void SendInitialADL(Scenario scene)
-        {
-            if (scene == Scenario.None)
-                return;
-
-            NSMessageProcessor nsmp = (NSMessageProcessor)NSMessageHandler.MessageProcessor;
-
-            if (nsmp == null)
-                return;
-
-            Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>();
-
-            #region Process Contacts
-
-            if ((scene & Scenario.SendInitialContactsADL) != Scenario.None)
-            {
-                // Combine initial ADL for Contacts
-                hashlist = new Dictionary<string, RoleLists>(NSMessageHandler.ContactList.Count);
-                lock (NSMessageHandler.ContactList.SyncRoot)
-                {
-                    foreach (Contact contact in NSMessageHandler.ContactList.All)
-                    {
-                        if (contact.ADLCount == 0)
-                            continue;
-
-                        contact.ADLCount--;
-
-                        string ch = contact.Hash;
-                        RoleLists l = RoleLists.None;
-
-                        if (contact.OnForwardList)
-                            l |= RoleLists.Forward;
-
-                        if (contact.OnAllowedList)
-                            l |= RoleLists.Allow;
-
-                        if (contact.AppearOffline)
-                            l |= RoleLists.Hide;
-
-                        if (l != RoleLists.None && !hashlist.ContainsKey(ch))
-                            hashlist.Add(ch, l);
-                    }
-                }
-                string[] adls = ConstructLists(hashlist, true);
-
-                if (adls.Length > 0)
-                {
-                    foreach (string payload in adls)
-                    {
-                        NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
-                        message.TransactionID = nsmp.IncreaseTransactionID();
-                        initialADLs.Add(message.TransactionID, message);
-                    }
-                }
-                scene |= ignoredSenario;
-                contactADLProcessed = true;
+                BinarySemaphore.Release();
             }
 
-            #endregion
-
-            #region Process Circles
-
-            if ((scene & Scenario.SendInitialCirclesADL) != Scenario.None)
-            {
-                if (contactADLProcessed)
-                {
-                    // Combine initial ADL for Circles
-                    if (NSMessageHandler.CircleList.Count > 0)
-                    {
-                        hashlist = new Dictionary<string, RoleLists>(NSMessageHandler.CircleList.Count);
-                        lock (NSMessageHandler.ContactList.SyncRoot)
-                        {
-                            foreach (Contact circle in NSMessageHandler.CircleList.Values)
-                            {
-                                if (circle.ADLCount == 0)
-                                    continue;
-
-                                circle.ADLCount--;
-                                string ch = circle.Hash;
-                                RoleLists l = circle.Lists;
-                                hashlist.Add(ch, l);
-                            }
-                        }
-
-                        string[] circleadls = ConstructLists(hashlist, true);
-
-                        if (circleadls.Length > 0)
-                        {
-                            foreach (string payload in circleadls)
-                            {
-                                NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
-                                message.TransactionID = nsmp.IncreaseTransactionID();
-                                initialADLs.Add(message.TransactionID, message);
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    ignoredSenario |= Scenario.SendInitialCirclesADL;
-                }
-            }
-
-            #endregion
-
-            // Send All Initial ADLs...
-            lock (initialADLs)
-            {
-                Dictionary<int, NSPayLoadMessage> initialADLsCopy = new Dictionary<int, NSPayLoadMessage>(initialADLs);
-
-                foreach (NSPayLoadMessage nsPayload in initialADLsCopy.Values)
-                {
-                    ((NSMessageProcessor)NSMessageHandler.MessageProcessor).SendMessage(nsPayload, nsPayload.TransactionID);
-                }
-            }
-        }
-
-        internal bool ProcessADL(int transid)
-        {
-            if (transid == serviceADL)
-            {
-                SendInitialADL(Scenario.SendInitialContactsADL | Scenario.SendInitialCirclesADL);
-                return true;
-            }
-            else if (initialADLs.ContainsKey(transid))
-            {
-                lock (initialADLs)
-                {
-                    initialADLs.Remove(transid);
-                }
-
-                if (initialADLs.Count <= 0)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "All initial ADLs have processed.", GetType().Name);
-
-                    if (NSMessageHandler.AutoSynchronize)
-                    {
-                        NSMessageHandler.OnSignedIn(EventArgs.Empty);
-                    }
-
-                    if (!AddressBookSynchronized)
-                    {
-                        if (NSMessageHandler.AutoSynchronize)
-                        {
-                            foreach (Contact contact in NSMessageHandler.ContactList.Pending)
-                            {
-                                // Added by other place, this place hasn't synchronized this contact yet.
-                                if (contact.OnForwardList)
-                                {
-                                    contact.OnPendingList = false;
-                                }
-                                else
-                                {
-                                    NSMessageHandler.ContactService.OnFriendshipRequested(new ContactEventArgs(contact));
-                                }
-                            }
-                        }
-
-                        abSynchronized = true;
-                        OnSynchronizationCompleted(EventArgs.Empty);
-                    }
-                }
-                return true;
-            }
-            return false;
+            NSMessageHandler.SetDefaults();
         }
 
         /// <summary>
@@ -851,157 +619,6 @@ namespace MSNPSharp
                 });
         }
 
-        public static string[] ConstructLists(Dictionary<string, RoleLists> contacts, bool initial)
-        {
-
-            List<string> mls = new List<string>();
-            XmlDocument xmlDoc = new XmlDocument();
-            XmlElement mlElement = xmlDoc.CreateElement("ml");
-            if (initial)
-                mlElement.SetAttribute("l", "1");
-
-            if (contacts == null || contacts.Count == 0)
-            {
-                mls.Add(mlElement.OuterXml);
-                return mls.ToArray();
-            }
-
-            List<string> sortedContacts = new List<string>(contacts.Keys);
-            sortedContacts.Sort(CompareContactsHash);
-
-            int domaincontactcount = 0;
-            string currentDomain = null;
-            XmlElement domtelElement = null;
-
-            foreach (string contact_hash in sortedContacts)
-            {
-                String name;
-                String domain;
-                string[] arr = contact_hash.Split(new string[] { ":", ";via=" }, StringSplitOptions.RemoveEmptyEntries);
-                String type = IMAddressInfoType.Yahoo.ToString();
-                if (arr.Length > 0)
-                    type = arr[0];
-
-                IMAddressInfoType clitype = (IMAddressInfoType)Enum.Parse(typeof(IMAddressInfoType), type);
-                type = ((int)clitype).ToString();
-                RoleLists imlist = Contact.GetListForADL(contacts[contact_hash], clitype, ServiceShortNames.IM);
-                RoleLists pelist = Contact.GetListForADL(contacts[contact_hash], clitype, ServiceShortNames.PE);
-
-                if (clitype == IMAddressInfoType.Telephone)
-                {
-                    if (!arr[1].StartsWith("+"))
-                        continue;
-
-                    domain = String.Empty;
-                    name = "tel:" + arr[1];
-                }
-                else if (clitype == IMAddressInfoType.RemoteNetwork)
-                {
-                    domain = String.Empty;
-                    name = arr[1];
-                }
-                else
-                {
-                    String[] usernameanddomain = arr[1].Split('@');
-                    domain = usernameanddomain[1];
-                    name = usernameanddomain[0];
-                }
-
-                if (imlist != RoleLists.None)
-                {
-                    if (currentDomain != domain)
-                    {
-                        currentDomain = domain;
-                        domaincontactcount = 0;
-
-                        if (clitype == IMAddressInfoType.Telephone)
-                        {
-                            domtelElement = xmlDoc.CreateElement("t");
-                        }
-                        else if (clitype == IMAddressInfoType.RemoteNetwork)
-                        {
-                            domtelElement = xmlDoc.CreateElement("n");
-                        }
-                        else
-                        {
-                            domtelElement = xmlDoc.CreateElement("d");
-                            domtelElement.SetAttribute("n", currentDomain);
-                        }
-                        mlElement.AppendChild(domtelElement);
-                    }
-
-                    XmlElement contactElement = xmlDoc.CreateElement("c");
-                    contactElement.SetAttribute("n", name);
-
-                    if (clitype != IMAddressInfoType.Telephone && clitype != IMAddressInfoType.RemoteNetwork)
-                        contactElement.SetAttribute("t", type);
-
-                    // IM
-                    XmlElement IMservice = xmlDoc.CreateElement("s");
-                    IMservice.SetAttribute("l", ((int)imlist).ToString());
-                    IMservice.SetAttribute("n", ServiceShortNames.IM.ToString());
-                    contactElement.AppendChild(IMservice);
-
-                    // PE
-                    if (pelist != RoleLists.None)
-                    {
-                        XmlElement PEservice = xmlDoc.CreateElement("s");
-                        PEservice.SetAttribute("l", ((int)pelist).ToString());
-                        PEservice.SetAttribute("n", ServiceShortNames.PE.ToString());
-                        contactElement.AppendChild(PEservice);
-                    }
-
-                    domtelElement.AppendChild(contactElement);
-                    domaincontactcount++;
-
-                }
-
-                if (mlElement.OuterXml.Length > 7300)
-                {
-                    mlElement.AppendChild(domtelElement);
-                    mls.Add(mlElement.OuterXml);
-
-                    mlElement = xmlDoc.CreateElement("ml");
-                    if (initial)
-                        mlElement.SetAttribute("l", "1");
-
-                    currentDomain = null;
-                    domaincontactcount = 0;
-                }
-            }
-
-            if (domaincontactcount > 0 && domtelElement != null)
-                mlElement.AppendChild(domtelElement);
-
-            mls.Add(mlElement.OuterXml);
-            return mls.ToArray();
-        }
-
-        private static int CompareContactsHash(string hash1, string hash2)
-        {
-            string[] str_arr1 = hash1.Split(new string[] { ":", ";via=" }, StringSplitOptions.RemoveEmptyEntries);
-            string[] str_arr2 = hash2.Split(new string[] { ":", ";via=" }, StringSplitOptions.RemoveEmptyEntries);
-
-            if (str_arr1.Length == 0)
-                return 1;
-
-            else if (str_arr2.Length == 0)
-                return -1;
-
-            string xContact, yContact;
-
-            if (str_arr1[1].IndexOf("@") == -1)
-                xContact = str_arr1[1];
-            else
-                xContact = str_arr1[1].Substring(str_arr1[1].IndexOf("@") + 1);
-
-            if (str_arr2[1].IndexOf("@") == -1)
-                yContact = str_arr2[1];
-            else
-                yContact = str_arr2[1].Substring(str_arr2[1].IndexOf("@") + 1);
-
-            return String.Compare(xContact, yContact, true, CultureInfo.InvariantCulture);
-        }
 
         #endregion
 
@@ -1048,9 +665,7 @@ namespace MSNPSharp
                             true, true, 1, RelationshipTypes.IndividualAddressBook, (int)RelationshipState.None,
                             delegate(object wlcSender, ManageWLConnectionCompletedEventArgs mwlce)
                             {
-                                Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(2);
-                                hashlist.Add(contact.Hash, RoleLists.Allow | RoleLists.Forward);
-                                string payload = ConstructLists(hashlist, false)[0];
+                                string payload = ContactList.GenerateMailListForAdl(contact, RoleLists.Allow | RoleLists.Forward, false);
                                 NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
 
                                 // Get all contacts and send ADL for each contact... Yahoo, Facebook etc.
@@ -1073,14 +688,14 @@ namespace MSNPSharp
 
                                                 if (typesFound.Count > 0)
                                                 {
-                                                    hashlist = new Dictionary<string, RoleLists>(2);
+                                                    Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(2);
 
                                                     foreach (IMAddressInfoType im in typesFound)
                                                     {
                                                         hashlist.Add(Contact.MakeHash(account, im), RoleLists.Allow | RoleLists.Forward);
                                                     }
 
-                                                    payload = ConstructLists(hashlist, false)[0];
+                                                    payload = ContactList.GenerateMailListForAdl(hashlist, false)[0];
                                                     NSMessageHandler.MessageProcessor.SendMessage(new NSPayLoadMessage("ADL", payload));
                                                 }
                                             });
@@ -1534,9 +1149,7 @@ namespace MSNPSharp
             if (contact.HasLists(list))
                 return;
 
-            Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(2);
-            hashlist.Add(contact.Hash, list);
-            string payload = ConstructLists(hashlist, false)[0];
+            string payload = ContactList.GenerateMailListForAdl(contact, list, false);
 
             if (list == RoleLists.Forward)
             {
@@ -1600,9 +1213,7 @@ namespace MSNPSharp
             if (!contact.HasLists(list))
                 return;
 
-            Dictionary<string, RoleLists> hashlist = new Dictionary<string, RoleLists>(2);
-            hashlist.Add(contact.Hash, list);
-            string payload = ConstructLists(hashlist, false)[0];
+            string payload = ContactList.GenerateMailListForAdl(contact, list, false);
 
             if (list == RoleLists.Forward)
             {
@@ -1882,7 +1493,7 @@ namespace MSNPSharp
                         return;
                     }
 
-                    NSMessageHandler.SendCircleNotifyRML(circle.AddressBookId, circle.HostDomain, circle.Lists, true);
+                    NSMessageHandler.SendCircleNotifyRML(circle.AddressBookId, circle.HostDomain, circle.Lists);
                     AddressBook.RemoveCircle(circle.AddressBookId.ToString("D").ToLowerInvariant(), true);
                     AddressBook.Save();
                 });
@@ -1892,46 +1503,11 @@ namespace MSNPSharp
 
         #endregion
 
-        public RoleId GetMemberRole(RoleLists list)
-        {
-            switch (list)
-            {
-                case RoleLists.Allow:
-                    return RoleId.Allow;
-
-                case RoleLists.Pending:
-                    return RoleId.Pending;
-
-                case RoleLists.Hide:
-                    return RoleId.Hide;
-            }
-            return RoleId.None;
-        }
-
-        public RoleLists GetMSNList(RoleId memberRole)
-        {
-            switch (memberRole)
-            {
-                case RoleId.Allow:
-                    return RoleLists.Allow;
-                case RoleId.Pending:
-                    return RoleLists.Pending;
-                case RoleId.Hide:
-                    return RoleLists.Hide;
-            }
-            return RoleLists.None;
-        }
-
         public override void Clear()
         {
             binarySemaphore.WaitOne();
             {
                 base.Clear();
-
-                serviceADL = 0;
-                ignoredSenario = Scenario.None;
-                contactADLProcessed = false;
-                initialADLs.Clear();
 
                 // Last save for contact list files
                 if (NSMessageHandler.IsSignedIn && AddressBook != null && Deltas != null)
