@@ -114,12 +114,6 @@ namespace MSNPSharp
         /// </summary>
         public event EventHandler<SignedOffEventArgs> SignedOff;
 
-
-        /// <summary>
-        /// Occurs when an answer is received after sending a ping to the MSN server via the SendPing() method.
-        /// </summary>
-        public event EventHandler<PingAnswerEventArgs> PingAnswer;
-
         /// <summary>
         /// Occurs when the server notifies the client with the status of the owner's mailbox.
         /// </summary>
@@ -169,11 +163,11 @@ namespace MSNPSharp
         private MessageManager messageManager;
         private bool autoSynchronize = true;
         private bool botMode = false;
-        private int canSendPing = 1;
 
         private bool isSignedIn = false;
         private MSNTicket msnTicket = MSNTicket.Empty;
         private AdlState adlState = new AdlState();
+        private System.Timers.Timer pong = null;
 
         private ContactService contactService;
         private MSNStorageService storageService;
@@ -507,9 +501,9 @@ namespace MSNPSharp
         /// <summary>
         /// Sends PNG (ping) command.
         /// </summary>
-        public virtual void SendPing()
+        private void SendPing()
         {
-            if (Interlocked.CompareExchange(ref canSendPing, 0, 1) == 1)
+            if (pong != null && messageProcessor.Connected)
             {
                 MessageProcessor.SendMessage(new NSMessage("PNG"));
             }
@@ -774,10 +768,19 @@ namespace MSNPSharp
                             OnOwnerVerified(EventArgs.Empty);
                         }
                         );
+
+                    pong = new System.Timers.Timer(1000);
+                    pong.Elapsed += new System.Timers.ElapsedEventHandler(pong_Elapsed);
+                    SendPing();
                 }
 
                 Owner.PassportVerified = message.CommandValues[2].Equals("1");
             }
+        }
+
+        private void pong_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            SendPing();
         }
 
         /// <summary>
@@ -793,11 +796,8 @@ namespace MSNPSharp
             if (ContactService.Deltas != null)
                 Owner.SyncProfileToDeltas();
 
-
             if (SignedIn != null)
                 SignedIn(this, e);
-
-            SendPing(); //Ping the server for the first time. Then client programmer should handle the answer.
         }
 
         /// <summary>
@@ -1409,17 +1409,23 @@ namespace MSNPSharp
         /// <param name="message"></param>
         protected virtual void OnQNGReceived(NSMessage message)
         {
-            if (PingAnswer != null)
+            if (pong != null)
             {
-                // get the number of seconds till the next ping and fire the event
-                // with the correct parameters.
                 int seconds = int.Parse((string)message.CommandValues[0], System.Globalization.CultureInfo.InvariantCulture);
-                PingAnswer(this, new PingAnswerEventArgs(seconds));
-
-                Interlocked.CompareExchange(ref canSendPing, 1, 0);
+                if (seconds > 1)
+                {
+                    try
+                    {
+                        pong.Interval = 1000 * (seconds - 1);
+                        pong.Enabled = true;
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        pong = null;
+                    }
+                }
             }
         }
-
 
 
         #endregion
@@ -1693,6 +1699,26 @@ namespace MSNPSharp
         /// </remarks>
         protected virtual bool Clear()
         {
+            // 0. Remove pong
+            if (pong != null)
+            {
+                pong.Elapsed -= pong_Elapsed;
+                try
+                {
+                    if (pong.Enabled)
+                        pong.Enabled = false;
+
+                    pong.Dispose();
+                }
+                catch (ObjectDisposedException)
+                {
+                }
+                finally
+                {
+                    pong = null;
+                }
+            }
+
             // 1. Cancel transfers
             p2pHandler.Dispose();
 
@@ -1709,7 +1735,6 @@ namespace MSNPSharp
             bool signInStatus = IsSignedIn;
             isSignedIn = false;
             externalEndPoint = null;
-            Interlocked.Exchange(ref canSendPing, 1);
             adlState.Reset();
 
             // 4. Clear contact lists and circle list.
