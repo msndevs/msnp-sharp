@@ -1,22 +1,36 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Diagnostics;
-using System.Net;
 using System.IO;
+using System.Net;
+using System.Text;
+using System.Timers;
+using System.Threading;
+using System.Diagnostics;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace MSNPSharp.Core
 {
     using MSNPSharp;
 
+    internal enum HttpPollAction
+    {
+        None,
+        Open,
+        Poll
+    };
+
     /// <summary>
     /// HTTP polling transport layer.
-    /// </summary>
     /// Reference in http://www.hypothetic.org/docs/msn/sitev2.0/general/http_connections.php.
+    /// </summary>
     public class HttpSocketMessageProcessor : SocketMessageProcessor, IDisposable
     {
+        private HttpPollAction action = HttpPollAction.None;
+
         private bool connected = false;
+        private bool sending = false;
+
+
         private bool opened = false; // first call to server has Action=open
         private bool verCommand = false;
         private bool cvrCommand = false;
@@ -27,35 +41,51 @@ namespace MSNPSharp.Core
         private string gatewayIP;
 
         private byte[] socketBuffer = new byte[8192];
+        private System.Timers.Timer pollTimer = new System.Timers.Timer(2000);
+        private object _lock = new object();
 
-        public string OpenUrl
+
+        public HttpSocketMessageProcessor(ConnectivitySettings connectivitySettings,
+            MessageReceiver messageReceiver,
+            MessagePool messagePool)
+            : base(connectivitySettings, messageReceiver, messagePool)
         {
-            get
-            {
-                return "http://gateway.messenger.hotmail.com/gateway/gateway.dll?Action=open&Server=NS&IP=messenger.hotmail.com";
-            }
+            gatewayIP = connectivitySettings.Host;
+            pollTimer.Elapsed += pollTimer_Elapsed;
+            pollTimer.AutoReset = true;
         }
 
-        public string PollUrl
+        private void pollTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            get
-            {
-                return String.Format(
-                        "http://{0}/gateway/gateway.dll?Action=poll&LifeSpan=1&SessionID={1}",
-                        GatewayIP,
-                        SessionID);
-            }
+            action = HttpPollAction.Poll;
+            SendSocketData(new byte[0]);
         }
 
-        public string CommandUrl
+        private string GenerateURI()
         {
-            get
+            StringBuilder sb = new StringBuilder();
+
+            sb.Append("http://");
+            sb.Append(gatewayIP);
+            sb.Append("/gateway/gateway.dll?");
+
+            switch (action)
             {
-                return String.Format(
-                        "http://{0}/gateway/gateway.dll?SessionID={1}",
-                        GatewayIP,
-                        SessionID);
+                case HttpPollAction.Open:
+                    sb.Append("Action=open&");
+                    sb.Append("Server=NS&");
+                    sb.Append("IP=" + ConnectivitySettings.Host);
+                    break;
+                case HttpPollAction.Poll:
+                    sb.Append("Action=poll&");
+                    sb.Append("SessionID=" + SessionID);
+                    break;
+                case HttpPollAction.None:
+                    sb.Append("SessionID=" + SessionID);
+                    break;
             }
+
+            return sb.ToString();
         }
 
         public override bool Connected
@@ -104,16 +134,12 @@ namespace MSNPSharp.Core
             }
         }
 
-        public HttpSocketMessageProcessor(ConnectivitySettings connectivitySettings,
-            MessageReceiver messageReceiver,
-            MessagePool messagePool)
-            : base(connectivitySettings, messageReceiver, messagePool)
-        {
-        }
+
 
         public override void Connect()
         {
             // don't have to do anything here
+            connected = true;
             OnConnected();
         }
 
@@ -121,7 +147,14 @@ namespace MSNPSharp.Core
         {
             // nothing to do
             if (Connected)
+            {
+                connected = false;
+
+                if (pollTimer.Enabled)
+                    pollTimer.Stop();
+
                 OnDisconnected();
+            }
         }
 
         public override void SendMessage(NetworkMessage message)
@@ -139,191 +172,178 @@ namespace MSNPSharp.Core
         [MethodImpl(MethodImplOptions.Synchronized)]
         public override void SendSocketData(byte[] data, object userState)
         {
-            // the simple and normal case
-            if (opened)
+            // connection has not been established yet; concat data to the end of OpenCommand
+            if (!opened)
             {
-                Trace.WriteLine("***** Send socket data: opened.");
+                if (openCommand == null)
+                {
+                    openCommand = (byte[])data.Clone();
+                }
+                else
+                {
+                    byte[] NewOpenCommand = new byte[openCommand.Length + data.Length];
+                    openCommand.CopyTo(NewOpenCommand, 0);
+                    data.CopyTo(NewOpenCommand, openCommand.Length);
+                    openCommand = NewOpenCommand;
+                }
 
-                WebRequest request = WebRequest.Create(OpenUrl);
-                request.Proxy = null; // TODO: don't disable proxy
+                if (data.Length > 4 && data[3] == ' ')
+                {
+                    if (data[0] == 'V' && data[1] == 'E' && data[2] == 'R')
+                        verCommand = true;
+                    else if (data[0] == 'C' && data[1] == 'V' && data[2] == 'R')
+                        cvrCommand = true;
+                    else if (data[0] == 'U' && data[1] == 'S' && data[2] == 'R')
+                        usrCommand = true;
+                }
+
+                if (verCommand && cvrCommand && usrCommand)
+                {
+                    opened = true;
+                    data = openCommand;
+                    action = HttpPollAction.Open;
+                }
+                else
+                {
+                    return;
+                }
+            }
+
+            lock (_lock)
+            {
+
+                if (pollTimer.Enabled)
+                    pollTimer.Stop();
+
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(GenerateURI());
                 request.Method = "POST";
-                request.ContentType = "text/xml; charset=utf-8";
+                request.Accept = "*/*";
+                request.AllowAutoRedirect = false;
+                request.AllowWriteStreamBuffering = false;
+                request.KeepAlive = true;
+                request.UserAgent = "MSMSGS";
+                request.ContentType = "application/x-msn-messenger";
                 request.ContentLength = data.Length;
+                request.Headers.Add("Pragma", "no-cache");
+                request.ServicePoint.Expect100Continue = false;
+                //request.Proxy = null; // TODO: don't disable proxy
 
                 Stream requestStream = request.GetRequestStream();
                 requestStream.Write(data, 0, data.Length);
                 requestStream.Close();
 
-                request.BeginGetResponse(EndGetResponseCallback,
-                    new HttpResponseState(request, null, null, userState, false));
+                sending = true;
+                action = HttpPollAction.None;
 
-                return;
-            }
-
-            Trace.WriteLine("***** Send socket data: not yet opened.");
-
-            // connection has not been established yet; concat data to the end of OpenCommand
-            if (openCommand == null)
-            {
-                openCommand = (byte[])data.Clone();
-            }
-            else
-            {
-                byte[] NewOpenCommand = new byte[openCommand.Length + data.Length];
-                openCommand.CopyTo(NewOpenCommand, 0);
-                data.CopyTo(NewOpenCommand, openCommand.Length);
-                openCommand = NewOpenCommand;
-            }
-
-            if (data.Length > 4 && data[3] == ' ')
-            {
-                if (data[0] == 'V' && data[1] == 'E' && data[2] == 'R')
-                    verCommand = true;
-                else if (data[0] == 'C' && data[1] == 'V' && data[2] == 'R')
-                    cvrCommand = true;
-                else if (data[0] == 'U' && data[1] == 'S' && data[2] == 'R')
-                    usrCommand = true;
-            }
-
-            if (verCommand && cvrCommand && usrCommand)
-            {
-                // we've collected enought to get started. Let's go
-                WebRequest request = WebRequest.Create(OpenUrl);
-                request.Proxy = null; // TODO: don't disable proxy
-                request.Method = "POST";
-                request.ContentType = "text/xml; charset=utf-8";
-                request.ContentLength = openCommand.Length;
-
-                Stream requestStream = request.GetRequestStream();
-                requestStream.Write(openCommand, 0, openCommand.Length);
-                requestStream.Close();
-
-                request.BeginGetResponse(EndGetResponseCallback,
-                    new HttpResponseState(request, null, null, userState, true));
-
-                openCommand = null;
-            }
-            else
-            {
-                Trace.WriteLine("First batch of commands not complete; waiting for more commands.");
+                request.BeginGetResponse(EndGetResponseCallback, request);
             }
         }
 
-        protected virtual void EndGetResponseCallback(IAsyncResult ar)
+        private void EndGetResponseCallback(IAsyncResult ar)
         {
-            HttpResponseState state = (HttpResponseState)ar.AsyncState;
-            state.response = state.request.EndGetResponse(ar);
+            bool wasSending = false;
+            byte[] responseData = null;
+            int responseLength = 0;
 
-            string[] messengerHeaders = state.response.Headers.GetValues("X-MSN-Messenger");
-            foreach (string messengerHeader in messengerHeaders)
+            lock (_lock)
             {
-                foreach (string token in messengerHeader.Split(new char[] { ';', ' ' }))
+                HttpWebRequest request = (HttpWebRequest)ar.AsyncState;
+                HttpWebResponse response = (HttpWebResponse)request.EndGetResponse(ar);
+
+                foreach (string str in response.Headers.AllKeys)
                 {
-                    if (token.StartsWith("SessionID="))
+                    switch (str)
                     {
-                        SessionID = token.Split(new char[] { '=' }, 2)[1];
-                        Trace.WriteLine("Detected new sessionID: " + SessionID);
-                    }
-                    else if (token.StartsWith("GW-IP="))
-                    {
-                        GatewayIP = token.Split(new char[] { '=' }, 2)[1];
-                        Trace.WriteLine("Detected new gateway IP: " + GatewayIP);
-                    }
-                    else if (!token.Equals(""))
-                    {
-                        Trace.WriteLine("Unknown token " + token);
+                        case "Content-Length":
+                            responseLength = Int32.Parse(response.Headers.Get(str));
+                            break;
+
+                        case "X-MSN-Messenger":
+                            string text = response.Headers.Get(str);
+
+                            string[] parts = text.Split(';');
+                            foreach (string part in parts)
+                            {
+                                string[] elements = part.Split('=');
+                                switch (elements[0].Trim())
+                                {
+                                    case "SessionID":
+                                        SessionID = elements[1];
+                                        break;
+                                    case "GW-IP":
+                                        GatewayIP = elements[1];
+                                        break;
+                                    case "Session":
+                                        break;
+                                    case "Action":
+                                        break;
+                                }
+                            }
+                            break;
                     }
                 }
+
+
+
+                responseData = new byte[responseLength];
+                int responseRead = 0;
+
+                Stream responseStream = response.GetResponseStream();
+
+                while (responseRead < responseLength)
+                {
+                    byte[] buf = new byte[256];
+                    int read = responseStream.Read(buf, 0, buf.Length);
+                    Array.Copy(buf, 0, responseData, responseRead, read);
+                    responseRead += read;
+                }
+
+                responseStream.Close();
+                response.Close();
+
+                wasSending = sending;
+                sending = false;
             }
 
-            opened = true;
-            state.responseStream = state.response.GetResponseStream();
-            state.responseStream.BeginRead(state.buffer, 0, state.buffer.Length, EndRead, state);
+            Thread dispatchThread = new Thread(new ParameterizedThreadStart(DoDispatch));
+            dispatchThread.Start(new object[] { responseData, wasSending });
+
+            
+
+            lock (_lock)
+            {
+                if ((!sending) && (!pollTimer.Enabled))
+                    pollTimer.Start();
+            }
         }
 
-        protected virtual void EndRead(IAsyncResult ar)
+        private void DoDispatch(object param)
         {
-            HttpResponseState state = (HttpResponseState)ar.AsyncState;
+            object[] _params = param as object[];
+            byte[] responseData = _params[0] as byte[];
+            bool wasSending = (bool)_params[1];
 
-            int read = state.responseStream.EndRead(ar);
-
-            if (read == 0)
+            if (wasSending)
             {
-                state.responseStream.Close();
-                state.response.Close();
-                state.buffer = null;
-
-                if (state.pollWhenDone)
-                {
-                    Trace.WriteLine("***** Launching next poll.. *****");
-
-                    WebRequest request = WebRequest.Create(PollUrl);
-                    request.Proxy = null; // TODO: don't disable proxy
-                    request.Method = "POST";
-                    request.ContentType = "text/xml; charset=utf-8";
-                    request.ContentLength = 0;
-
-                    Stream requestStream = request.GetRequestStream();
-                    // no data in stream
-                    requestStream.Close();
-
-                    request.BeginGetResponse(EndGetResponseCallback,
-                        new HttpResponseState(request, null, null, null, true));
-                }
-                else
-                {
-                    Trace.WriteLine("***** Not launching next poll.. *****");
-                }
-
-                return;
+                OnSendCompleted(new ObjectEventArgs(0));
             }
 
-            Trace.WriteLine("***** Read Response *****");
-            Trace.WriteLine(Encoding.ASCII.GetString(state.buffer, 0, read));
-
-            using (BinaryReader reader = new BinaryReader(new MemoryStream(state.buffer, 0, read)))
+            using (BinaryReader reader = new BinaryReader(new MemoryStream(responseData, 0, responseData.Length)))
             {
                 messagePool.BufferData(reader);
             }
+
             while (messagePool.MessageAvailable)
             {
-                // retrieve the message
                 byte[] incomingMessage = messagePool.GetNextMessageData();
-
-                // call the virtual method to perform polymorphism, descendant classes can take care of it
                 messageReceiver(incomingMessage);
             }
 
-            state.responseStream.BeginRead(state.buffer, 0, state.buffer.Length, EndRead, state);
         }
 
         public void Dispose()
         {
             // TODO
-        }
-
-        private class HttpResponseState
-        {
-            public bool pollWhenDone;
-            public WebRequest request;
-            public WebResponse response;
-            public Stream responseStream;
-
-            public object userData;
-
-            public byte[] buffer;
-
-            public HttpResponseState(WebRequest request, WebResponse response, Stream responseStream,
-                object userData,
-                bool pollWhenDone)
-            {
-                this.request = request;
-                this.response = response;
-                this.responseStream = responseStream;
-                this.userData = userData;
-                this.buffer = new byte[8192];
-                this.pollWhenDone = pollWhenDone;
-            }
         }
     }
 };

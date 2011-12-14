@@ -327,6 +327,9 @@ namespace MSNPSharp
         public const string DefaultHost = "messenger.hotmail.com";
         public const int DefaultPort = 1863;
 
+        public const string DefaultGatewayHost = "gateway.messenger.hotmail.com";
+        public const int DefaultGatewayPort = 80;
+
         private string host = DefaultHost;
         private int port = DefaultPort;
         private IPEndPoint[] endPoints = new IPEndPoint[0];
@@ -338,7 +341,7 @@ namespace MSNPSharp
         private string proxyPassword = string.Empty;
         private ProxyType proxyType = ProxyType.None;
         private WebProxy webProxy = null;
-        private bool httpPoll = false;
+        private bool httpPoll = true;
 
         #endregion
 
