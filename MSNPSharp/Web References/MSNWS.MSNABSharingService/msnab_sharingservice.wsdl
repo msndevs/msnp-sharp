@@ -12,6 +12,9 @@
   <message name="FindMembershipMessage">
     <part name="FindMembershipRequest" element="msnab:FindMembership" />
   </message>
+  <message name="FindMembershipByRoleMessage">
+    <part name="FindMembershipByRoleRequest" element="msnab:FindMembershipByRole" />
+  </message>
   <message name="ABFindAllMessage">
     <part name="ABFindAllRequest" element="msnab:ABFindAll" />
   </message>
@@ -56,6 +59,9 @@
   </message>
   <message name="FindMembershipResponseMessage">
     <part name="FindMembershipResponse" element="msnab:FindMembershipResponse" />
+  </message>
+  <message name="FindMembershipByRoleResponseMessage">
+    <part name="FindMembershipByRoleResponse" element="msnab:FindMembershipByRoleResponse" />
   </message>
   <message name="ABFindAllResponseMessage">
     <part name="ABFindAllResponse" element="msnab:ABFindAllResponse" />
@@ -184,6 +190,10 @@
       <input message="msnab:FindMembershipMessage" />
       <output message="msnab:FindMembershipResponseMessage" />
     </operation>
+    <operation name="FindMembershipByRole">
+      <input message="msnab:FindMembershipByRoleMessage" />
+      <output message="msnab:FindMembershipByRoleResponseMessage" />
+    </operation>
     <operation name="AddMember">
       <input message="msnab:AddMemberMessage" />
       <output message="msnab:AddMemberResponseMessage" />
@@ -293,6 +303,18 @@
     <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
     <operation name="FindMembership">
       <soap:operation soapAction="http://www.msn.com/webservices/AddressBook/FindMembership" />
+      <input>
+        <soap:header message="msnab:ABHeader" part="ApplicationHeader" use="literal" />
+        <soap:header message="msnab:ABHeader" part="AuthHeader" use="literal" />
+        <soap:body use="literal" />
+      </input>
+      <output>
+        <soap:header message="msnab:ServiceHeader" part="ServiceHeader" use="literal" />
+        <soap:body use="literal" />
+      </output>
+    </operation>
+    <operation name="FindMembershipByRole">
+      <soap:operation soapAction="http://www.msn.com/webservices/AddressBook/FindMembershipByRole" />
       <input>
         <soap:header message="msnab:ABHeader" part="ApplicationHeader" use="literal" />
         <soap:header message="msnab:ABHeader" part="AuthHeader" use="literal" />

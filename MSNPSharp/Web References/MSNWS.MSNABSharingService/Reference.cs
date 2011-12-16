@@ -40,6 +40,8 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         
         private System.Threading.SendOrPostCallback FindMembershipOperationCompleted;
         
+        private System.Threading.SendOrPostCallback FindMembershipByRoleOperationCompleted;
+        
         private System.Threading.SendOrPostCallback AddMemberOperationCompleted;
         
         private System.Threading.SendOrPostCallback DeleteMemberOperationCompleted;
@@ -117,6 +119,9 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         public event FindMembershipCompletedEventHandler FindMembershipCompleted;
         
         /// <remarks/>
+        public event FindMembershipByRoleCompletedEventHandler FindMembershipByRoleCompleted;
+        
+        /// <remarks/>
         public event AddMemberCompletedEventHandler AddMemberCompleted;
         
         /// <remarks/>
@@ -158,6 +163,39 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             if ((this.FindMembershipCompleted != null)) {
                 System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
                 this.FindMembershipCompleted(this, new FindMembershipCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ABAuthHeaderValue")]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ServiceHeaderValue", Direction=System.Web.Services.Protocols.SoapHeaderDirection.Out)]
+        [System.Web.Services.Protocols.SoapHeaderAttribute("ABApplicationHeaderValue")]
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://www.msn.com/webservices/AddressBook/FindMembershipByRole", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Bare)]
+        [return: System.Xml.Serialization.XmlElementAttribute("FindMembershipByRoleResponse", Namespace="http://www.msn.com/webservices/AddressBook")]
+        public FindMembershipByRoleResponse FindMembershipByRole([System.Xml.Serialization.XmlElementAttribute("FindMembershipByRole", Namespace="http://www.msn.com/webservices/AddressBook")] FindMembershipByRoleRequestType FindMembershipByRole1) {
+            object[] results = this.Invoke("FindMembershipByRole", new object[] {
+                        FindMembershipByRole1});
+            return ((FindMembershipByRoleResponse)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void FindMembershipByRoleAsync(FindMembershipByRoleRequestType FindMembershipByRole1) {
+            this.FindMembershipByRoleAsync(FindMembershipByRole1, null);
+        }
+        
+        /// <remarks/>
+        public void FindMembershipByRoleAsync(FindMembershipByRoleRequestType FindMembershipByRole1, object userState) {
+            if ((this.FindMembershipByRoleOperationCompleted == null)) {
+                this.FindMembershipByRoleOperationCompleted = new System.Threading.SendOrPostCallback(this.OnFindMembershipByRoleOperationCompleted);
+            }
+            this.InvokeAsync("FindMembershipByRole", new object[] {
+                        FindMembershipByRole1}, this.FindMembershipByRoleOperationCompleted, userState);
+        }
+        
+        private void OnFindMembershipByRoleOperationCompleted(object arg) {
+            if ((this.FindMembershipByRoleCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.FindMembershipByRoleCompleted(this, new FindMembershipByRoleCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
             }
         }
         
@@ -9256,6 +9294,143 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class FindMembershipByRoleRequestType {
+        
+        private ServiceFilter serviceFilterField;
+        
+        private RoleId[] includedRolesField;
+        
+        private string viewField;
+        
+        private bool expandMembershipField;
+        
+        private FindMembershipByRoleRequestTypeOptions optionsField;
+        
+        /// <remarks/>
+        public ServiceFilter serviceFilter {
+            get {
+                return this.serviceFilterField;
+            }
+            set {
+                this.serviceFilterField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public RoleId[] includedRoles {
+            get {
+                return this.includedRolesField;
+            }
+            set {
+                this.includedRolesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string view {
+            get {
+                return this.viewField;
+            }
+            set {
+                this.viewField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public bool expandMembership {
+            get {
+                return this.expandMembershipField;
+            }
+            set {
+                this.expandMembershipField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public FindMembershipByRoleRequestTypeOptions options {
+            get {
+                return this.optionsField;
+            }
+            set {
+                this.optionsField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.5420")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class ServiceFilter {
+        
+        private ServiceName[] typesField;
+        
+        private HandleType[] handlesField;
+        
+        private System.DateTime lastChangeField;
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute("ServiceType", IsNullable=false)]
+        public ServiceName[] Types {
+            get {
+                return this.typesField;
+            }
+            set {
+                this.typesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute("ServiceHandle")]
+        public HandleType[] Handles {
+            get {
+                return this.handlesField;
+            }
+            set {
+                this.handlesField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public System.DateTime LastChange {
+            get {
+                return this.lastChangeField;
+            }
+            set {
+                this.lastChangeField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.5420")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class FindMembershipByRoleRequestTypeOptions {
+        
+        private bool includeEmulatedMembershipsField;
+        
+        /// <remarks/>
+        public bool IncludeEmulatedMemberships {
+            get {
+                return this.includeEmulatedMembershipsField;
+            }
+            set {
+                this.includeEmulatedMembershipsField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.5420")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
     public partial class CircleAttributesType {
         
         private bool isPresenceEnabledField;
@@ -9513,7 +9688,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class FindMembershipResultType {
+    public partial class MembershipResult {
         
         private ServiceType[] servicesField;
         
@@ -9549,21 +9724,22 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.msn.com/webservices/AddressBook")]
     public partial class FindMembershipRequestType {
         
-        private FindMembershipRequestTypeServiceFilter serviceFilterField;
+        private ServiceFilter serviceFilterField;
         
         private string viewField;
+        
+        private bool expandMembershipField;
         
         private bool deltasOnlyField;
         
         private string lastChangeField;
         
         public FindMembershipRequestType() {
-            this.deltasOnlyField = false;
             this.lastChangeField = "0001-01-01T00:00:00.0000000-08:00";
         }
         
         /// <remarks/>
-        public FindMembershipRequestTypeServiceFilter serviceFilter {
+        public ServiceFilter serviceFilter {
             get {
                 return this.serviceFilterField;
             }
@@ -9573,7 +9749,7 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        public string View {
+        public string view {
             get {
                 return this.viewField;
             }
@@ -9583,7 +9759,16 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.ComponentModel.DefaultValueAttribute(false)]
+        public bool expandMembership {
+            get {
+                return this.expandMembershipField;
+            }
+            set {
+                this.expandMembershipField = value;
+            }
+        }
+        
+        /// <remarks/>
         public bool deltasOnly {
             get {
                 return this.deltasOnlyField;
@@ -9594,35 +9779,12 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
         }
         
         /// <remarks/>
-        [System.ComponentModel.DefaultValueAttribute("0001-01-01T00:00:00.0000000-08:00")]
         public string lastChange {
             get {
                 return this.lastChangeField;
             }
             set {
                 this.lastChangeField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.5420")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
-    public partial class FindMembershipRequestTypeServiceFilter {
-        
-        private ServiceName[] typesField;
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlArrayItemAttribute("ServiceType", IsNullable=false)]
-        public ServiceName[] Types {
-            get {
-                return this.typesField;
-            }
-            set {
-                this.typesField = value;
             }
         }
     }
@@ -9951,15 +10113,36 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
     public partial class FindMembershipResponse {
         
-        private FindMembershipResultType findMembershipResultField;
+        private MembershipResult findMembershipResultField;
         
         /// <remarks/>
-        public FindMembershipResultType FindMembershipResult {
+        public MembershipResult FindMembershipResult {
             get {
                 return this.findMembershipResultField;
             }
             set {
                 this.findMembershipResultField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "2.0.50727.5420")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true, Namespace="http://www.msn.com/webservices/AddressBook")]
+    public partial class FindMembershipByRoleResponse {
+        
+        private MembershipResult findMembershipByRoleResultField;
+        
+        /// <remarks/>
+        public MembershipResult FindMembershipByRoleResult {
+            get {
+                return this.findMembershipByRoleResultField;
+            }
+            set {
+                this.findMembershipByRoleResultField = value;
             }
         }
     }
@@ -10271,6 +10454,32 @@ namespace MSNPSharp.MSNWS.MSNABSharingService {
             get {
                 this.RaiseExceptionIfNecessary();
                 return ((FindMembershipResponse)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.5420")]
+    public delegate void FindMembershipByRoleCompletedEventHandler(object sender, FindMembershipByRoleCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "2.0.50727.5420")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class FindMembershipByRoleCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal FindMembershipByRoleCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public FindMembershipByRoleResponse Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((FindMembershipByRoleResponse)(this.results[0]));
             }
         }
     }

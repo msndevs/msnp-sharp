@@ -82,10 +82,6 @@ namespace MSNPSharpClient
             Settings.SerializationType = MSNPSharp.IO.MclSerialization.Compression | MSNPSharp.IO.MclSerialization.Cryptography;
 #endif
 
-            // The following line is very IMPOTANT.
-            // Keep the messenger sending PNG to the server in a proper frequency, or it will be kicked offline.
-            this.tmrKeepOnLine.Tick += new EventHandler(tmrKeepOnLine_Tick);
-
             // If you want to use it in an environment that does not have write permission, set NoSave to true.
             //Settings.NoSave = true;
 
@@ -114,10 +110,6 @@ namespace MSNPSharpClient
 
             // Listen for the data transfer events (i.e. file transfer invitation, activity invitation)
             messenger.P2PHandler.InvitationReceived += new EventHandler<P2PSessionEventArgs>(p2pHandler_InvitationReceived);
-
-            // Listen to ping answer event. In each ping answer, MSN will give you a number. That is the interval to send the next Ping.
-            // You can send a Ping by using Messenger.Nameserver.SendPing().
-            messenger.Nameserver.PingAnswer += new EventHandler<PingAnswerEventArgs>(Nameserver_PingAnswer);
 
             messenger.Nameserver.OwnerVerified += new EventHandler<EventArgs>(Nameserver_OwnerVerified);
             messenger.Nameserver.ContactOnline += new EventHandler<ContactStatusChangedEventArgs>(Nameserver_ContactOnline);
@@ -623,11 +615,6 @@ namespace MSNPSharpClient
                 SortByGroup(e);
         }
 
-        void Nameserver_PingAnswer(object sender, PingAnswerEventArgs e)
-        {
-            nextPing = e.SecondsToWait;
-        }
-
         void Nameserver_TextMessageReceived(object sender, TextMessageArrivedEventArgs e)
         {
             MessageManager_MessageArrived(sender, e);
@@ -1120,7 +1107,6 @@ namespace MSNPSharpClient
         private void ResetAll()
         {
             syncContactListCompleted = false;
-            tmrKeepOnLine.Enabled = false;
 
             displayImageBox.Image = null;
             displayImageBox.SizeMode = PictureBoxSizeMode.CenterImage;
@@ -1202,8 +1188,6 @@ namespace MSNPSharpClient
                 SortByStatus(null);
             else
                 SortByGroup(null);
-
-            tmrKeepOnLine.Enabled = true;
         }
 
 
@@ -1300,17 +1284,6 @@ namespace MSNPSharpClient
             }
         }
 
-        private int nextPing = 50;
-        private void tmrKeepOnLine_Tick(object sender, EventArgs e)
-        {
-            if (nextPing > 0)
-                nextPing--;
-            if (nextPing == 0)
-            {
-                nextPing--;
-                messenger.Nameserver.SendPing();
-            }
-        }
 
 
 
