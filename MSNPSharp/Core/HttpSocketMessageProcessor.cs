@@ -77,7 +77,7 @@ namespace MSNPSharp.Core
                     sb.Append("IP=" + ConnectivitySettings.Host);
                     break;
                 case HttpPollAction.Poll:
-                    sb.Append("Action=poll&");
+                    sb.Append("Action=poll&Lifespan=5&");
                     sb.Append("SessionID=" + SessionID);
                     break;
                 case HttpPollAction.None:
@@ -241,8 +241,6 @@ namespace MSNPSharp.Core
 
         private void EndGetResponseCallback(IAsyncResult ar)
         {
-            bool wasSending = false;
-            byte[] responseData = null;
             int responseLength = 0;
 
             lock (_lock)
@@ -283,52 +281,34 @@ namespace MSNPSharp.Core
                     }
                 }
 
-
-
-                responseData = new byte[responseLength];
-                int responseRead = 0;
-
                 Stream responseStream = response.GetResponseStream();
-
-                while (responseRead < responseLength)
-                {
-                    byte[] buf = new byte[256];
-                    int read = responseStream.Read(buf, 0, buf.Length);
-                    Array.Copy(buf, 0, responseData, responseRead, read);
-                    responseRead += read;
-                }
-
-                responseStream.Close();
-                response.Close();
-
-                wasSending = sending;
-                sending = false;
-            }
-
-            Thread dispatchThread = new Thread(new ParameterizedThreadStart(DoDispatch));
-            dispatchThread.Start(new object[] { responseData, wasSending });
-
-            
-
-            lock (_lock)
-            {
-                if ((!sending) && (!pollTimer.Enabled))
-                    pollTimer.Start();
+                HttpResponseState httpState = new HttpResponseState(request, response, responseStream, responseLength, sending);
+                responseStream.BeginRead(httpState.Buffer, httpState.Offset, responseLength - httpState.Offset, EndRead, httpState);
             }
         }
 
-        private void DoDispatch(object param)
+        private void EndRead(IAsyncResult ar)
         {
-            object[] _params = param as object[];
-            byte[] responseData = _params[0] as byte[];
-            bool wasSending = (bool)_params[1];
+            HttpResponseState state = (HttpResponseState)ar.AsyncState;
+            int read = state.ResponseStream.EndRead(ar);
+            state.Offset += read;
 
-            if (wasSending)
+            if (state.Offset < state.Buffer.Length)
+            {
+                state.ResponseStream.BeginRead(state.Buffer, state.Offset, state.Buffer.Length - state.Offset, EndRead, state);
+                return;
+            }
+
+            state.ResponseStream.Close();
+            state.Response.Close();
+            sending = false;
+
+            if (state.WasSending)
             {
                 OnSendCompleted(new ObjectEventArgs(0));
             }
 
-            using (BinaryReader reader = new BinaryReader(new MemoryStream(responseData, 0, responseData.Length)))
+            using (BinaryReader reader = new BinaryReader(new MemoryStream(state.Buffer, 0, state.Buffer.Length)))
             {
                 messagePool.BufferData(reader);
             }
@@ -339,11 +319,36 @@ namespace MSNPSharp.Core
                 messageReceiver(incomingMessage);
             }
 
+            lock (_lock)
+            {
+                if ((!sending) && (!pollTimer.Enabled))
+                    pollTimer.Start();
+            }
         }
 
         public void Dispose()
         {
             // TODO
+        }
+
+        private class HttpResponseState
+        {
+            public WebRequest Request;
+            public WebResponse Response;
+            public Stream ResponseStream;
+            public int Offset = 0;
+            public byte[] Buffer;
+            public bool WasSending = false;
+
+            public HttpResponseState(WebRequest request, WebResponse response, Stream responseStream,
+                int length, bool wasSending)
+            {
+                this.Request = request;
+                this.Response = response;
+                this.ResponseStream = responseStream;
+                this.Buffer = new byte[length];
+                this.WasSending = wasSending;
+            }
         }
     }
 };
