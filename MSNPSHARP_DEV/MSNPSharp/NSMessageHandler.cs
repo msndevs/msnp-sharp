@@ -1538,42 +1538,39 @@ namespace MSNPSharp
             {
                 // Combine initial ADL for Contacts
                 hashlist = new Dictionary<string, RoleLists>(ContactList.Count);
-                lock (ContactList.SyncRoot)
+
+                foreach (Contact contact in ContactList.All)
                 {
-                    foreach (Contact contact in ContactList.All)
-                    {
-                        if (contact.ADLCount == 0)
-                            continue;
+                    if (contact.ADLCount == 0)
+                        continue;
 
-                        contact.ADLCount--;
+                    contact.ADLCount--;
 
-                        string ch = contact.Hash;
-                        RoleLists l = RoleLists.None;
+                    string ch = contact.Hash;
+                    RoleLists l = RoleLists.None;
 
-                        if (contact.OnForwardList)
-                            l |= RoleLists.Forward;
+                    if (contact.OnForwardList)
+                        l |= RoleLists.Forward;
 
-                        if (contact.OnAllowedList)
-                            l |= RoleLists.Allow;
+                    if (contact.OnAllowedList)
+                        l |= RoleLists.Allow;
 
-                        if (contact.AppearOffline)
-                            l |= RoleLists.Hide;
+                    if (contact.AppearOffline)
+                        l |= RoleLists.Hide;
 
-                        if (l != RoleLists.None && !hashlist.ContainsKey(ch))
-                            hashlist.Add(ch, l);
-                    }
+                    if (l != RoleLists.None && !hashlist.ContainsKey(ch))
+                        hashlist.Add(ch, l);
                 }
+
                 string[] adls = ContactList.GenerateMailListForAdl(hashlist, true);
 
-                if (adls.Length > 0)
+                foreach (string payload in adls)
                 {
-                    foreach (string payload in adls)
-                    {
-                        NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
-                        message.TransactionID = nsmp.IncreaseTransactionID();
-                        adlState.InitialADLs.Add(message.TransactionID, message);
-                    }
+                    NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
+                    message.TransactionID = nsmp.IncreaseTransactionID();
+                    adlState.InitialADLs.Add(message.TransactionID, message);
                 }
+
                 scene |= adlState.IgnoredSenario;
                 adlState.ContactADLProcessed = true;
             }
@@ -1590,30 +1587,25 @@ namespace MSNPSharp
                     if (CircleList.Count > 0)
                     {
                         hashlist = new Dictionary<string, RoleLists>(CircleList.Count);
-                        lock (ContactList.SyncRoot)
-                        {
-                            foreach (Contact circle in CircleList.Values)
-                            {
-                                if (circle.ADLCount == 0)
-                                    continue;
 
-                                circle.ADLCount--;
-                                string ch = circle.Hash;
-                                RoleLists l = circle.Lists;
-                                hashlist.Add(ch, l);
-                            }
+                        foreach (Contact circle in CircleList.Values)
+                        {
+                            if (circle.ADLCount == 0)
+                                continue;
+
+                            circle.ADLCount--;
+                            string ch = circle.Hash;
+                            RoleLists l = circle.Lists;
+                            hashlist.Add(ch, l);
                         }
 
                         string[] circleadls = ContactList.GenerateMailListForAdl(hashlist, true);
 
-                        if (circleadls.Length > 0)
+                        foreach (string payload in circleadls)
                         {
-                            foreach (string payload in circleadls)
-                            {
-                                NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
-                                message.TransactionID = nsmp.IncreaseTransactionID();
-                                adlState.InitialADLs.Add(message.TransactionID, message);
-                            }
+                            NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
+                            message.TransactionID = nsmp.IncreaseTransactionID();
+                            adlState.InitialADLs.Add(message.TransactionID, message);
                         }
                     }
                 }
@@ -1626,14 +1618,11 @@ namespace MSNPSharp
             #endregion
 
             // Send All Initial ADLs...
-            lock (adlState.InitialADLs)
-            {
-                Dictionary<int, NSPayLoadMessage> initialADLsCopy = new Dictionary<int, NSPayLoadMessage>(adlState.InitialADLs);
+            Dictionary<int, NSPayLoadMessage> initialADLsCopy = new Dictionary<int, NSPayLoadMessage>(adlState.InitialADLs);
 
-                foreach (NSPayLoadMessage nsPayload in initialADLsCopy.Values)
-                {
-                    nsmp.SendMessage(nsPayload, nsPayload.TransactionID);
-                }
+            foreach (NSPayLoadMessage nsPayload in initialADLsCopy.Values)
+            {
+                nsmp.SendMessage(nsPayload, nsPayload.TransactionID);
             }
         }
 
