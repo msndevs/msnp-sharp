@@ -142,7 +142,9 @@ namespace MSNPSharp
 
         public void Disconnect()
         {
-            SendMessage(new NSMessage("OUT", new string[] { }));
+            if (Connected)
+                SendMessage(new NSMessage("OUT", new string[] { }));
+
             Processor.Disconnect();
         }
 

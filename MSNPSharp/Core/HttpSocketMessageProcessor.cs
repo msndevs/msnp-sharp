@@ -155,6 +155,12 @@ namespace MSNPSharp.Core
 
                 OnDisconnected();
             }
+
+            opened = false;
+            verCommand = false;
+            cvrCommand = false;
+            usrCommand = false;
+            openCommand = null;
         }
 
         public override void SendMessage(NetworkMessage message)
@@ -328,7 +334,7 @@ namespace MSNPSharp.Core
 
         public void Dispose()
         {
-            // TODO
+            Disconnect();
         }
 
         private class HttpResponseState
