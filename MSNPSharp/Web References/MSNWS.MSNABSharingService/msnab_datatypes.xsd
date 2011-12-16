@@ -35,6 +35,26 @@
       <xsd:element minOccurs="0" maxOccurs="unbounded" name="ContactWebSite" nillable="true" type="msnab:contactWebSiteType" />
     </xsd:sequence>
   </xsd:complexType>
+  <xsd:complexType name="ArrayOfHandleType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="ServiceHandle" nillable="true" type="msnab:HandleType" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="ArrayOfServiceName">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="ServiceType" type="msnab:ServiceName" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="ArrayOfServiceType">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="Service" type="msnab:ServiceType" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="ArrayOfRoleId">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="unbounded" name="RoleId" type="msnab:RoleId" />
+    </xsd:sequence>
+  </xsd:complexType>
   <xsd:complexType name="abInfoType">
     <xsd:sequence>
       <xsd:element minOccurs="1" maxOccurs="1" name="MigratedTo" type="xsd:short" />
@@ -193,6 +213,13 @@
         </xsd:complexType>
       </xsd:element>
       <xsd:element minOccurs="0" name="MembershipIsComplete" type="xsd:boolean" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="ServiceFilter">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" maxOccurs="1" name="Types" type="msnab:ArrayOfServiceName" />
+      <xsd:element minOccurs="0" maxOccurs="1" name="Handles" type="msnab:ArrayOfHandleType" />
+      <xsd:element minOccurs="1" maxOccurs="1" name="LastChange" type="xsd:dateTime" />
     </xsd:sequence>
   </xsd:complexType>
   <xsd:complexType name="BaseMember" abstract="true">

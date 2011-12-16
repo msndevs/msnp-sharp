@@ -198,7 +198,7 @@ namespace MSNPSharp.IO
                         {
                             ret = (MCLSerializer)new XmlSerializer(targettype).Deserialize(ms);
                         }
-                        catch (Exception)
+                        catch (InvalidOperationException)
                         {
                             // Deserialize error: XML struct changed, so create a empty mcl serializer.
                             ret = (MCLSerializer)Activator.CreateInstance(targettype);

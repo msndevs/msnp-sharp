@@ -46,7 +46,6 @@ namespace MSNPSharpClient
             this.deleteMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.openImageDialog = new System.Windows.Forms.OpenFileDialog();
-            this.tmrKeepOnLine = new System.Windows.Forms.Timer(this.components);
             this.sortContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripSortByStatus = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSortBygroup = new System.Windows.Forms.ToolStripMenuItem();
@@ -216,10 +215,6 @@ namespace MSNPSharpClient
             this.openImageDialog.Filter = "Supported Images|*.png;*.jpg;*.jpeg;*.gif";
             this.openImageDialog.Multiselect = true;
             this.openImageDialog.Title = "Select image";
-            // 
-            // tmrKeepOnLine
-            // 
-            this.tmrKeepOnLine.Interval = 1000;
             // 
             // sortContextMenu
             // 
@@ -836,7 +831,6 @@ namespace MSNPSharpClient
 
         private OpenFileDialog openFileDialog;
         private OpenFileDialog openImageDialog;
-        private System.Windows.Forms.Timer tmrKeepOnLine;
         private ImageList ImageList1;
         private ContextMenuStrip userMenuStrip;
         private ToolStripMenuItem sendIMMenuItem;

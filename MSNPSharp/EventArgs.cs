@@ -430,45 +430,6 @@ namespace MSNPSharp
     }
 
     /// <summary>
-    /// Used as event argument when an answer to a ping is received.
-    /// </summary>
-    [Serializable()]
-    public class PingAnswerEventArgs : EventArgs
-    {
-        /// <summary>
-        /// The number of seconds to wait before sending another PNG, 
-        /// and is reset to 50 every time a command is sent to the server. 
-        /// In environments where idle connections are closed after a short time, 
-        /// you should send a command to the server (even if it's just a PNG) at least this often.
-        /// Note: MSNPSharp does not handle this! E.g. if you experience unexpected connection dropping call the Ping() method.
-        /// </summary>
-        public int SecondsToWait
-        {
-            get
-            {
-                return secondsToWait;
-            }
-            set
-            {
-                secondsToWait = value;
-            }
-        }
-
-        /// <summary>
-        /// </summary>
-        private int secondsToWait;
-
-
-        /// <summary>
-        /// </summary>
-        /// <param name="seconds"></param>
-        public PingAnswerEventArgs(int seconds)
-        {
-            SecondsToWait = seconds;
-        }
-    }
-
-    /// <summary>
     /// Used as event argument when any contact list mutates.
     /// </summary>
     [Serializable()]
