@@ -1626,16 +1626,17 @@ namespace MSNPSharp
             #endregion
 
             // Send All Initial ADLs...
+            Dictionary<int, NSPayLoadMessage> initialADLsCopy = null;
             lock (adlState.InitialADLs)
             {
-                Dictionary<int, NSPayLoadMessage> initialADLsCopy = new Dictionary<int, NSPayLoadMessage>(adlState.InitialADLs);
-
-                foreach (NSPayLoadMessage nsPayload in initialADLsCopy.Values)
-                {
-                    nsmp.SendMessage(nsPayload, nsPayload.TransactionID);
-                }
+                initialADLsCopy = new Dictionary<int, NSPayLoadMessage>(adlState.InitialADLs);
+            }
+            foreach (NSPayLoadMessage nsPayload in initialADLsCopy.Values)
+            {
+                nsmp.SendMessage(nsPayload, nsPayload.TransactionID);
             }
         }
+    
 
         private bool ProcessADL(int transid)
         {
@@ -1655,11 +1656,6 @@ namespace MSNPSharp
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "All initial ADLs have processed.", GetType().Name);
 
-                    if (AutoSynchronize)
-                    {
-                        OnSignedIn(EventArgs.Empty);
-                    }
-
                     if (!AddressBookSynchronized)
                     {
                         if (AutoSynchronize)
@@ -1671,14 +1667,15 @@ namespace MSNPSharp
                                 {
                                     contact.OnPendingList = false;
                                 }
-                                else
-                                {
-                                    ContactService.OnFriendshipRequested(new ContactEventArgs(contact));
-                                }
                             }
                         }
 
                         ContactService.OnSynchronizationCompleted(EventArgs.Empty);
+                    }
+
+                    if (AutoSynchronize)
+                    {
+                        OnSignedIn(EventArgs.Empty);
                     }
                 }
                 return true;
