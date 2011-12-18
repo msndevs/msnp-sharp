@@ -1538,39 +1538,42 @@ namespace MSNPSharp
             {
                 // Combine initial ADL for Contacts
                 hashlist = new Dictionary<string, RoleLists>(ContactList.Count);
-
-                foreach (Contact contact in ContactList.All)
+                lock (ContactList.SyncRoot)
                 {
-                    if (contact.ADLCount == 0)
-                        continue;
+                    foreach (Contact contact in ContactList.All)
+                    {
+                        if (contact.ADLCount == 0)
+                            continue;
 
-                    contact.ADLCount--;
+                        contact.ADLCount--;
 
-                    string ch = contact.Hash;
-                    RoleLists l = RoleLists.None;
+                        string ch = contact.Hash;
+                        RoleLists l = RoleLists.None;
 
-                    if (contact.OnForwardList)
-                        l |= RoleLists.Forward;
+                        if (contact.OnForwardList)
+                            l |= RoleLists.Forward;
 
-                    if (contact.OnAllowedList)
-                        l |= RoleLists.Allow;
+                        if (contact.OnAllowedList)
+                            l |= RoleLists.Allow;
 
-                    if (contact.AppearOffline)
-                        l |= RoleLists.Hide;
+                        if (contact.AppearOffline)
+                            l |= RoleLists.Hide;
 
-                    if (l != RoleLists.None && !hashlist.ContainsKey(ch))
-                        hashlist.Add(ch, l);
+                        if (l != RoleLists.None && !hashlist.ContainsKey(ch))
+                            hashlist.Add(ch, l);
+                    }
                 }
-
                 string[] adls = ContactList.GenerateMailListForAdl(hashlist, true);
 
-                foreach (string payload in adls)
+                if (adls.Length > 0)
                 {
-                    NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
-                    message.TransactionID = nsmp.IncreaseTransactionID();
-                    adlState.InitialADLs.Add(message.TransactionID, message);
+                    foreach (string payload in adls)
+                    {
+                        NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
+                        message.TransactionID = nsmp.IncreaseTransactionID();
+                        adlState.InitialADLs.Add(message.TransactionID, message);
+                    }
                 }
-
                 scene |= adlState.IgnoredSenario;
                 adlState.ContactADLProcessed = true;
             }
@@ -1587,25 +1590,30 @@ namespace MSNPSharp
                     if (CircleList.Count > 0)
                     {
                         hashlist = new Dictionary<string, RoleLists>(CircleList.Count);
-
-                        foreach (Contact circle in CircleList.Values)
+                        lock (ContactList.SyncRoot)
                         {
-                            if (circle.ADLCount == 0)
-                                continue;
+                            foreach (Contact circle in CircleList.Values)
+                            {
+                                if (circle.ADLCount == 0)
+                                    continue;
 
-                            circle.ADLCount--;
-                            string ch = circle.Hash;
-                            RoleLists l = circle.Lists;
-                            hashlist.Add(ch, l);
+                                circle.ADLCount--;
+                                string ch = circle.Hash;
+                                RoleLists l = circle.Lists;
+                                hashlist.Add(ch, l);
+                            }
                         }
 
                         string[] circleadls = ContactList.GenerateMailListForAdl(hashlist, true);
 
-                        foreach (string payload in circleadls)
+                        if (circleadls.Length > 0)
                         {
-                            NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
-                            message.TransactionID = nsmp.IncreaseTransactionID();
-                            adlState.InitialADLs.Add(message.TransactionID, message);
+                            foreach (string payload in circleadls)
+                            {
+                                NSPayLoadMessage message = new NSPayLoadMessage("ADL", payload);
+                                message.TransactionID = nsmp.IncreaseTransactionID();
+                                adlState.InitialADLs.Add(message.TransactionID, message);
+                            }
                         }
                     }
                 }
@@ -1618,8 +1626,11 @@ namespace MSNPSharp
             #endregion
 
             // Send All Initial ADLs...
-            Dictionary<int, NSPayLoadMessage> initialADLsCopy = new Dictionary<int, NSPayLoadMessage>(adlState.InitialADLs);
-
+            Dictionary<int, NSPayLoadMessage> initialADLsCopy = null;
+            lock (adlState.InitialADLs)
+            {
+                initialADLsCopy = new Dictionary<int, NSPayLoadMessage>(adlState.InitialADLs);
+            }
             foreach (NSPayLoadMessage nsPayload in initialADLsCopy.Values)
             {
                 nsmp.SendMessage(nsPayload, nsPayload.TransactionID);
@@ -1644,11 +1655,6 @@ namespace MSNPSharp
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "All initial ADLs have processed.", GetType().Name);
 
-                    if (AutoSynchronize)
-                    {
-                        OnSignedIn(EventArgs.Empty);
-                    }
-
                     if (!AddressBookSynchronized)
                     {
                         if (AutoSynchronize)
@@ -1660,14 +1666,15 @@ namespace MSNPSharp
                                 {
                                     contact.OnPendingList = false;
                                 }
-                                else
-                                {
-                                    ContactService.OnFriendshipRequested(new ContactEventArgs(contact));
-                                }
                             }
                         }
 
                         ContactService.OnSynchronizationCompleted(EventArgs.Empty);
+                    }
+
+                    if (AutoSynchronize)
+                    {
+                        OnSignedIn(EventArgs.Empty);
                     }
                 }
                 return true;
