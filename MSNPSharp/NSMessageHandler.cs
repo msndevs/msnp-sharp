@@ -1651,14 +1651,14 @@ namespace MSNPSharp
                     {
                         if (AutoSynchronize)
                         {
-                            foreach (Contact contact in ContactList.Pending)
+                            foreach (Contact contact in ContactList.All)
                             {
                                 // Added by other place, this place hasn't synchronized this contact yet.
-                                if (contact.OnForwardList)
+                                if (contact.OnForwardList && contact.OnPendingList)
                                 {
                                     contact.OnPendingList = false;
                                 }
-                                else
+                                else if (contact.FriendshipStatus == RoleId.Pending)
                                 { 
                                     // FriendshipRequested (1/2): Before SignedIn
                                     ContactService.OnFriendshipRequested(new ContactEventArgs(contact));
