@@ -228,9 +228,10 @@ namespace MSNPSharp.Core
                 request.AllowWriteStreamBuffering = false;
                 request.KeepAlive = true;
                 request.UserAgent = "MSMSGS";
-                request.ContentType = "application/x-msn-messenger";
+                request.ContentType = "text/html; charset=UTF-8";
                 request.ContentLength = data.Length;
                 request.Headers.Add("Pragma", "no-cache");
+                request.Headers.Add("X-Requested-Session-Content-Type", "text/html");
                 request.ServicePoint.Expect100Continue = false;
                 //request.Proxy = null; // TODO: don't disable proxy
 
