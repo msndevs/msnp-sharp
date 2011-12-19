@@ -1658,6 +1658,10 @@ namespace MSNPSharp
                                 {
                                     contact.OnPendingList = false;
                                 }
+                                else
+                                {
+                                    ContactService.OnFriendshipRequested(new ContactEventArgs(contact));
+                                }
                             }
                         }
 
