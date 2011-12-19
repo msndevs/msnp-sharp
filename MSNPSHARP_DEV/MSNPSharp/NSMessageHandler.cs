@@ -1659,7 +1659,8 @@ namespace MSNPSharp
                                     contact.OnPendingList = false;
                                 }
                                 else
-                                {
+                                { 
+                                    // FriendshipRequested (1/2): Before SignedIn
                                     ContactService.OnFriendshipRequested(new ContactEventArgs(contact));
                                 }
                             }

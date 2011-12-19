@@ -815,7 +815,8 @@ namespace MSNPSharp.IO
                                         contact.OnPendingList = false;
                                     }
                                     // At this phase, we requested all memberships including pending.
-                                    else if (contact.OnPendingList)
+                                    // FriendshipRequested (2/2): After SignedIn
+                                    else if (contact.OnPendingList && NSMessageHandler.IsSignedIn)
                                     {
                                         NSMessageHandler.ContactService.OnFriendshipRequested(new ContactEventArgs(contact));
                                     }
