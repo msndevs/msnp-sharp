@@ -718,7 +718,7 @@ namespace MSNPSharpClient
             if (true /* || messenger.Nameserver.BotMode */)  //If you want your provisioned account in botmode to fire ReverseAdded event, uncomment this.
             {
                 // Show pending window if it is necessary.
-                if (contact.OnPendingList)
+                if (contact.FriendshipStatus == RoleId.Pending)
                 {
                     ReverseAddedForm form = new ReverseAddedForm(contact, messenger);
                     form.FormClosed += delegate(object f, FormClosedEventArgs fce)

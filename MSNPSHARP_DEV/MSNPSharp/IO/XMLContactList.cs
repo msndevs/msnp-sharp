@@ -117,23 +117,25 @@ namespace MSNPSharp.IO
             {
                 foreach (RoleId role in fs.Keys)
                 {
-                    if (role == RoleId.OneWayRelationship || role == RoleId.TwoWayRelationship)
+                    foreach (BaseMember bm in fs[role].Values)
                     {
-                        foreach (BaseMember bm in fs[role].Values)
+                        long cid;
+                        string account;
+                        IMAddressInfoType type;
+                        string displayname;
+
+                        if (DetectBaseMember(bm, out account, out type, out cid, out displayname))
                         {
-                            long cid;
-                            string account;
-                            IMAddressInfoType type;
-                            string displayname;
+                            Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
 
-                            if (DetectBaseMember(bm, out account, out type, out cid, out displayname))
+                            if (cid != 0)
+                                contact.CID = cid;
+
+                            contact.SetFriendshipStatus(role, false);
+
+                            if (role == RoleId.Pending)
                             {
-                                Contact contact = NSMessageHandler.ContactList.GetContact(account, displayname, type);
-
-                                if (cid != 0)
-                                    contact.CID = cid;
-
-                                contact.SetFriendshipStatus(role, false);
+                                NSMessageHandler.ContactService.OnFriendshipRequested(new ContactEventArgs(contact));
                             }
                         }
                     }
@@ -876,14 +878,11 @@ namespace MSNPSharp.IO
                                 if (serviceClone.ServiceType == ServiceName.SocialNetwork)
                                 {
                                     Contact contact = NSMessageHandler.ContactList.GetContactWithCreate(account, type);
+                                    contact.SetFriendshipStatus(memberrole, true);
 
-                                    if (memberrole == RoleId.OneWayRelationship)
+                                    if (memberrole == RoleId.Pending)
                                     {
-                                        contact.SetFriendshipStatus(RoleId.OneWayRelationship, true);
-                                    }
-                                    if (memberrole == RoleId.TwoWayRelationship)
-                                    {
-                                        contact.SetFriendshipStatus(RoleId.TwoWayRelationship, true);
+                                        NSMessageHandler.ContactService.OnFriendshipRequested(new ContactEventArgs(contact));
                                     }
                                 }
                             }
