@@ -878,6 +878,9 @@ namespace MSNPSharp.IO
                                 if (serviceClone.ServiceType == ServiceName.SocialNetwork)
                                 {
                                     Contact contact = NSMessageHandler.ContactList.GetContactWithCreate(account, type);
+                                    if (cid != 0)
+                                        contact.CID = cid;
+
                                     contact.SetFriendshipStatus(memberrole, true);
 
                                     if (memberrole == RoleId.Pending)
