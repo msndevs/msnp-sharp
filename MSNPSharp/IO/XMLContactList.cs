@@ -2726,7 +2726,7 @@ namespace MSNPSharp.IO
                         needsDelete |= true;
                     }
 
-                    if (needsDelete && contact.Lists == RoleLists.None)
+                    if (needsDelete && contact.Lists == RoleLists.None && contact.FriendshipStatus == RoleId.None)
                     {
                         contactList.Remove(account, type);
                     }
