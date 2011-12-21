@@ -1,7 +1,7 @@
 #region
 /*
-Copyright (c) 2002-2011, Bas Geertsema, Xih Solutions
-(http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice, Andy Phan.
+Copyright (c) 2002-2012, Bas Geertsema, Xih Solutions
+(http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice, Andy Phan, Chang Liu. 
 All rights reserved. http://code.google.com/p/msnp-sharp/
 
 Redistribution and use in source and binary forms, with or without
@@ -84,7 +84,7 @@ namespace MSNPSharp.Core
             return base.ToString();
         }
 
-        #region ICloneable ³ÉÔ±
+        #region ICloneable ï¿½ï¿½Ô±
 
         object ICloneable.Clone()
         {

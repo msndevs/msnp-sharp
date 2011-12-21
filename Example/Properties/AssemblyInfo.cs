@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 [assembly: CLSCompliantAttribute(false)]
 [assembly: AssemblyTitleAttribute("MSNPSharp Example Client")]
 [assembly: AssemblyDescriptionAttribute(".NET MSN Messenger library Example Client")]
-[assembly: AssemblyCopyrightAttribute("Copyright (c) 2002-2011, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice, Andy Phan.")]
+[assembly: AssemblyCopyrightAttribute("Copyright (c) 2002-2012, Bas Geertsema, Xih Solutions (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice, Andy Phan, Chang Liu. ")]
 [assembly: AssemblyProductAttribute("MSNPSharp")]
 [assembly: AssemblyDelaySignAttribute(false)]
 [assembly: GuidAttribute("FAE04EC0-301F-11D3-BF4B-00C04F79EFBC")]
