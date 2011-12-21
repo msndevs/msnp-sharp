@@ -686,7 +686,7 @@ namespace MSNPSharpClient
             this.accountTextBox.Name = "accountTextBox";
             this.accountTextBox.Size = new System.Drawing.Size(263, 21);
             this.accountTextBox.TabIndex = 9;
-            this.accountTextBox.Text = "testmsnpsharp@hotmail.com";
+            this.accountTextBox.Text = "testmsnpsharp@msn.com";
             this.accountTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.login_KeyPress);
             // 
             // loginButton

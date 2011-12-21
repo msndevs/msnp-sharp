@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 
 // Version information for an assembly consists of the following four values:
 // Major.Minor.Build.SVNRevision
-[assembly: AssemblyVersionAttribute("3.2.1.2632")]
-[assembly: AssemblyFileVersionAttribute("3.2.1.2632")]
+[assembly: AssemblyVersionAttribute("3.2.1.2668")]
+[assembly: AssemblyFileVersionAttribute("3.2.1.2668")]
 [assembly: AssemblyCompanyAttribute("MSNPSharp")]
 [assembly: AssemblyTrademarkAttribute("MSNPSharp")]
