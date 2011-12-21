@@ -56,7 +56,6 @@ namespace MSNPSharp
         private string signatureSound = string.Empty;
 
         private MediaType mediaType = MediaType.None;
-        private string currentMedia = string.Empty;
         private string appName = string.Empty;
         private string format = string.Empty;
         private string[] content;

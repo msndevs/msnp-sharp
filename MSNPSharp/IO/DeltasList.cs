@@ -288,7 +288,6 @@ namespace MSNPSharp.IO
 
             lock (UserImageRelationships)
             {
-                string key = UserImageRelationships[siblingAccount];
                 UserImageRelationships.Remove(siblingAccount);
             }
 

@@ -199,10 +199,10 @@ namespace MSNPSharp
         {
             // set the text property for easy retrieval
             Text = System.Text.Encoding.UTF8.GetString(data);
-            
-            if(ParentMessage == null)
+
+            if (ParentMessage == null)
                 return;
-            
+
             if (ParentMessage is MimeMessage)
             {
                 MimeMessage MSGMessage = (MimeMessage)ParentMessage;
@@ -362,6 +362,10 @@ namespace MSNPSharp
                     catch (Exception)
                     {
                     }
+                }
+
+                if (PFValue != string.Empty)
+                {
                 }
 
                 if (mimeHeader.ContainsKey(MIMEHeaderStrings.P4_Context))
