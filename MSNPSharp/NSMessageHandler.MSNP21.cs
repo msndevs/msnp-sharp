@@ -744,9 +744,9 @@ namespace MSNPSharp
 
                     XmlElement sep = xmlDoc.CreateElement("sep");
                     sep.SetAttribute("n", ServiceShortNames.IM.ToString());
-                    XmlElement Capabilities = xmlDoc.CreateElement("Capabilities");
-                    Capabilities.InnerText = ((long)localIMCaps).ToString() + ":" + ((long)localIMCapsEx).ToString();
-                    sep.AppendChild(Capabilities);
+                    XmlElement capabilities = xmlDoc.CreateElement("Capabilities");
+                    capabilities.InnerText = ((long)localIMCaps).ToString() + ":" + ((long)localIMCapsEx).ToString();
+                    sep.AppendChild(capabilities);
                     userElement.AppendChild(sep);
 
                     if (BotMode)
@@ -773,9 +773,9 @@ namespace MSNPSharp
                     XmlElement TYP = xmlDoc.CreateElement("TYP");
                     TYP.InnerText = "1";
                     sep.AppendChild(TYP);
-                    XmlElement Capabilities = xmlDoc.CreateElement("Capabilities");
-                    Capabilities.InnerText = ((long)localPECaps).ToString() + ":" + ((long)localPECapsEx).ToString();
-                    sep.AppendChild(Capabilities);
+                    XmlElement capabilities = xmlDoc.CreateElement("Capabilities");
+                    capabilities.InnerText = ((long)localPECaps).ToString() + ":" + ((long)localPECapsEx).ToString();
+                    sep.AppendChild(capabilities);
                     userElement.AppendChild(sep);
 
                     if (BotMode)
@@ -793,25 +793,25 @@ namespace MSNPSharp
                 {
                     XmlElement sep = xmlDoc.CreateElement("sep");
                     sep.SetAttribute("n", ServiceShortNames.PD.ToString());
-                    XmlElement ClientType = xmlDoc.CreateElement("ClientType");
-                    ClientType.InnerText = "1";
-                    sep.AppendChild(ClientType);
-                    XmlElement EpName = xmlDoc.CreateElement("EpName");
-                    EpName.InnerText = MSNHttpUtility.XmlEncode(newEPName);
-                    sep.AppendChild(EpName);
-                    XmlElement Idle = xmlDoc.CreateElement("Idle");
-                    Idle.InnerText = ((newStatus == PresenceStatus.Idle) ? "true" : "false");
-                    sep.AppendChild(Idle);
-                    XmlElement State = xmlDoc.CreateElement("State");
-                    State.InnerText = ParseStatus(newStatus);
-                    sep.AppendChild(State);
+                    XmlElement clientType = xmlDoc.CreateElement("ClientType");
+                    clientType.InnerText = "1";
+                    sep.AppendChild(clientType);
+                    XmlElement epName = xmlDoc.CreateElement("EpName");
+                    epName.InnerText = MSNHttpUtility.XmlEncode(newEPName);
+                    sep.AppendChild(epName);
+                    XmlElement idle = xmlDoc.CreateElement("Idle");
+                    idle.InnerText = ((newStatus == PresenceStatus.Idle) ? "true" : "false");
+                    sep.AppendChild(idle);
+                    XmlElement state = xmlDoc.CreateElement("State");
+                    state.InnerText = ParseStatus(newStatus);
+                    sep.AppendChild(state);
                     userElement.AppendChild(sep);
 
                     if (BotMode)
                     {
                         // Don't call Owner.EpName. It is recursive call to this method.
                         PrivateEndPointData privateEndPoint = Owner.EndPointData[MachineGuid] as PrivateEndPointData;
-                        privateEndPoint.ClientType = String.Copy(ClientType.InnerText);
+                        privateEndPoint.ClientType = String.Copy(clientType.InnerText);
                         privateEndPoint.Name = newEPName;
                         privateEndPoint.Idle = bool.Parse(((newStatus == PresenceStatus.Idle) ? "true" : "false"));
                         privateEndPoint.State = newStatus;
