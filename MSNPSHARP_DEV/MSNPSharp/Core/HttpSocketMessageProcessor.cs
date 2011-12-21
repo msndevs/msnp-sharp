@@ -257,7 +257,6 @@ namespace MSNPSharp.Core
                     using (Stream requestStream = request.GetRequestStream())
                     {
                         requestStream.Write(data, 0, data.Length);
-                        Thread.Sleep(5000);
                     }
                 }
                 catch (WebException we)
@@ -308,6 +307,8 @@ namespace MSNPSharp.Core
                                         if ("close" == elements[1])
                                         {
                                             // Session is closed... OUT or SignoutFromHere() was sent.
+                                            connected = false;
+                                            OnDisconnected();
                                         }
                                         break;
                                     case "Action":
