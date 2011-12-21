@@ -51,7 +51,6 @@ namespace MSNPSharpClient
             this.toolStripSortBygroup = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripDeleteGroup = new System.Windows.Forms.ToolStripMenuItem();
             this.groupContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.toolTipChangePhoto = new System.Windows.Forms.ToolTip(this.components);
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.WhatsUpPanel = new System.Windows.Forms.Panel();
             this.lblNewsLink = new System.Windows.Forms.LinkLabel();
@@ -847,7 +846,6 @@ namespace MSNPSharpClient
         private ToolStripMenuItem importContactsMenuItem;
         private ToolStripMenuItem createCircleMenuItem;
         private ToolStripMenuItem deleteMenuItem;
-        private ToolTip toolTipChangePhoto;
         private TableLayoutPanel tableLayoutPanel1;
         private Panel WhatsUpPanel;
         private LinkLabel lblNewsLink;

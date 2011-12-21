@@ -132,11 +132,6 @@ namespace MSNPSharp.IO
                                 contact.CID = cid;
 
                             contact.SetFriendshipStatus(role, false);
-
-                            if (role == RoleId.Pending)
-                            {
-                                NSMessageHandler.ContactService.OnFriendshipRequested(new ContactEventArgs(contact));
-                            }
                         }
                     }
                 }
@@ -883,7 +878,8 @@ namespace MSNPSharp.IO
 
                                     contact.SetFriendshipStatus(memberrole, true);
 
-                                    if (memberrole == RoleId.Pending)
+                                    // FriendshipRequested (2/2): After SignedIn
+                                    if (memberrole == RoleId.Pending && NSMessageHandler.IsSignedIn)
                                     {
                                         NSMessageHandler.ContactService.OnFriendshipRequested(new ContactEventArgs(contact));
                                     }
@@ -1660,7 +1656,6 @@ namespace MSNPSharp.IO
 
                     #region Process Contacts
 
-                    SortedDictionary<long, long> newCIDList = new SortedDictionary<long, long>();
                     Dictionary<string, CircleInverseInfoType> newInverseInfos = new Dictionary<string, CircleInverseInfoType>();
 
                     Dictionary<string, CircleInverseInfoType> modifiedConnections = new Dictionary<string, CircleInverseInfoType>();
@@ -1751,15 +1746,6 @@ namespace MSNPSharp.IO
 
                                     if (contactType.contactInfo.contactType == MessengerContactType.Circle)
                                     {
-                                        RelationshipState state = GetCircleMemberRelationshipStateFromNetworkInfo(contactType.contactInfo.NetworkInfoList);
-
-                                        //switch (state)
-                                        //{
-                                        //    case RelationshipState.Accepted:
-                                        //    case RelationshipState.WaitingResponse:
-                                        //        newCIDList[CID] = CID;
-                                        //        break;
-                                        //}
 
                                         //We get the hidden representative of a new circle.
                                         Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "A circle contact found: contactType: " + contactType.contactInfo.contactType + "\r\n " +
@@ -1843,10 +1829,9 @@ namespace MSNPSharp.IO
 
         private void ProcessCircles(Dictionary<string, CircleInverseInfoType> modifiedConnections, Dictionary<string, CircleInverseInfoType> newInverseInfos, Scenario scene)
         {
-            int[] result = new int[] { 0, 0 };
-            //We must process modified circles first.
-            result = ProcessModifiedCircles(modifiedConnections, scene | Scenario.ModifiedCircles);
-            result = ProcessNewConnections(newInverseInfos, scene | Scenario.NewCircles);
+            // We must process modified circles first.
+            ProcessModifiedCircles(modifiedConnections, scene | Scenario.ModifiedCircles);
+            ProcessNewConnections(newInverseInfos, scene | Scenario.NewCircles);
         }
 
         private int[] ProcessNewConnections(Dictionary<string, CircleInverseInfoType> newInverseInfos, Scenario scene)
@@ -1930,7 +1915,6 @@ namespace MSNPSharp.IO
 
         private void SaveCircleInverseInfo(CircleInverseInfoType[] inverseInfoList)
         {
-            List<string> modifiedCircles = new List<string>(0);
             if (inverseInfoList != null)
             {
                 foreach (CircleInverseInfoType circle in inverseInfoList)
@@ -2823,8 +2807,7 @@ namespace MSNPSharp.IO
                                 networkInfo.SourceId == SourceId.FaceBook &&
                                 networkInfo.DomainId == DomainIds.FaceBookDomain)
                             {
-                                Contact networkContact = CreateGatewayContact(networkInfo);
-
+                                CreateGatewayContact(networkInfo);
                             }
                         }
                     }

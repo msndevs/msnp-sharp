@@ -57,8 +57,6 @@ namespace MSNPSharp
     {
         #region Fields
 
-        private string applicationId = String.Empty;
-
         private bool abSynchronized;
         private object syncObject = new object();
         private Semaphore binarySemaphore = new Semaphore(1, 1);
@@ -71,8 +69,6 @@ namespace MSNPSharp
         public ContactService(NSMessageHandler nsHandler)
             : base(nsHandler)
         {
-            applicationId = nsHandler.Credentials.ClientInfo.ApplicationId;
-
         }
 
         #region Events
@@ -831,7 +827,7 @@ namespace MSNPSharp
                 return;
             }
 
-            if (contact.Guid == null || contact.Guid == Guid.Empty)
+            if (contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
             string lowerId = abId.ToLowerInvariant();
@@ -1056,7 +1052,7 @@ namespace MSNPSharp
 
         public void AddContactToFavoriteGroup(Contact contact)
         {
-            if (contact.Guid == null || contact.Guid == Guid.Empty)
+            if (contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
             ContactGroup favGroup = NSMessageHandler.ContactGroups.FavoriteGroup;
@@ -1069,7 +1065,7 @@ namespace MSNPSharp
 
         public void RemoveContactFromFavoriteGroup(Contact contact)
         {
-            if (contact.Guid == null || contact.Guid == Guid.Empty)
+            if (contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
             ContactGroup favGroup = NSMessageHandler.ContactGroups.FavoriteGroup;
@@ -1088,7 +1084,7 @@ namespace MSNPSharp
                 return;
             }
 
-            if (contact.Guid == null || contact.Guid == Guid.Empty)
+            if (contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
             ABGroupContactAddAsync(contact, group,
@@ -1110,7 +1106,7 @@ namespace MSNPSharp
                 return;
             }
 
-            if (contact.Guid == null || contact.Guid == Guid.Empty)
+            if (contact.Guid == Guid.Empty)
                 throw new InvalidOperationException("This is not a valid Messenger contact.");
 
             ABGroupContactDeleteAsync(contact, group,

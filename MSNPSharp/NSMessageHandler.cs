@@ -418,7 +418,7 @@ namespace MSNPSharp
                     messageProcessor.SendCompleted -= OnProcessorSendCompletedCallback;
                 }
 
-                messageProcessor = value as SocketMessageProcessor;
+                messageProcessor = (SocketMessageProcessor)value;
 
                 if (messageProcessor != null)
                 {
@@ -531,14 +531,7 @@ namespace MSNPSharp
 
             pm.FriendlyName = newName;
 
-            if (Owner.Status != PresenceStatus.Offline)
-            {
-                SetPresenceStatus(
-                            Owner.Status,
-                            Owner.LocalEndPointIMCapabilities, Owner.LocalEndPointIMCapabilitiesEx,
-                            Owner.LocalEndPointPECapabilities, Owner.LocalEndPointPECapabilitiesEx,
-                            Owner.EpName, pm, true);
-            }
+            SetPersonalMessage(pm);
         }
 
         /// <summary>
@@ -557,7 +550,6 @@ namespace MSNPSharp
                     Owner.LocalEndPointPECapabilities, Owner.LocalEndPointPECapabilitiesEx,
                     Owner.EpName, newPSM, true);
             }
-
         }
 
         /// <summary>
@@ -1365,7 +1357,7 @@ namespace MSNPSharp
                             RoleLists list = (RoleLists)int.Parse(contactNode.Attributes["l"].Value);
                             account = account.ToLower(CultureInfo.InvariantCulture);
 
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, account + " has removed you from his/her " + list.ToString(), GetType().Name);
+                            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, account + ":" + type + " has removed you from his/her " + list.ToString(), GetType().Name);
 
                         } while (contactNode.NextSibling != null);
                     }
@@ -1466,9 +1458,18 @@ namespace MSNPSharp
             // Set display name, personal status and photo
             PersonalMessage pm = Owner.PersonalMessage;
 
-            string psmMessage = ContactService.Deltas.Profile.PersonalMessage;
-            string mydispName = String.IsNullOrEmpty(ContactService.Deltas.Profile.DisplayName) ?
-                Owner.NickName : ContactService.Deltas.Profile.DisplayName;
+            // If we don't have a live profile yet, get it from saved deltas file.
+            {
+                string psmMessageSaved = ContactService.Deltas.Profile.PersonalMessage;
+                string mydispNameSaved = String.IsNullOrEmpty(ContactService.Deltas.Profile.DisplayName)
+                    ? Owner.NickName : ContactService.Deltas.Profile.DisplayName;
+
+                if (String.IsNullOrEmpty(pm.Message))
+                    pm.Message = psmMessageSaved;
+
+                if (String.IsNullOrEmpty(pm.FriendlyName))
+                    pm.FriendlyName = mydispNameSaved;
+            }
 
             Color colorScheme = ColorTranslator.FromOle(ContactService.Deltas.Profile.ColorScheme);
             Owner.SetColorScheme(colorScheme);
@@ -1667,8 +1668,8 @@ namespace MSNPSharp
                                 {
                                     contact.OnPendingList = false;
                                 }
-                                else if (contact.FriendshipStatus == RoleId.Pending)
-                                { 
+                                else if (contact.OnPendingList || contact.FriendshipStatus == RoleId.Pending)
+                                {
                                     // FriendshipRequested (1/2): Before SignedIn
                                     ContactService.OnFriendshipRequested(new ContactEventArgs(contact));
                                 }

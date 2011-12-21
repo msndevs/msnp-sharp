@@ -299,8 +299,6 @@ namespace MSNPSharp.P2P
             if (payloadMessageSize <= maxSize)
                 return new P2PMessage[] { this };
 
-
-            Random rand = new Random();
             List<P2PMessage> chunks = new List<P2PMessage>();
             byte[] totalMessage = (InnerBody != null)
                 ? InnerBody

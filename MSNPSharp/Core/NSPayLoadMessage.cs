@@ -48,8 +48,6 @@ namespace MSNPSharp.Core
     [Serializable()]
     public class NSPayLoadMessage : NSMessage
     {
-        private string payLoad = string.Empty;
-
         public string PayLoad
         {
             get
