@@ -41,7 +41,6 @@ namespace MSNPSharp.Core
         private string gatewayIP;
         private WebProxy webProxy;
 
-        private byte[] socketBuffer = new byte[8192];
         private System.Timers.Timer pollTimer = new System.Timers.Timer(2000);
         private object _lock = new object();
 
@@ -245,7 +244,7 @@ namespace MSNPSharp.Core
                 request.ContentType = "text/html; charset=UTF-8";
                 request.UserAgent = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.912.63 Safari/535.7";
                 request.Headers.Add("X-Requested-Session-Content-Type", "text/html");
-                
+
                 request.ServicePoint.Expect100Continue = false;
 
                 if (webProxy != null)
@@ -253,9 +252,19 @@ namespace MSNPSharp.Core
                     request.Proxy = webProxy;
                 }
 
-                Stream requestStream = request.GetRequestStream();
-                requestStream.Write(data, 0, data.Length);
-                requestStream.Close();
+                try
+                {
+                    using (Stream requestStream = request.GetRequestStream())
+                    {
+                        requestStream.Write(data, 0, data.Length);
+                        Thread.Sleep(5000);
+                    }
+                }
+                catch (WebException we)
+                {
+                    OnDisconnected();
+                    return;
+                }
 
                 sending = true;
                 action = HttpPollAction.None;
@@ -266,10 +275,9 @@ namespace MSNPSharp.Core
 
         private void EndGetResponseCallback(IAsyncResult ar)
         {
-            int responseLength = 0;
-
             lock (_lock)
             {
+                int responseLength = 0;
                 HttpWebRequest request = (HttpWebRequest)ar.AsyncState;
                 HttpWebResponse response = (HttpWebResponse)request.EndGetResponse(ar);
 
@@ -297,6 +305,10 @@ namespace MSNPSharp.Core
                                         GatewayIP = elements[1];
                                         break;
                                     case "Session":
+                                        if ("close" == elements[1])
+                                        {
+                                            // Session is closed... OUT or SignoutFromHere() was sent.
+                                        }
                                         break;
                                     case "Action":
                                         break;

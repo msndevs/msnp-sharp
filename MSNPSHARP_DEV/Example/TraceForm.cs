@@ -70,7 +70,6 @@ namespace MSNPSharpClient
         private delegate void WriteHandler(string buffer, RichTextBox rtb);
         private const int MaxBufferLen = 1024;
         private StringBuilder buffer = new StringBuilder(MaxBufferLen);
-        private DateTime lastInputTime = DateTime.Now;
         private Thread writeThread = null;
         private Queue<char> messageQueue = new Queue<char>(MaxBufferLen);
         private bool canClose = false;

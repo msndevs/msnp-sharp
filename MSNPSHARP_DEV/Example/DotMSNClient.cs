@@ -141,7 +141,7 @@ namespace MSNPSharpClient
             // This event will be fired after a chat window has been closed on a different login end point.
             // You will get this notification to decide whether to close the local chat window as well.
             messenger.Nameserver.RemoteEndPointCloseIMWindow += new EventHandler<CloseIMWindowEventArgs>(Nameserver_RemoteEndPointCloseIMWindow);
-            
+
             #endregion
 
             // This event will be triggered after finished getting your contacts recent updates.
@@ -153,7 +153,7 @@ namespace MSNPSharpClient
             //In most cases, these error are not so important.
             messenger.ContactService.ServiceOperationFailed += new EventHandler<ServiceOperationFailedEventArgs>(ServiceOperationFailed);
             messenger.StorageService.ServiceOperationFailed += new EventHandler<ServiceOperationFailedEventArgs>(ServiceOperationFailed);
-            messenger.WhatsUpService.ServiceOperationFailed += new EventHandler<ServiceOperationFailedEventArgs>(ServiceOperationFailed); 
+            messenger.WhatsUpService.ServiceOperationFailed += new EventHandler<ServiceOperationFailedEventArgs>(ServiceOperationFailed);
 
             #endregion
         }
@@ -196,7 +196,7 @@ namespace MSNPSharpClient
 
                 return CircleOffline;
             }
-            
+
             public static int GetContactStatusImageIndex(PresenceStatus status)
             {
                 switch (status)
@@ -266,7 +266,7 @@ namespace MSNPSharpClient
             if (Messenger.Connected)
             {
                 Messenger.Nameserver.SignedOff -= Nameserver_SignedOff;
-                
+
                 ResetAll();
                 Messenger.Disconnect();
             }
@@ -332,7 +332,7 @@ namespace MSNPSharpClient
 
         void ServiceOperationFailed(object sender, ServiceOperationFailedEventArgs e)
         {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Method + ": " + e.Exception.ToString(), sender.GetType().Name); 
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Method + ": " + e.Exception.ToString(), sender.GetType().Name);
         }
 
         void ContactService_SynchronizationCompleted(object sender, EventArgs e)
@@ -376,8 +376,8 @@ namespace MSNPSharpClient
                     Contact c = messenger.ContactList.GetContactByCID(long.Parse(activityDetails.OwnerCID));
 
                     if (c != null)
-                    {                        
-                        c.Activities.Add(activityDetails);                        
+                    {
+                        c.Activities.Add(activityDetails);
                     }
                 }
 
@@ -389,14 +389,14 @@ namespace MSNPSharpClient
 
                 lblNewsLink.Text = "Get Feeds";
                 lblNewsLink.Tag = e.Response.FeedUrl;
-                
+
                 ShowNextNews();
             }
         }
 
         private int currentActivity = 0;
         private bool activityForward = true;
-        
+
         private void ShowNextNews()
         {
             if (currentActivity >= activities.Count || currentActivity < 0)
@@ -441,8 +441,8 @@ namespace MSNPSharpClient
                         // which might be a bug of Mono's implementation.
                         // pbNewsPicture.LoadAsync(c.UserTileURL.AbsoluteUri);
 
-                        HttpAsyncDataDownloader.BeginDownload(c.UserTileURL.AbsoluteUri + "?t=" + System.Web.HttpUtility.UrlEncode(Messenger.StorageTicket), 
-                            new EventHandler<ObjectEventArgs>(SetUserTileToPictureBox), 
+                        HttpAsyncDataDownloader.BeginDownload(c.UserTileURL.AbsoluteUri + "?t=" + System.Web.HttpUtility.UrlEncode(Messenger.StorageTicket),
+                            new EventHandler<ObjectEventArgs>(SetUserTileToPictureBox),
                             Messenger.ConnectivitySettings.WebProxy);
                     }
                     else
@@ -456,12 +456,12 @@ namespace MSNPSharpClient
             else
                 currentActivity--;
         }
-        
+
         private void SetUserTileToPictureBox(object sender, ObjectEventArgs e)
         {
-            if(pbNewsPicture.InvokeRequired)
+            if (pbNewsPicture.InvokeRequired)
             {
-                pbNewsPicture.Invoke(new EventHandler<ObjectEventArgs>(SetUserTileToPictureBox), new object[]{ sender, e});
+                pbNewsPicture.Invoke(new EventHandler<ObjectEventArgs>(SetUserTileToPictureBox), new object[] { sender, e });
             }
             else
             {
@@ -470,7 +470,7 @@ namespace MSNPSharpClient
                     Image img = Image.FromStream(new MemoryStream((byte[])e.Object));
                     pbNewsPicture.Image = img;
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     Trace.WriteLine("Get UserTile error: " + ex.Message);
                 }
@@ -539,7 +539,7 @@ namespace MSNPSharpClient
 
             displayImageBox.Image = e.NewDisplayImage.Image;
         }
-        
+
 
         /// <summary>
         /// The main entry point for the application.
@@ -715,39 +715,33 @@ namespace MSNPSharpClient
             }
 
             Contact contact = e.Contact;
-            if (true /* || messenger.Nameserver.BotMode */)  //If you want your provisioned account in botmode to fire ReverseAdded event, uncomment this.
+
+            // Show pending window if it is necessary.
+            if (contact.OnPendingList || contact.FriendshipStatus == RoleId.Pending)
             {
-                // Show pending window if it is necessary.
-                if (contact.FriendshipStatus == RoleId.Pending)
+                ReverseAddedForm form = new ReverseAddedForm(contact, messenger);
+                form.FormClosed += delegate(object f, FormClosedEventArgs fce)
                 {
-                    ReverseAddedForm form = new ReverseAddedForm(contact, messenger);
-                    form.FormClosed += delegate(object f, FormClosedEventArgs fce)
+                    form = f as ReverseAddedForm;
+                    if (DialogResult.OK == form.DialogResult)
                     {
-                        form = f as ReverseAddedForm;
-                        if (DialogResult.OK == form.DialogResult)
+                        if (form.AddAsFriend)
                         {
-                            if (form.AddAsFriend)
-                            {
-                                messenger.ContactService.AddNewContact(contact.Account);
-                                System.Threading.Thread.Sleep(200);
-                            }
-                            else
-                            {
-                                messenger.ContactService.RemoveContact(contact, form.Block);
-                            }                           
-
-
+                            messenger.ContactService.AddNewContact(contact.Account);
                             System.Threading.Thread.Sleep(200);
-                            contact.OnPendingList = false;
                         }
-                        return;
-                    };
-                    form.Show(this);
-                }
-                else
-                {
-                    MessageBox.Show(contact.Account + " accepted your invitation and added you their contact list.");
-                }
+                        else
+                        {
+                            messenger.ContactService.RemoveContact(contact, form.Block);
+                        }
+
+
+                        System.Threading.Thread.Sleep(200);
+                        contact.OnPendingList = false;
+                    }
+                    return;
+                };
+                form.Show(this);
             }
         }
 
@@ -793,7 +787,7 @@ namespace MSNPSharpClient
 
                         // set the credentials, this is ofcourse something every MSNPSharp program will need to implement.
                         messenger.Credentials = new Credentials(accountTextBox.Text, passwordTextBox.Text);
-                       
+
                         // inform the user what is happening and try to connecto to the messenger network.
                         SetStatus("Connecting to server");
                         messenger.Connect();
@@ -913,8 +907,6 @@ namespace MSNPSharpClient
             {
                 if (newstatus == PresenceStatus.Offline)
                 {
-                    PresenceStatus old = Messenger.Owner.Status;
-
                     foreach (ConversationForm convform in ConversationForms)
                     {
                         if (convform.Visible == true)
@@ -1012,7 +1004,6 @@ namespace MSNPSharpClient
 
         void cbRobotMode_CheckedChanged(object sender, EventArgs e)
         {
-            ComboBox cbBotMode = sender as ComboBox;
             messenger.Nameserver.BotMode = cbRobotMode.Checked;
         }
 
@@ -1130,7 +1121,7 @@ namespace MSNPSharpClient
             comboPlaces.Items.Clear();
 
             List<ConversationForm> convFormsClone = new List<ConversationForm>(ConversationForms);
-            foreach(ConversationForm convForm in convFormsClone)
+            foreach (ConversationForm convForm in convFormsClone)
             {
                 convForm.Close();
             }
@@ -1261,7 +1252,7 @@ namespace MSNPSharpClient
                 if (MessageBox.Show(
                      e.P2PSession.Remote.Name +
                     " wants to invite you to join an activity.\r\n\r\nActivity name: " +
-                    p2pActivity.ActivityName + "\r\nAppID: " + 
+                    p2pActivity.ActivityName + "\r\nAppID: " +
                     p2pActivity.ApplicationId + "\r\nEufGuid: " +
                     p2pActivity.ApplicationEufGuid,
                     "Activity invitation",
@@ -1530,7 +1521,6 @@ namespace MSNPSharpClient
         private void SortByFavAndCircle(ContactStatusChangedEventArgs e)
         {
             Contact contactToUpdate = (e != null) ? e.Contact : null;
-            Contact via = (e != null) ? e.Via : null;
 
             TreeNode favoritesNode = null; // (0/0)
             TreeNode circlesNode = null; // (0/0)
@@ -1569,7 +1559,7 @@ namespace MSNPSharpClient
                 fbNode.NodeFont = PARENT_NODE_FONT;
                 fbNode.Tag = ImageIndexes.FacebookNodeKey;
             }
-            
+
 
             if (contactToUpdate == null)
             {
@@ -1608,7 +1598,7 @@ namespace MSNPSharpClient
                             newnode.Tag = contact;
                         }
                     }
-                } 
+                }
 
                 #endregion
 
@@ -1639,7 +1629,7 @@ namespace MSNPSharpClient
                             newnode.Tag = c;
                         }
                     }
-                } 
+                }
 
                 #endregion
 
@@ -1650,7 +1640,6 @@ namespace MSNPSharpClient
                 if (fbNetwork != null && fbNetwork.ContactList != null)
                 {
                     int onlineCountFB = 0;
-                    int contactCount = fbNetwork.ContactList[IMAddressInfoType.None].Count;
 
                     foreach (Contact fbContact in fbNetwork.ContactList.All)
                     {
@@ -1671,7 +1660,7 @@ namespace MSNPSharpClient
                     if (fbNode.Text != fbText)
                         fbNode.Text = fbText;
 
-                } 
+                }
 
                 #endregion
             }
@@ -1810,7 +1799,7 @@ namespace MSNPSharpClient
             TreeNode newnode = circleNode.Nodes.ContainsKey(circleMember.Hash) ?
                 circleNode.Nodes[circleMember.Hash] : circleNode.Nodes.Add(circleMember.Hash, text2);
 
-            
+
             newnode.ImageIndex = newnode.SelectedImageIndex = ImageIndexes.GetContactStatusImageIndex(circleMember.Status);
             newnode.NodeFont = circleMember.AppearOffline ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
             newnode.Tag = circleMember;
@@ -1823,11 +1812,10 @@ namespace MSNPSharpClient
         {
             SortByStatus(new ContactStatusChangedEventArgs(contact, via, contact.Status, contact.Status));
         }
-        
+
         private void SortByStatus(ContactStatusChangedEventArgs e)
         {
             Contact contactToUpdate = (e != null) ? e.Contact : null;
-            Contact via = (e != null) ? e.Via : null;
 
             TreeNode selectedNode = treeViewFavoriteList.SelectedNode;
             bool isExpanded = (selectedNode != null && selectedNode.IsExpanded);
@@ -1912,7 +1900,7 @@ namespace MSNPSharpClient
                         newnode2.NodeFont = contact.AppearOffline ? USER_NODE_FONT_BANNED : USER_NODE_FONT;
                         newnode2.Tag = contact;
                     }
-                } 
+                }
 
                 #endregion
             }
@@ -1923,14 +1911,14 @@ namespace MSNPSharpClient
 
                 if (contactToUpdate.Via != null)
                 {
-                    
+
                     #region Circle Members
-		
+
                     if (contactToUpdate.Via.ClientType == IMAddressInfoType.Circle)
                     {
                         UpdateCircleMember(contactToUpdate.Via, contactToUpdate);
-                    } 
-	                #endregion
+                    }
+                    #endregion
 
                     #region Facebook members
 
@@ -1952,7 +1940,7 @@ namespace MSNPSharpClient
                             newnode.Tag = contactToUpdate;
 
                         }
-                    } 
+                    }
 
                     #endregion
 
@@ -1969,10 +1957,10 @@ namespace MSNPSharpClient
                     }
 
                     return;
-                } 
+                }
 
                 #endregion
-                
+
 
                 TreeNode contactNode = null;
 
@@ -2090,12 +2078,9 @@ namespace MSNPSharpClient
         {
             SortByGroup(new ContactStatusChangedEventArgs(contact, via, contact.Status, contact.Status));
         }
-        
+
         private void SortByGroup(ContactStatusChangedEventArgs e)
         {
-            Contact contactToUpdate = (e != null) ? e.Contact : null;
-            Contact via = (e != null) ? e.Via : null;
-
             this.treeViewFavoriteList.BeginUpdate();
             this.toolStripSortByStatus.Checked = false;
 
@@ -2137,7 +2122,7 @@ namespace MSNPSharpClient
 
                 if (contact.ContactGroups.Count == 0)
                 {
-                    TreeNode newnode = common.Nodes.ContainsKey(contact.Hash) ? 
+                    TreeNode newnode = common.Nodes.ContainsKey(contact.Hash) ?
                         common.Nodes[contact.Hash] : common.Nodes.Add(contact.Hash, text);
 
                     newnode.ImageIndex = newnode.SelectedImageIndex = ImageIndexes.GetContactStatusImageIndex(contact.Status);
@@ -2406,7 +2391,7 @@ namespace MSNPSharpClient
                 shouldChange = true;
             }
 
-            if (messenger.Owner.PersonalMessage == null || 
+            if (messenger.Owner.PersonalMessage == null ||
                 personalStatusMessage != messenger.Owner.PersonalMessage.Message)
             {
                 shouldChange = true;
@@ -2446,7 +2431,7 @@ namespace MSNPSharpClient
 
                     // Update the roaming profile
                     messenger.Owner.UpdateRoamingProfileSync(newImage);
-                   
+
                 }
             }
         }

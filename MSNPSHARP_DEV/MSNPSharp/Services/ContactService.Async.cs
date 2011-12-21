@@ -921,8 +921,6 @@ namespace MSNPSharp
 
         private void CreateCircleAsync(string circleName, CreateCircleCompletedEventHandler callback)
         {
-            string addressBookId = string.Empty;
-
             //This is M$ style, you will never guess out the meaning of these numbers.
             ContentInfoType properties = new ContentInfoType();
             properties.Domain = 1;
