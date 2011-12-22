@@ -511,68 +511,6 @@ namespace MSNPSharp
 
         #endregion
 
-        #region SetScreenName & SetPersonalMessage
-
-        /// <summary>
-        /// Sets the contactlist owner's screenname. After receiving confirmation from the server
-        /// this will set the Owner object's name which will in turn raise the NameChange event.
-        /// </summary>
-        internal void SetScreenName(string newName)
-        {
-            if (Owner == null)
-                throw new MSNPSharpException("Not a valid owner");
-
-            if (string.IsNullOrEmpty(newName))
-            {
-                newName = Owner.Account;
-            }
-
-            PersonalMessage pm = Owner.PersonalMessage;
-
-            pm.FriendlyName = newName;
-
-            SetPersonalMessage(pm);
-        }
-
-        /// <summary>
-        /// Sets personal message.
-        /// </summary>
-        internal void SetPersonalMessage(PersonalMessage newPSM)
-        {
-            if (Owner == null)
-                throw new MSNPSharpException("Not a valid owner");
-
-            if (Owner.Status != PresenceStatus.Offline)
-            {
-                SetPresenceStatus(
-                    Owner.Status,
-                    Owner.LocalEndPointIMCapabilities, Owner.LocalEndPointIMCapabilitiesEx,
-                    Owner.LocalEndPointPECapabilities, Owner.LocalEndPointPECapabilitiesEx,
-                    Owner.EpName, newPSM, true);
-            }
-        }
-
-        /// <summary>
-        /// Sets the scene image and scheme context.
-        /// </summary>
-        internal void SetSceneData(SceneImage scimg, Color sccolor)
-        {
-            if (Owner == null)
-                throw new MSNPSharpException("Not a valid owner");
-
-            PersonalMessage pm = Owner.PersonalMessage;
-
-            pm.ColorScheme = sccolor;
-            pm.Scene = scimg.IsDefaultImage ? String.Empty : scimg.ContextPlain;
-
-            SetPresenceStatus(Owner.Status,
-                Owner.LocalEndPointIMCapabilities, Owner.LocalEndPointIMCapabilitiesEx,
-                Owner.LocalEndPointPECapabilities, Owner.LocalEndPointPECapabilitiesEx,
-                Owner.EpName, pm, true);
-        }
-
-        #endregion
-
         #region Circle
 
         internal int SendCircleNotifyRML(Guid circleId, string hostDomain, RoleLists lists)
@@ -779,7 +717,7 @@ namespace MSNPSharp
         /// Fires the <see cref="SignedIn"/> event.
         /// </summary>
         /// <param name="e"></param>
-        protected internal virtual void OnSignedIn(EventArgs e)
+        protected virtual void OnSignedIn(EventArgs e)
         {
             isSignedIn = true;
 
@@ -1480,6 +1418,10 @@ namespace MSNPSharp
             if (AutoSynchronize)
             {
                 SendInitialServiceADL();
+            }
+            else
+            {
+                OnSignedIn(EventArgs.Empty);
             }
         }
 

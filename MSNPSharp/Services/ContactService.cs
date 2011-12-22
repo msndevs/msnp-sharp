@@ -410,8 +410,6 @@ namespace MSNPSharp
             else
             {
                 InitialMembershipAndAbRequestCompleted();
-
-                NSMessageHandler.OnSignedIn(EventArgs.Empty);
             }
         }
 
