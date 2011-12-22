@@ -658,6 +658,68 @@ namespace MSNPSharp
 
         #endregion
 
+        #region SetScreenName & SetPersonalMessage
+
+        /// <summary>
+        /// Sets the contactlist owner's screenname. After receiving confirmation from the server
+        /// this will set the Owner object's name which will in turn raise the NameChange event.
+        /// </summary>
+        internal void SetScreenName(string newName)
+        {
+            if (Owner == null)
+                throw new MSNPSharpException("Not a valid owner");
+
+            if (string.IsNullOrEmpty(newName))
+            {
+                newName = Owner.Account;
+            }
+
+            PersonalMessage pm = Owner.PersonalMessage;
+
+            pm.FriendlyName = newName;
+
+            SetPersonalMessage(pm);
+        }
+
+        /// <summary>
+        /// Sets personal message.
+        /// </summary>
+        internal void SetPersonalMessage(PersonalMessage newPSM)
+        {
+            if (Owner == null)
+                throw new MSNPSharpException("Not a valid owner");
+
+            if (Owner.Status != PresenceStatus.Offline)
+            {
+                SetPresenceStatus(
+                    Owner.Status,
+                    Owner.LocalEndPointIMCapabilities, Owner.LocalEndPointIMCapabilitiesEx,
+                    Owner.LocalEndPointPECapabilities, Owner.LocalEndPointPECapabilitiesEx,
+                    Owner.EpName, newPSM, true);
+            }
+        }
+
+        /// <summary>
+        /// Sets the scene image and scheme context.
+        /// </summary>
+        internal void SetSceneData(SceneImage scimg, Color sccolor)
+        {
+            if (Owner == null)
+                throw new MSNPSharpException("Not a valid owner");
+
+            PersonalMessage pm = Owner.PersonalMessage;
+
+            pm.ColorScheme = sccolor;
+            pm.Scene = scimg.IsDefaultImage ? String.Empty : scimg.ContextPlain;
+
+            SetPresenceStatus(Owner.Status,
+                Owner.LocalEndPointIMCapabilities, Owner.LocalEndPointIMCapabilitiesEx,
+                Owner.LocalEndPointPECapabilities, Owner.LocalEndPointPECapabilitiesEx,
+                Owner.EpName, pm, true);
+        }
+
+        #endregion
+
         #region SetPresenceStatus
 
         /// <summary>
@@ -889,7 +951,7 @@ namespace MSNPSharp
                     {
                         string[] addressTypeAndAccount = siblingHash.Split(new char[] { ':' }, 2, StringSplitOptions.RemoveEmptyEntries);
                         Contact contact = ContactList.GetContactWithCreate(addressTypeAndAccount[1], (IMAddressInfoType)Enum.Parse(typeof(IMAddressInfoType), addressTypeAndAccount[0].ToString()));
-                        
+
                         InviteContactToMultiparty(contact, group);
                     }
 
@@ -1662,7 +1724,7 @@ namespace MSNPSharp
                 return;
             }
 
-            MultiMimeMessage multiMimeMessage = message.InnerMessage as MultiMimeMessage ;
+            MultiMimeMessage multiMimeMessage = message.InnerMessage as MultiMimeMessage;
 
             #region Get the Routing Info
 
@@ -1851,7 +1913,7 @@ namespace MSNPSharp
         {
             SLPMessage slpMessage = SLPMessage.Parse(multiMimeMessage.InnerBody);
             slpMessage.CreateFromParentMessage(multiMimeMessage);
-            
+
             return multiMimeMessage;
         }
 
