@@ -50,16 +50,424 @@ namespace MSNPSharp.IO
     [XmlRoot("ContactList")]
     public class XMLContactList : MCLSerializer
     {
+        #region Members
+
         [NonSerialized]
         private bool initialized = false;
 
         [NonSerialized]
         private int requestCircleCount = 0;
 
+        [NonSerialized]
+        private Dictionary<long, ContactType> contactTable = new Dictionary<long, ContactType>();
+
+        [NonSerialized]
+        private Dictionary<Guid, Contact> pendingAcceptionCircleList = new Dictionary<Guid, Contact>();
+
+        [NonSerialized]
+        private Dictionary<Guid, string> pendingCreateCircleList = new Dictionary<Guid, string>();
+
+        [NonSerialized]
+        private Dictionary<Guid, KeyValuePair<Contact, ContactType>> messengerContactLink = new Dictionary<Guid, KeyValuePair<Contact, ContactType>>();
+
+        [NonSerialized]
+        private Dictionary<Guid, List<ContactType>> shellContactLink = new Dictionary<Guid, List<ContactType>>();
+
+        [NonSerialized]
+        private List<ContactType> individualShellContacts = new List<ContactType>(0);
+
+
+        private SerializableDictionary<ServiceName, ServiceMembership> mslist = new SerializableDictionary<ServiceName, ServiceMembership>(0);
+        private SerializableDictionary<string, ABFindContactsPagedResultTypeAB> abInfos = new SerializableDictionary<string, ABFindContactsPagedResultTypeAB>();
+        private SerializableDictionary<string, string> myproperties = new SerializableDictionary<string, string>(0);
+        private SerializableDictionary<Guid, GroupType> groups = new SerializableDictionary<Guid, GroupType>(0);
+        private SerializableDictionary<string, SerializableDictionary<Guid, ContactType>> abcontacts = new SerializableDictionary<string, SerializableDictionary<Guid, ContactType>>(0);
+        private SerializableDictionary<string, CircleInverseInfoType> circleResults = new SerializableDictionary<string, CircleInverseInfoType>(0);
+
+        #endregion
+
+        #region Properties
+
+        public SerializableDictionary<ServiceName, ServiceMembership> MembershipList
+        {
+            get
+            {
+                return mslist;
+            }
+            set
+            {
+                mslist = value;
+            }
+        }
+
+        public string MembershipLastChange
+        {
+            get
+            {
+                if (MembershipList.Keys.Count == 0)
+                    return WebServiceConstants.ZeroTime;
+
+                List<Service> services = new List<Service>();
+                foreach (ServiceName sft in MembershipList.Keys)
+                    services.Add(new Service(MembershipList[sft].Service));
+
+                services.Sort();
+                return services[services.Count - 1].LastChange;
+            }
+        }
+
+        public SerializableDictionary<string, string> MyProperties
+        {
+            get
+            {
+                return myproperties;
+            }
+            set
+            {
+                myproperties = value;
+            }
+        }
+
+        public SerializableDictionary<Guid, GroupType> Groups
+        {
+            get
+            {
+                return groups;
+            }
+
+            set
+            {
+                groups = value;
+            }
+        }
+
+        /// <summary>
+        /// The contact list for different address book pages.<br></br>
+        /// The circle recreate procedure is based on this property.
+        /// </summary>
+        public SerializableDictionary<string, SerializableDictionary<Guid, ContactType>> AddressbookContacts
+        {
+            get
+            {
+                return abcontacts;
+            }
+            set
+            {
+                abcontacts = value;
+            }
+        }
+
+        public SerializableDictionary<string, ABFindContactsPagedResultTypeAB> AddressBooksInfo
+        {
+            get
+            {
+                return abInfos;
+            }
+
+            set
+            {
+                abInfos = value;
+            }
+        }
+
+        public SerializableDictionary<string, CircleInverseInfoType> CircleResults
+        {
+            get
+            {
+                return circleResults;
+            }
+            set
+            {
+                circleResults = value;
+            }
+        }
+
+        /// <summary>
+        /// Circles created by the library and waiting server's confirm.
+        /// </summary>
+        internal Dictionary<Guid, string> PendingCreateCircleList
+        {
+            get
+            {
+                return pendingCreateCircleList;
+            }
+        }
+
+        /// <summary>
+        /// A collection of all circles which are pending acception.
+        /// </summary>
+        private Dictionary<Guid, Contact> PendingAcceptionCircleList
+        {
+            get
+            {
+                return pendingAcceptionCircleList;
+            }
+        }
+
+        /// <summary>
+        /// These contacts are pure shell contacts, they don't have windows live account.
+        /// Such an example is the facebook contact which imported to your buddy list but
+        /// the owner doesn't have a WLM account.
+        /// </summary>
+        private List<ContactType> IndividualShellContacts
+        {
+            get
+            {
+                return individualShellContacts;
+            }
+        }
+
+        /// <summary>
+        /// These contacts are "Shells" of their corresponding messenger contact but in different network.
+        /// For example, a user have both messenger and facebook account, then on his/her friend's contact list,
+        /// that user's facebook contact is a shell contact of its messenger contact. The stupid M$ Windows Live team 
+        /// finally realized that they cannot manage the contacts only by account and network type, they need a 
+        /// foreign key instead. They should do this ten years ago and the ContactInfo data structure won't be 
+        /// this ugly now.
+        /// </summary>
+        private Dictionary<Guid, List<ContactType>> ShellContactLink
+        {
+            get
+            {
+                return shellContactLink;
+            }
+        }
+
+        /// <summary>
+        /// The messenger contact which MIGHT have shell contact connected to it.
+        /// </summary>
+        private Dictionary<Guid, KeyValuePair<Contact, ContactType>> MessengerContactLink
+        {
+            get
+            {
+                return messengerContactLink;
+            }
+        }
+
+        #endregion
+
+        #region Public Methods
+
         public static XMLContactList LoadFromFile(string filename, MclSerialization st, NSMessageHandler handler, bool useCache)
         {
             return (XMLContactList)LoadFromFile(filename, st, typeof(XMLContactList), handler, useCache);
         }
+
+        /// <summary>
+        /// Save the <see cref="XMLContactList"/> into a specified file.
+        /// </summary>
+        /// <param name="filename"></param>
+        public override void Save(string filename)
+        {
+            lock (SyncObject)
+            {
+                try
+                {
+                    Version = Properties.Resources.XMLContactListVersion;
+                    base.Save(filename);
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                                      "An error occurs while saving the Addressbook, StackTrace:\r\n" +
+                                      ex.StackTrace);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get a basemember from membership list.
+        /// </summary>
+        /// <param name="servicetype"></param>
+        /// <param name="account"></param>
+        /// <param name="type"></param>
+        /// <param name="memberrole"></param>
+        /// <returns>If the member not exist, return null.</returns>
+        public BaseMember SelectBaseMember(ServiceName servicetype, string account, IMAddressInfoType type, RoleId memberrole)
+        {
+            SerializableDictionary<RoleId, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
+            if ((ms != null) && ms.ContainsKey(memberrole))
+            {
+                string hash = Contact.MakeHash(account, type);
+                if (ms[memberrole].ContainsKey(hash))
+                    return ms[memberrole][hash];
+            }
+            return null;
+        }
+
+        public XMLContactList Merge(MembershipResult findMembership)
+        {
+            lock (SyncObject)
+            {
+                Initialize();
+
+                // Process new FindMemberships (deltas)
+                if (null != findMembership && null != findMembership.Services)
+                {
+                    foreach (ServiceType serviceType in findMembership.Services)
+                    {
+                        Service oldService = SelectTargetService(serviceType.Info.Handle.Type);
+
+                        if (oldService == null ||
+                            WebServiceDateTimeConverter.ConvertToDateTime(oldService.LastChange)
+                            < WebServiceDateTimeConverter.ConvertToDateTime(serviceType.LastChange))
+                        {
+                            if (serviceType.Deleted)
+                            {
+                                if (MembershipList.ContainsKey(serviceType.Info.Handle.Type))
+                                {
+                                    MembershipList.Remove(serviceType.Info.Handle.Type);
+                                }
+                            }
+                            else
+                            {
+                                Service updatedService = new Service();
+                                updatedService.Id = int.Parse(serviceType.Info.Handle.Id);
+                                updatedService.ServiceType = serviceType.Info.Handle.Type;
+                                updatedService.LastChange = serviceType.LastChange;
+                                updatedService.ForeignId = serviceType.Info.Handle.ForeignId;
+
+                                if (oldService == null)
+                                {
+                                    MembershipList.Add(updatedService.ServiceType, new ServiceMembership(updatedService));
+                                }
+
+                                if (null != serviceType.Memberships)
+                                {
+                                    if (ServiceName.Messenger == serviceType.Info.Handle.Type ||
+                                        ServiceName.IMAvailability == serviceType.Info.Handle.Type)
+                                    {
+                                        ProcessMessengerAndIMAvailabilityMemberships(serviceType, ref updatedService);
+                                    }
+                                    else
+                                    {
+                                        ProcessOtherMemberships(serviceType, ref updatedService);
+                                    }
+                                }
+
+                                // Update service.LastChange
+                                MembershipList[updatedService.ServiceType].Service = updatedService;
+                            }
+                        }
+                    }
+                }
+
+                return this;
+            }
+        }
+
+        public XMLContactList Merge(ABFindContactsPagedResultType forwardList)
+        {
+            Initialize();
+
+            if (forwardList != null && forwardList.Ab != null)
+            {
+                if (WebServiceConstants.MessengerIndividualAddressBookId == forwardList.Ab.abId.ToLowerInvariant())
+                {
+                    MergeIndividualAddressBook(forwardList);
+                }
+                else
+                {
+                    MergeGroupAddressBook(forwardList);
+                }
+            }
+
+            return this;
+        }
+
+        public virtual void Add(Dictionary<Service, Dictionary<RoleId, Dictionary<string, BaseMember>>> membershipRange)
+        {
+            lock (SyncObject)
+            {
+                foreach (Service svc in membershipRange.Keys)
+                {
+                    foreach (RoleId role in membershipRange[svc].Keys)
+                    {
+                        foreach (string hash in membershipRange[svc][role].Keys)
+                        {
+                            if (!mslist.ContainsKey(svc.ServiceType))
+                                mslist.Add(svc.ServiceType, new ServiceMembership(svc));
+
+                            if (!mslist[svc.ServiceType].Memberships.ContainsKey(role))
+                                mslist[svc.ServiceType].Memberships.Add(role, new SerializableDictionary<string, BaseMember>(0));
+
+                            if (mslist[svc.ServiceType].Memberships[role].ContainsKey(hash))
+                            {
+                                if (/* mslist[svc.ServiceType].Memberships[role][hash].LastChangedSpecified
+                                    && */
+                                    WebServiceDateTimeConverter.ConvertToDateTime(mslist[svc.ServiceType].Memberships[role][hash].LastChanged).CompareTo(
+                                    WebServiceDateTimeConverter.ConvertToDateTime(membershipRange[svc][role][hash].LastChanged)) <= 0)
+                                {
+                                    mslist[svc.ServiceType].Memberships[role][hash] = membershipRange[svc][role][hash];
+                                }
+                            }
+                            else
+                            {
+                                mslist[svc.ServiceType].Memberships[role].Add(hash, membershipRange[svc][role][hash]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public virtual void Add(string abId, Dictionary<Guid, ContactType> abRange)
+        {
+            lock (SyncObject)
+            {
+                string lowerId = abId.ToLowerInvariant();
+
+                if (!abcontacts.ContainsKey(lowerId))
+                {
+                    abcontacts.Add(lowerId, new SerializableDictionary<Guid, ContactType>(0));
+                }
+
+                foreach (Guid guid in abRange.Keys)
+                {
+                    abcontacts[lowerId][guid] = abRange[guid];
+                }
+            }
+        }
+
+        public void AddGroup(Dictionary<Guid, GroupType> groupRange)
+        {
+            foreach (GroupType group in groupRange.Values)
+            {
+                AddGroup(group);
+            }
+        }
+
+        public void AddGroup(GroupType group)
+        {
+            lock (SyncObject)
+            {
+                Guid key = new Guid(group.groupId);
+                if (groups.ContainsKey(key))
+                {
+                    groups[key] = group;
+                }
+                else
+                {
+                    groups.Add(key, group);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Set MyProperties to default value.
+        /// </summary>
+        public void InitializeMyProperties()
+        {
+            lock (SyncObject)
+            {
+                if (!MyProperties.ContainsKey(AnnotationNames.Live_Profile_Expression_LastChanged))
+                    MyProperties[AnnotationNames.Live_Profile_Expression_LastChanged] = XmlConvert.ToString(DateTime.MinValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
+            }
+        }
+
+        #endregion
+
+        #region Initialize
 
         /// <summary>
         /// Initialize contacts from mcl file. Creates contacts based on MemberShipList, Groups, CircleResults and AddressbookContacts.
@@ -164,7 +572,6 @@ namespace MSNPSharp.IO
                 }
             }
 
-
             #endregion
 
             #region Restore Groups
@@ -217,57 +624,11 @@ namespace MSNPSharp.IO
             }
 
             #endregion
-
         }
 
-        private bool IsContactTableEmpty()
-        {
-            lock (contactTable)
-                return contactTable.Count == 0;
-        }
+        #endregion
 
-        private bool IsPendingCreateConfirmCircle(string abId)
-        {
-            lock (PendingCreateCircleList)
-                return PendingCreateCircleList.ContainsKey(new Guid(abId));
-        }
-
-        private bool IsPendingCreateConfirmCircle(Guid abId)
-        {
-            lock (PendingCreateCircleList)
-                return PendingCreateCircleList.ContainsKey(abId);
-        }
-
-        #region New MembershipList
-
-        private SerializableDictionary<ServiceName, ServiceMembership> mslist = new SerializableDictionary<ServiceName, ServiceMembership>(0);
-        public SerializableDictionary<ServiceName, ServiceMembership> MembershipList
-        {
-            get
-            {
-                return mslist;
-            }
-            set
-            {
-                mslist = value;
-            }
-        }
-
-        public string MembershipLastChange
-        {
-            get
-            {
-                if (MembershipList.Keys.Count == 0)
-                    return WebServiceConstants.ZeroTime;
-
-                List<Service> services = new List<Service>();
-                foreach (ServiceName sft in MembershipList.Keys)
-                    services.Add(new Service(MembershipList[sft].Service));
-
-                services.Sort();
-                return services[services.Count - 1].LastChange;
-            }
-        }
+        #region Membership
 
         internal Service SelectTargetService(ServiceName type)
         {
@@ -324,414 +685,10 @@ namespace MSNPSharp.IO
             }
         }
 
-        /// <summary>
-        /// Try to remove a contact from a specific addressbook.
-        /// </summary>
-        /// <param name="abId">The specific addressbook identifier.</param>
-        /// <param name="contactId">The contact identifier.</param>
-        /// <returns>If the contact exists and removed successfully, return true, else return false.</returns>
-        internal bool RemoveContactFromAddressBook(Guid abId, Guid contactId)
-        {
-            return RemoveContactFromAddressBook(abId.ToString("D"), contactId);
-        }
-
-        /// <summary>
-        /// Try to remove a contact from a specific addressbook.
-        /// </summary>
-        /// <param name="abId">The specific addressbook identifier.</param>
-        /// <param name="contactId">The contact identifier.</param>
-        /// <returns>If the contact exists and removed successfully, return true, else return false.</returns>
-        internal bool RemoveContactFromAddressBook(string abId, Guid contactId)
-        {
-            lock (SyncObject)
-            {
-                string lowerId = abId.ToLowerInvariant();
-                lock (AddressbookContacts)
-                {
-                    if (AddressbookContacts.ContainsKey(lowerId))
-                    {
-                        if (AddressbookContacts[lowerId].ContainsKey(contactId))
-                        {
-                            return AddressbookContacts[lowerId].Remove(contactId);
-                        }
-                    }
-                }
-
-                return false;
-            }
-        }
-
-
-        private bool RemoveContactFromContactTable(long CID)
-        {
-            lock (contactTable)
-                return contactTable.Remove(CID);
-        }
-
-        /// <summary>
-        /// Remove an item in AddressBooksInfo property by giving an addressbook Id.
-        /// </summary>
-        /// <param name="abId"></param>
-        /// <returns></returns>
-        private bool RemoveAddressBookInfo(string abId)
-        {
-
-            lock (AddressBooksInfo)
-                return AddressBooksInfo.Remove(abId.ToLowerInvariant());
-        }
-
-        /// <summary>
-        /// Remove an item from AddressbookContacts property.
-        /// </summary>
-        /// <param name="abId">The addressbook page of a specified contact page.</param>
-        /// <returns></returns>
-        private bool RemoveAddressBookContatPage(string abId)
-        {
-            lock (AddressbookContacts)
-            {
-                return AddressbookContacts.Remove(abId.ToLowerInvariant());
-            }
-        }
-
-        /// <summary>
-        /// Add or update a contact in the specific address book.
-        /// </summary>
-        /// <param name="abId">The identifier of addressbook.</param>
-        /// <param name="contact">The contact to be added/updated.</param>
-        /// <returns>If the contact added to the addressbook, returen true, if the contact is updated (not add), return false.</returns>
-        internal bool SetContactToAddressBookContactPage(string abId, ContactType contact)
-        {
-            lock (SyncObject)
-            {
-                string lowerId = abId.ToLowerInvariant();
-                bool returnval = false;
-
-                lock (AddressbookContacts)
-                {
-                    if (!AddressbookContacts.ContainsKey(lowerId))
-                    {
-                        AddressbookContacts.Add(lowerId, new SerializableDictionary<Guid, ContactType>());
-                        returnval = true;
-                    }
-
-                    AddressbookContacts[lowerId][new Guid(contact.contactId)] = contact;
-                }
-
-                return returnval;
-            }
-        }
-
-        private bool SetAddressBookInfoToABInfoList(string abId, ABFindContactsPagedResultTypeAB abInfo)
-        {
-            string lowerId = abId.ToLowerInvariant();
-            if (AddressBooksInfo == null)
-                return false;
-
-            lock (AddressBooksInfo)
-                AddressBooksInfo[lowerId] = abInfo;
-            return true;
-        }
-
-
-        private bool HasContact(long CID)
-        {
-            lock (contactTable)
-                return contactTable.ContainsKey(CID);
-        }
-
-        private bool HasWLConnection(string abId)
-        {
-            lock (CircleResults)
-                return CircleResults.ContainsKey(abId);
-        }
-
-        /// <summary>
-        /// Check whether we've saved the specified addressbook.
-        /// </summary>
-        /// <param name="abId"></param>
-        /// <returns></returns>
-        private bool HasAddressBook(string abId)
-        {
-            string lowerId = abId.ToLowerInvariant();
-            if (AddressBooksInfo == null)
-                return false;
-
-            lock (AddressBooksInfo)
-                return AddressBooksInfo.ContainsKey(lowerId);
-        }
-
-        /// <summary>
-        /// Check whether the specific contact page exist.
-        /// </summary>
-        /// <param name="abId">The addressbook identifier of a specific contact page.</param>
-        /// <returns></returns>
-        private bool HasAddressBookContactPage(string abId)
-        {
-            string lowerId = abId.ToLowerInvariant();
-            if (AddressbookContacts == null)
-                return false;
-
-            bool returnValue = false;
-
-            lock (AddressbookContacts)
-            {
-                if (AddressbookContacts.ContainsKey(lowerId))
-                {
-                    if (AddressbookContacts[lowerId] != null)
-                    {
-                        returnValue = true;
-                    }
-                }
-            }
-
-            return returnValue;
-        }
-
-        internal bool HasContact(string abId, Guid contactId)
-        {
-            string lowerId = abId.ToLowerInvariant();
-            lock (AddressbookContacts)
-            {
-                if (!AddressbookContacts.ContainsKey(lowerId))
-                    return false;
-
-                return AddressbookContacts[lowerId].ContainsKey(contactId);
-            }
-        }
-
         private bool HasMemberhip(ServiceName servicetype, string account, IMAddressInfoType type, RoleId memberrole)
         {
             SerializableDictionary<RoleId, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
             return (ms != null) && ms.ContainsKey(memberrole) && ms[memberrole].ContainsKey(Contact.MakeHash(account, type));
-        }
-
-        /// <summary>
-        /// Get a basemember from membership list.
-        /// </summary>
-        /// <param name="servicetype"></param>
-        /// <param name="account"></param>
-        /// <param name="type"></param>
-        /// <param name="memberrole"></param>
-        /// <returns>If the member not exist, return null.</returns>
-        public BaseMember SelectBaseMember(ServiceName servicetype, string account, IMAddressInfoType type, RoleId memberrole)
-        {
-            string hash = Contact.MakeHash(account, type);
-            SerializableDictionary<RoleId, SerializableDictionary<string, BaseMember>> ms = SelectTargetMemberships(servicetype);
-            if ((ms != null) && ms.ContainsKey(memberrole) && ms[memberrole].ContainsKey(hash))
-            {
-                return ms[memberrole][hash];
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// Get a contact from a specific addressbook by providing the addressbook identifier and contact identifier.
-        /// </summary>
-        /// <param name="abId">The addressbook identifier.</param>
-        /// <param name="contactId">The contactidentifier.</param>
-        /// <returns>If the contact exist, return the contact object, else return null.</returns>
-        internal ContactType SelectContactFromAddressBook(string abId, Guid contactId)
-        {
-            string lowerId = abId.ToLowerInvariant();
-            if (!HasContact(abId, contactId))
-                return null;
-            return AddressbookContacts[lowerId][contactId];
-        }
-
-        public virtual void Add(
-            Dictionary<Service,
-            Dictionary<RoleId,
-            Dictionary<string, BaseMember>>> range)
-        {
-            lock (SyncObject)
-            {
-                foreach (Service svc in range.Keys)
-                {
-                    foreach (RoleId role in range[svc].Keys)
-                    {
-                        foreach (string hash in range[svc][role].Keys)
-                        {
-                            if (!mslist.ContainsKey(svc.ServiceType))
-                                mslist.Add(svc.ServiceType, new ServiceMembership(svc));
-
-                            if (!mslist[svc.ServiceType].Memberships.ContainsKey(role))
-                                mslist[svc.ServiceType].Memberships.Add(role, new SerializableDictionary<string, BaseMember>(0));
-
-                            if (mslist[svc.ServiceType].Memberships[role].ContainsKey(hash))
-                            {
-                                if (/* mslist[svc.ServiceType].Memberships[role][hash].LastChangedSpecified
-                                    && */
-                                    WebServiceDateTimeConverter.ConvertToDateTime(mslist[svc.ServiceType].Memberships[role][hash].LastChanged).CompareTo(
-                                    WebServiceDateTimeConverter.ConvertToDateTime(range[svc][role][hash].LastChanged)) <= 0)
-                                {
-                                    mslist[svc.ServiceType].Memberships[role][hash] = range[svc][role][hash];
-                                }
-                            }
-                            else
-                            {
-                                mslist[svc.ServiceType].Memberships[role].Add(hash, range[svc][role][hash]);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Get the hidden representative's CID by providing addressbook Id from the inverse connection list.
-        /// </summary>
-        /// <param name="abId"></param>
-        /// <returns></returns>
-        private CircleInverseInfoType SelectWLConnection(string abId)
-        {
-            if (string.IsNullOrEmpty(abId))
-                return null;
-
-            string lowerId = abId.ToLowerInvariant();
-            if (!HasWLConnection(lowerId))
-                return null;
-
-            lock (CircleResults)
-                return CircleResults[lowerId];
-
-        }
-
-        private string[] SelectWLConnection(List<string> abIds, RelationshipState state)
-        {
-            List<string> results = new List<string>(0);
-
-            lock (CircleResults)
-            {
-                foreach (string abId in abIds)
-                {
-                    if (HasWLConnection(abId))
-                    {
-                        if (state == RelationshipState.None)
-                        {
-                            results.Add(abId);
-                        }
-                        else
-                        {
-                            if (CircleResults[abId.ToLowerInvariant()].PersonalInfo.MembershipInfo.CirclePersonalMembership.State == state.ToString())
-                                results.Add(abId);
-                        }
-
-                    }
-                }
-            }
-
-            return results.ToArray();
-        }
-
-        private string[] FilterWLConnections(List<string> abIds, RelationshipState state)
-        {
-            List<string> returnValues = new List<string>(0);
-
-
-            foreach (string abId in abIds)
-            {
-                string lowerId = abId.ToLowerInvariant();
-                if (CircleResults.ContainsKey(lowerId))
-                {
-                    CircleInverseInfoType inverseInfo = CircleResults[lowerId];
-                    if (inverseInfo.PersonalInfo.MembershipInfo.CirclePersonalMembership.State == state.ToString())
-                        returnValues.Add(abId);
-                }
-            }
-
-            return returnValues.ToArray();
-        }
-
-        private CircleInverseInfoType SelectCircleInverseInfo(string abId)
-        {
-            if (string.IsNullOrEmpty(abId))
-                return null;
-
-            abId = abId.ToLowerInvariant();
-
-            lock (CircleResults)
-            {
-                if (!CircleResults.ContainsKey(abId))
-                    return null;
-                return CircleResults[abId];
-            }
-        }
-
-        /// <summary>
-        /// Get a hidden representative for a addressbook by CID.
-        /// </summary>
-        /// <param name="CID"></param>
-        /// <returns></returns>
-        private ContactType SelecteContact(long CID)
-        {
-            if (!HasContact(CID))
-            {
-                return null;
-            }
-
-            lock (contactTable)
-                return contactTable[CID];
-        }
-
-        public XMLContactList Merge(MembershipResult findMembership)
-        {
-            lock (SyncObject)
-            {
-                Initialize();
-
-                // Process new FindMemberships (deltas)
-                if (null != findMembership && null != findMembership.Services)
-                {
-                    foreach (ServiceType serviceType in findMembership.Services)
-                    {
-                        Service oldService = SelectTargetService(serviceType.Info.Handle.Type);
-
-                        if (oldService == null ||
-                            WebServiceDateTimeConverter.ConvertToDateTime(oldService.LastChange)
-                            < WebServiceDateTimeConverter.ConvertToDateTime(serviceType.LastChange))
-                        {
-                            if (serviceType.Deleted)
-                            {
-                                if (MembershipList.ContainsKey(serviceType.Info.Handle.Type))
-                                {
-                                    MembershipList.Remove(serviceType.Info.Handle.Type);
-                                }
-                            }
-                            else
-                            {
-                                Service updatedService = new Service();
-                                updatedService.Id = int.Parse(serviceType.Info.Handle.Id);
-                                updatedService.ServiceType = serviceType.Info.Handle.Type;
-                                updatedService.LastChange = serviceType.LastChange;
-                                updatedService.ForeignId = serviceType.Info.Handle.ForeignId;
-
-                                if (oldService == null)
-                                {
-                                    MembershipList.Add(updatedService.ServiceType, new ServiceMembership(updatedService));
-                                }
-
-                                if (null != serviceType.Memberships)
-                                {
-                                    if (ServiceName.Messenger == serviceType.Info.Handle.Type ||
-                                        ServiceName.IMAvailability == serviceType.Info.Handle.Type)
-                                    {
-                                        ProcessMessengerAndIMAvailabilityMemberships(serviceType, ref updatedService);
-                                    }
-                                    else
-                                    {
-                                        ProcessOtherMemberships(serviceType, ref updatedService);
-                                    }
-                                }
-
-                                // Update service.LastChange
-                                MembershipList[updatedService.ServiceType].Service = updatedService;
-                            }
-                        }
-                    }
-                }
-
-                return this;
-            }
         }
 
         private void ProcessMessengerAndIMAvailabilityMemberships(ServiceType messengerService, ref Service messengerServiceClone)
@@ -896,12 +853,9 @@ namespace MSNPSharp.IO
             return x.LastChanged.CompareTo(y.LastChanged);
         }
 
-
         private bool DetectBaseMember(BaseMember bm,
-            out string account, out IMAddressInfoType type,
-            out long cid, out string displayname)
+            out string account, out IMAddressInfoType type, out long cid, out string displayname)
         {
-
             bool ret = false;
 
             account = string.Empty;
@@ -990,115 +944,75 @@ namespace MSNPSharp.IO
 
         #region Addressbook
 
-        private SerializableDictionary<string, ABFindContactsPagedResultTypeAB> abInfos = new SerializableDictionary<string, ABFindContactsPagedResultTypeAB>();
-        private SerializableDictionary<string, string> myproperties = new SerializableDictionary<string, string>(0);
-        private SerializableDictionary<Guid, GroupType> groups = new SerializableDictionary<Guid, GroupType>(0);
-        private SerializableDictionary<string, SerializableDictionary<Guid, ContactType>> abcontacts = new SerializableDictionary<string, SerializableDictionary<Guid, ContactType>>(0);
-        private SerializableDictionary<string, CircleInverseInfoType> circleResults = new SerializableDictionary<string, CircleInverseInfoType>(0);
-
-        [NonSerialized]
-        private Dictionary<long, ContactType> contactTable = new Dictionary<long, ContactType>();
-
-        [NonSerialized]
-        private Dictionary<Guid, Contact> pendingAcceptionCircleList = new Dictionary<Guid, Contact>();
-
-        [NonSerialized]
-        private Dictionary<Guid, string> pendingCreateCircleList = new Dictionary<Guid, string>();
-
-        [NonSerialized]
-        private Dictionary<Guid, KeyValuePair<Contact, ContactType>> messengerContactLink = new Dictionary<Guid, KeyValuePair<Contact, ContactType>>();
-
-        [NonSerialized]
-        private Dictionary<Guid, List<ContactType>> shellContactLink = new Dictionary<Guid, List<ContactType>>();
-
-        [NonSerialized]
-        private List<ContactType> individualShellContacts = new List<ContactType>(0);
-
-        /// <summary>
-        /// These contacts are pure shell contacts, they don't have windows live account.
-        /// Such an example is the facebook contact which imported to your buddy list but
-        /// the owner doesn't have a WLM account.
-        /// </summary>
-        internal List<ContactType> IndividualShellContacts
+        private bool IsContactTableEmpty()
         {
-            get
-            {
-                return individualShellContacts;
-            }
+            lock (contactTable)
+                return contactTable.Count == 0;
+        }
+
+        private bool HasContact(long CID)
+        {
+            lock (contactTable)
+                return contactTable.ContainsKey(CID);
+        }
+
+        private bool HasWLConnection(string abId)
+        {
+            lock (CircleResults)
+                return CircleResults.ContainsKey(abId);
         }
 
         /// <summary>
-        /// The messenger contact which MIGHT have shell contact connected to it.
+        /// Check whether we've saved the specified addressbook.
         /// </summary>
-        private Dictionary<Guid, KeyValuePair<Contact, ContactType>> MessengerContactLink
+        /// <param name="abId"></param>
+        /// <returns></returns>
+        private bool HasAddressBook(string abId)
         {
-            get
-            {
-                return messengerContactLink;
-            }
+            string lowerId = abId.ToLowerInvariant();
+            if (AddressBooksInfo == null)
+                return false;
+
+            lock (AddressBooksInfo)
+                return AddressBooksInfo.ContainsKey(lowerId);
         }
 
         /// <summary>
-        /// These contacts are "Shells" of their corresponding messenger contact but in different network.
-        /// For example, a user have both messenger and facebook account, then on his/her friend's contact list,
-        /// that user's facebook contact is a shell contact of its messenger contact. The stupid M$ Windows Live team 
-        /// finally realized that they cannot manage the contacts only by account and network type, they need a 
-        /// foreign key instead. They should do this ten years ago and the ContactInfo data structure won't be 
-        /// this ugly now.
+        /// Check whether the specific contact page exist.
         /// </summary>
-        private Dictionary<Guid, List<ContactType>> ShellContactLink
+        /// <param name="abId">The addressbook identifier of a specific contact page.</param>
+        /// <returns></returns>
+        private bool HasAddressBookContactPage(string abId)
         {
-            get
+            string lowerId = abId.ToLowerInvariant();
+            if (AddressbookContacts == null)
+                return false;
+
+            bool returnValue = false;
+
+            lock (AddressbookContacts)
             {
-                return shellContactLink;
+                if (AddressbookContacts.ContainsKey(lowerId))
+                {
+                    if (AddressbookContacts[lowerId] != null)
+                    {
+                        returnValue = true;
+                    }
+                }
             }
+
+            return returnValue;
         }
 
-        /// <summary>
-        /// Circles created by the library and waiting server's confirm.
-        /// </summary>
-        internal Dictionary<Guid, string> PendingCreateCircleList
+        internal bool HasContact(string abId, Guid contactId)
         {
-            get
+            string lowerId = abId.ToLowerInvariant();
+            lock (AddressbookContacts)
             {
-                return pendingCreateCircleList;
-            }
-        }
+                if (!AddressbookContacts.ContainsKey(lowerId))
+                    return false;
 
-        /// <summary>
-        /// A collection of all circles which are pending acception.
-        /// </summary>
-        internal Dictionary<Guid, Contact> PendingAcceptionCircleList
-        {
-            get
-            {
-                return pendingAcceptionCircleList;
-            }
-        }
-
-        public SerializableDictionary<string, CircleInverseInfoType> CircleResults
-        {
-            get
-            {
-                return circleResults;
-            }
-            set
-            {
-                circleResults = value;
-            }
-        }
-
-        [XmlElement("AddressBooksInfo")]
-        public SerializableDictionary<string, ABFindContactsPagedResultTypeAB> AddressBooksInfo
-        {
-            get
-            {
-                return abInfos;
-            }
-
-            set
-            {
-                abInfos = value;
+                return AddressbookContacts[lowerId].ContainsKey(contactId);
             }
         }
 
@@ -1181,106 +1095,234 @@ namespace MSNPSharp.IO
         }
 
 
-        public SerializableDictionary<string, string> MyProperties
+        /// <summary>
+        /// Try to remove a contact from a specific addressbook.
+        /// </summary>
+        /// <param name="abId">The specific addressbook identifier.</param>
+        /// <param name="contactId">The contact identifier.</param>
+        /// <returns>If the contact exists and removed successfully, return true, else return false.</returns>
+        internal bool RemoveContactFromAddressBook(Guid abId, Guid contactId)
         {
-            get
-            {
-                return myproperties;
-            }
-            set
-            {
-                myproperties = value;
-            }
-        }
-
-        public SerializableDictionary<Guid, GroupType> Groups
-        {
-            get
-            {
-                return groups;
-            }
-
-            set
-            {
-                groups = value;
-            }
+            return RemoveContactFromAddressBook(abId.ToString("D"), contactId);
         }
 
         /// <summary>
-        /// The contact list for different address book pages.<br></br>
-        /// The circle recreate procedure is based on this property.
+        /// Try to remove a contact from a specific addressbook.
         /// </summary>
-        public SerializableDictionary<string, SerializableDictionary<Guid, ContactType>> AddressbookContacts
-        {
-            get
-            {
-                return abcontacts;
-            }
-            set
-            {
-                abcontacts = value;
-            }
-        }
-
-        public void AddGroup(Dictionary<Guid, GroupType> range)
-        {
-            foreach (GroupType group in range.Values)
-            {
-                AddGroup(group);
-            }
-        }
-
-        public void AddGroup(GroupType group)
-        {
-            lock (SyncObject)
-            {
-                Guid key = new Guid(group.groupId);
-                if (groups.ContainsKey(key))
-                {
-                    groups[key] = group;
-                }
-                else
-                {
-                    groups.Add(key, group);
-                }
-            }
-        }
-
-        public virtual void Add(string abId, Dictionary<Guid, ContactType> range)
+        /// <param name="abId">The specific addressbook identifier.</param>
+        /// <param name="contactId">The contact identifier.</param>
+        /// <returns>If the contact exists and removed successfully, return true, else return false.</returns>
+        internal bool RemoveContactFromAddressBook(string abId, Guid contactId)
         {
             lock (SyncObject)
             {
                 string lowerId = abId.ToLowerInvariant();
-
-                if (!abcontacts.ContainsKey(lowerId))
+                lock (AddressbookContacts)
                 {
-                    abcontacts.Add(lowerId, new SerializableDictionary<Guid, ContactType>(0));
+                    if (AddressbookContacts.ContainsKey(lowerId))
+                    {
+                        if (AddressbookContacts[lowerId].ContainsKey(contactId))
+                        {
+                            return AddressbookContacts[lowerId].Remove(contactId);
+                        }
+                    }
                 }
 
-                foreach (Guid guid in range.Keys)
-                {
-                    abcontacts[lowerId][guid] = range[guid];
-                }
+                return false;
             }
         }
 
-        public XMLContactList Merge(ABFindContactsPagedResultType forwardList)
-        {
-            Initialize();
 
-            if (forwardList != null && forwardList.Ab != null)
+        private bool RemoveContactFromContactTable(long CID)
+        {
+            lock (contactTable)
+                return contactTable.Remove(CID);
+        }
+
+        /// <summary>
+        /// Remove an item in AddressBooksInfo property by giving an addressbook Id.
+        /// </summary>
+        /// <param name="abId"></param>
+        /// <returns></returns>
+        private bool RemoveAddressBookInfo(string abId)
+        {
+
+            lock (AddressBooksInfo)
+                return AddressBooksInfo.Remove(abId.ToLowerInvariant());
+        }
+
+        /// <summary>
+        /// Remove an item from AddressbookContacts property.
+        /// </summary>
+        /// <param name="abId">The addressbook page of a specified contact page.</param>
+        /// <returns></returns>
+        private bool RemoveAddressBookContatPage(string abId)
+        {
+            lock (AddressbookContacts)
             {
-                if (WebServiceConstants.MessengerIndividualAddressBookId == forwardList.Ab.abId.ToLowerInvariant())
+                return AddressbookContacts.Remove(abId.ToLowerInvariant());
+            }
+        }
+
+        /// <summary>
+        /// Add or update a contact in the specific address book.
+        /// </summary>
+        /// <param name="abId">The identifier of addressbook.</param>
+        /// <param name="contact">The contact to be added/updated.</param>
+        /// <returns>If the contact added to the addressbook, returen true, if the contact is updated (not add), return false.</returns>
+        internal bool SetContactToAddressBookContactPage(string abId, ContactType contact)
+        {
+            lock (SyncObject)
+            {
+                string lowerId = abId.ToLowerInvariant();
+                bool returnval = false;
+
+                lock (AddressbookContacts)
                 {
-                    MergeIndividualAddressBook(forwardList);
+                    if (!AddressbookContacts.ContainsKey(lowerId))
+                    {
+                        AddressbookContacts.Add(lowerId, new SerializableDictionary<Guid, ContactType>());
+                        returnval = true;
+                    }
+
+                    AddressbookContacts[lowerId][new Guid(contact.contactId)] = contact;
                 }
-                else
+
+                return returnval;
+            }
+        }
+
+        private bool SetAddressBookInfoToABInfoList(string abId, ABFindContactsPagedResultTypeAB abInfo)
+        {
+            string lowerId = abId.ToLowerInvariant();
+            if (AddressBooksInfo == null)
+                return false;
+
+            lock (AddressBooksInfo)
+                AddressBooksInfo[lowerId] = abInfo;
+            return true;
+        }
+
+        private bool IsPendingCreateConfirmCircle(string abId)
+        {
+            lock (PendingCreateCircleList)
+                return PendingCreateCircleList.ContainsKey(new Guid(abId));
+        }
+
+        private bool IsPendingCreateConfirmCircle(Guid abId)
+        {
+            lock (PendingCreateCircleList)
+                return PendingCreateCircleList.ContainsKey(abId);
+        }
+
+        /// <summary>
+        /// Get a contact from a specific addressbook by providing the addressbook identifier and contact identifier.
+        /// </summary>
+        /// <param name="abId">The addressbook identifier.</param>
+        /// <param name="contactId">The contactidentifier.</param>
+        /// <returns>If the contact exist, return the contact object, else return null.</returns>
+        internal ContactType SelectContactFromAddressBook(string abId, Guid contactId)
+        {
+            string lowerId = abId.ToLowerInvariant();
+            if (!HasContact(abId, contactId))
+                return null;
+            return AddressbookContacts[lowerId][contactId];
+        }
+
+        /// <summary>
+        /// Get the hidden representative's CID by providing addressbook Id from the inverse connection list.
+        /// </summary>
+        /// <param name="abId"></param>
+        /// <returns></returns>
+        private CircleInverseInfoType SelectWLConnection(string abId)
+        {
+            if (string.IsNullOrEmpty(abId))
+                return null;
+
+            string lowerId = abId.ToLowerInvariant();
+            if (!HasWLConnection(lowerId))
+                return null;
+
+            lock (CircleResults)
+                return CircleResults[lowerId];
+
+        }
+
+        private string[] SelectWLConnection(List<string> abIds, RelationshipState state)
+        {
+            List<string> results = new List<string>(0);
+
+            lock (CircleResults)
+            {
+                foreach (string abId in abIds)
                 {
-                    MergeGroupAddressBook(forwardList);
+                    if (HasWLConnection(abId))
+                    {
+                        if (state == RelationshipState.None)
+                        {
+                            results.Add(abId);
+                        }
+                        else
+                        {
+                            if (CircleResults[abId.ToLowerInvariant()].PersonalInfo.MembershipInfo.CirclePersonalMembership.State == state.ToString())
+                                results.Add(abId);
+                        }
+
+                    }
                 }
             }
 
-            return this;
+            return results.ToArray();
+        }
+
+        private string[] FilterWLConnections(List<string> abIds, RelationshipState state)
+        {
+            List<string> returnValues = new List<string>(0);
+
+
+            foreach (string abId in abIds)
+            {
+                string lowerId = abId.ToLowerInvariant();
+                if (CircleResults.ContainsKey(lowerId))
+                {
+                    CircleInverseInfoType inverseInfo = CircleResults[lowerId];
+                    if (inverseInfo.PersonalInfo.MembershipInfo.CirclePersonalMembership.State == state.ToString())
+                        returnValues.Add(abId);
+                }
+            }
+
+            return returnValues.ToArray();
+        }
+
+        private CircleInverseInfoType SelectCircleInverseInfo(string abId)
+        {
+            if (string.IsNullOrEmpty(abId))
+                return null;
+
+            abId = abId.ToLowerInvariant();
+
+            lock (CircleResults)
+            {
+                if (!CircleResults.ContainsKey(abId))
+                    return null;
+                return CircleResults[abId];
+            }
+        }
+
+        /// <summary>
+        /// Get a hidden representative for a addressbook by CID.
+        /// </summary>
+        /// <param name="CID"></param>
+        /// <returns></returns>
+        private ContactType SelecteContact(long CID)
+        {
+            if (!HasContact(CID))
+            {
+                return null;
+            }
+
+            lock (contactTable)
+                return contactTable[CID];
         }
 
         /// <summary>
@@ -2057,7 +2099,6 @@ namespace MSNPSharp.IO
                 return PendingCreateCircleList.Remove(abId);
         }
 
-
         /// <summary>
         /// Get a circle addressbook by addressbook identifier.
         /// </summary>
@@ -2105,7 +2146,6 @@ namespace MSNPSharp.IO
             return true;
         }
 
-
         /// <summary>
         /// Create a circle.
         /// </summary>
@@ -2143,7 +2183,6 @@ namespace MSNPSharp.IO
 
             return true;
         }
-
 
         private bool RestoreCircles(string[] abIds, RelationshipState state)
         {
@@ -3037,46 +3076,6 @@ namespace MSNPSharp.IO
             return true;
         }
 
-
-        /// <summary>
-        /// Set MyProperties to default value.
-        /// </summary>
-        public void InitializeMyProperties()
-        {
-            lock (SyncObject)
-            {
-                if (!MyProperties.ContainsKey(AnnotationNames.Live_Profile_Expression_LastChanged))
-                    MyProperties[AnnotationNames.Live_Profile_Expression_LastChanged] = XmlConvert.ToString(DateTime.MinValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
-            }
-        }
-
         #endregion
-
-        #region Overrides
-
-        /// <summary>
-        /// Save the <see cref="XMLContactList"/> into a specified file.
-        /// </summary>
-        /// <param name="filename"></param>
-        public override void Save(string filename)
-        {
-
-            lock (SyncObject)
-            {
-                try
-                {
-                    Version = Properties.Resources.XMLContactListVersion;
-                    base.Save(filename);
-                }
-                catch (Exception ex)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                                      "An error occurs while saving the Addressbook, StackTrace:\r\n" +
-                                      ex.StackTrace);
-                }
-            }
-        }
-        #endregion
-
     }
 };
