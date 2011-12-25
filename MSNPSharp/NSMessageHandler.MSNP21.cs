@@ -652,7 +652,8 @@ namespace MSNPSharp
             delPayload.InnerMessage = mmMessage;
             MessageProcessor.SendMessage(delPayload);
 
-            if (endPointID == MachineGuid && messageProcessor.Connected)
+            // We will receive NFY DEL for normal users
+            if (BotMode && endPointID == MachineGuid && messageProcessor.Connected)
                 messageProcessor.Disconnect();
         }
 
@@ -1465,9 +1466,11 @@ namespace MSNPSharp
                                                 routingInfo.Sender.SetChangedPlace(new PlaceChangedEventArgs(routingInfo.Sender.EndPointData[epid], PlaceChangedReason.SignedOut));
                                             }
 
-                                            if (routingInfo.FromOwner && epid == MachineGuid)
+                                            if (routingInfo.FromOwner && epid == MachineGuid &&
+                                                messageProcessor != null && messageProcessor.Connected)
                                             {
-                                                SignoutFrom(epid);
+                                                // Just disconnect
+                                                messageProcessor.Disconnect();
                                             }
 
                                             break;
