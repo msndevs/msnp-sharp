@@ -135,7 +135,7 @@ namespace MSNPSharp.Core
                     sb.Append("IP=" + ConnectivitySettings.Host);
                     break;
                 case HttpPollAction.Poll:
-                    sb.Append("Action=poll&Lifespan=5&");
+                    sb.Append("Action=poll&Lifespan=3&");
                     sb.Append("SessionID=" + SessionID);
                     break;
                 case HttpPollAction.None:
@@ -287,6 +287,7 @@ namespace MSNPSharp.Core
                     pollTimer.Stop();
 
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(GenerateURI());
+                request.Timeout = 5000;
                 request.Method = "POST";
                 request.Accept = "*/*";
                 request.AllowAutoRedirect = false;
@@ -329,7 +330,6 @@ namespace MSNPSharp.Core
             catch (WebException we)
             {
                 OnDisconnected();
-                return;
             }
         }
 
@@ -347,7 +347,6 @@ namespace MSNPSharp.Core
             catch (WebException we)
             {
                 OnDisconnected();
-                return;
             }
         }
 
@@ -386,8 +385,9 @@ namespace MSNPSharp.Core
                                         if ("close" == elements[1])
                                         {
                                             // Session is closed... OUT or SignoutFromHere() was sent.
+                                            // We will receive 400 error if we send a new data.
+                                            // So, fire event after all content read.
                                             connected = false;
-                                            OnDisconnected();
                                         }
                                         break;
                                     case "Action":
@@ -435,7 +435,14 @@ namespace MSNPSharp.Core
             lock (_lock)
             {
                 if (connected && (!sending) && (!pollTimer.Enabled))
+                {
                     pollTimer.Start();
+                }
+                else if (!connected)
+                {
+                    // All content is read. It is time to fire event if not connected..
+                    Disconnect();
+                }
             }
         }
 
