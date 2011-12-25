@@ -73,6 +73,7 @@ namespace MSNPSharp.Core
         private string gatewayIP;
         private WebProxy webProxy;
 
+        private Queue<byte[]> sendingQueue = new Queue<byte[]>();
         private System.Timers.Timer pollTimer = new System.Timers.Timer(2000);
         private object _lock = new object();
 
@@ -97,8 +98,23 @@ namespace MSNPSharp.Core
             }
         }
 
+        [MethodImpl(MethodImplOptions.Synchronized)]
         private void pollTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
+            byte[] send = new byte[0];
+
+            lock (_lock)
+            {
+                while (sendingQueue.Count > 0)
+                    send = NetworkMessage.AppendArray(send, sendingQueue.Dequeue());
+            }
+
+            if (send.Length > 0)
+            {
+                action = HttpPollAction.None;
+                SendSocketData(send);
+            }
+
             action = HttpPollAction.Poll;
             SendSocketData(new byte[0]);
         }
@@ -198,6 +214,7 @@ namespace MSNPSharp.Core
                 OnDisconnected();
             }
 
+            sendingQueue = new Queue<byte[]>();
             opened = false;
             verCommand = false;
             cvrCommand = false;
@@ -259,6 +276,12 @@ namespace MSNPSharp.Core
 
             lock (_lock)
             {
+                if (sending)
+                {
+                    sendingQueue.Enqueue(data);
+                    action = HttpPollAction.None;
+                    return;
+                }
 
                 if (pollTimer.Enabled)
                     pollTimer.Stop();
@@ -284,23 +307,47 @@ namespace MSNPSharp.Core
                     request.Proxy = webProxy;
                 }
 
-                try
-                {
-                    using (Stream requestStream = request.GetRequestStream())
-                    {
-                        requestStream.Write(data, 0, data.Length);
-                    }
-                }
-                catch (WebException we)
-                {
-                    OnDisconnected();
-                    return;
-                }
-
                 sending = true;
                 action = HttpPollAction.None;
 
+                StreamState streamState = new StreamState(request, null, data);
+                request.BeginGetRequestStream(EndGetRequestStream, streamState);
+            }
+        }
+
+        private void EndGetRequestStream(IAsyncResult ar)
+        {
+            StreamState streamState = (StreamState)ar.AsyncState;
+            HttpWebRequest request = (HttpWebRequest)streamState.Request;
+            byte[] dataToSend = streamState.Buffer;
+            try
+            {
+                Stream stream = request.EndGetRequestStream(ar);
+                StreamState streamState2 = new StreamState(request, stream, null);
+                stream.BeginWrite(dataToSend, 0, dataToSend.Length, RequestStreamEndWrite, streamState2);
+            }
+            catch (WebException we)
+            {
+                OnDisconnected();
+                return;
+            }
+        }
+
+        private void RequestStreamEndWrite(IAsyncResult ar)
+        {
+            StreamState streamState = (StreamState)ar.AsyncState;
+            HttpWebRequest request = (HttpWebRequest)streamState.Request;
+            Stream stream = streamState.Stream;
+            try
+            {
+                stream.EndWrite(ar);
+
                 request.BeginGetResponse(EndGetResponseCallback, request);
+            }
+            catch (WebException we)
+            {
+                OnDisconnected();
+                return;
             }
         }
 
@@ -352,20 +399,19 @@ namespace MSNPSharp.Core
                 }
 
                 Stream responseStream = response.GetResponseStream();
-                HttpResponseState httpState = new HttpResponseState(request, response, responseStream, responseLength, sending);
-                responseStream.BeginRead(httpState.Buffer, httpState.Offset, responseLength - httpState.Offset, EndRead, httpState);
+                HttpResponseState httpState = new HttpResponseState(request, response, responseStream, responseLength);
+                responseStream.BeginRead(httpState.Buffer, httpState.Offset, responseLength - httpState.Offset, ResponseStreamEndRead, httpState);
             }
         }
 
-        private void EndRead(IAsyncResult ar)
+        private void ResponseStreamEndRead(IAsyncResult ar)
         {
             HttpResponseState state = (HttpResponseState)ar.AsyncState;
-            int read = state.ResponseStream.EndRead(ar);
-            state.Offset += read;
+            state.Offset += state.ResponseStream.EndRead(ar);
 
             if (state.Offset < state.Buffer.Length)
             {
-                state.ResponseStream.BeginRead(state.Buffer, state.Offset, state.Buffer.Length - state.Offset, EndRead, state);
+                state.ResponseStream.BeginRead(state.Buffer, state.Offset, state.Buffer.Length - state.Offset, ResponseStreamEndRead, state);
                 return;
             }
 
@@ -373,10 +419,7 @@ namespace MSNPSharp.Core
             state.Response.Close();
             sending = false;
 
-            if (state.WasSending)
-            {
-                OnSendCompleted(new ObjectEventArgs(0));
-            }
+            OnSendCompleted(new ObjectEventArgs(0));
 
             using (BinaryReader reader = new BinaryReader(new MemoryStream(state.Buffer, 0, state.Buffer.Length)))
             {
@@ -408,16 +451,27 @@ namespace MSNPSharp.Core
             public Stream ResponseStream;
             public int Offset = 0;
             public byte[] Buffer;
-            public bool WasSending = false;
 
-            public HttpResponseState(WebRequest request, WebResponse response, Stream responseStream,
-                int length, bool wasSending)
+            public HttpResponseState(WebRequest request, WebResponse response, Stream responseStream, int length)
             {
                 this.Request = request;
                 this.Response = response;
                 this.ResponseStream = responseStream;
                 this.Buffer = new byte[length];
-                this.WasSending = wasSending;
+            }
+        }
+
+        private class StreamState
+        {
+            public WebRequest Request;
+            public Stream Stream;
+            public byte[] Buffer;
+
+            public StreamState(WebRequest request, Stream stream, byte[] buffer)
+            {
+                this.Request = request;
+                this.Stream = stream;
+                this.Buffer = buffer;
             }
         }
     }
