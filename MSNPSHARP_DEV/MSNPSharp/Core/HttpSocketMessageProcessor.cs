@@ -46,8 +46,17 @@ namespace MSNPSharp.Core
 
     internal enum HttpPollAction
     {
+        /// <summary>
+        /// Send and receive data. We have data to send and we want to receive data immediately (no lifespan).
+        /// </summary>
         None,
+        /// <summary>
+        /// Open connection to the name server.
+        /// </summary>
         Open,
+        /// <summary>
+        /// We don't have data to send. Receive data only and wait until Lifespan elapsed for the available data.
+        /// </summary>
         Poll
     };
 
@@ -59,9 +68,8 @@ namespace MSNPSharp.Core
     {
         private HttpPollAction action = HttpPollAction.None;
 
-        private bool connected = false;
-        private bool sending = false;
-
+        private volatile bool connected = false;
+        private volatile bool sending = false;
 
         private bool opened = false; // first call to server has Action=open
         private bool verCommand = false;
@@ -77,10 +85,8 @@ namespace MSNPSharp.Core
         private System.Timers.Timer pollTimer = new System.Timers.Timer(2000);
         private object _lock = new object();
 
-
         public HttpSocketMessageProcessor(ConnectivitySettings connectivitySettings,
-            MessageReceiver messageReceiver,
-            MessagePool messagePool)
+            MessageReceiver messageReceiver, MessagePool messagePool)
             : base(connectivitySettings, messageReceiver, messagePool)
         {
             gatewayIP = connectivitySettings.Host;
@@ -98,25 +104,55 @@ namespace MSNPSharp.Core
             }
         }
 
+        public override bool Connected
+        {
+            get
+            {
+                return connected;
+            }
+        }
+
+        private string SessionID
+        {
+            get
+            {
+                return sessionID;
+            }
+            set
+            {
+                sessionID = value;
+            }
+        }
+
+        private string GatewayIP
+        {
+            get
+            {
+                return gatewayIP;
+            }
+            set
+            {
+                gatewayIP = value;
+            }
+        }
+
+
         [MethodImpl(MethodImplOptions.Synchronized)]
         private void pollTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            byte[] send = new byte[0];
+            byte[] buffer = new byte[0];
+            action = HttpPollAction.Poll;
 
             lock (_lock)
             {
                 while (sendingQueue.Count > 0)
-                    send = NetworkMessage.AppendArray(send, sendingQueue.Dequeue());
+                    buffer = NetworkMessage.AppendArray(buffer, sendingQueue.Dequeue());
+
+                if (buffer.Length > 0)
+                    action = HttpPollAction.None;
             }
 
-            if (send.Length > 0)
-            {
-                action = HttpPollAction.None;
-                SendSocketData(send);
-            }
-
-            action = HttpPollAction.Poll;
-            SendSocketData(new byte[0]);
+            SendSocketData(buffer);
         }
 
         private string GenerateURI()
@@ -146,54 +182,6 @@ namespace MSNPSharp.Core
             return sb.ToString();
         }
 
-        public override bool Connected
-        {
-            get
-            {
-                return connected;
-            }
-        }
-
-
-
-        private string SessionID
-        {
-            get
-            {
-                lock (this)
-                {
-                    return sessionID;
-                }
-            }
-            set
-            {
-                lock (this)
-                {
-                    sessionID = value;
-                }
-            }
-        }
-
-        private string GatewayIP
-        {
-            get
-            {
-                lock (this)
-                {
-                    return gatewayIP;
-                }
-            }
-            set
-            {
-                lock (this)
-                {
-                    gatewayIP = value;
-                }
-            }
-        }
-
-
-
         public override void Connect()
         {
             // don't have to do anything here
@@ -220,6 +208,11 @@ namespace MSNPSharp.Core
             cvrCommand = false;
             usrCommand = false;
             openCommand = null;
+        }
+
+        public void Dispose()
+        {
+            Disconnect();
         }
 
         public override void SendMessage(NetworkMessage message)
@@ -444,11 +437,6 @@ namespace MSNPSharp.Core
                     Disconnect();
                 }
             }
-        }
-
-        public void Dispose()
-        {
-            Disconnect();
         }
 
         private class HttpResponseState
