@@ -322,7 +322,7 @@ namespace MSNPSharp.Core
             }
             catch (WebException we)
             {
-                OnDisconnected();
+                HandleWebException(we);
             }
         }
 
@@ -334,83 +334,118 @@ namespace MSNPSharp.Core
             try
             {
                 stream.EndWrite(ar);
+                stream.Close();
 
                 request.BeginGetResponse(EndGetResponseCallback, request);
             }
             catch (WebException we)
             {
-                OnDisconnected();
+                HandleWebException(we);
             }
         }
 
         private void EndGetResponseCallback(IAsyncResult ar)
         {
+            int responseLength = 0;
+            HttpWebRequest request = (HttpWebRequest)ar.AsyncState;
+
             lock (_lock)
             {
-                int responseLength = 0;
-                HttpWebRequest request = (HttpWebRequest)ar.AsyncState;
-                HttpWebResponse response = (HttpWebResponse)request.EndGetResponse(ar);
-
-                foreach (string str in response.Headers.AllKeys)
+                try
                 {
-                    switch (str)
+                    HttpWebResponse response = (HttpWebResponse)request.EndGetResponse(ar);
+
+                    foreach (string str in response.Headers.AllKeys)
                     {
-                        case "Content-Length":
-                            responseLength = Int32.Parse(response.Headers.Get(str));
-                            break;
+                        switch (str)
+                        {
+                            case "Content-Length":
+                                responseLength = Int32.Parse(response.Headers.Get(str));
+                                break;
 
-                        case "X-MSN-Messenger":
-                            string text = response.Headers.Get(str);
+                            case "X-MSN-Messenger":
+                                string text = response.Headers.Get(str);
 
-                            string[] parts = text.Split(';');
-                            foreach (string part in parts)
-                            {
-                                string[] elements = part.Split('=');
-                                switch (elements[0].Trim())
+                                string[] parts = text.Split(';');
+                                foreach (string part in parts)
                                 {
-                                    case "SessionID":
-                                        SessionID = elements[1];
-                                        break;
-                                    case "GW-IP":
-                                        GatewayIP = elements[1];
-                                        break;
-                                    case "Session":
-                                        if ("close" == elements[1])
-                                        {
-                                            // Session is closed... OUT or SignoutFromHere() was sent.
-                                            // We will receive 400 error if we send a new data.
-                                            // So, fire event after all content read.
-                                            connected = false;
-                                        }
-                                        break;
-                                    case "Action":
-                                        break;
+                                    string[] elements = part.Split('=');
+                                    switch (elements[0].Trim())
+                                    {
+                                        case "SessionID":
+                                            SessionID = elements[1];
+                                            break;
+                                        case "GW-IP":
+                                            GatewayIP = elements[1];
+                                            break;
+                                        case "Session":
+                                            if ("close" == elements[1])
+                                            {
+                                                // Session is closed... OUT or SignoutFromHere() was sent.
+                                                // We will receive 400 error if we send a new data.
+                                                // So, fire event after all content read.
+                                                connected = false;
+                                            }
+                                            break;
+                                        case "Action":
+                                            break;
+                                    }
                                 }
-                            }
-                            break;
+                                break;
+                        }
                     }
-                }
 
-                Stream responseStream = response.GetResponseStream();
-                HttpResponseState httpState = new HttpResponseState(request, response, responseStream, responseLength);
-                responseStream.BeginRead(httpState.Buffer, httpState.Offset, responseLength - httpState.Offset, ResponseStreamEndRead, httpState);
+                    Stream responseStream = response.GetResponseStream();
+                    HttpResponseState httpState = new HttpResponseState(request, response, responseStream, responseLength);
+                    responseStream.BeginRead(httpState.Buffer, httpState.Offset, responseLength - httpState.Offset, ResponseStreamEndRead, httpState);
+                }
+                catch (WebException we)
+                {
+                    HandleWebException(we);
+                }
             }
         }
 
         private void ResponseStreamEndRead(IAsyncResult ar)
         {
             HttpResponseState state = (HttpResponseState)ar.AsyncState;
-            state.Offset += state.ResponseStream.EndRead(ar);
 
-            if (state.Offset < state.Buffer.Length)
+            try
             {
-                state.ResponseStream.BeginRead(state.Buffer, state.Offset, state.Buffer.Length - state.Offset, ResponseStreamEndRead, state);
-                return;
-            }
+                state.Offset += state.ResponseStream.EndRead(ar);
 
-            state.ResponseStream.Close();
-            state.Response.Close();
-            sending = false;
+                if (state.Offset < state.Buffer.Length)
+                {
+                    state.ResponseStream.BeginRead(state.Buffer, state.Offset, state.Buffer.Length - state.Offset, ResponseStreamEndRead, state);
+                    return;
+                }
+            }
+            catch (WebException we)
+            {
+                HandleWebException(we);
+            }
+            catch (ObjectDisposedException ode)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                    "HTTP Response Stream disposed: " + ode.StackTrace, GetType().Name);
+            }
+            finally
+            {
+                if (state.Offset == state.Buffer.Length)
+                {
+                    sending = false;
+                    try
+                    {
+                        state.ResponseStream.Close();
+                        state.Response.Close();
+                    }
+                    catch (Exception exc)
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                            "HTTP Response Stream close error: " + exc.StackTrace, GetType().Name);
+                    }
+                }
+            }
 
             OnSendCompleted(new ObjectEventArgs(0));
 
@@ -436,6 +471,46 @@ namespace MSNPSharp.Core
                     // All content is read. It is time to fire event if not connected..
                     Disconnect();
                 }
+            }
+        }
+
+        private void HandleWebException(WebException we)
+        {
+            switch (we.Status)
+            {
+                case WebExceptionStatus.ConnectFailure:
+                case WebExceptionStatus.ConnectionClosed:
+                case WebExceptionStatus.KeepAliveFailure:
+                case WebExceptionStatus.NameResolutionFailure:
+                case WebExceptionStatus.ProxyNameResolutionFailure:
+                case WebExceptionStatus.SendFailure:
+                case WebExceptionStatus.ProtocolError:
+                case WebExceptionStatus.ReceiveFailure:
+                case WebExceptionStatus.RequestCanceled:
+                case WebExceptionStatus.Timeout:
+                case WebExceptionStatus.UnknownError:
+                    {
+                        OnDisconnected();
+
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                            "HTTP Error: " + we.ToString(), GetType().Name);
+
+                        HttpWebResponse wr = (HttpWebResponse)we.Response;
+                        if (wr != null)
+                        {
+                            try
+                            {
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                                    "HTTP Status: " + ((int)wr.StatusCode) + " " + wr.StatusCode + " " + wr.StatusDescription, GetType().Name);
+                            }
+                            catch (Exception exp)
+                            {
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                                    "HTTP Error: " + we.ToString(), GetType().Name);
+                            }
+                        }
+                        break;
+                    }
             }
         }
 
