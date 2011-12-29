@@ -903,10 +903,9 @@ namespace MSNPSharp
                 newSettings.Host = hostAndPort[0];
                 newSettings.Port = int.Parse(hostAndPort[1], System.Globalization.CultureInfo.InvariantCulture);
 
-                processor.ConnectivitySettings = newSettings;
-
-                // and reconnect. The login procedure will now start over again
-                processor.Connect();
+                // Register events,
+                this.MessageProcessor = (processor = new NSMessageProcessor(newSettings));
+                processor.Connect(); // and reconnect. The login procedure will now start over again
             }
         }
 

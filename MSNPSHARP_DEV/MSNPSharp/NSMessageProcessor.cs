@@ -41,9 +41,59 @@ namespace MSNPSharp
 
     public class NSMessageProcessor : IMessageProcessor
     {
-        private int transactionID = 0;
+        #region Events
 
+        public event EventHandler<EventArgs> ConnectionEstablished;
+        public event EventHandler<EventArgs> ConnectionClosed;
+        public event EventHandler<ExceptionEventArgs> ConnectingException;
+        public event EventHandler<ExceptionEventArgs> ConnectionException;
+        public event EventHandler<ObjectEventArgs> SendCompleted;
         public event EventHandler<ExceptionEventArgs> HandlerException;
+
+        #region Event triggers
+
+        protected virtual void OnConnectionEstablished(object sender, EventArgs e)
+        {
+            if (ConnectionEstablished != null)
+                ConnectionEstablished(sender, e);
+        }
+
+        protected virtual void OnConnectionClosed(object sender, EventArgs e)
+        {
+            if (ConnectionClosed != null)
+                ConnectionClosed(sender, e);
+        }
+
+        protected virtual void OnConnectingException(object sender, ExceptionEventArgs e)
+        {
+            if (ConnectingException != null)
+                ConnectingException(sender, e);
+        }
+
+        protected virtual void OnConnectionException(object sender, ExceptionEventArgs e)
+        {
+            if (ConnectionException != null)
+                ConnectionException(sender, e);
+        }
+
+        protected virtual void OnSendCompleted(object sender, ObjectEventArgs e)
+        {
+            if (SendCompleted != null)
+                SendCompleted(sender, e);
+        }
+
+        protected virtual void OnHandlerException(object sender, ExceptionEventArgs e)
+        {
+            if (HandlerException != null)
+                HandlerException(sender, e);
+        }
+
+        #endregion
+
+        #endregion
+
+        private int transactionID = 0;
+        private SocketMessageProcessor processor = null;
 
         protected internal NSMessageProcessor(ConnectivitySettings connectivitySettings)
         {
@@ -69,9 +119,15 @@ namespace MSNPSharp
             }
         }
 
-        SocketMessageProcessor processor = null;
+        public bool Connected
+        {
+            get
+            {
+                return (processor.Connected);
+            }
+        }
 
-        private SocketMessageProcessor Processor
+        public SocketMessageProcessor Processor
         {
             get
             {
@@ -79,7 +135,37 @@ namespace MSNPSharp
             }
             set
             {
+                if (processor != null)
+                {
+                    processor.ConnectionEstablished -= OnConnectionEstablished;
+                    processor.ConnectionClosed -= OnConnectionClosed;
+                    processor.ConnectingException -= OnConnectingException;
+                    processor.ConnectionException -= OnConnectionException;
+                    processor.SendCompleted -= OnSendCompleted;
+                }
+
                 processor = value;
+
+                if (processor != null)
+                {
+                    processor.ConnectionEstablished += OnConnectionEstablished;
+                    processor.ConnectionClosed += OnConnectionClosed;
+                    processor.ConnectingException += OnConnectingException;
+                    processor.ConnectionException += OnConnectionException;
+                    processor.SendCompleted += OnSendCompleted;
+                }
+            }
+        }
+
+        public ConnectivitySettings ConnectivitySettings
+        {
+            get
+            {
+                return Processor.ConnectivitySettings;
+            }
+            set
+            {
+                Processor.ConnectivitySettings = value;
             }
         }
 
@@ -145,48 +231,14 @@ namespace MSNPSharp
             Processor.Disconnect();
         }
 
-        public bool Connected
+        public void RegisterHandler(IMessageHandler handler)
         {
-            get
-            {
-                return Processor.Connected;
-            }
+            Processor.RegisterHandler(handler);
         }
 
-        public ConnectivitySettings ConnectivitySettings
+        public void UnregisterHandler(IMessageHandler handler)
         {
-            get { return Processor.ConnectivitySettings; }
-            set { Processor.ConnectivitySettings = value; }
-        }
-
-        public event EventHandler<EventArgs> ConnectionEstablished
-        {
-            add { Processor.ConnectionEstablished += value; }
-            remove { Processor.ConnectionEstablished -= value; }
-        }
-
-        public event EventHandler<EventArgs> ConnectionClosed
-        {
-            add { Processor.ConnectionClosed += value; }
-            remove { Processor.ConnectionClosed -= value; }
-        }
-
-        public event EventHandler<ExceptionEventArgs> ConnectingException
-        {
-            add { Processor.ConnectingException += value; }
-            remove { Processor.ConnectingException -= value; }
-        }
-
-        public event EventHandler<ExceptionEventArgs> ConnectionException
-        {
-            add { Processor.ConnectionException += value; }
-            remove { Processor.ConnectionException -= value; }
-        }
-
-        public event EventHandler<ObjectEventArgs> SendCompleted
-        {
-            add { Processor.SendCompleted += value; }
-            remove { Processor.SendCompleted -= value; }
+            Processor.UnregisterHandler(handler);
         }
 
         protected virtual void DispatchMessage(NetworkMessage message)
@@ -211,20 +263,10 @@ namespace MSNPSharp
                 }
                 catch (Exception e)
                 {
-                    if (HandlerException != null)
-                        HandlerException(this, new ExceptionEventArgs(new MSNPSharpException("An exception occured while handling a nameserver message. See inner exception for more details.", e)));
+                    OnHandlerException(this, new ExceptionEventArgs(new MSNPSharpException(
+                        "An exception occured while handling a nameserver message. See inner exception for more details.", e)));
                 }
             }
-        }
-
-        public void RegisterHandler(IMessageHandler handler)
-        {
-            Processor.RegisterHandler(handler);
-        }
-
-        public void UnregisterHandler(IMessageHandler handler)
-        {
-            Processor.UnregisterHandler(handler);
         }
     }
 };
