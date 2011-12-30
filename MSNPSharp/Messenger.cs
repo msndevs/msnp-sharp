@@ -95,6 +95,25 @@ namespace MSNPSharp
         /// </summary>
         public Messenger()
         {
+            // Inform us for Connected, Disconnected, ConnectingException events. 
+            nsMessageHandler.MessageProcessorChanged += OnMessageProcessorChanged;
+        }
+
+        private void OnMessageProcessorChanged(object sender, MessageProcessorChangedEventArgs e)
+        {
+            if (e.OldProcessor != null)
+            {
+                e.OldProcessor.ConnectionEstablished -= OnConnectionEstablished;
+                e.OldProcessor.ConnectionClosed -= OnConnectionClosed;
+                e.OldProcessor.ConnectingException -= OnConnectingException;
+            }
+
+            if (e.NewProcessor != null)
+            {
+                e.NewProcessor.ConnectionEstablished += OnConnectionEstablished;
+                e.NewProcessor.ConnectionClosed += OnConnectionClosed;
+                e.NewProcessor.ConnectingException += OnConnectingException;
+            }
         }
 
         #endregion
@@ -431,4 +450,32 @@ namespace MSNPSharp
 
         #endregion
     }
+
+    public class MessageProcessorChangedEventArgs : EventArgs
+    {
+        private NSMessageProcessor oldProcessor;
+        private NSMessageProcessor newProcessor;
+
+        public NSMessageProcessor OldProcessor
+        {
+            get
+            {
+                return oldProcessor;
+            }
+        }
+
+        public NSMessageProcessor NewProcessor
+        {
+            get
+            {
+                return newProcessor;
+            }
+        }
+
+        public MessageProcessorChangedEventArgs(NSMessageProcessor oldProcessor, NSMessageProcessor newProcessor)
+        {
+            this.oldProcessor = oldProcessor;
+            this.newProcessor = newProcessor;
+        }
+    };
 };

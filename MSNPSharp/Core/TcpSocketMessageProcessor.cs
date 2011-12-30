@@ -46,9 +46,11 @@ namespace MSNPSharp.Core
 
     public class TcpSocketMessageProcessor : SocketMessageProcessor, IDisposable
     {
+        #region Members
+
         private byte[] socketBuffer = new byte[8192];
-        private IPEndPoint proxyEndPoint = null;
-        private ProxySocket socket = null;
+        private IPEndPoint proxyEndPoint;
+        private ProxySocket socket;
 
         public TcpSocketMessageProcessor(ConnectivitySettings connectivitySettings, MessagePool messagePool)
             : base(connectivitySettings, messagePool)
@@ -58,6 +60,24 @@ namespace MSNPSharp.Core
         ~TcpSocketMessageProcessor()
         {
             Dispose(false);
+        }
+
+        #endregion
+
+        #region Properties
+
+        public override bool Connected
+        {
+            get
+            {
+                if (socket == null)
+                    return false;
+
+                lock (socket)
+                {
+                    return IsSocketConnected(socket);
+                }
+            }
         }
 
         protected IPEndPoint ProxyEndPoint
@@ -71,6 +91,26 @@ namespace MSNPSharp.Core
                 proxyEndPoint = value;
             }
         }
+
+        public EndPoint LocalEndPoint
+        {
+            get
+            {
+                return socket.LocalEndPoint;
+            }
+        }
+
+        public virtual EndPoint RemoteEndPoint
+        {
+            get
+            {
+                return socket.RemoteEndPoint;
+            }
+        }
+
+        #endregion
+
+        #region Methods
 
         public virtual ProxySocket GetPreparedSocket(IPAddress address, int port)
         {
@@ -158,200 +198,6 @@ namespace MSNPSharp.Core
             return socket;
         }
 
-        protected virtual void EndSendCallback(IAsyncResult ar)
-        {
-            SocketSendState state = (SocketSendState)ar.AsyncState;
-            Socket socket = state.Socket;
-            try
-            {
-                socket.EndSend(ar);
-
-                if (state.UserData != null)
-                {
-                    OnSendCompleted(new ObjectEventArgs(state.UserData));
-                }
-            }
-            catch (SocketException sex)
-            {
-                if (sex.NativeErrorCode != 10035)  //10035: WSAEWOULDBLOCK
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Error while sending network message. Error message: " + sex.Message);
-                    OnDisconnected();
-                }
-            }
-            catch (ObjectDisposedException)
-            {
-                // the connection is closed
-                OnDisconnected();
-            }
-            catch (Exception e)
-            {
-                throw new MSNPSharpException("Error while sending network message. See the inner exception for more details.", e);
-            }
-        }
-
-        public override void SendSocketData(byte[] data)
-        {
-            SendSocketData(socket, data, null);
-        }
-
-        public override void SendSocketData(byte[] data, object userState)
-        {
-            if (socket == null || !Connected)
-            {
-                // the connection is closed
-                OnDisconnected();
-                return;
-            }
-
-            SendSocketData(socket, data, userState);
-        }
-
-        public void SendSocketData(Socket psocket, byte[] data, object userState)
-        {
-            try
-            {
-                if (psocket != null && IsSocketConnected(psocket))
-                {
-                    lock (psocket)
-                    {
-                        SocketSendState state = new SocketSendState(psocket, userState);
-                        psocket.BeginSend(data, 0, data.Length, SocketFlags.None, EndSendCallback, state);
-                    }
-                }
-                else
-                {
-                    OnDisconnected();
-                }
-            }
-            catch (SocketException sex)
-            {
-                if (sex.NativeErrorCode != 10035)  //10035: WSAEWOULDBLOCK
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Error while sending network message. Error message: " + sex.Message);
-                    OnDisconnected();
-                }
-
-                return;
-            }
-            catch (ObjectDisposedException)
-            {
-                // the connection is closed
-                OnDisconnected();
-            }
-            catch (Exception e)
-            {
-                throw new MSNPSharpException("Error while sending network message. See the inner exception for more details.", e);
-            }
-        }
-
-        protected virtual void EndReceiveCallback(IAsyncResult ar)
-        {
-            try
-            {
-                System.Diagnostics.Debug.Assert(messagePool != null, "Field messagepool must be defined in derived class of SocketMessageProcessor.");
-
-                Socket socket = (Socket)ar.AsyncState;
-                int count = socket.EndReceive(ar);
-
-                if (count == 0)
-                {
-                    // No data is received. We are disconnected.
-                    OnDisconnected();
-                    return;
-                }
-
-                byte[] buffer = new byte[count];
-                Array.Copy(socketBuffer, 0, buffer, 0, count);
-                DispatchRawData(buffer);
-
-                // start a new read				
-                BeginDataReceive(socket);
-            }
-            catch (SocketException e)
-            {
-                // close the socket upon a exception
-                if (socket != null && Connected)
-                    socket.Close();
-
-                OnDisconnected();
-                OnConnectingException(e);
-            }
-            catch (ObjectDisposedException)
-            {
-                // the connection is closed
-                OnDisconnected();
-            }
-            catch (Exception e)
-            {
-                // close the socket upon a exception
-                if (socket != null && Connected)
-                    socket.Close();
-
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.ToString() + "\r\n" + e.StackTrace + "\r\n", GetType().Name);
-
-                OnDisconnected();
-                OnConnectionException(e);
-            }
-        }
-
-
-        protected virtual void EndConnectCallback(IAsyncResult ar)
-        {
-            try
-            {
-                if (socket == null)
-                {
-                    OnDisconnected();
-                    return;
-                }
-
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "End Connect Callback", GetType().Name);
-
-                ((ProxySocket)socket).EndConnect(ar);
-
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "End Connect Callback Daarna", GetType().Name);
-
-                OnConnected();
-
-                // Begin receiving data
-                BeginDataReceive(socket);
-            }
-            catch (Exception e)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "** EndConnectCallback exception **" + e.ToString(), GetType().Name);
-                OnConnectingException(e);
-            }
-        }
-
-        public virtual void BeginDataReceive(Socket socket)
-        {
-            try
-            {
-                socketBuffer = new byte[socketBuffer.Length];
-                socket.BeginReceive(socketBuffer, 0, socketBuffer.Length, SocketFlags.None, new AsyncCallback(EndReceiveCallback), socket);
-            }
-            catch (ObjectDisposedException)
-            {
-                OnDisconnected();
-            }
-        }
-
-
-        public override bool Connected
-        {
-            get
-            {
-                if (socket == null)
-                    return false;
-
-                lock (socket)
-                {
-                    return IsSocketConnected(socket);
-                }
-            }
-        }
-
         /// <summary>
         /// Show whether the socket is connected at a certain moment.
         /// </summary>
@@ -408,22 +254,6 @@ namespace MSNPSharp.Core
             return returnValue;
         }
 
-        public EndPoint LocalEndPoint
-        {
-            get
-            {
-                return socket.LocalEndPoint;
-            }
-        }
-
-        public virtual EndPoint RemoteEndPoint
-        {
-            get
-            {
-                return socket.RemoteEndPoint;
-            }
-        }
-
         /// <summary>
         /// Connect to the target through ConnectivitySettins.
         /// </summary>
@@ -476,6 +306,184 @@ namespace MSNPSharp.Core
             }
         }
 
+        protected virtual void EndConnectCallback(IAsyncResult ar)
+        {
+            try
+            {
+                if (socket == null)
+                {
+                    OnDisconnected();
+                    return;
+                }
+
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "End Connect Callback", GetType().Name);
+
+                ((ProxySocket)socket).EndConnect(ar);
+
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "End Connect Callback Daarna", GetType().Name);
+
+                OnConnected();
+
+                // Begin receiving data
+                BeginDataReceive(socket);
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "** EndConnectCallback exception **" + e.ToString(), GetType().Name);
+                OnConnectingException(e);
+            }
+        }
+
+        public virtual void BeginDataReceive(Socket socket)
+        {
+            try
+            {
+                socketBuffer = new byte[socketBuffer.Length];
+                socket.BeginReceive(socketBuffer, 0, socketBuffer.Length, SocketFlags.None, new AsyncCallback(EndReceiveCallback), socket);
+            }
+            catch (ObjectDisposedException)
+            {
+                OnDisconnected();
+            }
+        }
+
+        protected virtual void EndReceiveCallback(IAsyncResult ar)
+        {
+            try
+            {
+                Debug.Assert(MessagePool != null, "Field messagepool must be defined in derived class of SocketMessageProcessor.");
+
+                Socket socket = (Socket)ar.AsyncState;
+                int count = socket.EndReceive(ar);
+
+                if (count == 0)
+                {
+                    // No data is received. We are disconnected.
+                    OnDisconnected();
+                    return;
+                }
+
+                byte[] buffer = new byte[count];
+                Array.Copy(socketBuffer, 0, buffer, 0, count);
+                DispatchRawData(buffer);
+
+                // start a new read				
+                BeginDataReceive(socket);
+            }
+            catch (SocketException e)
+            {
+                // close the socket upon a exception
+                if (socket != null && Connected)
+                    socket.Close();
+
+                OnDisconnected();
+                OnConnectingException(e);
+            }
+            catch (ObjectDisposedException)
+            {
+                // the connection is closed
+                OnDisconnected();
+            }
+            catch (Exception e)
+            {
+                // close the socket upon a exception
+                if (socket != null && Connected)
+                    socket.Close();
+
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.ToString() + "\r\n" + e.StackTrace + "\r\n", GetType().Name);
+
+                OnDisconnected();
+                OnConnectionException(e);
+            }
+        }
+
+        public override void SendMessage(NetworkMessage message)
+        {
+            Send(message.GetBytes());
+        }
+
+        public override void Send(byte[] data, object userState)
+        {
+            if (socket == null || !Connected)
+            {
+                // the connection is closed
+                OnDisconnected();
+                return;
+            }
+
+            SendSocketData(socket, data, userState);
+        }
+
+        public void SendSocketData(Socket psocket, byte[] data, object userState)
+        {
+            try
+            {
+                if (psocket != null && IsSocketConnected(psocket))
+                {
+                    lock (psocket)
+                    {
+                        SocketSendState state = new SocketSendState(psocket, userState);
+                        psocket.BeginSend(data, 0, data.Length, SocketFlags.None, EndSendCallback, state);
+                    }
+                }
+                else
+                {
+                    OnDisconnected();
+                }
+            }
+            catch (SocketException sex)
+            {
+                if (sex.NativeErrorCode != 10035)  //10035: WSAEWOULDBLOCK
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Error while sending network message. Error message: " + sex.Message);
+                    OnDisconnected();
+                }
+
+                return;
+            }
+            catch (ObjectDisposedException)
+            {
+                // the connection is closed
+                OnDisconnected();
+            }
+            catch (Exception e)
+            {
+                throw new MSNPSharpException("Error while sending network message. See the inner exception for more details.", e);
+            }
+        }
+
+        protected virtual void EndSendCallback(IAsyncResult ar)
+        {
+            SocketSendState state = (SocketSendState)ar.AsyncState;
+            Socket socket = state.Socket;
+            try
+            {
+                socket.EndSend(ar);
+
+                if (state.UserData != null)
+                {
+                    OnSendCompleted(new ObjectEventArgs(state.UserData));
+                }
+            }
+            catch (SocketException sex)
+            {
+                if (sex.NativeErrorCode != 10035)  //10035: WSAEWOULDBLOCK
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Error while sending network message. Error message: " + sex.Message);
+                    OnDisconnected();
+                }
+            }
+            catch (ObjectDisposedException)
+            {
+                // the connection is closed
+                OnDisconnected();
+            }
+            catch (Exception e)
+            {
+                throw new MSNPSharpException("Error while sending network message. See the inner exception for more details.", e);
+            }
+        }
+
         public override void Disconnect()
         {
             // clean up the socket properly
@@ -503,11 +511,6 @@ namespace MSNPSharp.Core
             }
         }
 
-        public override void SendMessage(NetworkMessage message)
-        {
-            SendSocketData(message.GetBytes());
-        }
-
         public void Dispose(bool disposing)
         {
             if (disposing)
@@ -524,6 +527,8 @@ namespace MSNPSharp.Core
             Dispose(true);
             GC.SuppressFinalize(this);
         }
+
+        #endregion
 
         private class SocketSendState
         {

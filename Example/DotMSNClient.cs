@@ -98,7 +98,7 @@ namespace MSNPSharpClient
             // Set the events that we will handle
             messenger.ConnectionEstablished += new EventHandler<EventArgs>(NameserverProcessor_ConnectionEstablished);
             messenger.ConnectingException += new EventHandler<ExceptionEventArgs>(NameserverProcessor_ConnectingException);
-
+            messenger.ConnectionClosed += new EventHandler<EventArgs>(messenger_ConnectionClosed);
             // This event will be fired after a chat window has been closed on a different login end point.
             // You will get this notification to decide whether to close the local chat window as well.
             messenger.Nameserver.RemoteEndPointCloseIMWindow += new EventHandler<CloseIMWindowEventArgs>(Nameserver_RemoteEndPointCloseIMWindow);
@@ -1049,6 +1049,17 @@ namespace MSNPSharpClient
             messenger.Nameserver.AutoSynchronize = !cbRobotMode.Checked;
 
             SetStatus("Connected to server");
+        }
+
+        private void messenger_ConnectionClosed(object sender, EventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new EventHandler(messenger_ConnectionClosed), sender, e);
+                return;
+            }
+
+            SetStatus("Disconnected from server");
         }
 
         private void Nameserver_SignedIn(object sender, EventArgs e)
