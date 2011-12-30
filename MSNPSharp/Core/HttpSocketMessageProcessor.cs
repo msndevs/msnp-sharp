@@ -86,9 +86,8 @@ namespace MSNPSharp.Core
         private System.Timers.Timer pollTimer = new System.Timers.Timer(2000);
         private object _lock = new object();
 
-        public HttpSocketMessageProcessor(ConnectivitySettings connectivitySettings,
-            MessageReceiver messageReceiver, MessagePool messagePool)
-            : base(connectivitySettings, messageReceiver, messagePool)
+        public HttpSocketMessageProcessor(ConnectivitySettings connectivitySettings, MessagePool messagePool)
+            : base(connectivitySettings, messagePool)
         {
             gatewayIP = connectivitySettings.Host;
             host = gatewayIP;
@@ -451,16 +450,7 @@ namespace MSNPSharp.Core
 
             OnSendCompleted(new ObjectEventArgs(0));
 
-            using (BinaryReader reader = new BinaryReader(new MemoryStream(state.Buffer, 0, state.Buffer.Length)))
-            {
-                messagePool.BufferData(reader);
-            }
-
-            while (messagePool.MessageAvailable)
-            {
-                byte[] incomingMessage = messagePool.GetNextMessageData();
-                messageReceiver(incomingMessage);
-            }
+            DispatchRawData(state.Buffer);
 
             lock (_lock)
             {

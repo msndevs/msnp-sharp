@@ -99,15 +99,11 @@ namespace MSNPSharp
         {
             if (connectivitySettings.HttpPoll)
             {
-                Processor = new HttpSocketMessageProcessor(connectivitySettings,
-                    this.OnMessageReceived,
-                    new NSMessagePool());
+                Processor = new HttpSocketMessageProcessor(connectivitySettings, new NSMessagePool());
             }
             else
             {
-                Processor = new TcpSocketMessageProcessor(connectivitySettings,
-                    this.OnMessageReceived,
-                    new NSMessagePool());
+                Processor = new TcpSocketMessageProcessor(connectivitySettings, new NSMessagePool());
             }
         }
 
@@ -142,6 +138,7 @@ namespace MSNPSharp
                     processor.ConnectingException -= OnConnectingException;
                     processor.ConnectionException -= OnConnectionException;
                     processor.SendCompleted -= OnSendCompleted;
+                    processor.MessageReceived -= OnMessageReceived;
                 }
 
                 processor = value;
@@ -153,6 +150,7 @@ namespace MSNPSharp
                     processor.ConnectingException += OnConnectingException;
                     processor.ConnectionException += OnConnectionException;
                     processor.SendCompleted += OnSendCompleted;
+                    processor.MessageReceived += OnMessageReceived;
                 }
             }
         }
@@ -182,12 +180,12 @@ namespace MSNPSharp
             return System.Threading.Interlocked.Increment(ref transactionID);
         }
 
-        protected void OnMessageReceived(byte[] data)
+        protected void OnMessageReceived(object sender, ByteEventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming NS command...", GetType().Name);
 
             NSMessage message = new NSMessage();
-            message.ParseBytes(data);
+            message.ParseBytes(e.Bytes);
 
             DispatchMessage(message);
         }
