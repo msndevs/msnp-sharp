@@ -152,10 +152,11 @@ namespace MSNPSharp
 
         private Credentials credentials = new Credentials(MsnProtocol.MSNP21);
         private IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, 0);
-        private IPEndPoint externalEndPoint;
         private NSMessageProcessor messageProcessor;
+        private IPEndPoint externalEndPoint;
         private P2PHandler p2pHandler;
         private int hopCount = 0;
+
 
         private ContactGroupList contactGroups;
         private ContactList contactList;
@@ -416,6 +417,8 @@ namespace MSNPSharp
                     messageProcessor.ConnectionEstablished -= OnProcessorConnectCallback;
                     messageProcessor.ConnectionClosed -= OnProcessorDisconnectCallback;
                     messageProcessor.SendCompleted -= OnProcessorSendCompletedCallback;
+
+                    messageProcessor.UnregisterHandler(this);
                 }
 
                 messageProcessor = (NSMessageProcessor)value;
@@ -428,6 +431,8 @@ namespace MSNPSharp
                     messageProcessor.ConnectionClosed += OnProcessorDisconnectCallback;
                     // track transid
                     messageProcessor.SendCompleted += OnProcessorSendCompletedCallback;
+
+                    messageProcessor.RegisterHandler(this);
                 }
             }
         }
@@ -503,7 +508,7 @@ namespace MSNPSharp
         /// </summary>
         private void SendPing()
         {
-            if (pong != null && messageProcessor.Connected)
+            if (pong != null && messageProcessor != null && messageProcessor.Connected)
             {
                 MessageProcessor.SendMessage(new NSMessage("PNG"));
             }
@@ -879,9 +884,11 @@ namespace MSNPSharp
             {
                 // switch to a new notification server. That means reconnecting our current message processor.
                 NSMessageProcessor processor = (NSMessageProcessor)MessageProcessor;
-
+                // set new connectivity settings
+                ConnectivitySettings newSettings = new ConnectivitySettings(processor.ConnectivitySettings);
                 // disconnect first
                 processor.Disconnect();
+                processor = null;
 
                 string[] hostAndPort = ((string)message.CommandValues[1]).Split(new char[] { ':' });
                 bool isGateway = message.CommandValues[2].ToString() == "G";
@@ -897,15 +904,23 @@ namespace MSNPSharp
                     }
                 }
 
-                // set new connectivity settings
-                ConnectivitySettings newSettings = new ConnectivitySettings(processor.ConnectivitySettings);
-                newSettings.HttpPoll = isGateway;
-                newSettings.Host = hostAndPort[0];
-                newSettings.Port = int.Parse(hostAndPort[1], System.Globalization.CultureInfo.InvariantCulture);
+                if (Settings.DisableHttpPolling && isGateway)
+                {
+                    newSettings.HttpPoll = false;
+                    newSettings.Host = ConnectivitySettings.DefaultHost;
+                    newSettings.Port = ConnectivitySettings.DefaultPort;
+                }
+                else
+                {
+                    newSettings.HttpPoll = isGateway;
+                    newSettings.Host = hostAndPort[0];
+                    newSettings.Port = int.Parse(hostAndPort[1], System.Globalization.CultureInfo.InvariantCulture);
+                }
 
-                // Register events,
-                this.MessageProcessor = (processor = new NSMessageProcessor(newSettings));
-                processor.Connect(); // and reconnect. The login procedure will now start over again
+                // Register events and handler,
+                NSMessageProcessor mp = new NSMessageProcessor(newSettings);
+                this.MessageProcessor = mp;
+                mp.Connect(); // then reconnect. The login procedure will now start over again.
             }
         }
 

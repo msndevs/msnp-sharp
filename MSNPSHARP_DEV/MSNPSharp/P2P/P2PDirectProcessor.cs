@@ -57,10 +57,80 @@ namespace MSNPSharp.P2P
     /// </summary>
     public class P2PDirectProcessor : IMessageProcessor, IDisposable
     {
+        #region Events
+
         public event EventHandler<EventArgs> DirectNegotiationTimedOut;
         public event EventHandler<EventArgs> HandshakeCompleted;
         public event EventHandler<P2PMessageEventArgs> P2PMessageReceived;
 
+        public event EventHandler<EventArgs> ConnectionEstablished;
+        public event EventHandler<EventArgs> ConnectionClosed;
+        public event EventHandler<ExceptionEventArgs> ConnectingException;
+        public event EventHandler<ExceptionEventArgs> ConnectionException;
+        public event EventHandler<ObjectEventArgs> SendCompleted;
+
+        #region Event triggers
+
+        protected virtual void OnDirectNegotiationTimedOut(EventArgs e)
+        {
+            if (DirectNegotiationTimedOut != null)
+                DirectNegotiationTimedOut(this, e);
+        }
+
+        protected virtual void OnHandshakeCompleted(EventArgs e)
+        {
+            // Disable timer.
+            socketExpireTimer.Enabled = false;
+
+            if (HandshakeCompleted != null)
+                HandshakeCompleted(this, e);
+        }
+
+        protected virtual void OnP2PMessageReceived(P2PMessageEventArgs e)
+        {
+            if (P2PMessageReceived != null)
+                P2PMessageReceived(this, e);
+        }
+
+        protected virtual void OnConnectionEstablished(object sender, EventArgs e)
+        {
+            if (ConnectionEstablished != null)
+                ConnectionEstablished(sender, e);
+
+            this.OnConnected();
+        }
+
+        protected virtual void OnConnectionClosed(object sender, EventArgs e)
+        {
+            if (ConnectionClosed != null)
+                ConnectionClosed(sender, e);
+
+            DCState = DirectConnectionState.Closed;
+        }
+
+        protected virtual void OnConnectingException(object sender, ExceptionEventArgs e)
+        {
+            if (ConnectingException != null)
+                ConnectingException(sender, e);
+        }
+
+        protected virtual void OnConnectionException(object sender, ExceptionEventArgs e)
+        {
+            if (ConnectionException != null)
+                ConnectionException(sender, e);
+        }
+
+        protected virtual void OnSendCompleted(object sender, ObjectEventArgs e)
+        {
+            if (SendCompleted != null)
+                SendCompleted(sender, e);
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Members
         private P2PVersion version = P2PVersion.P2PV1;
         private Guid nonce = Guid.Empty;
         private bool needHash = false;
@@ -71,6 +141,9 @@ namespace MSNPSharp.P2P
         private P2PSession startupSession = null;
         private NSMessageHandler nsMessageHandler = null;
         private DirectConnectionState dcState = DirectConnectionState.Closed;
+        #endregion
+
+        #region Properties
 
         public P2PVersion Version
         {
@@ -107,7 +180,7 @@ namespace MSNPSharp.P2P
         }
 
         // Only transport over TCP is supported; no HTTP poll support
-        TcpSocketMessageProcessor processor = null;
+        private TcpSocketMessageProcessor processor;
         private TcpSocketMessageProcessor Processor
         {
             get
@@ -116,48 +189,42 @@ namespace MSNPSharp.P2P
             }
             set
             {
+                if (processor != null)
+                {
+                    processor.ConnectionEstablished -= OnConnectionEstablished;
+                    processor.ConnectionClosed -= OnConnectionClosed;
+                    processor.ConnectingException -= OnConnectingException;
+                    processor.ConnectionException -= OnConnectionException;
+                    processor.SendCompleted -= OnSendCompleted;
+                }
+
                 processor = value;
+
+                if (processor != null)
+                {
+                    processor.ConnectionEstablished += OnConnectionEstablished;
+                    processor.ConnectionClosed += OnConnectionClosed;
+                    processor.ConnectingException += OnConnectingException;
+                    processor.ConnectionException += OnConnectionException;
+                    processor.SendCompleted += OnSendCompleted;
+                }
             }
         }
 
         public bool Connected
         {
-            get { return Processor.Connected; }
-        }
-
-        public event EventHandler<EventArgs> ConnectionEstablished
-        {
-            add { Processor.ConnectionEstablished += value; }
-            remove { Processor.ConnectionEstablished -= value; }
-        }
-
-        public event EventHandler<EventArgs> ConnectionClosed
-        {
-            add { Processor.ConnectionClosed += value; }
-            remove { Processor.ConnectionClosed -= value; }
-        }
-
-        public event EventHandler<ExceptionEventArgs> ConnectingException
-        {
-            add { Processor.ConnectingException += value; }
-            remove { Processor.ConnectingException -= value; }
-        }
-
-        public event EventHandler<ExceptionEventArgs> ConnectionException
-        {
-            add { Processor.ConnectionException += value; }
-            remove { Processor.ConnectionException -= value; }
-        }
-
-        public event EventHandler<ObjectEventArgs> SendCompleted
-        {
-            add { Processor.SendCompleted += value; }
-            remove { Processor.SendCompleted -= value; }
+            get
+            {
+                return Processor != null && Processor.Connected;
+            }
         }
 
         public EndPoint LocalEndPoint
         {
-            get { return Processor.LocalEndPoint; }
+            get
+            {
+                return Processor.LocalEndPoint;
+            }
         }
 
         /// <summary>
@@ -181,6 +248,9 @@ namespace MSNPSharp.P2P
                 return Processor.RemoteEndPoint;
             }
         }
+
+        #endregion
+
         Guid reply = Guid.Empty;
         /// <summary>
         /// Constructor.
@@ -194,11 +264,9 @@ namespace MSNPSharp.P2P
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object - " + p2pVersion, GetType().Name);
 
-            Processor = new TcpSocketMessageProcessor(connectivitySettings, 
-                this.OnMessageReceived, 
+            Processor = new TcpSocketMessageProcessor(connectivitySettings,
+                this.OnMessageReceived,
                 new P2PDCPool());
-            Processor.ConnectionEstablished += new EventHandler<EventArgs>(OnConnected);
-            Processor.ConnectionClosed += new EventHandler<EventArgs>(OnDisconnected);
 
             this.version = p2pVersion;
             this.nonce = authNonce;
@@ -334,11 +402,6 @@ namespace MSNPSharp.P2P
             }
         }
 
-        protected void OnConnected(object sender, EventArgs e)
-        {
-            OnConnected();
-        }
-
         protected void OnConnected()
         {
             if (!IsListener && DCState == DirectConnectionState.Closed)
@@ -366,11 +429,6 @@ namespace MSNPSharp.P2P
                 Processor.SendSocketData(hm.GetBytes());
                 DCState = DirectConnectionState.HandshakeReply;
             }
-        }
-
-        protected void OnDisconnected(object sender, EventArgs e)
-        {
-            DCState = DirectConnectionState.Closed;
         }
 
         private P2PDCHandshakeMessage VerifyHandshake(byte[] data)
@@ -569,27 +627,6 @@ namespace MSNPSharp.P2P
                 Processor.SendSocketData(dcSocket, p2pMessage.GetBytes(), se);
             else
                 Processor.SendSocketData(p2pMessage.GetBytes(), se);
-        }
-
-        protected virtual void OnDirectNegotiationTimedOut(EventArgs e)
-        {
-            if (DirectNegotiationTimedOut != null)
-                DirectNegotiationTimedOut(this, e);
-        }
-
-        protected virtual void OnHandshakeCompleted(EventArgs e)
-        {
-            // Disable timer.
-            socketExpireTimer.Enabled = false;
-
-            if (HandshakeCompleted != null)
-                HandshakeCompleted(this, e);
-        }
-
-        protected virtual void OnP2PMessageReceived(P2PMessageEventArgs e)
-        {
-            if (P2PMessageReceived != null)
-                P2PMessageReceived(this, e);
         }
 
         protected void Dispose(bool disposing)

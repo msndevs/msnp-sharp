@@ -53,28 +53,48 @@ namespace MSNPSharp
     /// </remarks>
     public class Messenger
     {
-        #region Members
+        #region Events
 
-        private NSMessageProcessor nsMessageProcessor = null;
-        private NSMessageHandler nsMessageHandler = null;
-        private ConnectivitySettings connectivitySettings = null;
-        private Credentials credentials = new Credentials();
-        private bool shouldReconnect = false;
-        
+        public event EventHandler<EventArgs> ConnectionEstablished;
+        public event EventHandler<EventArgs> ConnectionClosed;
+        public event EventHandler<ExceptionEventArgs> ConnectingException;
+
+        protected virtual void OnConnectionEstablished(object sender, EventArgs e)
+        {
+            if (ConnectionEstablished != null)
+                ConnectionEstablished(sender, e);
+        }
+
+        protected virtual void OnConnectionClosed(object sender, EventArgs e)
+        {
+            if (ConnectionClosed != null)
+                ConnectionClosed(sender, e);
+
+            if (shouldReconnect)
+                DoConnect();
+
+            shouldReconnect = false;
+        }
+
+        protected virtual void OnConnectingException(object sender, ExceptionEventArgs e)
+        {
+            if (ConnectingException != null)
+                ConnectingException(sender, e);
+        }
 
         #endregion
 
-        #region .ctor
+        #region Members
+
+        private ConnectivitySettings connectivitySettings = new ConnectivitySettings();
+        private NSMessageHandler nsMessageHandler = new NSMessageHandler();
+        private bool shouldReconnect = false;
 
         /// <summary>
         /// Basic constructor to instantiate a Messenger object.
         /// </summary>
         public Messenger()
         {
-            connectivitySettings = new ConnectivitySettings();
-            nsMessageProcessor = new NSMessageProcessor(connectivitySettings);
-            nsMessageHandler = new NSMessageHandler();
-            
         }
 
         #endregion
@@ -88,21 +108,7 @@ namespace MSNPSharp
         {
             get
             {
-                return nsMessageHandler.MessageManager;
-            }
-        }
-
-        /// <summary>
-        /// The message processor that is used to send and receive nameserver messages.
-        /// </summary>
-        /// <remarks>
-        /// This processor is mainly used by the nameserver handler.
-        /// </remarks>
-        public NSMessageProcessor NameserverProcessor
-        {
-            get
-            {
-                return nsMessageProcessor;
+                return Nameserver.MessageManager;
             }
         }
 
@@ -121,7 +127,13 @@ namespace MSNPSharp
             set
             {
                 connectivitySettings = value;
-                NameserverProcessor.ConnectivitySettings = ConnectivitySettings;
+
+                NSMessageProcessor mp = Nameserver.MessageProcessor as NSMessageProcessor;
+
+                if (mp != null)
+                {
+                    mp.ConnectivitySettings = ConnectivitySettings;
+                }
             }
         }
 
@@ -139,11 +151,11 @@ namespace MSNPSharp
         {
             get
             {
-                return credentials;
+                return Nameserver.Credentials;
             }
             set
             {
-                credentials = value;
+                Nameserver.Credentials = value;
             }
         }
 
@@ -165,7 +177,8 @@ namespace MSNPSharp
         {
             get
             {
-                return nsMessageProcessor.Connected;
+                NSMessageProcessor mp = Nameserver.MessageProcessor as NSMessageProcessor;
+                return (mp != null && mp.Connected);
             }
         }
 
@@ -292,33 +305,11 @@ namespace MSNPSharp
 
         #region Methods
 
-        private void DoConnect()
-        {
-            // everything is okay, resume
-            NameserverProcessor.ConnectivitySettings = ConnectivitySettings;
-            NameserverProcessor.RegisterHandler(Nameserver);
-            Nameserver.MessageProcessor = NameserverProcessor;
-            Nameserver.Credentials = Credentials;
-
-            NameserverProcessor.Connect();
-        }
-
-        void NameserverProcessor_ConnectionClosed(object sender, EventArgs e)
-        {
-            NameserverProcessor.ConnectionClosed -= NameserverProcessor_ConnectionClosed;
-            if (shouldReconnect)
-                DoConnect();
-            shouldReconnect = false;
-        }
-
         /// <summary>
         /// Connects to the messenger network.
         /// </summary>
         public virtual void Connect()
         {
-            if (NameserverProcessor == null)
-                throw new MSNPSharpException("No message processor defined");
-
             if (Nameserver == null)
                 throw new MSNPSharpException("No message handler defined");
 
@@ -331,37 +322,45 @@ namespace MSNPSharp
             if (Credentials.Password.Length == 0)
                 throw new MSNPSharpException("The specified password is empty");
 
-            if (Credentials.ClientCode.Length == 0 || credentials.ClientID.Length == 0)
+            if (Credentials.ClientCode.Length == 0 || Credentials.ClientID.Length == 0)
                 throw new MSNPSharpException("The local messengerclient credentials (client-id and client code) are not specified. This is necessary in order to authenticate the local client with the messenger server. See for more info about the values to use the documentation of the Credentials class.");
 
             if (Connected)
             {
                 shouldReconnect = true;
-                NameserverProcessor.ConnectionClosed += new EventHandler<EventArgs>(NameserverProcessor_ConnectionClosed);
                 Disconnect();
             }
             else
             {
                 DoConnect();
             }
-            
         }
 
-        
+        private void DoConnect()
+        {
+            if (Settings.DisableHttpPolling)
+                ConnectivitySettings.HttpPoll = false;
+
+            NSMessageProcessor mp = new NSMessageProcessor(ConnectivitySettings);
+            Nameserver.MessageProcessor = mp;
+            mp.Connect();
+        }
 
         /// <summary>
         /// Disconnects from the messenger network.
         /// </summary>
         public virtual void Disconnect()
         {
-            if (nsMessageProcessor.Connected)
+            NSMessageProcessor mp = Nameserver.MessageProcessor as NSMessageProcessor;
+
+            if (mp != null && mp.Connected)
             {
-                if (nsMessageHandler != null && Nameserver.Owner != null)
+                if (nsMessageHandler != null && nsMessageHandler.Owner != null)
                 {
-                    Nameserver.Owner.SetStatus(PresenceStatus.Offline);
+                    nsMessageHandler.Owner.SetStatus(PresenceStatus.Offline);
                 }
 
-                nsMessageProcessor.Disconnect();
+                mp.Disconnect();
             }
         }
 

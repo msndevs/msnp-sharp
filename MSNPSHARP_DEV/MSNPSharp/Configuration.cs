@@ -109,6 +109,7 @@ namespace MSNPSharp
 
         private static PublicPortPriority publicPortPriority = PublicPortPriority.First;
         private static bool disableP2PDirectConnections = false;
+        private static bool disableHttpPolling = false;
 
         private static string savepath = Path.GetFullPath(".");
         private static bool enableGzipCompressionForWebServices;
@@ -148,6 +149,21 @@ namespace MSNPSharp
             set
             {
                 Settings.disableP2PDirectConnections = value;
+            }
+        }
+
+        /// <summary>
+        /// Never use HTTP polling feature
+        /// </summary>
+        public static bool DisableHttpPolling
+        {
+            get
+            {
+                return Settings.disableHttpPolling;
+            }
+            set
+            {
+                Settings.disableHttpPolling = value;
             }
         }
 
