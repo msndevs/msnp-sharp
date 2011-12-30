@@ -99,6 +99,16 @@ namespace MSNPSharp
         #region Public Events
 
         /// <summary>
+        /// 
+        /// </summary>
+        public event EventHandler<MessageProcessorChangedEventArgs> MessageProcessorChanged;
+        protected virtual void OnMessageProcessorChanged(MessageProcessorChangedEventArgs e)
+        {
+            if (MessageProcessorChanged != null)
+                MessageProcessorChanged(this, e);
+        }
+
+        /// <summary>
         /// Occurs when the user finished the authentication step, the owner was created.
         /// </summary>
         public event EventHandler<EventArgs> OwnerVerified;
@@ -421,7 +431,11 @@ namespace MSNPSharp
                     messageProcessor.UnregisterHandler(this);
                 }
 
-                messageProcessor = (NSMessageProcessor)value;
+                NSMessageProcessor oldProcessor = messageProcessor;
+                NSMessageProcessor newProcessor = (NSMessageProcessor)value;
+                OnMessageProcessorChanged(new MessageProcessorChangedEventArgs(oldProcessor, newProcessor));
+
+                messageProcessor = newProcessor;
 
                 if (messageProcessor != null)
                 {

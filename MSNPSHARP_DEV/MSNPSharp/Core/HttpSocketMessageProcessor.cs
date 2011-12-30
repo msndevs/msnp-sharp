@@ -153,7 +153,7 @@ namespace MSNPSharp.Core
                     action = HttpPollAction.None;
             }
 
-            SendSocketData(buffer);
+            Send(buffer);
         }
 
         private string GenerateURI()
@@ -218,18 +218,11 @@ namespace MSNPSharp.Core
 
         public override void SendMessage(NetworkMessage message)
         {
-            //int transid = NSMessageProcessor.IncreaseTransactionID();
-            SendSocketData(message.GetBytes() /*, transid */);
-        }
-
-        public override void SendSocketData(byte[] data)
-        {
-            //int transid = NSMessageProcessor.IncreaseTransactionID();
-            SendSocketData(data, null/*transid*/);
+            Send(message.GetBytes());
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
-        public override void SendSocketData(byte[] data, object userState)
+        public override void Send(byte[] data, object userState)
         {
             // connection has not been established yet; concat data to the end of OpenCommand
             if (!opened)

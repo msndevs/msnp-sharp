@@ -408,7 +408,7 @@ namespace MSNPSharp.P2P
             {
                 // Send foo
                 DCState = DirectConnectionState.Foo;
-                Processor.SendSocketData(new byte[] { 0x04, 0x00, 0x00, 0x00, 0x66, 0x6f, 0x6f, 0x00 });
+                Processor.Send(new byte[] { 0x04, 0x00, 0x00, 0x00, 0x66, 0x6f, 0x6f, 0x00 });
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "foo0 sent", GetType().Name);
 
                 // Send NONCE
@@ -426,7 +426,7 @@ namespace MSNPSharp.P2P
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Sending handshake message:\r\n " +
                     hm.ToDebugString(), GetType().Name);
 
-                Processor.SendSocketData(hm.GetBytes());
+                Processor.Send(hm.GetBytes());
                 DCState = DirectConnectionState.HandshakeReply;
             }
         }
@@ -629,7 +629,7 @@ namespace MSNPSharp.P2P
             if (dcSocket != null)
                 Processor.SendSocketData(dcSocket, p2pMessage.GetBytes(), se);
             else
-                Processor.SendSocketData(p2pMessage.GetBytes(), se);
+                Processor.Send(p2pMessage.GetBytes(), se);
         }
 
         protected void Dispose(bool disposing)

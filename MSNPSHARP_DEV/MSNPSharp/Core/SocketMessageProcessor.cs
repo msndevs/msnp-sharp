@@ -125,7 +125,7 @@ namespace MSNPSharp.Core
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Connected", GetType().Name);
 
             if (ConnectionEstablished != null)
-                ConnectionEstablished(this, new EventArgs());
+                ConnectionEstablished(this, EventArgs.Empty);
         }
 
         protected virtual void OnDisconnected()
@@ -142,7 +142,7 @@ namespace MSNPSharp.Core
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Disconnected", GetType().Name);
 
             if (ConnectionClosed != null)
-                ConnectionClosed(this, new EventArgs());
+                ConnectionClosed(this, EventArgs.Empty);
         }
 
         #endregion
@@ -154,7 +154,7 @@ namespace MSNPSharp.Core
         protected ConnectivitySettings connectivitySettings = new ConnectivitySettings();
         private List<IMessageHandler> messageHandlers = new List<IMessageHandler>();
         private bool hasFiredDisconnectEvent = false;
-        protected MessagePool messagePool = null;
+        private MessagePool messagePool = null;
 
         public SocketMessageProcessor(ConnectivitySettings connectivitySettings, MessagePool messagePool)
         {
@@ -249,23 +249,25 @@ namespace MSNPSharp.Core
 
         public abstract void Connect();
         public abstract void Disconnect();
-        public abstract void SendSocketData(byte[] data);
-        public abstract void SendSocketData(byte[] data, object userState);
+
+        public abstract void Send(byte[] data, object userState);
+        public virtual void Send(byte[] data)
+        {
+            Send(data, null);
+        }
 
         protected virtual void DispatchRawData(byte[] data)
         {
-            // read the messages and dispatch to handlers
+            // Read the messages,
             using (BinaryReader reader = new BinaryReader(new MemoryStream(data, 0, data.Length)))
             {
                 messagePool.BufferData(reader);
             }
 
+            // and dispatch to handlers
             while (messagePool.MessageAvailable)
             {
-                // retrieve the message
-                byte[] incomingMessage = messagePool.GetNextMessageData();
-                // call the virtual method to perform polymorphism, descendant classes can take care of it
-                OnMessageReceived(new ByteEventArgs(incomingMessage));
+                OnMessageReceived(new ByteEventArgs(messagePool.GetNextMessageData()));
             }
         }
     }

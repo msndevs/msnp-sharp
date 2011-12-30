@@ -213,7 +213,7 @@ namespace MSNPSharp
                 "Outgoing message:\r\n" + nsMessage.ToDebugString() + "\r\n", GetType().Name);
 
             // convert to bytes and send it over the socket
-            Processor.SendSocketData(nsMessage.GetBytes(), transactionID);
+            Processor.Send(nsMessage.GetBytes(), transactionID);
         }
 
         public void Connect()
