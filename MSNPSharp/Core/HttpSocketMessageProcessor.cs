@@ -79,6 +79,7 @@ namespace MSNPSharp.Core
 
         private string sessionID;
         private string gatewayIP;
+        private string host;
         private WebProxy webProxy;
 
         private Queue<byte[]> sendingQueue = new Queue<byte[]>();
@@ -90,6 +91,7 @@ namespace MSNPSharp.Core
             : base(connectivitySettings, messageReceiver, messagePool)
         {
             gatewayIP = connectivitySettings.Host;
+            host = gatewayIP;
             pollTimer.Elapsed += pollTimer_Elapsed;
             pollTimer.AutoReset = true;
 
@@ -346,7 +348,6 @@ namespace MSNPSharp.Core
 
         private void EndGetResponseCallback(IAsyncResult ar)
         {
-            int responseLength = 0;
             HttpWebRequest request = (HttpWebRequest)ar.AsyncState;
 
             lock (_lock)
@@ -354,13 +355,14 @@ namespace MSNPSharp.Core
                 try
                 {
                     HttpWebResponse response = (HttpWebResponse)request.EndGetResponse(ar);
+                    int responseLength = (int)response.ContentLength;
 
                     foreach (string str in response.Headers.AllKeys)
                     {
                         switch (str)
                         {
-                            case "Content-Length":
-                                responseLength = Int32.Parse(response.Headers.Get(str));
+                            case "X-MSN-Host":
+                                host = response.Headers.Get(str);
                                 break;
 
                             case "X-MSN-Messenger":
@@ -490,6 +492,7 @@ namespace MSNPSharp.Core
                 case WebExceptionStatus.Timeout:
                 case WebExceptionStatus.UnknownError:
                     {
+
                         OnDisconnected();
 
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
@@ -506,7 +509,7 @@ namespace MSNPSharp.Core
                             catch (Exception exp)
                             {
                                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                                    "HTTP Error: " + we.ToString(), GetType().Name);
+                                    "HTTP Error: " + exp.ToString(), GetType().Name);
                             }
                         }
                         break;

@@ -56,11 +56,9 @@ namespace MSNPSharpClient
             // Required for Windows Form Designer support
             //
             InitializeComponent();
-
             this.Icon = Properties.Resources.MSNPSharp_logo_small_ico;
 
-            // You can set proxy settings here
-            // for example: messenger.ConnectivitySettings.ProxyHost = "10.0.0.2";
+            #region ----------------- SETTINGS SECTION -----------------
 
             Settings.TraceSwitch.Level = System.Diagnostics.TraceLevel.Verbose;
 
@@ -83,19 +81,32 @@ namespace MSNPSharpClient
 #endif
 
             // If you want to use it in an environment that does not have write permission, set NoSave to true.
-            //Settings.NoSave = true;
+            // Settings.NoSave = true;
+
+            // Disable HTTP polling feature
+            // Settings.DisableHttpPolling = true;
 
             // Disable P2P direct connections for transfers if direct connections fails or
             // the machine connecting internet is behind NAT.
-            //Settings.DisableP2PDirectConnections = true;
+            // Settings.DisableP2PDirectConnections = true;
 
-            // set the events that we will handle
-            // remember that the nameserver is the server that sends contact lists, notifies you of contact status changes, etc.
-            // a switchboard server handles the individual conversation sessions.
-            messenger.NameserverProcessor.ConnectionEstablished += new EventHandler<EventArgs>(NameserverProcessor_ConnectionEstablished);
+            // You can set proxy settings here
+            // messenger.ConnectivitySettings.ProxyHost = "10.0.0.2";
+
+            #endregion
+
+            // Set the events that we will handle
+            messenger.ConnectionEstablished += new EventHandler<EventArgs>(NameserverProcessor_ConnectionEstablished);
+            messenger.ConnectingException += new EventHandler<ExceptionEventArgs>(NameserverProcessor_ConnectingException);
+
+            // This event will be fired after a chat window has been closed on a different login end point.
+            // You will get this notification to decide whether to close the local chat window as well.
+            messenger.Nameserver.RemoteEndPointCloseIMWindow += new EventHandler<CloseIMWindowEventArgs>(Nameserver_RemoteEndPointCloseIMWindow);
+            messenger.Nameserver.OwnerVerified += new EventHandler<EventArgs>(Nameserver_OwnerVerified);
             messenger.Nameserver.SignedIn += new EventHandler<EventArgs>(Nameserver_SignedIn);
             messenger.Nameserver.SignedOff += new EventHandler<SignedOffEventArgs>(Nameserver_SignedOff);
-            messenger.NameserverProcessor.ConnectingException += new EventHandler<ExceptionEventArgs>(NameserverProcessor_ConnectingException);
+            messenger.Nameserver.ContactOnline += new EventHandler<ContactStatusChangedEventArgs>(Nameserver_ContactOnline);
+            messenger.Nameserver.ContactOffline += new EventHandler<ContactStatusChangedEventArgs>(Nameserver_ContactOffline);
             messenger.Nameserver.ExceptionOccurred += new EventHandler<ExceptionEventArgs>(Nameserver_ExceptionOccurred);
             messenger.Nameserver.AuthenticationError += new EventHandler<ExceptionEventArgs>(Nameserver_AuthenticationError);
             messenger.Nameserver.ServerErrorReceived += new EventHandler<MSNErrorEventArgs>(Nameserver_ServerErrorReceived);
@@ -107,19 +118,16 @@ namespace MSNPSharpClient
             messenger.MessageManager.EmoticonReceived += new EventHandler<EmoticonArrivedEventArgs>(Nameserver_EmoticonReceived);
             messenger.MessageManager.WinkReceived += new EventHandler<WinkEventArgs>(Nameserver_WinkReceived);
 
-
             // Listen for the data transfer events (i.e. file transfer invitation, activity invitation)
             messenger.P2PHandler.InvitationReceived += new EventHandler<P2PSessionEventArgs>(p2pHandler_InvitationReceived);
 
-            messenger.Nameserver.OwnerVerified += new EventHandler<EventArgs>(Nameserver_OwnerVerified);
-            messenger.Nameserver.ContactOnline += new EventHandler<ContactStatusChangedEventArgs>(Nameserver_ContactOnline);
-            messenger.Nameserver.ContactOffline += new EventHandler<ContactStatusChangedEventArgs>(Nameserver_ContactOffline);
+            // This event will be triggered after finished getting your contacts recent updates.
+            messenger.WhatsUpService.GetWhatsUpCompleted += new EventHandler<GetWhatsUpCompletedEventArgs>(WhatsUpService_GetWhatsUpCompleted);
 
             // SynchronizationCompleted will fired after the updated operation for your contact list has completed.
             messenger.ContactService.SynchronizationCompleted += new EventHandler<EventArgs>(ContactService_SynchronizationCompleted);
             // FriendshipRequested will fired after a contact adds you to his/her contact list (pending list)
             messenger.ContactService.FriendshipRequested += new EventHandler<ContactEventArgs>(Nameserver_FriendshipRequested);
-
             // ContactAdded will fired after a contact added to any role list.
             messenger.ContactService.ContactAdded += new EventHandler<ListMutateEventArgs>(ContactService_ContactAdded);
             // ContactRemoved will fired after a contact removed from any role list.
@@ -134,18 +142,9 @@ namespace MSNPSharpClient
             messenger.ContactService.ExitCircleCompleted += new EventHandler<CircleEventArgs>(ContactService_ExitCircle);
             messenger.ContactService.CircleMemberJoined += new EventHandler<CircleMemberEventArgs>(ContactService_CircleMemberJoined);
             messenger.ContactService.CircleMemberLeft += new EventHandler<CircleMemberEventArgs>(ContactService_CircleMemberLeft);
+            
             #endregion
 
-            #region MPOP related events
-
-            // This event will be fired after a chat window has been closed on a different login end point.
-            // You will get this notification to decide whether to close the local chat window as well.
-            messenger.Nameserver.RemoteEndPointCloseIMWindow += new EventHandler<CloseIMWindowEventArgs>(Nameserver_RemoteEndPointCloseIMWindow);
-
-            #endregion
-
-            // This event will be triggered after finished getting your contacts recent updates.
-            messenger.WhatsUpService.GetWhatsUpCompleted += new EventHandler<GetWhatsUpCompletedEventArgs>(WhatsUpService_GetWhatsUpCompleted);
 
             #region Webservice Error handler
 
@@ -154,7 +153,7 @@ namespace MSNPSharpClient
             messenger.ContactService.ServiceOperationFailed += new EventHandler<ServiceOperationFailedEventArgs>(ServiceOperationFailed);
             messenger.StorageService.ServiceOperationFailed += new EventHandler<ServiceOperationFailedEventArgs>(ServiceOperationFailed);
             messenger.WhatsUpService.ServiceOperationFailed += new EventHandler<ServiceOperationFailedEventArgs>(ServiceOperationFailed);
-
+            messenger.DirectoryService.ServiceOperationFailed += new EventHandler<ServiceOperationFailedEventArgs>(ServiceOperationFailed);
             #endregion
         }
 
