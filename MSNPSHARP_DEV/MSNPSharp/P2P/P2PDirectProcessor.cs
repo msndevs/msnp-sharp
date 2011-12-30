@@ -196,6 +196,7 @@ namespace MSNPSharp.P2P
                     processor.ConnectingException -= OnConnectingException;
                     processor.ConnectionException -= OnConnectionException;
                     processor.SendCompleted -= OnSendCompleted;
+                    processor.MessageReceived -= OnMessageReceived;
                 }
 
                 processor = value;
@@ -207,6 +208,7 @@ namespace MSNPSharp.P2P
                     processor.ConnectingException += OnConnectingException;
                     processor.ConnectionException += OnConnectionException;
                     processor.SendCompleted += OnSendCompleted;
+                    processor.MessageReceived += OnMessageReceived;
                 }
             }
         }
@@ -264,9 +266,7 @@ namespace MSNPSharp.P2P
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Constructing object - " + p2pVersion, GetType().Name);
 
-            Processor = new TcpSocketMessageProcessor(connectivitySettings,
-                this.OnMessageReceived,
-                new P2PDCPool());
+            Processor = new TcpSocketMessageProcessor(connectivitySettings, new P2PDCPool());
 
             this.version = p2pVersion;
             this.nonce = authNonce;
@@ -495,11 +495,14 @@ namespace MSNPSharp.P2P
         /// <summary>
         /// Discards the foo message and sends the message to all handlers as a P2PDCMessage object.
         /// </summary>
-        /// <param name="data"></param>
-        protected void OnMessageReceived(byte[] data)
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        protected void OnMessageReceived(object sender, ByteEventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                 "Analyzing message in DC state <" + dcState + ">", GetType().Name);
+
+            byte[] data = e.Bytes;
 
             switch (dcState)
             {

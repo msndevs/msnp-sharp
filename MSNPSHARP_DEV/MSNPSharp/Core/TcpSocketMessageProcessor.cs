@@ -50,10 +50,8 @@ namespace MSNPSharp.Core
         private IPEndPoint proxyEndPoint = null;
         private ProxySocket socket = null;
 
-        public TcpSocketMessageProcessor(ConnectivitySettings connectivitySettings, 
-            MessageReceiver messageReceiver,
-            MessagePool messagePool)
-            : base(connectivitySettings, messageReceiver, messagePool)
+        public TcpSocketMessageProcessor(ConnectivitySettings connectivitySettings, MessagePool messagePool)
+            : base(connectivitySettings, messagePool)
         {
         }
 
@@ -249,14 +247,13 @@ namespace MSNPSharp.Core
 
         protected virtual void EndReceiveCallback(IAsyncResult ar)
         {
-            int count = 0;
-
             try
             {
                 System.Diagnostics.Debug.Assert(messagePool != null, "Field messagepool must be defined in derived class of SocketMessageProcessor.");
 
                 Socket socket = (Socket)ar.AsyncState;
-                count = socket.EndReceive(ar);
+                int count = socket.EndReceive(ar);
+
                 if (count == 0)
                 {
                     // No data is received. We are disconnected.
@@ -264,20 +261,9 @@ namespace MSNPSharp.Core
                     return;
                 }
 
-                // read the messages and dispatch to handlers
-                using (BinaryReader reader = new BinaryReader(new MemoryStream(socketBuffer, 0, count)))
-                {
-                    messagePool.BufferData(reader);
-                }
-                while (messagePool.MessageAvailable)
-                {
-                    // retrieve the message
-                    byte[] incomingMessage = messagePool.GetNextMessageData();
-
-
-                    // call the virtual method to perform polymorphism, descendant classes can take care of it
-                    messageReceiver(incomingMessage);
-                }
+                byte[] buffer = new byte[count];
+                Array.Copy(socketBuffer, 0, buffer, 0, count);
+                DispatchRawData(buffer);
 
                 // start a new read				
                 BeginDataReceive(socket);
@@ -467,7 +453,7 @@ namespace MSNPSharp.Core
                     {
                         addresses[i] = ConnectivitySettings.EndPoints[i].Address;
                     }
-                    
+
                     ((ProxySocket)socket).BeginConnect(addresses, port, new AsyncCallback(EndConnectCallback), socket);
                 }
                 else if (IPAddress.TryParse(ConnectivitySettings.Host, out hostIP))
@@ -519,11 +505,8 @@ namespace MSNPSharp.Core
 
         public override void SendMessage(NetworkMessage message)
         {
-            // TODO: WTF?
-            throw new NotSupportedException();
+            SendSocketData(message.GetBytes());
         }
-
-        // protected abstract void OnMessageReceived(byte[] data);
 
         public void Dispose(bool disposing)
         {

@@ -62,17 +62,28 @@ namespace MSNPSharp.Core
         }
     };
 
+    public class ByteEventArgs : EventArgs
+    {
+        private byte[] bytes;
+
+        public ByteEventArgs(byte[] bytes)
+        {
+            this.bytes = bytes;
+        }
+
+        public byte[] Bytes
+        {
+            get
+            {
+                return bytes;
+            }
+        }
+    };
+
+
     public abstract class SocketMessageProcessor : IMessageProcessor
     {
-        protected ConnectivitySettings connectivitySettings = new ConnectivitySettings();
-        protected MessagePool messagePool = null;
-        private bool hasFiredDisconnectEvent = false;
-        private List<IMessageHandler> messageHandlers = new List<IMessageHandler>();
-
-        public delegate void MessageReceiver(byte[] data);
-        protected MessageReceiver messageReceiver;
-
-        #region events
+        #region Events
 
         public event EventHandler<EventArgs> ConnectionEstablished;
         public event EventHandler<EventArgs> ConnectionClosed;
@@ -80,6 +91,33 @@ namespace MSNPSharp.Core
         public event EventHandler<ExceptionEventArgs> ConnectionException;
 
         public event EventHandler<ObjectEventArgs> SendCompleted;
+        public event EventHandler<ByteEventArgs> MessageReceived;
+
+        #region Event triggers
+
+        protected virtual void OnConnectingException(Exception e)
+        {
+            if (ConnectionException != null)
+                ConnectionException(this, new ExceptionEventArgs(new ConnectivityException("SocketMessageProcessor encountered a socket exception while retrieving data. See the inner exception for more information.", e)));
+        }
+
+        protected virtual void OnConnectionException(Exception e)
+        {
+            if (ConnectionException != null)
+                ConnectionException(this, new ExceptionEventArgs(new ConnectivityException("SocketMessageProcessor encountered a general exception while retrieving data. See the inner exception for more information.", e)));
+        }
+
+        protected virtual void OnSendCompleted(ObjectEventArgs e)
+        {
+            if (SendCompleted != null)
+                SendCompleted(this, e);
+        }
+
+        protected virtual void OnMessageReceived(ByteEventArgs e)
+        {
+            if (MessageReceived != null)
+                MessageReceived(this, e);
+        }
 
         protected virtual void OnConnected()
         {
@@ -107,49 +145,31 @@ namespace MSNPSharp.Core
                 ConnectionClosed(this, new EventArgs());
         }
 
-        protected virtual void OnConnectingException(Exception e)
-        {
-            if (ConnectionException != null)
-                ConnectionException(this, new ExceptionEventArgs(new ConnectivityException("SocketMessageProcessor encountered a socket exception while retrieving data. See the inner exception for more information.", e)));
-        }
+        #endregion
 
-        protected virtual void OnConnectionException(Exception e)
-        {
-            if (ConnectionException != null)
-                ConnectionException(this, new ExceptionEventArgs(new ConnectivityException("SocketMessageProcessor encountered a general exception while retrieving data. See the inner exception for more information.", e)));
-        }
+        #endregion
 
-        protected virtual void OnSendCompleted(ObjectEventArgs e)
+        #region Members
+
+        protected ConnectivitySettings connectivitySettings = new ConnectivitySettings();
+        private List<IMessageHandler> messageHandlers = new List<IMessageHandler>();
+        private bool hasFiredDisconnectEvent = false;
+        protected MessagePool messagePool = null;
+
+        public SocketMessageProcessor(ConnectivitySettings connectivitySettings, MessagePool messagePool)
         {
-            if (SendCompleted != null)
-                SendCompleted(this, e);
+            ConnectivitySettings = connectivitySettings;
+            MessagePool = messagePool;
         }
 
         #endregion
 
-        public SocketMessageProcessor(ConnectivitySettings connectivitySettings, 
-            MessageReceiver messageReceiver,
-            MessagePool messagePool)
-        {
-            ConnectivitySettings = connectivitySettings;
-            this.messageReceiver = messageReceiver;
-            MessagePool = messagePool;
-        }
+        #region Properties
 
-        protected MessagePool MessagePool
+        public abstract bool Connected
         {
-            get
-            {
-                return messagePool;
-            }
-            set
-            {
-                messagePool = value;
-            }
+            get;
         }
-
-        public abstract void SendSocketData(byte[] data);
-        public abstract void SendSocketData(byte[] data, object userState);
 
         public ConnectivitySettings ConnectivitySettings
         {
@@ -171,11 +191,6 @@ namespace MSNPSharp.Core
             }
         }
 
-        public abstract bool Connected
-        {
-            get;
-        }
-
         public List<IMessageHandler> MessageHandlers
         {
             get
@@ -183,6 +198,24 @@ namespace MSNPSharp.Core
                 return messageHandlers;
             }
         }
+
+        protected MessagePool MessagePool
+        {
+            get
+            {
+                return messagePool;
+            }
+            set
+            {
+                messagePool = value;
+            }
+        }
+
+        #endregion
+
+        #region IMessageProcessor members
+
+        public abstract void SendMessage(NetworkMessage message);
 
         public virtual void RegisterHandler(IMessageHandler handler)
         {
@@ -212,9 +245,28 @@ namespace MSNPSharp.Core
             }
         }
 
+        #endregion
+
         public abstract void Connect();
         public abstract void Disconnect();
-        public abstract void SendMessage(NetworkMessage message);
+        public abstract void SendSocketData(byte[] data);
+        public abstract void SendSocketData(byte[] data, object userState);
 
+        protected virtual void DispatchRawData(byte[] data)
+        {
+            // read the messages and dispatch to handlers
+            using (BinaryReader reader = new BinaryReader(new MemoryStream(data, 0, data.Length)))
+            {
+                messagePool.BufferData(reader);
+            }
+
+            while (messagePool.MessageAvailable)
+            {
+                // retrieve the message
+                byte[] incomingMessage = messagePool.GetNextMessageData();
+                // call the virtual method to perform polymorphism, descendant classes can take care of it
+                OnMessageReceived(new ByteEventArgs(incomingMessage));
+            }
+        }
     }
 };
