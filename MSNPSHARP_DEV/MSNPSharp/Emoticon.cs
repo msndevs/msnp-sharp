@@ -40,8 +40,11 @@ namespace MSNPSharp
     [Serializable()]
     public class Emoticon : DisplayImage
     {
-        string shortcut;
+        private string shortcut;
+        private bool dataReady = false;
 
+        
+        
         public Emoticon()
         {
             ObjectType = MSNObjectType.Emoticon;
@@ -75,6 +78,25 @@ namespace MSNPSharp
             set
             {
                 shortcut = value;
+            }
+        }
+        
+        /// <summary>
+        /// Gets or sets a value indicating whether all data have been filled to the DataStrem.
+        /// </summary>
+        /// <value>
+        /// <c>true</c> if data ready; otherwise, <c>false</c>.
+        /// </value>
+        internal bool DataReady 
+        {
+            get 
+            {
+                return this.dataReady;
+            }
+            
+            set 
+            {
+                dataReady = value;
             }
         }
     }
