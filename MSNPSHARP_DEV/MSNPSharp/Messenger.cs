@@ -56,15 +56,13 @@ namespace MSNPSharp
         #region Events
 
         public event EventHandler<EventArgs> ConnectionEstablished;
-        public event EventHandler<EventArgs> ConnectionClosed;
-        public event EventHandler<ExceptionEventArgs> ConnectingException;
-
         protected virtual void OnConnectionEstablished(object sender, EventArgs e)
         {
             if (ConnectionEstablished != null)
                 ConnectionEstablished(sender, e);
         }
 
+        public event EventHandler<EventArgs> ConnectionClosed;
         protected virtual void OnConnectionClosed(object sender, EventArgs e)
         {
             if (ConnectionClosed != null)
@@ -76,6 +74,7 @@ namespace MSNPSharp
             shouldReconnect = false;
         }
 
+        public event EventHandler<ExceptionEventArgs> ConnectingException;
         protected virtual void OnConnectingException(object sender, ExceptionEventArgs e)
         {
             if (ConnectingException != null)
@@ -318,7 +317,6 @@ namespace MSNPSharp
                 return Nameserver.P2PHandler;
             }
         }
-
 
         #endregion
 

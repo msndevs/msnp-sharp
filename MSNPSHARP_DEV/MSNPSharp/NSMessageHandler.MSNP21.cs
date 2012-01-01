@@ -54,61 +54,6 @@ namespace MSNPSharp
         /// Occurs when any contact changes status.
         /// </summary>
         public event EventHandler<ContactStatusChangedEventArgs> ContactStatusChanged;
-        /// <summary>
-        /// Occurs when any contact goes from offline status to another status.
-        /// </summary>
-        public event EventHandler<ContactStatusChangedEventArgs> ContactOnline;
-        /// <summary>
-        /// Occurs when any contact goes from any status to offline status.
-        /// </summary>
-        public event EventHandler<ContactStatusChangedEventArgs> ContactOffline;
-
-
-        /// <summary>
-        /// Occurs when a user is typing.
-        /// </summary>
-        public event EventHandler<TypingArrivedEventArgs> TypingMessageReceived;
-        /// <summary>
-        /// Occurs when we receive a nudge message by a user.
-        /// </summary>
-        public event EventHandler<NudgeArrivedEventArgs> NudgeReceived;
-        /// <summary>
-        /// Occurs when we receive a text message from a user.
-        /// </summary>
-        public event EventHandler<TextMessageArrivedEventArgs> TextMessageReceived;
-
-
-        /// <summary>
-        /// Fired when a contact sends a emoticon definition.
-        /// </summary>
-        public event EventHandler<EmoticonDefinitionEventArgs> EmoticonDefinitionReceived;
-
-        /// <summary>
-        /// Fired when a contact sends a wink definition.
-        /// </summary>
-        public event EventHandler<WinkEventArgs> WinkDefinitionReceived;
-
-        /// <summary>
-        /// Occurs when a multiparty chat created remotely. Owner is joined automatically by the library.
-        /// </summary>
-        public event EventHandler<MultipartyCreatedEventArgs> MultipartyCreatedRemotely;
-        /// <summary>
-        /// Occurs when a contact joined the group chat.
-        /// </summary>
-        public event EventHandler<GroupChatParticipationEventArgs> JoinedGroupChat;
-        /// <summary>
-        /// Occurs when a contact left the group chat.
-        /// </summary>
-        public event EventHandler<GroupChatParticipationEventArgs> LeftGroupChat;
-        /// <summary>
-        /// Occurs after the user on another end point closed the IM window.
-        /// </summary>
-        public event EventHandler<CloseIMWindowEventArgs> RemoteEndPointCloseIMWindow;
-
-        /// <summary>
-        /// Fire the <see cref="ContactStatusChanged"/> event.
-        /// </summary>
-        /// <param name="e"></param>
         protected internal virtual void OnContactStatusChanged(ContactStatusChangedEventArgs e)
         {
             if (ContactStatusChanged != null)
@@ -116,9 +61,9 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Fire the <see cref="ContactOffline"/> event.
+        /// Occurs when any contact goes from offline status to another status.
         /// </summary>
-        /// <param name="e"></param>
+        public event EventHandler<ContactStatusChangedEventArgs> ContactOnline;
         protected internal virtual void OnContactOffline(ContactStatusChangedEventArgs e)
         {
             if (ContactOffline != null)
@@ -126,13 +71,12 @@ namespace MSNPSharp
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
                 e.Contact.ToString() + " goes to " + e.NewStatus + " from " + e.OldStatus + (e.Via == null ? String.Empty : " via=" + e.Via.ToString()) + "\r\n", GetType().Name);
-
         }
 
         /// <summary>
-        /// Fire the <see cref="ContactOnline"/> event.
+        /// Occurs when any contact goes from any status to offline status.
         /// </summary>
-        /// <param name="e"></param>
+        public event EventHandler<ContactStatusChangedEventArgs> ContactOffline;
         protected internal virtual void OnContactOnline(ContactStatusChangedEventArgs e)
         {
             if (ContactOnline != null)
@@ -142,6 +86,10 @@ namespace MSNPSharp
                 e.Contact.ToString() + " goes to " + e.NewStatus + " from " + e.OldStatus + (e.Via == null ? String.Empty : " via=" + e.Via.ToString()) + "\r\n", GetType().Name);
         }
 
+        /// <summary>
+        /// Occurs when a user is typing.
+        /// </summary>
+        public event EventHandler<TypingArrivedEventArgs> TypingMessageReceived;
         protected virtual void OnTypingMessageReceived(TypingArrivedEventArgs e)
         {
             if (TypingMessageReceived != null)
@@ -152,6 +100,10 @@ namespace MSNPSharp
 
         }
 
+        /// <summary>
+        /// Occurs when we receive a nudge message by a user.
+        /// </summary>
+        public event EventHandler<NudgeArrivedEventArgs> NudgeReceived;
         protected virtual void OnNudgeReceived(NudgeArrivedEventArgs e)
         {
             if (NudgeReceived != null)
@@ -161,6 +113,10 @@ namespace MSNPSharp
                 "NUDGE: " + e.Sender.ToString() + (e.Sender == e.OriginalSender ? String.Empty : ";via=" + e.OriginalSender.ToString()));
         }
 
+        /// <summary>
+        /// Occurs when we receive a text message from a user.
+        /// </summary>
+        public event EventHandler<TextMessageArrivedEventArgs> TextMessageReceived;
         protected virtual void OnTextMessageReceived(TextMessageArrivedEventArgs e)
         {
             if (TextMessageReceived != null)
@@ -170,24 +126,41 @@ namespace MSNPSharp
                 "TEXT MESSAGE: " + e.Sender.ToString() + (e.Sender == e.OriginalSender ? String.Empty : ";via=" + e.OriginalSender.ToString()) + "\r\n" + e.TextMessage.ToDebugString());
         }
 
+
+        /// <summary>
+        /// Fired when a contact sends a emoticon definition.
+        /// </summary>
+        public event EventHandler<EmoticonDefinitionEventArgs> EmoticonDefinitionReceived;
         protected virtual void OnEmoticonDefinitionReceived(EmoticonDefinitionEventArgs e)
         {
             if (EmoticonDefinitionReceived != null)
                 EmoticonDefinitionReceived(this, e);
         }
 
+        /// <summary>
+        /// Fired when a contact sends a wink definition.
+        /// </summary>
+        public event EventHandler<WinkEventArgs> WinkDefinitionReceived;
         protected virtual void OnWinkDefinitionReceived(WinkEventArgs e)
         {
             if (WinkDefinitionReceived != null)
                 WinkDefinitionReceived(this, e);
         }
 
+        /// <summary>
+        /// Occurs when a multiparty chat created remotely. Owner is joined automatically by the library.
+        /// </summary>
+        public event EventHandler<MultipartyCreatedEventArgs> MultipartyCreatedRemotely;
         protected virtual void OnMultipartyCreatedRemotely(MultipartyCreatedEventArgs e)
         {
             if (MultipartyCreatedRemotely != null)
                 MultipartyCreatedRemotely(this, e);
         }
 
+        /// <summary>
+        /// Occurs when a contact joined the group chat.
+        /// </summary>
+        public event EventHandler<GroupChatParticipationEventArgs> JoinedGroupChat;
         protected virtual void OnJoinedGroupChat(GroupChatParticipationEventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
@@ -197,6 +170,10 @@ namespace MSNPSharp
                 JoinedGroupChat(this, e);
         }
 
+        /// <summary>
+        /// Occurs when a contact left the group chat.
+        /// </summary>
+        public event EventHandler<GroupChatParticipationEventArgs> LeftGroupChat;
         protected virtual void OnLeftGroupChat(GroupChatParticipationEventArgs e)
         {
             if (LeftGroupChat != null)
@@ -206,6 +183,10 @@ namespace MSNPSharp
                e.Contact + " left group chat " + e.Via.ToString(), GetType().Name);
         }
 
+        /// <summary>
+        /// Occurs after the user on another end point closed the IM window.
+        /// </summary>
+        public event EventHandler<CloseIMWindowEventArgs> RemoteEndPointCloseIMWindow;
         protected virtual void OnRemoteEndPointCloseIMWindow(CloseIMWindowEventArgs e)
         {
             if (RemoteEndPointCloseIMWindow != null)
