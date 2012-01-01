@@ -32,6 +32,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
 using System.Text;
+using System.Threading;
 using System.Collections;
 using System.Diagnostics;
 
@@ -44,44 +45,41 @@ namespace MSNPSharp
         #region Events
 
         public event EventHandler<EventArgs> ConnectionEstablished;
-        public event EventHandler<EventArgs> ConnectionClosed;
-        public event EventHandler<ExceptionEventArgs> ConnectingException;
-        public event EventHandler<ExceptionEventArgs> ConnectionException;
-        public event EventHandler<ObjectEventArgs> SendCompleted;
-        public event EventHandler<ExceptionEventArgs> HandlerException;
-
-        #region Event triggers
-
         protected virtual void OnConnectionEstablished(object sender, EventArgs e)
         {
             if (ConnectionEstablished != null)
                 ConnectionEstablished(sender, e);
         }
 
+        public event EventHandler<EventArgs> ConnectionClosed;
         protected virtual void OnConnectionClosed(object sender, EventArgs e)
         {
             if (ConnectionClosed != null)
                 ConnectionClosed(sender, e);
         }
 
+        public event EventHandler<ExceptionEventArgs> ConnectingException;
         protected virtual void OnConnectingException(object sender, ExceptionEventArgs e)
         {
             if (ConnectingException != null)
                 ConnectingException(sender, e);
         }
 
+        public event EventHandler<ExceptionEventArgs> ConnectionException;
         protected virtual void OnConnectionException(object sender, ExceptionEventArgs e)
         {
             if (ConnectionException != null)
                 ConnectionException(sender, e);
         }
 
+        public event EventHandler<ObjectEventArgs> SendCompleted;
         protected virtual void OnSendCompleted(object sender, ObjectEventArgs e)
         {
             if (SendCompleted != null)
                 SendCompleted(sender, e);
         }
 
+        public event EventHandler<ExceptionEventArgs> HandlerException;
         protected virtual void OnHandlerException(object sender, ExceptionEventArgs e)
         {
             if (HandlerException != null)
@@ -90,10 +88,8 @@ namespace MSNPSharp
 
         #endregion
 
-        #endregion
-
         private int transactionID = 0;
-        private SocketMessageProcessor processor = null;
+        private SocketMessageProcessor processor;
 
         protected internal NSMessageProcessor(ConnectivitySettings connectivitySettings)
         {
@@ -172,12 +168,12 @@ namespace MSNPSharp
         /// </summary>
         internal void ResetTransactionID()
         {
-            System.Threading.Interlocked.Exchange(ref transactionID, 0);
+            Interlocked.Exchange(ref transactionID, 0);
         }
 
         protected internal int IncreaseTransactionID()
         {
-            return System.Threading.Interlocked.Increment(ref transactionID);
+            return Interlocked.Increment(ref transactionID);
         }
 
         protected void OnMessageReceived(object sender, ByteEventArgs e)

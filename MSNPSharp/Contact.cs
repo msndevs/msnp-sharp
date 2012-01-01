@@ -211,6 +211,8 @@ namespace MSNPSharp
 
         #endregion
 
+        #region .ctor
+
         private Contact()
         {
         }
@@ -255,6 +257,168 @@ namespace MSNPSharp
             }
         }
 
+        #endregion
+
+        #region Events
+
+        /// <summary>
+        /// Fired when friendship with a contact changed.
+        /// </summary>
+        public event EventHandler<FriendshipStatusChangedEventArgs> FriendshipStatusChanged;
+        protected virtual void OnFriendshipStatusChanged(FriendshipStatusChangedEventArgs e)
+        {
+            if (FriendshipStatusChanged != null)
+                FriendshipStatusChanged(this, e);
+        }
+
+        /// <summary>
+        /// Fired when contact places changed.
+        /// </summary>
+        public event EventHandler<PlaceChangedEventArgs> PlacesChanged;
+        protected virtual void OnPlacesChanged(PlaceChangedEventArgs e)
+        {
+            if (PlacesChanged != null)
+                PlacesChanged(this, e);
+        }
+
+        /// <summary>
+        /// Fired when core profile updated via Directory Service.
+        /// </summary>
+        public event EventHandler<EventArgs> CoreProfileUpdated;
+        protected internal virtual void OnCoreProfileUpdated(EventArgs e)
+        {
+            if (CoreProfileUpdated != null)
+                CoreProfileUpdated(this, e);
+        }
+
+        /// <summary>
+        /// Fired when contact's display name changed.
+        /// </summary>
+        public event EventHandler<EventArgs> ScreenNameChanged;
+        protected virtual void OnScreenNameChanged(string oldName)
+        {
+            if (ScreenNameChanged != null)
+            {
+                ScreenNameChanged(this, EventArgs.Empty);
+            }
+        }
+
+        public event EventHandler<EventArgs> PersonalMessageChanged;
+        protected virtual void OnPersonalMessageChanged(PersonalMessage newmessage)
+        {
+            if (PersonalMessageChanged != null)
+            {
+                PersonalMessageChanged(this, EventArgs.Empty);
+            }
+        }
+
+        /// <summary>
+        /// Fired after contact's display image has been changed.
+        /// </summary>
+        public event EventHandler<DisplayImageChangedEventArgs> DisplayImageChanged;
+        protected virtual void OnDisplayImageChanged(DisplayImageChangedEventArgs e)
+        {
+            if (DisplayImageChanged != null)
+            {
+                DisplayImageChanged(this, e);
+            }
+        }
+
+        /// <summary>
+        /// Fired after contact's scene has been changed.
+        /// </summary>
+        public event EventHandler<SceneImageChangedEventArgs> SceneImageChanged;
+        protected virtual void OnSceneImageChanged(SceneImageChangedEventArgs e)
+        {
+            if (SceneImageChanged != null)
+            {
+                SceneImageChanged(this, e);
+            }
+        }
+
+        /// <summary>
+        /// Fired after received contact's display image changed notification.
+        /// </summary>
+        public event EventHandler<DisplayImageChangedEventArgs> DisplayImageContextChanged;
+        protected virtual void OnDisplayImageContextChanged(DisplayImageChangedEventArgs e)
+        {
+            if (DisplayImageContextChanged != null)
+            {
+                DisplayImageContextChanged(this, e);
+            }
+        }
+
+        /// <summary>
+        /// Fired after receiving notification that the contact's scene image has changed.
+        /// </summary>
+        public event EventHandler<SceneImageChangedEventArgs> SceneImageContextChanged;
+        protected virtual void OnSceneImageContextChanged(SceneImageChangedEventArgs e)
+        {
+            if (SceneImageContextChanged != null)
+            {
+                SceneImageContextChanged(this, e);
+            }
+        }
+
+        /// <summary>
+        /// Fired after receiving notification that the contact's color scheme has changed.
+        /// </summary>
+        public event EventHandler<EventArgs> ColorSchemeChanged;
+        internal virtual void OnColorSchemeChanged()
+        {
+            if (ColorSchemeChanged != null)
+            {
+                ColorSchemeChanged(this, EventArgs.Empty);
+            }
+        }
+
+        public event EventHandler<ContactGroupEventArgs> ContactGroupAdded;
+        protected virtual void OnContactGroupAdded(ContactGroup group)
+        {
+            if (ContactGroupAdded != null)
+                ContactGroupAdded(this, new ContactGroupEventArgs(group));
+        }
+
+        public event EventHandler<ContactGroupEventArgs> ContactGroupRemoved;
+        protected virtual void OnContactGroupRemoved(ContactGroup group)
+        {
+            if (ContactGroupRemoved != null)
+                ContactGroupRemoved(this, new ContactGroupEventArgs(group));
+        }
+
+        public event EventHandler<StatusChangedEventArgs> ContactOnline;
+        protected virtual void OnContactOnline(StatusChangedEventArgs e)
+        {
+            if (ContactOnline != null)
+                ContactOnline(this, e);
+        }
+
+        public event EventHandler<StatusChangedEventArgs> ContactOffline;
+        protected virtual void OnContactOffline(StatusChangedEventArgs e)
+        {
+            if (ContactOffline != null)
+            {
+                ContactOffline(this, e);
+            }
+        }
+
+        public event EventHandler<StatusChangedEventArgs> StatusChanged;
+        protected virtual void OnStatusChanged(StatusChangedEventArgs e)
+        {
+            if (StatusChanged != null)
+                StatusChanged(this, e);
+        }
+
+        public event EventHandler<EventArgs> DirectBridgeEstablished;
+        protected void OnDirectBridgeEstablished(EventArgs e)
+        {
+            if (DirectBridgeEstablished != null)
+                DirectBridgeEstablished(this, e);
+        }
+
+        #endregion
+
+
         protected internal void SetCircleInfo(CircleInverseInfoType circleInfo, ContactType me)
         {
             MeContact = me;
@@ -271,65 +435,6 @@ namespace MSNPSharp
             contactList = new ContactList(AddressBookId, new Owner(AddressBookId, me.contactInfo.passportName, me.contactInfo.CID, NSMessageHandler), this, NSMessageHandler);
             Lists = RoleLists.Allow | RoleLists.Forward;
         }
-
-        #region Events
-
-        /// <summary>
-        /// Fired when friendship with a contact changed.
-        /// </summary>
-        public event EventHandler<FriendshipStatusChangedEventArgs> FriendshipStatusChanged;
-
-        /// <summary>
-        /// Fired when contact places changed.
-        /// </summary>
-        public event EventHandler<PlaceChangedEventArgs> PlacesChanged;
-
-        /// <summary>
-        /// Fired when core profile updated via Directory Service.
-        /// </summary>
-        public event EventHandler<EventArgs> CoreProfileUpdated;
-
-        /// <summary>
-        /// Fired when contact's display name changed.
-        /// </summary>
-        public event EventHandler<EventArgs> ScreenNameChanged;
-
-        public event EventHandler<EventArgs> PersonalMessageChanged;
-
-        /// <summary>
-        /// Fired after contact's display image has been changed.
-        /// </summary>
-        public event EventHandler<DisplayImageChangedEventArgs> DisplayImageChanged;
-
-        /// <summary>
-        /// Fired after contact's scene has been changed.
-        /// </summary>
-        public event EventHandler<SceneImageChangedEventArgs> SceneImageChanged;
-
-        public event EventHandler<EventArgs> DirectBridgeEstablished;
-
-        /// <summary>
-        /// Fired after received contact's display image changed notification.
-        /// </summary>
-        public event EventHandler<DisplayImageChangedEventArgs> DisplayImageContextChanged;
-
-        /// <summary>
-        /// Fired after receiving notification that the contact's scene image has changed.
-        /// </summary>
-        public event EventHandler<SceneImageChangedEventArgs> SceneImageContextChanged;
-
-        /// <summary>
-        /// Fired after receiving notification that the contact's color scheme has changed.
-        /// </summary>
-        public event EventHandler<EventArgs> ColorSchemeChanged;
-
-        public event EventHandler<ContactGroupEventArgs> ContactGroupAdded;
-        public event EventHandler<ContactGroupEventArgs> ContactGroupRemoved;
-        public event EventHandler<StatusChangedEventArgs> ContactOnline;
-        public event EventHandler<StatusChangedEventArgs> ContactOffline;
-        public event EventHandler<StatusChangedEventArgs> StatusChanged;
-
-        #endregion
 
         #region Contact Properties
 
@@ -1407,49 +1512,6 @@ namespace MSNPSharp
 
         #region Protected
 
-        protected virtual void OnFriendshipStatusChanged(FriendshipStatusChangedEventArgs e)
-        {
-            if (FriendshipStatusChanged != null)
-                FriendshipStatusChanged(this, e);
-        }
-
-        protected virtual void OnScreenNameChanged(string oldName)
-        {
-            if (ScreenNameChanged != null)
-            {
-                ScreenNameChanged(this, EventArgs.Empty);
-            }
-        }
-
-        protected virtual void OnPersonalMessageChanged(PersonalMessage newmessage)
-        {
-            if (PersonalMessageChanged != null)
-            {
-                PersonalMessageChanged(this, EventArgs.Empty);
-            }
-        }
-
-        /// <summary>
-        /// Called when the End Points changed.
-        /// </summary>
-        /// <param name="e"></param>
-        protected virtual void OnPlacesChanged(PlaceChangedEventArgs e)
-        {
-            if (PlacesChanged != null)
-                PlacesChanged(this, e);
-        }
-
-        /// <summary>
-        /// Called when the core profile updated.
-        /// </summary>
-        /// <param name="e"></param>
-        protected internal virtual void OnCoreProfileUpdated(EventArgs e)
-        {
-            if (CoreProfileUpdated != null)
-                CoreProfileUpdated(this, e);
-        }
-
-
         internal void SetChangedPlace(PlaceChangedEventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
@@ -1487,67 +1549,6 @@ namespace MSNPSharp
             if (triggerEvent)
             {
                 OnPlacesChanged(e);
-            }
-        }
-
-
-        protected virtual void OnStatusChanged(StatusChangedEventArgs e)
-        {
-            if (StatusChanged != null)
-                StatusChanged(this, e);
-        }
-
-        protected virtual void OnContactOnline(StatusChangedEventArgs e)
-        {
-            if (ContactOnline != null)
-                ContactOnline(this, e);
-        }
-
-        protected virtual void OnContactOffline(StatusChangedEventArgs e)
-        {
-            if (ContactOffline != null)
-            {
-                ContactOffline(this, e);
-            }
-        }
-
-        protected virtual void OnDisplayImageChanged(DisplayImageChangedEventArgs arg)
-        {
-            if (DisplayImageChanged != null)
-            {
-                DisplayImageChanged(this, arg);
-            }
-        }
-
-        protected virtual void OnSceneImageChanged(SceneImageChangedEventArgs arg)
-        {
-            if (SceneImageChanged != null)
-            {
-                SceneImageChanged(this, arg);
-            }
-        }
-
-        protected virtual void OnDisplayImageContextChanged(DisplayImageChangedEventArgs arg)
-        {
-            if (DisplayImageContextChanged != null)
-            {
-                DisplayImageContextChanged(this, arg);
-            }
-        }
-
-        protected virtual void OnSceneImageContextChanged(SceneImageChangedEventArgs arg)
-        {
-            if (SceneImageContextChanged != null)
-            {
-                SceneImageContextChanged(this, arg);
-            }
-        }
-
-        internal virtual void OnColorSchemeChanged()
-        {
-            if (ColorSchemeChanged != null)
-            {
-                ColorSchemeChanged(this, EventArgs.Empty);
             }
         }
 
@@ -1624,24 +1625,6 @@ namespace MSNPSharp
         #endregion
 
         #region Internal contact operations
-
-        protected virtual void OnContactGroupAdded(ContactGroup group)
-        {
-            if (ContactGroupAdded != null)
-                ContactGroupAdded(this, new ContactGroupEventArgs(group));
-        }
-
-        protected virtual void OnContactGroupRemoved(ContactGroup group)
-        {
-            if (ContactGroupRemoved != null)
-                ContactGroupRemoved(this, new ContactGroupEventArgs(group));
-        }
-
-        protected void OnDirectBridgeEstablished(EventArgs e)
-        {
-            if (DirectBridgeEstablished != null)
-                DirectBridgeEstablished(this, e);
-        }
 
         private void HandleDirectBridgeOpened(object sender, EventArgs e)
         {
