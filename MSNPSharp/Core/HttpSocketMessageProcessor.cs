@@ -299,11 +299,11 @@ namespace MSNPSharp.Core
                 action = HttpPollAction.None;
 
                 StreamState streamState = new StreamState(request, null, data);
-                request.BeginGetRequestStream(EndGetRequestStream, streamState);
+                request.BeginGetRequestStream(EndGetRequestStreamCallback, streamState);
             }
         }
 
-        private void EndGetRequestStream(IAsyncResult ar)
+        private void EndGetRequestStreamCallback(IAsyncResult ar)
         {
             StreamState streamState = (StreamState)ar.AsyncState;
             HttpWebRequest request = (HttpWebRequest)streamState.Request;
@@ -312,7 +312,7 @@ namespace MSNPSharp.Core
             {
                 Stream stream = request.EndGetRequestStream(ar);
                 StreamState streamState2 = new StreamState(request, stream, null);
-                stream.BeginWrite(dataToSend, 0, dataToSend.Length, RequestStreamEndWrite, streamState2);
+                stream.BeginWrite(dataToSend, 0, dataToSend.Length, RequestStreamEndWriteCallback, streamState2);
             }
             catch (WebException we)
             {
@@ -320,7 +320,7 @@ namespace MSNPSharp.Core
             }
         }
 
-        private void RequestStreamEndWrite(IAsyncResult ar)
+        private void RequestStreamEndWriteCallback(IAsyncResult ar)
         {
             StreamState streamState = (StreamState)ar.AsyncState;
             HttpWebRequest request = (HttpWebRequest)streamState.Request;
@@ -391,7 +391,7 @@ namespace MSNPSharp.Core
 
                     Stream responseStream = response.GetResponseStream();
                     HttpResponseState httpState = new HttpResponseState(request, response, responseStream, responseLength);
-                    responseStream.BeginRead(httpState.Buffer, httpState.Offset, responseLength - httpState.Offset, ResponseStreamEndRead, httpState);
+                    responseStream.BeginRead(httpState.Buffer, httpState.Offset, responseLength - httpState.Offset, ResponseStreamEndReadCallback, httpState);
                 }
                 catch (WebException we)
                 {
@@ -400,7 +400,7 @@ namespace MSNPSharp.Core
             }
         }
 
-        private void ResponseStreamEndRead(IAsyncResult ar)
+        private void ResponseStreamEndReadCallback(IAsyncResult ar)
         {
             HttpResponseState state = (HttpResponseState)ar.AsyncState;
 
@@ -410,7 +410,7 @@ namespace MSNPSharp.Core
 
                 if (state.Offset < state.Buffer.Length)
                 {
-                    state.ResponseStream.BeginRead(state.Buffer, state.Offset, state.Buffer.Length - state.Offset, ResponseStreamEndRead, state);
+                    state.ResponseStream.BeginRead(state.Buffer, state.Offset, state.Buffer.Length - state.Offset, ResponseStreamEndReadCallback, state);
                     return;
                 }
             }

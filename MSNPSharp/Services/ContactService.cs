@@ -74,143 +74,10 @@ namespace MSNPSharp
         #region Events
 
         /// <summary>
-        /// Fires when a contact is added to pending list
-        /// </summary>
-        public event EventHandler<ContactEventArgs> FriendshipRequested;
-
-        /// <summary>
-        /// Fires when a contact is added to any list (including reverse list)
-        /// </summary>
-        public event EventHandler<ListMutateEventArgs> ContactAdded;
-
-        /// <summary>
-        /// Fires when a contact is removed from any list (including reverse list)
-        /// </summary>
-        public event EventHandler<ListMutateEventArgs> ContactRemoved;
-
-        /// <summary>
-        /// Fires when a new contactgroup is created
-        /// </summary>
-        public event EventHandler<ContactGroupEventArgs> ContactGroupAdded;
-
-        /// <summary>
-        /// Fires when a contactgroup is removed
-        /// </summary>
-        public event EventHandler<ContactGroupEventArgs> ContactGroupRemoved;
-
-        /// <summary>
-        /// Fires when a new <see cref="Contact"/> is created.
-        /// </summary>
-        public event EventHandler<CircleEventArgs> CreateCircleCompleted;
-
-        /// <summary>
-        /// Fires when the owner has left a specific <see cref="Contact"/>.
-        /// </summary>
-        public event EventHandler<CircleEventArgs> ExitCircleCompleted;
-
-        /// <summary>
         /// Fires when a call to SynchronizeList() has been made and the synchronization process is completed.
         /// This means all contact-updates are received from the server and processed.
         /// </summary>
         public event EventHandler<EventArgs> SynchronizationCompleted;
-
-        /// <summary>
-        /// Fired after the InviteContactToCircle succeeded.
-        /// </summary>
-        public event EventHandler<CircleMemberEventArgs> InviteCircleMemberCompleted;
-
-        /// <summary>
-        /// Fired after a circle member has left the circle.
-        /// </summary>
-        public event EventHandler<CircleMemberEventArgs> CircleMemberLeft;
-
-        /// <summary>
-        /// Fired after a circle member has joined the circle.
-        /// </summary>
-        public event EventHandler<CircleMemberEventArgs> CircleMemberJoined;
-
-        /// <summary>
-        /// Fired after a remote user invite us to join a circle.
-        /// </summary>
-        public event EventHandler<CircleEventArgs> JoinCircleInvitationReceived;
-
-        /// <summary>
-        /// Fired after the owner join a circle successfully.
-        /// </summary>
-        public event EventHandler<CircleEventArgs> JoinedCircleCompleted;
-
-        #region Event triggers
-
-        internal void OnFriendshipRequested(ContactEventArgs e)
-        {
-            if (FriendshipRequested != null)
-                FriendshipRequested(this, e);
-        }
-
-        internal void OnContactAdded(ListMutateEventArgs e)
-        {
-            if (ContactAdded != null)
-                ContactAdded(this, e);
-        }
-
-        internal void OnContactRemoved(ListMutateEventArgs e)
-        {
-            if (ContactRemoved != null)
-                ContactRemoved(this, e);
-        }
-
-        internal void OnContactGroupAdded(ContactGroupEventArgs e)
-        {
-            if (ContactGroupAdded != null)
-                ContactGroupAdded(this, e);
-        }
-
-        internal void OnJoinCircleInvitationReceived(CircleEventArgs e)
-        {
-            if (JoinCircleInvitationReceived != null)
-                JoinCircleInvitationReceived(this, e);
-        }
-
-        internal void OnJoinedCircleCompleted(CircleEventArgs e)
-        {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Circle invitation accepted: " + e.Circle.ToString());
-
-            if (JoinedCircleCompleted != null)
-                JoinedCircleCompleted(this, e);
-        }
-
-        internal void OnContactGroupRemoved(ContactGroupEventArgs e)
-        {
-            if (ContactGroupRemoved != null)
-                ContactGroupRemoved(this, e);
-        }
-
-        internal void OnCreateCircleCompleted(CircleEventArgs e)
-        {
-            if (CreateCircleCompleted != null)
-                CreateCircleCompleted(this, e);
-        }
-
-        internal void OnExitCircleCompleted(CircleEventArgs e)
-        {
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Exit circle completed: " + e.Circle.ToString());
-
-            if (ExitCircleCompleted != null)
-                ExitCircleCompleted(this, e);
-        }
-
-        internal void OnCircleMemberLeft(CircleMemberEventArgs e)
-        {
-            if (CircleMemberLeft != null)
-                CircleMemberLeft(this, e);
-        }
-
-        internal void OnCircleMemberJoined(CircleMemberEventArgs e)
-        {
-            if (CircleMemberJoined != null)
-                CircleMemberJoined(this, e);
-        }
-
         internal void OnSynchronizationCompleted(EventArgs e)
         {
             abSynchronized = true;
@@ -219,13 +86,129 @@ namespace MSNPSharp
                 SynchronizationCompleted(this, e);
         }
 
-        private void OnInviteCircleMemberCompleted(CircleMemberEventArgs e)
+        /// <summary>
+        /// Fires when a contact is added to pending list
+        /// </summary>
+        public event EventHandler<ContactEventArgs> FriendshipRequested;
+        internal void OnFriendshipRequested(ContactEventArgs e)
+        {
+            if (FriendshipRequested != null)
+                FriendshipRequested(this, e);
+        }
+
+        /// <summary>
+        /// Fires when a contact is added to any list (including reverse list)
+        /// </summary>
+        public event EventHandler<ListMutateEventArgs> ContactAdded;
+        internal void OnContactAdded(ListMutateEventArgs e)
+        {
+            if (ContactAdded != null)
+                ContactAdded(this, e);
+        }
+
+        /// <summary>
+        /// Fires when a contact is removed from any list (including reverse list)
+        /// </summary>
+        public event EventHandler<ListMutateEventArgs> ContactRemoved;
+        internal void OnContactRemoved(ListMutateEventArgs e)
+        {
+            if (ContactRemoved != null)
+                ContactRemoved(this, e);
+        }
+
+        /// <summary>
+        /// Fires when a new contactgroup is created
+        /// </summary>
+        public event EventHandler<ContactGroupEventArgs> ContactGroupAdded;
+        internal void OnContactGroupAdded(ContactGroupEventArgs e)
+        {
+            if (ContactGroupAdded != null)
+                ContactGroupAdded(this, e);
+        }
+
+        /// <summary>
+        /// Fires when a contactgroup is removed
+        /// </summary>
+        public event EventHandler<ContactGroupEventArgs> ContactGroupRemoved;
+        internal void OnContactGroupRemoved(ContactGroupEventArgs e)
+        {
+            if (ContactGroupRemoved != null)
+                ContactGroupRemoved(this, e);
+        }
+
+        /// <summary>
+        /// Fires when a new <see cref="Contact"/> is created.
+        /// </summary>
+        public event EventHandler<CircleEventArgs> CreateCircleCompleted;
+        internal void OnCreateCircleCompleted(CircleEventArgs e)
+        {
+            if (CreateCircleCompleted != null)
+                CreateCircleCompleted(this, e);
+        }
+
+        /// <summary>
+        /// Fires when the owner has left a specific <see cref="Contact"/>.
+        /// </summary>
+        public event EventHandler<CircleEventArgs> ExitCircleCompleted;
+        internal void OnExitCircleCompleted(CircleEventArgs e)
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Exit circle completed: " + e.Circle.ToString());
+
+            if (ExitCircleCompleted != null)
+                ExitCircleCompleted(this, e);
+        }
+
+        /// <summary>
+        /// Fired after the InviteContactToCircle succeeded.
+        /// </summary>
+        public event EventHandler<CircleMemberEventArgs> InviteCircleMemberCompleted;
+        internal void OnInviteCircleMemberCompleted(CircleMemberEventArgs e)
         {
             if (InviteCircleMemberCompleted != null)
                 InviteCircleMemberCompleted(this, e);
         }
 
-        #endregion
+        /// <summary>
+        /// Fired after a circle member has left the circle.
+        /// </summary>
+        public event EventHandler<CircleMemberEventArgs> CircleMemberLeft;
+        internal void OnCircleMemberLeft(CircleMemberEventArgs e)
+        {
+            if (CircleMemberLeft != null)
+                CircleMemberLeft(this, e);
+        }
+
+        /// <summary>
+        /// Fired after a circle member has joined the circle.
+        /// </summary>
+        public event EventHandler<CircleMemberEventArgs> CircleMemberJoined;
+        internal void OnCircleMemberJoined(CircleMemberEventArgs e)
+        {
+            if (CircleMemberJoined != null)
+                CircleMemberJoined(this, e);
+        }
+
+        /// <summary>
+        /// Fired after a remote user invite us to join a circle.
+        /// </summary>
+        public event EventHandler<CircleEventArgs> JoinCircleInvitationReceived;
+        internal void OnJoinCircleInvitationReceived(CircleEventArgs e)
+        {
+            if (JoinCircleInvitationReceived != null)
+                JoinCircleInvitationReceived(this, e);
+        }
+
+        /// <summary>
+        /// Fired after the owner join a circle successfully.
+        /// </summary>
+        public event EventHandler<CircleEventArgs> JoinedCircleCompleted;
+        internal void OnJoinedCircleCompleted(CircleEventArgs e)
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Circle invitation accepted: " + e.Circle.ToString());
+
+            if (JoinedCircleCompleted != null)
+                JoinedCircleCompleted(this, e);
+        }
 
         #endregion
 

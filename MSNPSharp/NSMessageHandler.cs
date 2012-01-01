@@ -99,7 +99,7 @@ namespace MSNPSharp
         #region Public Events
 
         /// <summary>
-        /// 
+        /// Occurs when the message processor of the nameserver changed.
         /// </summary>
         public event EventHandler<MessageProcessorChangedEventArgs> MessageProcessorChanged;
         protected virtual void OnMessageProcessorChanged(MessageProcessorChangedEventArgs e)
@@ -112,42 +112,105 @@ namespace MSNPSharp
         /// Occurs when the user finished the authentication step, the owner was created.
         /// </summary>
         public event EventHandler<EventArgs> OwnerVerified;
+        protected virtual void OnOwnerVerified(EventArgs e)
+        {
+            if (OwnerVerified != null)
+                OwnerVerified(this, e);
+        }
 
         /// <summary>
         /// Occurs when the authentication and authorization with the server has finished.
         /// The client is now connected to the messenger network.
         /// </summary>
         public event EventHandler<EventArgs> SignedIn;
+        protected virtual void OnSignedIn(EventArgs e)
+        {
+            isSignedIn = true;
+
+            Owner.EndPointData[NSMessageHandler.MachineGuid] = new PrivateEndPointData(Owner.Account, NSMessageHandler.MachineGuid);
+
+            if (ContactService.Deltas != null)
+                Owner.SyncProfileToDeltas();
+
+            if (SignedIn != null)
+                SignedIn(this, e);
+        }
 
         /// <summary>
         /// Occurs when the message processor has disconnected, and thus the user is no longer signed in.
         /// </summary>
         public event EventHandler<SignedOffEventArgs> SignedOff;
+        protected virtual void OnSignedOff(SignedOffEventArgs e)
+        {
+            if (Owner != null)
+                Owner.SetStatus(PresenceStatus.Offline);
+
+            Clear();
+
+            if (messageProcessor != null)
+                messageProcessor.Disconnect();
+
+            if (SignedOff != null)
+                SignedOff(this, e);
+        }
 
         /// <summary>
         /// Occurs when the server notifies the client with the status of the owner's mailbox.
         /// </summary>
         public event EventHandler<MailboxStatusEventArgs> MailboxStatusReceived;
+        protected virtual void OnMailboxStatusReceived(MailboxStatusEventArgs e)
+        {
+            if (MailboxStatusReceived != null)
+            {
+                MailboxStatusReceived(this, e);
+            }
+        }
 
         /// <summary>
-        /// Occurs when new mail is received.
+        /// Occurs when the owner has received new e-mail, or e-mail has been removed / moved.
         /// </summary>
         public event EventHandler<NewMailEventArgs> NewMailReceived;
+        protected virtual void OnNewMailReceived(NewMailEventArgs e)
+        {
+            if (NewMailReceived != null)
+            {
+                NewMailReceived(this, e);
+            }
+        }
 
         /// <summary>
         /// Occurs when unread mail is read or mail is moved.
         /// </summary>
         public event EventHandler<MailChangedEventArgs> MailboxChanged;
+        protected virtual void OnMailboxChanged(MailChangedEventArgs e)
+        {
+            if (MailboxChanged != null)
+            {
+                MailboxChanged(this, e);
+            }
+        }
 
         /// <summary>
         /// Occurs when the server sends an error.
         /// </summary>
         public event EventHandler<MSNErrorEventArgs> ServerErrorReceived;
+        protected virtual void OnServerErrorReceived(MSNErrorEventArgs e)
+        {
+            if (ServerErrorReceived != null)
+                ServerErrorReceived(this, e);
+        }
 
         /// <summary>
         /// Occurs when an exception is thrown while handling the incoming or outgoing messages.
         /// </summary>
         public event EventHandler<ExceptionEventArgs> ExceptionOccurred;
+        protected virtual void OnExceptionOccurred(ExceptionEventArgs e)
+        {
+            if (ExceptionOccurred != null)
+                ExceptionOccurred(this, e);
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Exception.Message + "\r\n\r\nStackTrace: \r\n" + e.Exception.StackTrace + "\r\n\r\n", GetType().Name);
+        }
 
         /// <summary>
         /// Occurs when the user could not be signed in due to authentication errors. Most likely due
@@ -155,6 +218,13 @@ namespace MSNPSharp
         /// <see cref="ExceptionOccurred"/> event.
         /// </summary>
         public event EventHandler<ExceptionEventArgs> AuthenticationError;
+        protected virtual void OnAuthenticationError(ExceptionEventArgs e)
+        {
+            if (AuthenticationError != null)
+                AuthenticationError(this, e);
+
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.ToString(), GetType().Name);
+        }
 
         #endregion
 
@@ -686,7 +756,7 @@ namespace MSNPSharp
                             if (messageProcessor != null)
                                 messageProcessor.Disconnect();
 
-                            OnAuthenticationErrorOccurred(e);
+                            OnAuthenticationError(e);
                         }
                     );
                 }
@@ -695,7 +765,7 @@ namespace MSNPSharp
                     if (messageProcessor != null)
                         messageProcessor.Disconnect();
 
-                    OnAuthenticationErrorOccurred(new ExceptionEventArgs(exception));
+                    OnAuthenticationError(new ExceptionEventArgs(exception));
                     return;
                 }
             }
@@ -730,41 +800,6 @@ namespace MSNPSharp
         private void pong_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
             SendPing();
-        }
-
-        /// <summary>
-        /// Fires the <see cref="SignedIn"/> event.
-        /// </summary>
-        /// <param name="e"></param>
-        protected virtual void OnSignedIn(EventArgs e)
-        {
-            isSignedIn = true;
-
-            Owner.EndPointData[NSMessageHandler.MachineGuid] = new PrivateEndPointData(Owner.Account, NSMessageHandler.MachineGuid);
-
-            if (ContactService.Deltas != null)
-                Owner.SyncProfileToDeltas();
-
-            if (SignedIn != null)
-                SignedIn(this, e);
-        }
-
-        /// <summary>
-        /// Fires the <see cref="SignedOff"/> event.
-        /// </summary>
-        /// <param name="e"></param>
-        protected virtual void OnSignedOff(SignedOffEventArgs e)
-        {
-            if (Owner != null)
-                Owner.SetStatus(PresenceStatus.Offline);
-
-            Clear();
-
-            if (messageProcessor != null)
-                messageProcessor.Disconnect();
-
-            if (SignedOff != null)
-                SignedOff(this, e);
         }
 
         #endregion
@@ -1054,7 +1089,7 @@ namespace MSNPSharp
             {
                 MimeMessage mimeEmailNotificationMessage = mimeMessage.InnerMessage as MimeMessage;
 
-                OnMailNotificationReceived(new NewMailEventArgs(
+                OnNewMailReceived(new NewMailEventArgs(
                     mimeMessage.MimeHeader[MIMEHeaderStrings.From],
                     mimeEmailNotificationMessage.MimeHeader["Message-URL"],
                     mimeEmailNotificationMessage.MimeHeader["Post-URL"],
@@ -1069,7 +1104,7 @@ namespace MSNPSharp
                 //Now this is the unread OIM info, not the new mail.
                 MimeMessage mimeActiveEmailNotificationMessage = mimeMessage.InnerMessage as MimeMessage;
 
-                OnMailChanged(new MailChangedEventArgs(
+                OnMailboxChanged(new MailChangedEventArgs(
                     mimeActiveEmailNotificationMessage.MimeHeader["Src-Folder"],
                     mimeActiveEmailNotificationMessage.MimeHeader["Dest-Folder"],
                     mimeActiveEmailNotificationMessage.MimeHeader.ContainsKey("Message-Delta") ? int.Parse(mimeActiveEmailNotificationMessage.MimeHeader["Message-Delta"], System.Globalization.CultureInfo.InvariantCulture) : 0
@@ -1165,44 +1200,7 @@ namespace MSNPSharp
             }
         }
 
-        /// <summary>
-        /// Fires the <see cref="MailboxChanged"/> event.
-        /// </summary>
-        /// <remarks>Called when the owner has removed or moved e-mail.</remarks>
-        /// <param name="e"></param>
-        protected virtual void OnMailChanged(MailChangedEventArgs e)
-        {
-            if (MailboxChanged != null)
-            {
-                MailboxChanged(this, e);
-            }
-        }
 
-        /// <summary>
-        /// Fires the <see cref="MailboxStatusReceived"/> event.
-        /// </summary>
-        /// <remarks>Called when the server sends the status of the owner's mailbox.</remarks>
-        /// <param name="e"></param>
-        protected virtual void OnMailboxStatusReceived(MailboxStatusEventArgs e)
-        {
-            if (MailboxStatusReceived != null)
-            {
-                MailboxStatusReceived(this, e);
-            }
-        }
-
-        /// <summary>
-        /// Fires the <see cref="NewMailReceived"/> event.
-        /// </summary>
-        /// <remarks>Called when the owner has received new e-mail, or e-mail has been removed / moved.</remarks>
-        /// <param name="e"></param>
-        protected virtual void OnMailNotificationReceived(NewMailEventArgs e)
-        {
-            if (NewMailReceived != null)
-            {
-                NewMailReceived(this, e);
-            }
-        }
 
         #endregion
 
@@ -1916,49 +1914,6 @@ namespace MSNPSharp
                 OnExceptionOccurred(new ExceptionEventArgs(e));
                 throw; //RethrowToPreserveStackDetails (without e)
             }
-        }
-
-        /// <summary>
-        /// Fires the <see cref="ServerErrorReceived"/> event.
-        /// </summary>
-        /// <param name="e"></param>
-        protected virtual void OnServerErrorReceived(MSNErrorEventArgs e)
-        {
-            if (ServerErrorReceived != null)
-                ServerErrorReceived(this, e);
-        }
-
-        /// <summary>
-        /// Fires the <see cref="ExceptionOccurred"/> event.
-        /// </summary>
-        /// <param name="e">The exception event args</param>
-        protected virtual void OnExceptionOccurred(ExceptionEventArgs e)
-        {
-            if (ExceptionOccurred != null)
-                ExceptionOccurred(this, e);
-
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Exception.Message + "\r\n\r\nStackTrace: \r\n" + e.Exception.StackTrace + "\r\n\r\n", GetType().Name);
-        }
-
-        /// <summary>
-        /// Fires the <see cref="AuthenticationError"/> event.
-        /// </summary>
-        /// <param name="e">The exception event args</param>
-        protected virtual void OnAuthenticationErrorOccurred(ExceptionEventArgs e)
-        {
-            if (AuthenticationError != null)
-                AuthenticationError(this, e);
-
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.ToString(), GetType().Name);
-        }
-
-        /// <summary>
-        /// Fires the <see cref="OwnerVerified"/> event.
-        /// </summary>
-        protected virtual void OnOwnerVerified(EventArgs e)
-        {
-            if (OwnerVerified != null)
-                OwnerVerified(this, e);
         }
 
         #endregion
