@@ -150,7 +150,20 @@ namespace MSNPSharp.Core
                 while (sendingQueue.Count > 0)
                 {
                     QueueState qs = sendingQueue.Dequeue();
-                    userStates.Add(qs.UserState);
+
+                    if (qs.UserState is Array)
+                    {
+                        foreach (object us in qs.UserState as object[])
+                        {
+                            if (!userStates.Contains(us))
+                                userStates.Add(us);
+                        }
+                    }
+                    else
+                    {
+                        if (!userStates.Contains(qs.UserState))
+                            userStates.Add(qs.UserState);
+                    }
 
                     buffer = NetworkMessage.AppendArray(buffer, qs.Data);
                 }

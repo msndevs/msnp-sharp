@@ -35,6 +35,7 @@ using System.Text;
 using System.Threading;
 using System.Diagnostics;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace MSNPSharp.P2P
 {
@@ -727,9 +728,7 @@ namespace MSNPSharp.P2P
 
         #endregion
 
-        /// <summary>
-        /// 
-        /// </summary>
+        [MethodImpl(MethodImplOptions.Synchronized)]
         protected virtual void ProcessSendQueues()
         {
             lock (sendQueues)  // lock at the queue level, since it might be modified.
