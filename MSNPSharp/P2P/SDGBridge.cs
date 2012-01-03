@@ -163,6 +163,73 @@ namespace MSNPSharp.P2P
             nsmp.SendMessage(sdgPayload, sdgPayload.TransactionID);
         }
 
+        protected override void SendMultiPacket(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage[] sendList)
+        {
+            if (remote == null)
+                return;
+
+            NSMessageProcessor nsmp = (NSMessageProcessor)NSMessageHandler.MessageProcessor;
+
+            string to = ((int)remote.ClientType).ToString() + ":" + remote.Account;
+            string from = ((int)NSMessageHandler.Owner.ClientType).ToString() + ":" + NSMessageHandler.Owner.Account;
+
+            MultiMimeMessage mmMessage = new MultiMimeMessage(to, from);
+            mmMessage.RoutingHeaders[MIMERoutingHeaders.From][MIMERoutingHeaders.EPID] = NSMessageHandler.MachineGuid.ToString("B").ToLowerInvariant();
+            mmMessage.RoutingHeaders[MIMERoutingHeaders.To][MIMERoutingHeaders.EPID] = remoteGuid.ToString("B").ToLowerInvariant();
+            mmMessage.RoutingHeaders[MIMERoutingHeaders.ServiceChannel] = "PE";
+            mmMessage.RoutingHeaders[MIMERoutingHeaders.Options] = "0";
+
+            mmMessage.ContentKeyVersion = "2.0";
+            mmMessage.ContentHeaders[MIMEContentHeaders.ContentType] = "application/x-msnmsgrp2p";
+            mmMessage.ContentHeaders[MIMEContentHeaders.ContentTransferEncoding] = "binary";
+            mmMessage.ContentHeaders[MIMEContentHeaders.MessageType] = MessageTypes.Data;
+
+            List<string> bridgingOffsets = new List<string>();
+            List<object> userStates = new List<object>();
+            byte[] buffer = new byte[0];
+
+            foreach (P2PMessage p2pMessage in sendList)
+            {
+                SLPMessage slpMessage = p2pMessage.IsSLPData ? p2pMessage.InnerMessage as SLPMessage : null;
+
+                if (slpMessage != null &&
+                    ((slpMessage.ContentType == "application/x-msnmsgr-transreqbody" ||
+                      slpMessage.ContentType == "application/x-msnmsgr-transrespbody" ||
+                      slpMessage.ContentType == "application/x-msnmsgr-transdestaddrupdate")))
+                {
+                    SendOnePacket(session, remote, remoteGuid, p2pMessage);
+                }
+                else
+                {
+                    bridgingOffsets.Add(buffer.Length.ToString());
+                    buffer = NetworkMessage.AppendArray(buffer, p2pMessage.GetBytes(true));
+                    int transId = nsmp.IncreaseTransactionID();
+
+                    userStates.Add(transId);
+                    lock (p2pAckMessages)
+                        p2pAckMessages[transId] = new P2PMessageSessionEventArgs(p2pMessage, session);
+
+                    //mmMessage.ContentHeaders[MIMEContentHeaders.Pipe] = PackageNo.ToString();
+                    //mmMessage.ContentHeaders[MIMEContentHeaders.BridgingOffsets] = "0";
+                }
+            }
+
+            if (buffer.Length > 0)
+            {
+                mmMessage.ContentHeaders[MIMEContentHeaders.BridgingOffsets] = String.Join(",", bridgingOffsets.ToArray());
+                mmMessage.InnerBody = buffer;
+
+                int transId2 = nsmp.IncreaseTransactionID();
+                userStates.Add(transId2);
+
+                NSMessage sdgPayload = new NSMessage("SDG");
+                sdgPayload.TransactionID = transId2;
+                sdgPayload.InnerMessage = mmMessage;
+
+                nsmp.Processor.Send(sdgPayload.GetBytes(), userStates.ToArray());
+            }
+        }
+
         internal void FireSendCompleted(int transid)
         {
             if (p2pAckMessages.ContainsKey(transid))
