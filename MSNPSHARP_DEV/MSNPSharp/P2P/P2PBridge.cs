@@ -773,6 +773,13 @@ namespace MSNPSharp.P2P
         }
 
         protected abstract void SendOnePacket(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage msg);
+        protected virtual void SendMultiPacket(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage[] sendList)
+        {
+            foreach (P2PMessage p2pMessage in sendList)
+            {
+                SendOnePacket(session, remote, remoteGuid, p2pMessage);
+            }
+        }
 
         /// <summary>
         /// Stop sending future messages to the specified <see cref="P2PSession"/>.
