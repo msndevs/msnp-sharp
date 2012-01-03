@@ -84,7 +84,7 @@ namespace MSNPSharp.Core
 
         private Queue<QueueState> sendingQueue = new Queue<QueueState>();
         private System.Timers.Timer pollTimer = new System.Timers.Timer(2000);
-        private object _lock = new object();
+        private object syncObject = new object();
 
         public HttpSocketMessageProcessor(ConnectivitySettings connectivitySettings, MessagePool messagePool)
             : base(connectivitySettings, messagePool)
@@ -145,15 +145,15 @@ namespace MSNPSharp.Core
             List<object> userStates = new List<object>();
             action = HttpPollAction.Poll;
 
-            lock (_lock)
+            lock (syncObject)
             {
                 while (sendingQueue.Count > 0)
                 {
-                    QueueState qs = sendingQueue.Dequeue();
+                    QueueState queueState = sendingQueue.Dequeue();
 
-                    if (qs.UserState is Array)
+                    if (queueState.UserState is Array)
                     {
-                        foreach (object us in qs.UserState as object[])
+                        foreach (object us in queueState.UserState as object[])
                         {
                             if (!userStates.Contains(us))
                                 userStates.Add(us);
@@ -161,11 +161,11 @@ namespace MSNPSharp.Core
                     }
                     else
                     {
-                        if (!userStates.Contains(qs.UserState))
-                            userStates.Add(qs.UserState);
+                        if (!userStates.Contains(queueState.UserState))
+                            userStates.Add(queueState.UserState);
                     }
 
-                    buffer = NetworkMessage.AppendArray(buffer, qs.Data);
+                    buffer = NetworkMessage.AppendArray(buffer, queueState.Data);
                 }
 
                 if (buffer.Length > 0)
@@ -177,29 +177,29 @@ namespace MSNPSharp.Core
 
         private string GenerateURI()
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder stringBuilder = new StringBuilder();
 
-            sb.Append("http://");
-            sb.Append(gatewayIP);
-            sb.Append("/gateway/gateway.dll?");
+            stringBuilder.Append("http://");
+            stringBuilder.Append(gatewayIP);
+            stringBuilder.Append("/gateway/gateway.dll?");
 
             switch (action)
             {
                 case HttpPollAction.Open:
-                    sb.Append("Action=open&");
-                    sb.Append("Server=NS&");
-                    sb.Append("IP=" + ConnectivitySettings.Host);
+                    stringBuilder.Append("Action=open&");
+                    stringBuilder.Append("Server=NS&");
+                    stringBuilder.Append("IP=" + ConnectivitySettings.Host);
                     break;
                 case HttpPollAction.Poll:
-                    sb.Append("Action=poll&Lifespan=3&");
-                    sb.Append("SessionID=" + SessionID);
+                    stringBuilder.Append("Action=poll&Lifespan=3&");
+                    stringBuilder.Append("SessionID=" + SessionID);
                     break;
                 case HttpPollAction.None:
-                    sb.Append("SessionID=" + SessionID);
+                    stringBuilder.Append("SessionID=" + SessionID);
                     break;
             }
 
-            return sb.ToString();
+            return stringBuilder.ToString();
         }
 
         public override void Connect()
@@ -280,7 +280,7 @@ namespace MSNPSharp.Core
                 }
             }
 
-            lock (_lock)
+            lock (syncObject)
             {
                 if (sending)
                 {
@@ -367,23 +367,23 @@ namespace MSNPSharp.Core
             HttpWebRequest request = (HttpWebRequest)streamState.Request;
             object userState = streamState.UserState;
 
-            lock (_lock)
+            lock (syncObject)
             {
                 try
                 {
                     HttpWebResponse response = (HttpWebResponse)request.EndGetResponse(ar);
                     int responseLength = (int)response.ContentLength;
 
-                    foreach (string str in response.Headers.AllKeys)
+                    foreach (string header in response.Headers.AllKeys)
                     {
-                        switch (str)
+                        switch (header)
                         {
                             case "X-MSN-Host":
-                                host = response.Headers.Get(str);
+                                host = response.Headers.Get(header);
                                 break;
 
                             case "X-MSN-Messenger":
-                                string text = response.Headers.Get(str);
+                                string text = response.Headers.Get(header);
 
                                 string[] parts = text.Split(';');
                                 foreach (string part in parts)
@@ -484,7 +484,7 @@ namespace MSNPSharp.Core
 
             DispatchRawData(state.Buffer);
 
-            lock (_lock)
+            lock (syncObject)
             {
                 if (connected && (!sending) && (!pollTimer.Enabled))
                 {
