@@ -462,7 +462,17 @@ namespace MSNPSharp.Core
 
                 if (state.UserData != null)
                 {
-                    OnSendCompleted(new ObjectEventArgs(state.UserData));
+                    if (state.UserData is Array)
+                    {
+                        foreach (object userState in state.UserData as object[])
+                        {
+                            OnSendCompleted(new ObjectEventArgs(userState));
+                        }
+                    }
+                    else
+                    {
+                        OnSendCompleted(new ObjectEventArgs(state.UserData));
+                    }
                 }
             }
             catch (SocketException sex)
