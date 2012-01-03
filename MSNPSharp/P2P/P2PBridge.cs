@@ -741,7 +741,9 @@ namespace MSNPSharp.P2P
 
                     if (Ready(pair.Key))
                     {
-                        while ((pair.Value.Count > 0) && (list.Count < queueSize))
+                        while (
+                            (pair.Value.Count > 0) &&
+                            (queueSize == 0 /*no limit*/ || list.Count < queueSize /* has limit */))
                         {
                             P2PSendItem item = pair.Value.Dequeue();
 
