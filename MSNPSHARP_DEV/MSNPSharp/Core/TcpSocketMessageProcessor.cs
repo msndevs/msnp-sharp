@@ -460,20 +460,7 @@ namespace MSNPSharp.Core
             {
                 socket.EndSend(ar);
 
-                if (state.UserData != null)
-                {
-                    if (state.UserData is Array)
-                    {
-                        foreach (object userState in state.UserData as object[])
-                        {
-                            OnSendCompleted(new ObjectEventArgs(userState));
-                        }
-                    }
-                    else
-                    {
-                        OnSendCompleted(new ObjectEventArgs(state.UserData));
-                    }
-                }
+                OnAfterRawDataSent(state.UserState);
             }
             catch (SocketException sex)
             {
@@ -543,12 +530,12 @@ namespace MSNPSharp.Core
         private class SocketSendState
         {
             public Socket Socket;
-            public object UserData;
+            public object UserState;
 
-            public SocketSendState(Socket socket, object userData)
+            public SocketSendState(Socket socket, object userState)
             {
                 this.Socket = socket;
-                this.UserData = userData;
+                this.UserState = userState;
             }
         }
     }
