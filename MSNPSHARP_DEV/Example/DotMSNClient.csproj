@@ -167,6 +167,7 @@
     <Compile Include="TraceForm.Designer.cs">
       <DependentUpon>TraceForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="XmlSettings.cs" />
     <EmbeddedResource Include="AddContactForm.resx">
       <SubType>Designer</SubType>
       <DependentUpon>AddContactForm.cs</DependentUpon>

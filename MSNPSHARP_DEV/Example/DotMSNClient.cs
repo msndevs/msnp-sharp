@@ -34,6 +34,7 @@ namespace MSNPSharpClient
         private TraceForm traceform = new TraceForm();
         private bool syncContactListCompleted = false;
         private PresenceStatus lastStatus = PresenceStatus.Online;
+        private XmlSettings xmlSettings;
 
         public List<ConversationForm> ConversationForms
         {
@@ -231,7 +232,12 @@ namespace MSNPSharpClient
         {
 
 
+            xmlSettings = XmlSettings.Load();
 
+            accountTextBox.Text = xmlSettings.Username;
+            passwordTextBox.Text = xmlSettings.Password;
+            cbRobotMode.Checked = bool.Parse(xmlSettings.Bot);
+            comboStatus.SelectedIndex = comboStatus.FindString(GetStatusString((PresenceStatus)Enum.Parse(typeof(PresenceStatus), xmlSettings.LastStatus)));
 
             ImageList1.Images.Add(MSNPSharpClient.Properties.Resources.closed);
             ImageList1.Images.Add(MSNPSharpClient.Properties.Resources.open);
@@ -272,6 +278,18 @@ namespace MSNPSharpClient
             }
 
             traceform.Close();
+
+            try
+            {
+                xmlSettings.Username = accountTextBox.Text;
+                xmlSettings.Password = passwordTextBox.Text;
+                xmlSettings.Bot = cbRobotMode.Checked.ToString();
+                xmlSettings.LastStatus = lastStatus.ToString();
+                xmlSettings.Save();
+            }
+            catch (Exception)
+            {
+            }
         }
 
         private void AutoGroupMessageReply(Contact circle)
