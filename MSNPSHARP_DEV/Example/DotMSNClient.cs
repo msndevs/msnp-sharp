@@ -700,6 +700,12 @@ namespace MSNPSharpClient
 
         void ContactService_ContactRemoved(object sender, ListMutateEventArgs e)
         {
+            if (InvokeRequired)
+            {
+                BeginInvoke(new EventHandler<ListMutateEventArgs>(ContactService_ContactRemoved), sender, e);
+                return;
+            }
+
             Trace.WriteLine(e.Contact.Hash + " removed from the " + e.AffectedList + " role list.");
 
             if (!syncContactListCompleted)  //This add/remove was caused by initial contact list sync, don't process it.
@@ -713,6 +719,12 @@ namespace MSNPSharpClient
 
         void ContactService_ContactAdded(object sender, ListMutateEventArgs e)
         {
+            if (InvokeRequired)
+            {
+                BeginInvoke(new EventHandler<ListMutateEventArgs>(ContactService_ContactAdded), sender, e);
+                return;
+            }
+
             Trace.WriteLine(e.Contact.Hash + " added to the " + e.AffectedList + " role list.");
 
             if (!syncContactListCompleted)  //This add/remove was caused by initial contact list sync, don't process it.
