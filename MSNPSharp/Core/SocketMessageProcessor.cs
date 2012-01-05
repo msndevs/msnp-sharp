@@ -97,8 +97,8 @@ namespace MSNPSharp.Core
 
         protected virtual void OnConnectingException(Exception e)
         {
-            if (ConnectionException != null)
-                ConnectionException(this, new ExceptionEventArgs(new ConnectivityException("SocketMessageProcessor encountered a socket exception while retrieving data. See the inner exception for more information.", e)));
+            if (ConnectingException != null)
+                ConnectingException(this, new ExceptionEventArgs(new ConnectivityException("SocketMessageProcessor encountered a socket exception while retrieving data. See the inner exception for more information.", e)));
         }
 
         protected virtual void OnConnectionException(Exception e)
@@ -268,6 +268,24 @@ namespace MSNPSharp.Core
             while (messagePool.MessageAvailable)
             {
                 OnMessageReceived(new ByteEventArgs(messagePool.GetNextMessageData()));
+            }
+        }
+
+        protected virtual void OnAfterRawDataSent(object userState)
+        {
+            if (userState != null)
+            {
+                if (userState is Array)
+                {
+                    foreach (object us in userState as object[])
+                    {
+                        OnSendCompleted(new ObjectEventArgs(us));
+                    }
+                }
+                else
+                {
+                    OnSendCompleted(new ObjectEventArgs(userState));
+                }
             }
         }
     }
