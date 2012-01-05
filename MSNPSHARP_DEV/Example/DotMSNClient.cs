@@ -33,6 +33,7 @@ namespace MSNPSharpClient
         private List<ConversationForm> convforms = new List<ConversationForm>(0);
         private TraceForm traceform = new TraceForm();
         private bool syncContactListCompleted = false;
+        private PresenceStatus lastStatus = PresenceStatus.Online;
 
         public List<ConversationForm> ConversationForms
         {
@@ -248,7 +249,7 @@ namespace MSNPSharpClient
             Text += " (v" + dllVersion.Major + "." + dllVersion.Minor + "." + dllVersion.Build + " r" + dllVersion.Revision + ")";
             treeViewFavoriteList.TreeViewNodeSorter = StatusSorter.Default;
 
-            comboStatus.SelectedIndex = 0;
+            SetLastStatusCombo();
 
             if (toolStripSortByStatus.Checked)
                 SortByStatus(null);
@@ -315,7 +316,7 @@ namespace MSNPSharpClient
         {
             if (InvokeRequired)
             {
-                BeginInvoke(new EventHandler<EventArgs>(RefreshCircleList), new object[] { sender, e });
+                Invoke(new EventHandler<EventArgs>(RefreshCircleList), new object[] { sender, e });
                 return;
             }
 
@@ -352,7 +353,7 @@ namespace MSNPSharpClient
         {
             if (InvokeRequired)
             {
-                BeginInvoke(new EventHandler<GetWhatsUpCompletedEventArgs>(WhatsUpService_GetWhatsUpCompleted), new object[] { sender, e });
+                Invoke(new EventHandler<GetWhatsUpCompletedEventArgs>(WhatsUpService_GetWhatsUpCompleted), new object[] { sender, e });
                 return;
             }
 
@@ -516,7 +517,7 @@ namespace MSNPSharpClient
         {
             if (InvokeRequired)
             {
-                BeginInvoke(new EventHandler<EventArgs>(Owner_PersonalMessageChanged), new object[] { sender, e });
+                Invoke(new EventHandler<EventArgs>(Owner_PersonalMessageChanged), new object[] { sender, e });
                 return;
             }
 
@@ -532,7 +533,7 @@ namespace MSNPSharpClient
         {
             if (InvokeRequired)
             {
-                displayImageBox.BeginInvoke(new EventHandler<DisplayImageChangedEventArgs>(Owner_DisplayImageChanged), new object[] { sender, e });
+                displayImageBox.Invoke(new EventHandler<DisplayImageChangedEventArgs>(Owner_DisplayImageChanged), new object[] { sender, e });
                 return;
             }
 
@@ -659,7 +660,7 @@ namespace MSNPSharpClient
         {
             if (InvokeRequired)
             {
-                BeginInvoke(new EventHandler<MessageArrivedEventArgs>(MessageManager_MessageArrived), new object[] { sender, e });
+                Invoke(new EventHandler<MessageArrivedEventArgs>(MessageManager_MessageArrived), new object[] { sender, e });
             }
             else
             {
@@ -858,12 +859,17 @@ namespace MSNPSharpClient
         {
             if (InvokeRequired)
             {
-                BeginInvoke(new EventHandler<StatusChangedEventArgs>(Owner_StatusChanged), new object[] { sender, e });
+                Invoke(new EventHandler<StatusChangedEventArgs>(Owner_StatusChanged), new object[] { sender, e });
                 return;
             }
 
             if (messenger.Nameserver.IsSignedIn)
             {
+                if (Messenger.Owner.Online)
+                {
+                    lastStatus = Messenger.Owner.Status;
+                }
+
                 comboStatus.SelectedIndex = comboStatus.FindString(GetStatusString(Messenger.Owner.Status));
             }
         }
@@ -922,16 +928,20 @@ namespace MSNPSharpClient
                     }
 
                     Messenger.Disconnect();
-                    comboStatus.SelectedIndex = 0;
                 }
                 else
                 {
                     Messenger.Owner.Status = newstatus;
+                    lastStatus = newstatus;
                 }
             }
             else if (newstatus == PresenceStatus.Offline)
             {
-                comboStatus.SelectedIndex = 0;
+                SetLastStatusCombo();
+            }
+            else
+            {
+                lastStatus = newstatus;
             }
         }
 
@@ -1010,7 +1020,7 @@ namespace MSNPSharpClient
         {
             if (comboPlaces.InvokeRequired)
             {
-                comboPlaces.BeginInvoke(new EventHandler<PlaceChangedEventArgs>(Owner_PlacesChanged), sender, e);
+                comboPlaces.Invoke(new EventHandler<PlaceChangedEventArgs>(Owner_PlacesChanged), sender, e);
                 return;
             }
 
@@ -1059,15 +1069,26 @@ namespace MSNPSharpClient
                 return;
             }
 
+            SetLastStatusCombo();
+
             SetStatus("Disconnected from server");
         }
+
+        private void SetLastStatusCombo()
+        {
+            if (PresenceStatus.Offline != lastStatus)
+            {
+                comboStatus.SelectedIndex = comboStatus.FindString(GetStatusString(lastStatus));
+            }
+        }
+
 
         private void Nameserver_SignedIn(object sender, EventArgs e)
         {
 
             if (InvokeRequired)
             {
-                BeginInvoke(new EventHandler(Nameserver_SignedIn), sender, e);
+                Invoke(new EventHandler(Nameserver_SignedIn), sender, e);
                 return;
             }
 
