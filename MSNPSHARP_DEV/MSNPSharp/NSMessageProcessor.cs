@@ -222,7 +222,8 @@ namespace MSNPSharp
             if (Connected)
                 SendMessage(new NSMessage("OUT", new string[] { }));
 
-            Processor.Disconnect();
+            // OUT disconnects
+            // Processor.Disconnect();
         }
 
         public void RegisterHandler(IMessageHandler handler)

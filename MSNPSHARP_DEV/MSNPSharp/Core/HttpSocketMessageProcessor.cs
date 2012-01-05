@@ -70,7 +70,6 @@ namespace MSNPSharp.Core
 
         private volatile bool connected = false;
         private volatile bool isWebRequestInProcess = false; // We can't send another web request if this is true
-        private WebRequest lastRequest = null; // To abort web request
 
         private bool opened = false; // first call to server has Action=open
         private bool verCommand = false;
@@ -223,27 +222,13 @@ namespace MSNPSharp.Core
                 OnDisconnected();
             }
 
+            isWebRequestInProcess = false;
             sendingQueue = new Queue<QueueState>();
             opened = false;
             verCommand = false;
             cvrCommand = false;
             usrCommand = false;
             openCommand = null;
-
-            if (isWebRequestInProcess && lastRequest != null)
-            {
-                try
-                {
-                    lastRequest.Abort();
-                }
-                catch (Exception)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "HTTP Request is ABORTED", GetType().Name);
-                }
-                lastRequest = null;
-            }
-
-            isWebRequestInProcess = false;
         }
 
         public void Dispose()
@@ -310,7 +295,6 @@ namespace MSNPSharp.Core
 
                 isWebRequestInProcess = true;
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(GenerateURI());
-                lastRequest = request;
                 action = HttpPollAction.None;
 
                 request.Timeout = 5000;
@@ -469,7 +453,6 @@ namespace MSNPSharp.Core
                 if (httpState.ReceiveBufferOffset == httpState.ReceiveBuffer.Length)
                 {
                     isWebRequestInProcess = false;
-                    lastRequest = null;
                     try
                     {
                         httpState.Stream.Close();
