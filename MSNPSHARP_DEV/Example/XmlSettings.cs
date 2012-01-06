@@ -17,8 +17,8 @@ namespace MSNPSharpClient
     {
         public const string FileName = "./settings.xml";
 
-        private string username = "youraccount@hotmail.com";
-        private string password = "changeME";
+        private string username = "testmsnpsharp@live.cn";
+        private string password = "tstmsnpsharp";
         private string bot = "false";
         private string lastStatus = "Online";
 
