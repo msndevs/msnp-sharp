@@ -1,3 +1,7 @@
+#if DEBUG
+#define SAVEPASSWORD // Comment this if you make Pang happy!
+#endif
+
 using System;
 using System.IO;
 using System.Data;
@@ -233,9 +237,10 @@ namespace MSNPSharpClient
 
 
             xmlSettings = XmlSettings.Load();
-
             accountTextBox.Text = xmlSettings.Username;
+#if SAVEPASSWORD
             passwordTextBox.Text = xmlSettings.Password;
+#endif
             cbRobotMode.Checked = bool.Parse(xmlSettings.Bot);
             comboStatus.SelectedIndex = comboStatus.FindString(GetStatusString((PresenceStatus)Enum.Parse(typeof(PresenceStatus), xmlSettings.LastStatus)));
 
@@ -282,7 +287,9 @@ namespace MSNPSharpClient
             try
             {
                 xmlSettings.Username = accountTextBox.Text;
+#if SAVEPASSWORD
                 xmlSettings.Password = passwordTextBox.Text;
+#endif
                 xmlSettings.Bot = cbRobotMode.Checked.ToString();
                 xmlSettings.LastStatus = lastStatus.ToString();
                 xmlSettings.Save();

@@ -764,7 +764,7 @@ namespace MSNPSharp.P2P
 
                     byte L = TLvs[index + 1];
                     byte[] V = new byte[(int)L];
-                    Array.Copy(TLvs, index + 2, V, 0, (int)L);
+                    Buffer.BlockCopy(TLvs, index + 2, V, 0, (int)L);
                     ProcessHeaderTLVData(T, L, V);
                     index += 2 + L;
                 }
@@ -793,7 +793,7 @@ namespace MSNPSharp.P2P
 
                         byte L = TLvs[index + 1];
                         byte[] V = new byte[(int)L];
-                        Array.Copy(TLvs, index + 2, V, 0, (int)L);
+                        Buffer.BlockCopy(TLvs, index + 2, V, 0, (int)L);
                         ProcessDataPacketTLVData(T, L, V);
                         index += 2 + L;
                     }

@@ -84,7 +84,7 @@ namespace MSNPSharp.Core
             return base.ToString();
         }
 
-        #region ICloneable ��Ա
+        #region ICloneable
 
         object ICloneable.Clone()
         {
@@ -94,7 +94,7 @@ namespace MSNPSharp.Core
             if (messageClone.InnerBody == null && InnerBody != null)
             {
                 messageClone.InnerBody = new byte[InnerBody.Length];
-                Array.Copy(InnerBody, messageClone.InnerBody, InnerBody.Length);
+                Buffer.BlockCopy(InnerBody, 0, messageClone.InnerBody, 0, InnerBody.Length);
             }
 
             return messageClone;

@@ -151,8 +151,8 @@ namespace MSNPSharp.Core
             if (appendingArray != null)
             {
                 byte[] newArray = new byte[originalArray.Length + appendingArray.Length];
-                Array.Copy(originalArray, 0, newArray, 0, originalArray.Length);
-                Array.Copy(appendingArray, 0, newArray, originalArray.Length, appendingArray.Length);
+                Buffer.BlockCopy(originalArray, 0, newArray, 0, originalArray.Length);
+                Buffer.BlockCopy(appendingArray, 0, newArray, originalArray.Length, appendingArray.Length);
                 return newArray;
             }
             else

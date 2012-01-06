@@ -410,23 +410,23 @@ namespace MSNPSharp.IO
                     case MclSerialization.Compression:
                         byte[] compressed = Compress(xml);
                         ret = new byte[MclBytes.Length + compressed.Length];
-                        Array.Copy(MclBytes, 0, ret, 0, MclBytes.Length);
-                        Array.Copy(compressed, 0, ret, MclBytes.Length, compressed.Length);
+                        Buffer.BlockCopy(MclBytes, 0, ret, 0, MclBytes.Length);
+                        Buffer.BlockCopy(compressed, 0, ret, MclBytes.Length, compressed.Length);
                         break;
 
                     case MclSerialization.Cryptography:
                         byte[] encyrpted = Encyrpt(xml, sha256Password);
                         ret = new byte[MpwBytes.Length + encyrpted.Length];
-                        Array.Copy(MpwBytes, 0, ret, 0, MpwBytes.Length);
-                        Array.Copy(encyrpted, 0, ret, MpwBytes.Length, encyrpted.Length);
+                        Buffer.BlockCopy(MpwBytes, 0, ret, 0, MpwBytes.Length);
+                        Buffer.BlockCopy(encyrpted, 0, ret, MpwBytes.Length, encyrpted.Length);
                         break;
 
                     case MclSerialization.Compression | MclSerialization.Cryptography:
                         byte[] compressed2 = Compress(xml);
                         byte[] encyrpted2 = Encyrpt(compressed2, sha256Password);
                         ret = new byte[McpBytes.Length + encyrpted2.Length];
-                        Array.Copy(McpBytes, 0, ret, 0, McpBytes.Length);
-                        Array.Copy(encyrpted2, 0, ret, McpBytes.Length, encyrpted2.Length);
+                        Buffer.BlockCopy(McpBytes, 0, ret, 0, McpBytes.Length);
+                        Buffer.BlockCopy(encyrpted2, 0, ret, McpBytes.Length, encyrpted2.Length);
                         break;
                 }
             }

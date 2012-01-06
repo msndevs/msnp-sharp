@@ -68,14 +68,14 @@ namespace MSNPSharp.Core
     {
         private HttpPollAction action = HttpPollAction.None;
 
-        private volatile bool connected = false;
-        private volatile bool isWebRequestInProcess = false; // We can't send another web request if this is true
+        private volatile bool connected;
+        private volatile bool isWebRequestInProcess; // We can't send another web request if this is true
 
-        private bool opened = false; // first call to server has Action=open
-        private bool verCommand = false;
-        private bool cvrCommand = false;
-        private bool usrCommand = false;
-        private byte[] openCommand = null;
+        private bool opened; // first call to server has Action=open
+        private bool verCommand;
+        private bool cvrCommand;
+        private bool usrCommand;
+        private byte[] openCommand;
 
         private string sessionID;
         private string gatewayIP;
@@ -143,10 +143,11 @@ namespace MSNPSharp.Core
         {
             byte[] buffer = new byte[0];
             List<object> userStates = new List<object>();
-            action = HttpPollAction.Poll;
 
             lock (syncObject)
             {
+                action = HttpPollAction.Poll;
+
                 while (sendingQueue.Count > 0)
                 {
                     QueueState queueState = sendingQueue.Dequeue();
@@ -326,12 +327,10 @@ namespace MSNPSharp.Core
         private void EndGetRequestStreamCallback(IAsyncResult ar)
         {
             HttpState httpState = (HttpState)ar.AsyncState;
-            HttpWebRequest request = (HttpWebRequest)httpState.Request;
-            byte[] dataToSend = httpState.SendBuffer;
             try
             {
-                httpState.Stream = request.EndGetRequestStream(ar);
-                httpState.Stream.BeginWrite(dataToSend, 0, dataToSend.Length, RequestStreamEndWriteCallback, httpState);
+                httpState.Stream = httpState.Request.EndGetRequestStream(ar);
+                httpState.Stream.BeginWrite(httpState.Buffer, 0, httpState.Buffer.Length, RequestStreamEndWriteCallback, httpState);
             }
             catch (WebException we)
             {
@@ -342,16 +341,14 @@ namespace MSNPSharp.Core
         private void RequestStreamEndWriteCallback(IAsyncResult ar)
         {
             HttpState httpState = (HttpState)ar.AsyncState;
-            HttpWebRequest request = (HttpWebRequest)httpState.Request;
-            Stream stream = httpState.Stream;
             try
             {
-                stream.EndWrite(ar);
-                stream.Close();
-                stream = null;
+                httpState.Stream.EndWrite(ar);
+                httpState.Stream.Close();
                 httpState.Stream = null;
+                httpState.Buffer = null;
 
-                request.BeginGetResponse(EndGetResponseCallback, httpState);
+                httpState.Request.BeginGetResponse(EndGetResponseCallback, httpState);
             }
             catch (WebException we)
             {
@@ -362,14 +359,14 @@ namespace MSNPSharp.Core
         private void EndGetResponseCallback(IAsyncResult ar)
         {
             HttpState httpState = (HttpState)ar.AsyncState;
-            HttpWebRequest request = (HttpWebRequest)httpState.Request;
 
             lock (syncObject)
             {
                 try
                 {
-                    httpState.Response = (HttpWebResponse)request.EndGetResponse(ar);
+                    httpState.Response = httpState.Request.EndGetResponse(ar);
                     int responseLength = (int)httpState.Response.ContentLength;
+                    httpState.Request = null;
 
                     foreach (string header in httpState.Response.Headers.AllKeys)
                     {
@@ -412,10 +409,10 @@ namespace MSNPSharp.Core
                     }
 
                     httpState.Stream = httpState.Response.GetResponseStream();
-                    httpState.ReceiveBuffer = new byte[responseLength];
-                    httpState.ReceiveBufferOffset = 0;
+                    httpState.Buffer = new byte[responseLength];
+                    httpState.BufferOffset = 0;
 
-                    httpState.Stream.BeginRead(httpState.ReceiveBuffer, httpState.ReceiveBufferOffset, httpState.ReceiveBuffer.Length - httpState.ReceiveBufferOffset, ResponseStreamEndReadCallback, httpState);
+                    httpState.Stream.BeginRead(httpState.Buffer, httpState.BufferOffset, httpState.Buffer.Length - httpState.BufferOffset, ResponseStreamEndReadCallback, httpState);
                 }
                 catch (WebException we)
                 {
@@ -427,15 +424,13 @@ namespace MSNPSharp.Core
         private void ResponseStreamEndReadCallback(IAsyncResult ar)
         {
             HttpState httpState = (HttpState)ar.AsyncState;
-            object userState = httpState.UserState;
-
             try
             {
-                httpState.ReceiveBufferOffset += httpState.Stream.EndRead(ar);
+                httpState.BufferOffset += httpState.Stream.EndRead(ar);
 
-                if (httpState.ReceiveBufferOffset < httpState.ReceiveBuffer.Length)
+                if (httpState.BufferOffset < httpState.Buffer.Length)
                 {
-                    httpState.Stream.BeginRead(httpState.ReceiveBuffer, httpState.ReceiveBufferOffset, httpState.ReceiveBuffer.Length - httpState.ReceiveBufferOffset, ResponseStreamEndReadCallback, httpState);
+                    httpState.Stream.BeginRead(httpState.Buffer, httpState.BufferOffset, httpState.Buffer.Length - httpState.BufferOffset, ResponseStreamEndReadCallback, httpState);
                     return;
                 }
             }
@@ -450,27 +445,31 @@ namespace MSNPSharp.Core
             }
             finally
             {
-                if (httpState.ReceiveBufferOffset == httpState.ReceiveBuffer.Length)
+                if (httpState.BufferOffset == httpState.Buffer.Length)
                 {
                     isWebRequestInProcess = false;
                     try
                     {
                         httpState.Stream.Close();
                         httpState.Response.Close();
-                        httpState.Stream = null;
-                        httpState.Response = null;
                     }
                     catch (Exception exc)
                     {
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
                             "HTTP Response Stream close error: " + exc.StackTrace, GetType().Name);
                     }
+                    finally
+                    {
+                        httpState.Stream = null;
+                        httpState.Response = null;
+                    }
                 }
             }
 
-            OnAfterRawDataSent(userState);
-
-            DispatchRawData(httpState.ReceiveBuffer);
+            OnAfterRawDataSent(httpState.UserState);
+            DispatchRawData(httpState.Buffer);
+            httpState.UserState = null;
+            httpState.Buffer = null;
 
             lock (syncObject)
             {
@@ -529,33 +528,31 @@ namespace MSNPSharp.Core
 
         private class HttpState
         {
-            public WebRequest Request;
-            public WebResponse Response;
-            public Stream Stream;
-            public byte[] SendBuffer;
+            internal WebRequest Request;
+            internal WebResponse Response;
+            internal Stream Stream;
 
-            internal byte[] ReceiveBuffer;
-            internal int ReceiveBufferOffset = 0;
+            internal byte[] Buffer;
+            internal int BufferOffset;
             internal Object UserState;
 
-            public HttpState(WebRequest request, WebResponse response,
-                Stream stream, byte[] sendBuffer, object userState)
+            internal HttpState(WebRequest request, WebResponse response,
+                Stream stream, byte[] buffer, object userState)
             {
                 this.Request = request;
                 this.Response = response;
                 this.Stream = stream;
-                this.SendBuffer = sendBuffer;
-                this.ReceiveBuffer = new byte[0];
+                this.Buffer = buffer;
                 this.UserState = userState;
             }
         }
 
         private class QueueState
         {
-            public byte[] Data;
-            public Object UserState;
+            internal byte[] Data;
+            internal Object UserState;
 
-            public QueueState(byte[] data, object userState)
+            internal QueueState(byte[] data, object userState)
             {
                 this.Data = data;
                 this.UserState = userState;

@@ -192,7 +192,7 @@ namespace MSNPSharp.Core
                 int startIndex = bodyStart;
                 int newLength = data.Length - startIndex;
                 InnerBody = new byte[newLength];
-                Array.Copy(data, startIndex, InnerBody, 0, newLength);
+                Buffer.BlockCopy(data, startIndex, InnerBody, 0, newLength);
             }
 
 

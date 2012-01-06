@@ -75,7 +75,7 @@ namespace MSNPSharp.Core
                 ret += 4;
 
             byte[] mimeData = new byte[end];
-            Array.Copy(data, mimeData, end);
+            Buffer.BlockCopy(data, 0, mimeData, 0, end);
 
             string mimeStr = Encoding.UTF8.GetString(mimeData);
             string[] lines = mimeStr.Trim().Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);

@@ -115,34 +115,35 @@ namespace MSNPSharp.Core
         public virtual ProxySocket GetPreparedSocket(IPAddress address, int port)
         {
             //Creates the Socket for sending data over TCP.
-            ProxySocket socket = new ProxySocket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            ProxySocket proxySocket = new ProxySocket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
             // incorporate the connection settings like proxy's						
             // Note: ProxyType is in MSNPSharp namespace, ProxyTypes in ProxySocket namespace.
-            if (ConnectivitySettings.ProxyType != ProxyType.None)
+
+            if (ConnectivitySettings.ProxyType == ProxyType.None)
+            {
+                proxySocket.ProxyType = ProxyTypes.None;
+            }
+            else
             {
                 // set the proxy type
                 switch (ConnectivitySettings.ProxyType)
                 {
                     case ProxyType.Socks4:
-                        socket.ProxyType = ProxyTypes.Socks4;
+                        proxySocket.ProxyType = ProxyTypes.Socks4;
                         break;
 
                     case ProxyType.Socks5:
-                        socket.ProxyType = ProxyTypes.Socks5;
+                        proxySocket.ProxyType = ProxyTypes.Socks5;
                         break;
 
                     case ProxyType.Http:
-                        socket.ProxyType = ProxyTypes.Http;
-                        break;
-
-                    case ProxyType.None:
-                        socket.ProxyType = ProxyTypes.None;
+                        proxySocket.ProxyType = ProxyTypes.Http;
                         break;
                 }
 
-                socket.ProxyUser = ConnectivitySettings.ProxyUsername;
-                socket.ProxyPass = ConnectivitySettings.ProxyPassword;
+                proxySocket.ProxyUser = ConnectivitySettings.ProxyUsername;
+                proxySocket.ProxyPass = ConnectivitySettings.ProxyPassword;
 
                 // resolve the proxy host
                 if (proxyEndPoint == null)
@@ -174,28 +175,26 @@ namespace MSNPSharp.Core
                         throw new ConnectivityException("DNS Resolve for the proxy server failed: " + ConnectivitySettings.ProxyHost + " failed.", exp);
                 }
 
-                socket.ProxyEndPoint = proxyEndPoint;
+                proxySocket.ProxyEndPoint = proxyEndPoint;
             }
-            else
-                socket.ProxyType = ProxyTypes.None;
 
             //Send operations will timeout of confirmation is not received within 3000 milliseconds.
-            socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 3000);
+            proxySocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 3000);
 
             //Socket will linger for 2 seconds after close is called.
             LingerOption lingerOption = new LingerOption(true, 2);
-            socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Linger, lingerOption);
+            proxySocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Linger, lingerOption);
 
             try
             {
-                socket.Bind(new IPEndPoint(address, port));
+                proxySocket.Bind(new IPEndPoint(address, port));
             }
             catch (SocketException ex)
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occured while trying to bind to a local address, error code: " + ex.ErrorCode + ".");
             }
 
-            return socket;
+            return proxySocket;
         }
 
         /// <summary>
@@ -313,19 +312,18 @@ namespace MSNPSharp.Core
                 if (socket == null)
                 {
                     OnDisconnected();
-                    return;
                 }
+                else
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "End Connect Callback", GetType().Name);
+                    socket.EndConnect(ar);
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "End Connect Callback Daarna", GetType().Name);
 
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "End Connect Callback", GetType().Name);
+                    OnConnected();
 
-                ((ProxySocket)socket).EndConnect(ar);
-
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "End Connect Callback Daarna", GetType().Name);
-
-                OnConnected();
-
-                // Begin receiving data
-                BeginDataReceive(socket);
+                    // Begin receiving data
+                    BeginDataReceive(socket);
+                }
             }
             catch (Exception e)
             {
@@ -360,15 +358,16 @@ namespace MSNPSharp.Core
                 {
                     // No data is received. We are disconnected.
                     OnDisconnected();
-                    return;
                 }
+                else
+                {
+                    byte[] buffer = new byte[count];
+                    Buffer.BlockCopy(socketBuffer, 0, buffer, 0, count);
+                    DispatchRawData(buffer);
 
-                byte[] buffer = new byte[count];
-                Array.Copy(socketBuffer, 0, buffer, 0, count);
-                DispatchRawData(buffer);
-
-                // start a new read				
-                BeginDataReceive(socket);
+                    // start a new read
+                    BeginDataReceive(socket);
+                }
             }
             catch (SocketException e)
             {
@@ -438,8 +437,6 @@ namespace MSNPSharp.Core
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "Error while sending network message. Error message: " + sex.Message);
                     OnDisconnected();
                 }
-
-                return;
             }
             catch (ObjectDisposedException)
             {
