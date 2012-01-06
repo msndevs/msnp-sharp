@@ -59,7 +59,7 @@ namespace MSNPSharp.IO
         private string fileName;
 
         [NonSerialized]
-        NSMessageHandler nsMessageHandler;
+        private string password;
 
         [NonSerialized]
         private bool useCache;
@@ -133,17 +133,6 @@ namespace MSNPSharp.IO
             }
         }
 
-        protected NSMessageHandler NSMessageHandler
-        {
-            get
-            {
-                return nsMessageHandler;
-            }
-            set
-            {
-                nsMessageHandler = value;
-            }
-        }
 
         protected bool UseCache
         {
@@ -179,14 +168,15 @@ namespace MSNPSharp.IO
             SaveToMCL(filename);
         }
 
-        protected static MCLSerializer LoadFromFile(string filename, MclSerialization st, Type targettype, NSMessageHandler handler, bool useCache)
+        protected static MCLSerializer LoadFromFile(string filename, MclSerialization st, Type targettype, string password, bool useCache)
         {
             int beginTick = Environment.TickCount;
             MCLSerializer ret = (MCLSerializer)Activator.CreateInstance(targettype);
+            
 
             if (Settings.NoSave == false && File.Exists(filename))
             {
-                MclFile file = MclFile.Open(filename, FileAccess.Read, st, handler.Credentials.Password, useCache);
+                MclFile file = MclFile.Open(filename, FileAccess.Read, st, password, useCache);
 
                 int deserializeTick = Environment.TickCount;
 
@@ -212,8 +202,9 @@ namespace MSNPSharp.IO
 
             ret.SerializationType = st;
             ret.FileName = filename;
-            ret.NSMessageHandler = handler;
+            //ret.NSMessageHandler = handler;
             ret.UseCache = useCache;
+            ret.password = password;
 
             int tickConsume = Environment.TickCount - beginTick;
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<" + ret.GetType().ToString() + "> Total loading time (by ticks): " + tickConsume + "\r\n");
@@ -234,7 +225,7 @@ namespace MSNPSharp.IO
                 int serializeTickConsume = Environment.TickCount - serializeBegin;
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "<" + this.GetType().ToString() + "> serialize time (by ticks): " + serializeTickConsume);
 
-                MclFile file = MclFile.Open(filename, FileAccess.Write, SerializationType, NSMessageHandler.Credentials.Password, UseCache);
+                MclFile file = MclFile.Open(filename, FileAccess.Write, SerializationType, password, UseCache);
                 file.Content = ms.ToArray();
                 file.Save(filename);
                 ms.Close();

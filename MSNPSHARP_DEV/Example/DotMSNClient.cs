@@ -38,7 +38,7 @@ namespace MSNPSharpClient
         private TraceForm traceform = new TraceForm();
         private bool syncContactListCompleted = false;
         private PresenceStatus lastStatus = PresenceStatus.Online;
-        private XmlSettings xmlSettings;
+        private UserSettings xmlSettings;
 
         public List<ConversationForm> ConversationForms
         {
@@ -236,7 +236,7 @@ namespace MSNPSharpClient
         {
 
 
-            xmlSettings = XmlSettings.Load();
+            xmlSettings = UserSettings.Load();
             accountTextBox.Text = xmlSettings.Username;
 #if SAVEPASSWORD
             passwordTextBox.Text = xmlSettings.Password;
