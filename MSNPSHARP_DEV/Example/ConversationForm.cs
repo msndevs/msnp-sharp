@@ -591,11 +591,11 @@ namespace MSNPSharpClient
                         DisplaySystemMessage("WINK saved as " + path);
                     }
 
-                    
+
                 }
             }
         }
-    
+
 
         /// <summary>
         /// Clean up any resources being used.
@@ -666,26 +666,50 @@ namespace MSNPSharpClient
         private void PrintNudge(NudgeArrivedEventArgs e)
         {
             PerformNudge();
-            DisplaySystemMessage(e.Sender.Account + " has sent a nudge! invidual sender=" + e.OriginalSender);
+
+            string message = e.OriginalSender + " has sent a nudge!";
+
+            if (e.OriginalSender != e.Sender)
+            {
+                message += " (By: " + e.Sender.Account + ")";
+            }
+
+            DisplaySystemMessage(message);
         }
 
         private void PrintTyping(TypingArrivedEventArgs e)
         {
-            DisplaySystemMessage(e.Sender.Account + " is typing... invidual sender=" + e.OriginalSender);
+            string message = e.OriginalSender + " is typing...";
+
+            if (e.OriginalSender != e.Sender)
+            {
+                message += " (By: " + e.Sender.Account + ")";
+            }
+
+            DisplaySystemMessage(message);
         }
 
-
+        private delegate void DisplaySystemMessageDelegate(string status);
         public void DisplaySystemMessage(string systemMessage)
         {
+            if (InvokeRequired)
+            {
+                BeginInvoke(new DisplaySystemMessageDelegate(DisplaySystemMessage), new object[] { systemMessage });
+                return;
+            }
+
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
+
             systemLabel.Text = systemMessage;
             systemLabel.Visible = true;
-            while (stopwatch.ElapsedMilliseconds < 2000)
+
+            while (stopwatch.ElapsedMilliseconds < 3000)
             {
                 System.Threading.Thread.Sleep(10);
                 Application.DoEvents();
             }
+
             systemLabel.Visible = false;
             systemLabel.Text = String.Empty;
             stopwatch.Stop();
@@ -694,13 +718,17 @@ namespace MSNPSharpClient
 
         private void ConversationForm_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            remoteContact.DisplayImageChanged -= Contact_DisplayImageChanged;
-            remoteContact.DisplayImageContextChanged -= Contact_DisplayImageConextChanged;
 
             if (remoteContact.ClientType == IMAddressInfoType.TemporaryGroup)
             {
                 _messenger.Nameserver.LeaveMultiparty(remoteContact);
             }
+
+            remoteContact.DisplayImageChanged -= Contact_DisplayImageChanged;
+            remoteContact.DisplayImageContextChanged -= Contact_DisplayImageConextChanged;
+
+            _messenger.Nameserver.JoinedGroupChat -= (Nameserver_JoinedGroupChat);
+            _messenger.Nameserver.LeftGroupChat -= (Nameserver_LeftGroupChat);
         }
 
         private void PrintText(Contact c, TextMessage message)
@@ -848,7 +876,7 @@ namespace MSNPSharpClient
             ai.ActivityData = @"http://code.google.com/p/msnp-sharp/";
             activities.Add(ai);
 
-            
+
 
             ai = new ActivityInfo();
             ai.AppID = 10551728;
@@ -871,7 +899,12 @@ namespace MSNPSharpClient
 
                 activitiesMenuStrip1.Items.Add(tsi);
             }
+
+            _messenger.Nameserver.JoinedGroupChat += (Nameserver_JoinedGroupChat);
+            _messenger.Nameserver.LeftGroupChat += (Nameserver_LeftGroupChat);
+
         }
+
 
         private void ConversationForm_Shown(object sender, EventArgs e)
         {
@@ -918,7 +951,7 @@ namespace MSNPSharpClient
 
         private void RequestDisplayImage(Contact remoteContact, DisplayImage updateImage)
         {
-            if (remoteContact.P2PVersionSupported != P2PVersion.None && 
+            if (remoteContact.P2PVersionSupported != P2PVersion.None &&
                 remoteContact.ClientType == IMAddressInfoType.WindowsLive &&
                 updateImage != remoteContact.UserTileLocation)
             {
@@ -1087,7 +1120,7 @@ namespace MSNPSharpClient
             }
             catch (Exception)
             {
-                    DisplaySystemMessage("Remote contact not online, emoticon will not be sent.");
+                DisplaySystemMessage("Remote contact not online, emoticon will not be sent.");
             }
         }
 
@@ -1249,5 +1282,23 @@ namespace MSNPSharpClient
             }
         }
 
+        private void Nameserver_JoinedGroupChat(object sender, GroupChatParticipationEventArgs e)
+        {
+            if (e.Via == this.remoteContact)
+            {
+                DisplaySystemMessage(e.Contact + " joined group chat.Group has " +
+                    e.Via.ContactList[IMAddressInfoType.None].Count + " members now.");
+            }
+        }
+
+        private void Nameserver_LeftGroupChat(object sender, GroupChatParticipationEventArgs e)
+        {
+            if (e.Via == this.remoteContact)
+            {
+                DisplaySystemMessage(e.Contact + " left group chat. Group has " +
+                    e.Via.ContactList[IMAddressInfoType.None].Count + " members now.");
+            }
+
+        }
     }
 };
