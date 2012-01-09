@@ -234,16 +234,6 @@ namespace MSNPSharpClient
 
         private void ClientForm_Load(object sender, EventArgs e)
         {
-
-
-            xmlSettings = UserSettings.Load();
-            accountTextBox.Text = xmlSettings.Username;
-#if SAVEPASSWORD
-            passwordTextBox.Text = xmlSettings.Password;
-#endif
-            cbRobotMode.Checked = bool.Parse(xmlSettings.Bot);
-            comboStatus.SelectedIndex = comboStatus.FindString(GetStatusString((PresenceStatus)Enum.Parse(typeof(PresenceStatus), xmlSettings.LastStatus)));
-
             ImageList1.Images.Add(MSNPSharpClient.Properties.Resources.closed);
             ImageList1.Images.Add(MSNPSharpClient.Properties.Resources.open);
             ImageList1.Images.Add(MSNPSharpClient.Properties.Resources.circle);
@@ -267,8 +257,17 @@ namespace MSNPSharpClient
             else
                 SortByGroup(null);
 
+
             // ******* Listen traces *****
             traceform.Show();
+
+            xmlSettings = UserSettings.Load();
+            accountTextBox.Text = xmlSettings.Username;
+#if SAVEPASSWORD
+            passwordTextBox.Text = xmlSettings.Password;
+#endif
+            cbRobotMode.Checked = bool.Parse(xmlSettings.Bot);
+            comboStatus.SelectedIndex = comboStatus.FindString(GetStatusString((PresenceStatus)Enum.Parse(typeof(PresenceStatus), xmlSettings.LastStatus)));
         }
 
 
