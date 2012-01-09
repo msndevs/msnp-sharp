@@ -313,7 +313,7 @@ namespace MSNPSharp.P2P
                     P2PMessage chunkMessage = new P2PMessage(Version);
                     uint messageSize = (uint)Math.Min((uint)maxSize, (totalMessage.LongLength - offset));
                     byte[] chunk = new byte[messageSize];
-                    Array.Copy(totalMessage, (int)offset, chunk, 0, (int)messageSize);
+                    Buffer.BlockCopy(totalMessage, (int)offset, chunk, 0, (int)messageSize);
 
                     chunkMessage.V1Header.Flags = V1Header.Flags;
                     chunkMessage.V1Header.AckIdentifier = V1Header.AckIdentifier;
@@ -360,7 +360,7 @@ namespace MSNPSharp.P2P
                     uint dataSize = (uint)Math.Min((uint)maxDataSize, (totalMessage.LongLength - offset));
 
                     byte[] chunk = new byte[dataSize];
-                    Array.Copy(totalMessage, (int)offset, chunk, 0, (int)dataSize);
+                    Buffer.BlockCopy(totalMessage, (int)offset, chunk, 0, (int)dataSize);
 
                     if (offset == 0)
                     {
@@ -513,7 +513,7 @@ namespace MSNPSharp.P2P
         {
             int headerAndBodyHeaderLen = header.ParseHeader(data);
             byte[] bodyAndFooter = new byte[data.Length - headerAndBodyHeaderLen];
-            Array.Copy(data, headerAndBodyHeaderLen, bodyAndFooter, 0, bodyAndFooter.Length);
+            Buffer.BlockCopy(data, headerAndBodyHeaderLen, bodyAndFooter, 0, bodyAndFooter.Length);
 
             Stream stream = new MemoryStream(bodyAndFooter);
             BinaryReader reader = new BinaryReader(stream);
@@ -816,7 +816,7 @@ namespace MSNPSharp.P2P
             {
                 byte[] handshakeMessage = base.GetBytes(); // Calls P2PDCMessage.GetBytes();
 
-                Array.Copy(guidData, 0, handshakeMessage, handshakeMessage.Length - guidData.Length, guidData.Length);
+                Buffer.BlockCopy(guidData, 0, handshakeMessage, handshakeMessage.Length - guidData.Length, guidData.Length);
 
                 return handshakeMessage;
             }
@@ -826,8 +826,8 @@ namespace MSNPSharp.P2P
                 byte[] totalMessage = new byte[4 + 16];
                 byte[] packetSize = BitUtility.GetBytes((UInt32)16, true);
 
-                Array.Copy(packetSize, 0, totalMessage, 0, packetSize.Length);
-                Array.Copy(guidData, 0, totalMessage, packetSize.Length, guidData.Length);
+                Buffer.BlockCopy(packetSize, 0, totalMessage, 0, packetSize.Length);
+                Buffer.BlockCopy(guidData, 0, totalMessage, packetSize.Length, guidData.Length);
 
                 return totalMessage;
             }

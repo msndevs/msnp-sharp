@@ -243,12 +243,12 @@ namespace MSNPSharp.Core
             int routerHeaderEnd = routingHeaders.Parse(data);
 
             byte[] reliabilityData = new byte[data.Length - routerHeaderEnd];
-            Array.Copy(data, routerHeaderEnd, reliabilityData, 0, reliabilityData.Length);
+            Buffer.BlockCopy(data, routerHeaderEnd, reliabilityData, 0, reliabilityData.Length);
             reliabilityHeaders.Clear();
             int reliabilityHeaderEnd = reliabilityHeaders.Parse(reliabilityData);
 
             byte[] messagingData = new byte[data.Length - routerHeaderEnd - reliabilityHeaderEnd];
-            Array.Copy(reliabilityData, reliabilityHeaderEnd, messagingData, 0, messagingData.Length);
+            Buffer.BlockCopy(reliabilityData, reliabilityHeaderEnd, messagingData, 0, messagingData.Length);
             contentHeaders.Clear();
             int messagingHeaderEnd = contentHeaders.Parse(messagingData);
             contentKey = contentHeaders.ContainsKey(MIMEContentHeaders.Publication)
@@ -265,7 +265,7 @@ namespace MSNPSharp.Core
                  contentLen <= bodyLen /*don't allow buffer overflow*/))
             {
                 InnerBody = new byte[contentLen];
-                Array.Copy(messagingData, messagingHeaderEnd, InnerBody, 0, InnerBody.Length);
+                Buffer.BlockCopy(messagingData, messagingHeaderEnd, InnerBody, 0, InnerBody.Length);
             }
             else
             {
@@ -291,7 +291,7 @@ namespace MSNPSharp.Core
                     int payLoadLength = 0;
                     payLoadLength = InnerBody.Length;
                     byte[] headers = new byte[readableBinaries.Length - payLoadLength];
-                    Array.Copy(readableBinaries, headers, headers.Length);
+                    Buffer.BlockCopy(readableBinaries, 0, headers, 0, headers.Length);
 
                     if (InnerBody != null && InnerMessage == null)
                     {

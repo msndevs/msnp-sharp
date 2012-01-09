@@ -130,19 +130,15 @@ namespace MSNPSharp.Core
 
         protected virtual void OnDisconnected()
         {
-            if (hasFiredDisconnectEvent)
-            {
-                return;
-            }
-            else
+            if (!hasFiredDisconnectEvent)
             {
                 hasFiredDisconnectEvent = true;
+
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Disconnected", GetType().Name);
+
+                if (ConnectionClosed != null)
+                    ConnectionClosed(this, EventArgs.Empty);
             }
-
-            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Disconnected", GetType().Name);
-
-            if (ConnectionClosed != null)
-                ConnectionClosed(this, EventArgs.Empty);
         }
 
         #endregion
@@ -151,12 +147,12 @@ namespace MSNPSharp.Core
 
         #region Members
 
-        protected ConnectivitySettings connectivitySettings = new ConnectivitySettings();
         private List<IMessageHandler> messageHandlers = new List<IMessageHandler>();
-        private bool hasFiredDisconnectEvent = false;
-        private MessagePool messagePool = null;
+        private ConnectivitySettings connectivitySettings;
+        private bool hasFiredDisconnectEvent;
+        private MessagePool messagePool;
 
-        public SocketMessageProcessor(ConnectivitySettings connectivitySettings, MessagePool messagePool)
+        protected SocketMessageProcessor(ConnectivitySettings connectivitySettings, MessagePool messagePool)
         {
             ConnectivitySettings = connectivitySettings;
             MessagePool = messagePool;

@@ -275,7 +275,7 @@ namespace MSNPSharp
             try
             {
                 AddressBook = XMLContactList.LoadFromFile(addressbookFile, st, NSMessageHandler, false);
-                Deltas = DeltasList.LoadFromFile(deltasResultsFile, st, NSMessageHandler, true);
+                Deltas = DeltasList.LoadFromFile(deltasResultsFile, st, NSMessageHandler.Credentials.Password, true);
             }
             catch (Exception)
             {
@@ -1547,7 +1547,7 @@ namespace MSNPSharp
 
                     if (reCreate)
                     {
-                        Deltas = DeltasList.LoadFromFile(deltasResultFile, st, NSMessageHandler, true);
+                        Deltas = DeltasList.LoadFromFile(deltasResultFile, st, NSMessageHandler.Credentials.Password, true);
                         Deltas.Save(true);
                     }
                 }

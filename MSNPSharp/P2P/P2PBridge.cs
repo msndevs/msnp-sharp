@@ -737,12 +737,11 @@ namespace MSNPSharp.P2P
 
                 foreach (KeyValuePair<P2PSession, P2PSendQueue> pair in sendQueuesCopy)
                 {
-                    List<P2PMessage> list = new List<P2PMessage>(queueSize);
-
                     if (Ready(pair.Key))
                     {
-                        while (
-                            (pair.Value.Count > 0) &&
+                        List<P2PMessage> list = new List<P2PMessage>(queueSize);
+
+                        while ((pair.Value.Count > 0) &&
                             (queueSize == 0 /*no limit*/ || list.Count < queueSize /* has limit */))
                         {
                             P2PSendItem item = pair.Value.Dequeue();
@@ -758,12 +757,12 @@ namespace MSNPSharp.P2P
 
                             list.Add(item.P2PMessage);
                         }
-                    }
 
-                    if (list.Count > 0)
-                    {
-                        SendMultiPacket(pair.Key, pair.Key.Remote, pair.Key.RemoteContactEndPointID, list.ToArray());
-                    }
+                        if (list.Count > 0)
+                        {
+                            SendMultiPacket(pair.Key, pair.Key.Remote, pair.Key.RemoteContactEndPointID, list.ToArray());
+                        }
+                    }                    
                 }
 
                 bool moreQueued = false;

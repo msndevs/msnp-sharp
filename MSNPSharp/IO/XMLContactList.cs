@@ -75,7 +75,9 @@ namespace MSNPSharp.IO
 
         [NonSerialized]
         private List<ContactType> individualShellContacts = new List<ContactType>(0);
-
+  
+        [NonSerialized]
+        private NSMessageHandler nsMessageHandler;
 
         private SerializableDictionary<ServiceName, ServiceMembership> mslist = new SerializableDictionary<ServiceName, ServiceMembership>(0);
         private SerializableDictionary<string, ABFindContactsPagedResultTypeAB> abInfos = new SerializableDictionary<string, ABFindContactsPagedResultTypeAB>();
@@ -87,6 +89,19 @@ namespace MSNPSharp.IO
         #endregion
 
         #region Properties
+        
+        protected NSMessageHandler NSMessageHandler
+        {
+            get
+            {
+                return nsMessageHandler;
+            }
+            
+            set
+            {
+                nsMessageHandler = value;
+            }
+        }
 
         public SerializableDictionary<ServiceName, ServiceMembership> MembershipList
         {
@@ -248,9 +263,11 @@ namespace MSNPSharp.IO
 
         #region Public Methods
 
-        public static XMLContactList LoadFromFile(string filename, MclSerialization st, NSMessageHandler handler, bool useCache)
+        public static XMLContactList LoadFromFile(string filename, MclSerialization st, NSMessageHandler nsHandler, bool useCache)
         {
-            return (XMLContactList)LoadFromFile(filename, st, typeof(XMLContactList), handler, useCache);
+            XMLContactList contactlist = (XMLContactList)LoadFromFile(filename, st, typeof(XMLContactList), nsHandler.Credentials.Password, useCache);
+            contactlist.NSMessageHandler = nsHandler;
+            return contactlist;
         }
 
         /// <summary>

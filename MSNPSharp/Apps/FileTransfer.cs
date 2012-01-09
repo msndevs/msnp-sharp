@@ -163,7 +163,7 @@ namespace MSNPSharp.Apps
         private byte[] Pad(byte[] data, uint len)
         {
             byte[] ret = new byte[len];
-            Array.Copy(data, ret, data.Length);
+            Buffer.BlockCopy(data, 0, ret, 0, data.Length);
             return ret;
         }
     }

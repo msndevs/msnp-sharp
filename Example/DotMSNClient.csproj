@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <ProjectType>Local</ProjectType>
@@ -208,6 +208,7 @@
       <SubType>Designer</SubType>
       <DependentUpon>TraceForm.cs</DependentUpon>
     </EmbeddedResource>
+    <Compile Include="UserSettings.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MSNPSharp\MSNPSharp.csproj">

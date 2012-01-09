@@ -994,7 +994,7 @@ namespace MSNPSharp
             byte[] hash3 = hmac.ComputeHash(hash1);
             byte[] hash4 = hmac.ComputeHash(CombinByte(hash3, magic));
             byte[] outbyt = new byte[4];
-            Array.Copy(hash4, outbyt, outbyt.Length);
+            Buffer.BlockCopy(hash4, 0, outbyt, 0, outbyt.Length);
             return CombinByte(hash2, outbyt);
         }
 

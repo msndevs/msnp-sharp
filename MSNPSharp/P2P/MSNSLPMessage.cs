@@ -349,17 +349,17 @@ namespace MSNPSharp.P2P
         {
             int lineLen = MSNHttpUtility.IndexOf(data, "\r\n");
             byte[] lineData = new byte[lineLen];
-            Array.Copy(data, lineData, lineLen);
+            Buffer.BlockCopy(data, 0, lineData, 0, lineLen);
             StartLine = Encoding.GetString(lineData).Trim();
 
             byte[] header = new byte[data.Length - lineLen - 2];
-            Array.Copy(data, lineLen + 2, header, 0, header.Length);
+            Buffer.BlockCopy(data, lineLen + 2, header, 0, header.Length);
 
             mimeHeaders.Clear();
             int mimeEnd = mimeHeaders.Parse(header);
 
             byte[] body = new byte[header.Length - mimeEnd];
-            Array.Copy(header, mimeEnd, body, 0, body.Length);
+            Buffer.BlockCopy(header, mimeEnd, body, 0, body.Length);
 
             mimeBodies.Clear();
             mimeBodies.Parse(body);
@@ -384,7 +384,7 @@ namespace MSNPSharp.P2P
             try
             {
                 byte[] lineData = new byte[lineLen];
-                Array.Copy(data, lineData, lineLen);
+                Buffer.BlockCopy(data, 0, lineData, 0, lineLen);
                 string line = Encoding.UTF8.GetString(lineData);
 
                 if (!line.Contains("MSNSLP"))

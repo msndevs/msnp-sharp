@@ -96,8 +96,7 @@ namespace MSNPSharp
                 TypingMessageReceived(this, e);
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                "TYPING: " + e.Sender.ToString() + (e.Sender == e.OriginalSender ? String.Empty : ";via=" + e.OriginalSender.ToString()));
-
+                "TYPING: " + e.OriginalSender.ToString() + (e.Sender == e.OriginalSender ? String.Empty : ";by=" + e.Sender.ToString()));
         }
 
         /// <summary>
@@ -110,7 +109,7 @@ namespace MSNPSharp
                 NudgeReceived(this, e);
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                "NUDGE: " + e.Sender.ToString() + (e.Sender == e.OriginalSender ? String.Empty : ";via=" + e.OriginalSender.ToString()));
+                "NUDGE: " + e.OriginalSender + (e.Sender == e.OriginalSender ? String.Empty : ";by=" + e.Sender.ToString()));
         }
 
         /// <summary>
@@ -123,7 +122,7 @@ namespace MSNPSharp
                 TextMessageReceived(this, e);
 
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                "TEXT MESSAGE: " + e.Sender.ToString() + (e.Sender == e.OriginalSender ? String.Empty : ";via=" + e.OriginalSender.ToString()) + "\r\n" + e.TextMessage.ToDebugString());
+                "TEXT MESSAGE: " + e.OriginalSender.ToString() + (e.Sender == e.OriginalSender ? String.Empty : ";by=" + e.Sender.ToString()) + "\r\n" + e.TextMessage.ToDebugString());
         }
 
 

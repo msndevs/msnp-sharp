@@ -456,9 +456,9 @@ namespace MSNPSharp.IO
             Save(true);
         }
 
-        public static DeltasList LoadFromFile(string filename, MclSerialization st, NSMessageHandler handler, bool useCache)
+        public static DeltasList LoadFromFile(string filename, MclSerialization st, string password, bool useCache)
         {
-            DeltasList deltas = (DeltasList)LoadFromFile(filename, st, typeof(DeltasList), handler, useCache);
+            DeltasList deltas = (DeltasList)LoadFromFile(filename, st, typeof(DeltasList), password, useCache);
             deltas.InitializeCacheKeys();
             return deltas;
         }
