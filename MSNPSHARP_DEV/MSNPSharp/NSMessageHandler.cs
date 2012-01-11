@@ -496,7 +496,7 @@ namespace MSNPSharp
                 {
                     messageProcessor.ConnectionEstablished -= OnProcessorConnectCallback;
                     messageProcessor.ConnectionClosed -= OnProcessorDisconnectCallback;
-                    messageProcessor.SendCompleted -= OnProcessorSendCompletedCallback;
+                    // messageProcessor.SendCompleted -= OnProcessorSendCompletedCallback;
 
                     messageProcessor.UnregisterHandler(this);
                 }
@@ -514,7 +514,7 @@ namespace MSNPSharp
                     // and make sure we respond on closing
                     messageProcessor.ConnectionClosed += OnProcessorDisconnectCallback;
                     // track transid
-                    messageProcessor.SendCompleted += OnProcessorSendCompletedCallback;
+                    // messageProcessor.SendCompleted += OnProcessorSendCompletedCallback;
 
                     messageProcessor.RegisterHandler(this);
                 }
@@ -653,11 +653,6 @@ namespace MSNPSharp
                 throw new MSNPSharpException("No Credentials passed in the NSMessageHandler");
 
             SendInitialMessage();
-        }
-
-        protected virtual void OnProcessorSendCompletedCallback(object sender, ObjectEventArgs e)
-        {
-            SDGBridge.FireSendCompleted((int)e.Object);
         }
 
         /// <summary>

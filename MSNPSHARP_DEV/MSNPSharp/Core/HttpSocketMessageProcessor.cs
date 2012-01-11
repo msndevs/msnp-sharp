@@ -37,6 +37,7 @@ using System.Text;
 using System.Timers;
 using System.Threading;
 using System.Diagnostics;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
@@ -72,10 +73,8 @@ namespace MSNPSharp.Core
         private volatile bool isWebRequestInProcess; // We can't send another web request if this is true
 
         private bool opened; // first call to server has Action=open
-        private bool verCommand;
-        private bool cvrCommand;
-        private bool usrCommand;
-        private byte[] openCommand;
+        private byte[] openCommand = new byte[0];
+        private BitArray openState = new BitArray(3); // VER,CVR,USR
 
         private string sessionID;
         private string gatewayIP;
@@ -84,7 +83,7 @@ namespace MSNPSharp.Core
 
         private Queue<QueueState> sendingQueue = new Queue<QueueState>();
         private System.Timers.Timer pollTimer = new System.Timers.Timer(2000);
-        private object syncObject = new object();
+        private object syncObject;
 
         public HttpSocketMessageProcessor(ConnectivitySettings connectivitySettings, MessagePool messagePool)
             : base(connectivitySettings, messagePool)
@@ -137,6 +136,19 @@ namespace MSNPSharp.Core
             }
         }
 
+        private object SyncObject
+        {
+            get
+            {
+                if (syncObject == null)
+                {
+                    Interlocked.CompareExchange(ref syncObject, new object(), null);
+                }
+
+                return syncObject;
+            }
+        }
+
 
         [MethodImpl(MethodImplOptions.Synchronized)]
         private void pollTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
@@ -144,7 +156,7 @@ namespace MSNPSharp.Core
             byte[] buffer = new byte[0];
             List<object> userStates = new List<object>();
 
-            lock (syncObject)
+            lock (SyncObject)
             {
                 action = HttpPollAction.Poll;
 
@@ -210,6 +222,40 @@ namespace MSNPSharp.Core
             OnConnected();
         }
 
+        private byte[] Open(byte[] data)
+        {
+            if (data.Length > 4 && data[3] == ' ')
+            {
+                // Concat data to the end of OpenCommand
+                openCommand = NetworkMessage.AppendArray(openCommand, data);
+
+                // Be fast...
+                switch ((char)data[0])
+                {
+                    case 'V':
+                        openState[0] = (data[1] == 'E' && data[2] == 'R');
+                        break;
+
+                    case 'C':
+                        openState[1] = (data[1] == 'V' && data[2] == 'R');
+                        break;
+
+                    case 'U':
+                        openState[2] = (data[1] == 'S' && data[2] == 'R');
+                        break;
+                }
+            }
+
+            if (openState.Get(0) && openState.Get(1) && openState.Get(2))
+            {
+                opened = true;
+                action = HttpPollAction.Open;
+                return openCommand;
+            }
+
+            return null; // Connection has not been established yet
+        }
+
         public override void Disconnect()
         {
             // nothing to do
@@ -225,11 +271,9 @@ namespace MSNPSharp.Core
 
             isWebRequestInProcess = false;
             sendingQueue = new Queue<QueueState>();
+            openCommand = new byte[0];
+            openState.SetAll(false);
             opened = false;
-            verCommand = false;
-            cvrCommand = false;
-            usrCommand = false;
-            openCommand = null;
         }
 
         public void Dispose()
@@ -245,82 +289,51 @@ namespace MSNPSharp.Core
         [MethodImpl(MethodImplOptions.Synchronized)]
         public override void Send(byte[] data, object userState)
         {
-            // connection has not been established yet; concat data to the end of OpenCommand
-            if (!opened)
+            if (opened || (null != (data = Open(data))))
             {
-                if (openCommand == null)
+                lock (SyncObject)
                 {
-                    openCommand = (byte[])data.Clone();
+                    if (isWebRequestInProcess)
+                    {
+                        sendingQueue.Enqueue(new QueueState(data, userState));
+                        action = HttpPollAction.None;
+                    }
+                    else
+                    {
+                        if (pollTimer.Enabled)
+                        {
+                            pollTimer.Stop();
+                        }
+
+                        isWebRequestInProcess = true;
+                        HttpWebRequest request = (HttpWebRequest)WebRequest.Create(GenerateURI());
+                        action = HttpPollAction.None;
+
+                        request.Timeout = 5000;
+                        request.Method = "POST";
+                        request.Accept = "*/*";
+                        request.AllowAutoRedirect = false;
+                        request.AllowWriteStreamBuffering = false;
+                        request.KeepAlive = true;
+                        request.ContentLength = data.Length;
+                        request.Headers.Add("Pragma", "no-cache");
+
+                        // Bypass msnp blockers
+                        request.ContentType = "text/html; charset=UTF-8";
+                        request.UserAgent = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.912.63 Safari/535.7";
+                        request.Headers.Add("X-Requested-Session-Content-Type", "text/html");
+
+                        request.ServicePoint.Expect100Continue = false;
+
+                        if (webProxy != null)
+                        {
+                            request.Proxy = webProxy;
+                        }
+
+                        HttpState httpState = new HttpState(request, null, null, data, userState);
+                        request.BeginGetRequestStream(EndGetRequestStreamCallback, httpState);
+                    }
                 }
-                else
-                {
-                    byte[] NewOpenCommand = new byte[openCommand.Length + data.Length];
-                    openCommand.CopyTo(NewOpenCommand, 0);
-                    data.CopyTo(NewOpenCommand, openCommand.Length);
-                    openCommand = NewOpenCommand;
-                }
-
-                if (data.Length > 4 && data[3] == ' ')
-                {
-                    if (data[0] == 'V' && data[1] == 'E' && data[2] == 'R')
-                        verCommand = true;
-                    else if (data[0] == 'C' && data[1] == 'V' && data[2] == 'R')
-                        cvrCommand = true;
-                    else if (data[0] == 'U' && data[1] == 'S' && data[2] == 'R')
-                        usrCommand = true;
-                }
-
-                if (verCommand && cvrCommand && usrCommand)
-                {
-                    opened = true;
-                    data = openCommand;
-                    action = HttpPollAction.Open;
-                }
-                else
-                {
-                    return;
-                }
-            }
-
-            lock (syncObject)
-            {
-                if (isWebRequestInProcess)
-                {
-                    sendingQueue.Enqueue(new QueueState(data, userState));
-                    action = HttpPollAction.None;
-                    return;
-                }
-
-                if (pollTimer.Enabled)
-                    pollTimer.Stop();
-
-                isWebRequestInProcess = true;
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(GenerateURI());
-                action = HttpPollAction.None;
-
-                request.Timeout = 5000;
-                request.Method = "POST";
-                request.Accept = "*/*";
-                request.AllowAutoRedirect = false;
-                request.AllowWriteStreamBuffering = false;
-                request.KeepAlive = true;
-                request.ContentLength = data.Length;
-                request.Headers.Add("Pragma", "no-cache");
-
-                // Bypass msnp blockers
-                request.ContentType = "text/html; charset=UTF-8";
-                request.UserAgent = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.912.63 Safari/535.7";
-                request.Headers.Add("X-Requested-Session-Content-Type", "text/html");
-
-                request.ServicePoint.Expect100Continue = false;
-
-                if (webProxy != null)
-                {
-                    request.Proxy = webProxy;
-                }
-
-                HttpState httpState = new HttpState(request, null, null, data, userState);
-                request.BeginGetRequestStream(EndGetRequestStreamCallback, httpState);
             }
         }
 
@@ -360,7 +373,7 @@ namespace MSNPSharp.Core
         {
             HttpState httpState = (HttpState)ar.AsyncState;
 
-            lock (syncObject)
+            lock (SyncObject)
             {
                 try
                 {
@@ -445,7 +458,7 @@ namespace MSNPSharp.Core
             }
             finally
             {
-                if (httpState.BufferOffset == httpState.Buffer.Length)
+                if (httpState.Buffer != null && httpState.Buffer.Length == httpState.BufferOffset)
                 {
                     isWebRequestInProcess = false;
                     try
@@ -468,10 +481,8 @@ namespace MSNPSharp.Core
 
             OnAfterRawDataSent(httpState.UserState);
             DispatchRawData(httpState.Buffer);
-            httpState.UserState = null;
-            httpState.Buffer = null;
 
-            lock (syncObject)
+            lock (SyncObject)
             {
                 if (connected && (!isWebRequestInProcess) && (!pollTimer.Enabled))
                 {

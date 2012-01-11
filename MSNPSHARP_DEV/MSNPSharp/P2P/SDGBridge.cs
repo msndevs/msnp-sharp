@@ -111,6 +111,40 @@ namespace MSNPSharp.P2P
         public SDGBridge(NSMessageHandler nsHandler)
             : base(QueueSize, nsHandler)
         {
+            nsHandler.MessageProcessorChanged += nsHandler_MessageProcessorChanged;
+        }
+
+        private void nsHandler_MessageProcessorChanged(object sender, MessageProcessorChangedEventArgs e)
+        {
+            if (e.OldProcessor != null)
+            {
+                e.OldProcessor.SendCompleted -= Processor_SendCompleted;
+            }
+
+            if (e.NewProcessor != null)
+            {
+                e.NewProcessor.SendCompleted += Processor_SendCompleted;
+            }
+        }
+
+        private void Processor_SendCompleted(object sender, ObjectEventArgs e)
+        {
+            int transid = (int)e.Object;
+            P2PMessageSessionEventArgs p2pe = null;
+
+            lock (p2pAckMessages)
+            {
+                if (p2pAckMessages.ContainsKey(transid))
+                {
+                    p2pe = p2pAckMessages[transid];
+                    p2pAckMessages.Remove(transid);
+                }
+            }
+
+            if (p2pe != null)
+            {
+                OnBridgeSent(p2pe);
+            }
         }
 
         protected override void SendOnePacket(P2PSession session, Contact remote, Guid remoteGuid, P2PMessage p2pMessage)
@@ -210,7 +244,6 @@ namespace MSNPSharp.P2P
                         p2pAckMessages[transId] = new P2PMessageSessionEventArgs(p2pMessage, session);
 
                     //mmMessage.ContentHeaders[MIMEContentHeaders.Pipe] = PackageNo.ToString();
-                    //mmMessage.ContentHeaders[MIMEContentHeaders.BridgingOffsets] = "0";
                 }
             }
 
@@ -227,19 +260,6 @@ namespace MSNPSharp.P2P
                 sdgPayload.InnerMessage = mmMessage;
 
                 nsmp.Processor.Send(sdgPayload.GetBytes(), userStates.ToArray());
-            }
-        }
-
-        internal void FireSendCompleted(int transid)
-        {
-            if (p2pAckMessages.ContainsKey(transid))
-            {
-                P2PMessageSessionEventArgs p2pe = p2pAckMessages[transid];
-
-                lock (p2pAckMessages)
-                    p2pAckMessages.Remove(transid);
-
-                OnBridgeSent(p2pe);
             }
         }
     }
