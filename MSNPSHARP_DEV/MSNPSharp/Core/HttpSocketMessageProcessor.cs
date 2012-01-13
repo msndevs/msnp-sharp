@@ -67,6 +67,8 @@ namespace MSNPSharp.Core
     /// </summary>
     public class HttpSocketMessageProcessor : SocketMessageProcessor, IDisposable
     {
+        public const int MaxAllowedPacket = 32768;
+
         private HttpPollAction action = HttpPollAction.None;
 
         private volatile bool connected;
@@ -158,8 +160,6 @@ namespace MSNPSharp.Core
 
             lock (SyncObject)
             {
-                action = HttpPollAction.Poll;
-
                 while (sendingQueue.Count > 0)
                 {
                     QueueState queueState = sendingQueue.Dequeue();
@@ -179,10 +179,12 @@ namespace MSNPSharp.Core
                     }
 
                     buffer = NetworkMessage.AppendArray(buffer, queueState.Data);
+
+                    if (buffer.Length > MaxAllowedPacket)
+                        break;
                 }
 
-                if (buffer.Length > 0)
-                    action = HttpPollAction.None;
+                action = (buffer.Length > 0) ? HttpPollAction.None : HttpPollAction.Poll;
             }
 
             Send(buffer, userStates.ToArray());
@@ -500,17 +502,31 @@ namespace MSNPSharp.Core
         {
             switch (we.Status)
             {
+                case WebExceptionStatus.NameResolutionFailure:
+                case WebExceptionStatus.ProxyNameResolutionFailure:
+                    {
+                        OnConnectingException(we);
+                        goto default;
+                    }
+
+
                 case WebExceptionStatus.ConnectFailure:
                 case WebExceptionStatus.ConnectionClosed:
                 case WebExceptionStatus.KeepAliveFailure:
-                case WebExceptionStatus.NameResolutionFailure:
-                case WebExceptionStatus.ProxyNameResolutionFailure:
+                case WebExceptionStatus.PipelineFailure:
+                case WebExceptionStatus.SecureChannelFailure:
+                    {
+                        OnConnectionException(we);
+                        goto default;
+                    }
+
                 case WebExceptionStatus.SendFailure:
                 case WebExceptionStatus.ProtocolError:
                 case WebExceptionStatus.ReceiveFailure:
                 case WebExceptionStatus.RequestCanceled:
                 case WebExceptionStatus.Timeout:
                 case WebExceptionStatus.UnknownError:
+                default:
                     {
 
                         OnDisconnected();
