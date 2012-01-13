@@ -70,12 +70,10 @@ namespace MSNPSharpClient
                 lastStatus = value;
             }
         }
-        
-        public static UserSettings Load()
-        {
-            UserSettings settings = (UserSettings)LoadFromFile(fileName, MclSerialization.Cryptography | MclSerialization.Compression, typeof(UserSettings), "Pang is happy now.", false);
 
-            return settings;
+        public static UserSettings Load(string filePassword)
+        {
+            return (UserSettings)LoadFromFile(fileName, MclSerialization.Cryptography | MclSerialization.Compression, typeof(UserSettings), filePassword, false);
         }
 
     }

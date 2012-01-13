@@ -336,7 +336,6 @@ namespace MSNPSharp.Core
         {
             try
             {
-                socketBuffer = new byte[socketBuffer.Length];
                 socket.BeginReceive(socketBuffer, 0, socketBuffer.Length, SocketFlags.None, new AsyncCallback(EndReceiveCallback), socket);
             }
             catch (ObjectDisposedException)
@@ -403,13 +402,6 @@ namespace MSNPSharp.Core
 
         public override void Send(byte[] data, object userState)
         {
-            if (socket == null || !Connected)
-            {
-                // the connection is closed
-                OnDisconnected();
-                return;
-            }
-
             SendSocketData(socket, data, userState);
         }
 
@@ -452,10 +444,10 @@ namespace MSNPSharp.Core
         protected virtual void EndSendCallback(IAsyncResult ar)
         {
             SocketSendState state = (SocketSendState)ar.AsyncState;
-            Socket socket = state.Socket;
+
             try
             {
-                socket.EndSend(ar);
+                state.Socket.EndSend(ar);
 
                 OnAfterRawDataSent(state.UserState);
             }

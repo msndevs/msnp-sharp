@@ -261,7 +261,7 @@ namespace MSNPSharpClient
             // ******* Listen traces *****
             traceform.Show();
 
-            xmlSettings = UserSettings.Load();
+            xmlSettings = UserSettings.Load("Nobody likes hardcoding!");
             accountTextBox.Text = xmlSettings.Username;
 #if SAVEPASSWORD
             passwordTextBox.Text = xmlSettings.Password;
