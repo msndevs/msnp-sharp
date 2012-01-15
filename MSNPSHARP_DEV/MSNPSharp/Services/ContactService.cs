@@ -289,8 +289,8 @@ namespace MSNPSharp
 
             try
             {
-                if (NSMessageHandler.AutoSynchronize &&
-                    (AddressBook.Version != Properties.Resources.XMLContactListVersion || Deltas.Version != Properties.Resources.DeltasListVersion))
+                if (AddressBook.Version != Properties.Resources.XMLContactListVersion ||
+                    Deltas.Version != Properties.Resources.DeltasListVersion)
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
                         "Your MCL addressbook version is outdated: " + AddressBook.Version.ToString() +
@@ -308,91 +308,84 @@ namespace MSNPSharp
             }
 
             // Should has no lock here.
-            if (NSMessageHandler.AutoSynchronize)
+            bool firstTime = false;
+            BinarySemaphore.WaitOne();
+            try
             {
-                bool firstTime = false;
-                BinarySemaphore.WaitOne();
-                try
+                if (AddressBook != null)
                 {
-                    if (AddressBook != null)
-                    {
-                        AddressBook.Initialize();
-                        firstTime = (DateTime.MinValue == WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)));
-                    }
-                }
-                catch (Exception)
-                {
-                }
-                finally
-                {
-                    BinarySemaphore.Release();
-                }
-
-                if (firstTime)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
-                        "Getting your membership list for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
-                }
-
-                // Should be no lock here, let the msRequest take care of the locks.
-                try
-                {
-                    msRequest(
-                        PartnerScenario.Initial,
-                        delegate
-                        {
-                            BinarySemaphore.WaitOne();
-                            {
-                                if (AddressBook != null && Deltas != null)
-                                {
-                                    BinarySemaphore.Release();
-
-                                    if (firstTime)
-                                    {
-                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
-                                            "Getting your address book for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
-                                    }
-
-                                    // Should be no lock here, let the abRequest take care of the locks.
-                                    try
-                                    {
-                                        abRequest(PartnerScenario.Initial,
-                                            delegate
-                                            {
-                                                // Should be no lock here, let the InitialABRequestCompleted take care of the locks.
-                                                InitialMembershipAndAbRequestCompleted();
-                                            }
-                                        );
-                                    }
-                                    catch (Exception abRequestEception)
-                                    {
-                                        OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged",
-                                            new MSNPSharpException(abRequestEception.Message, abRequestEception)));
-
-                                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                                            "An error occured while getting membership list: " + abRequestEception.Message, GetType().Name);
-                                        return;
-                                    }
-                                }
-                                else
-                                {
-                                    //If addressbook is null, we are still locking.
-                                    BinarySemaphore.Release();
-                                }
-                            }
-                            // Should has no lock here.
-                        }
-                    );
-                }
-                catch (Exception ex)
-                {
-                    OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership", new MSNPSharpException(ex.Message, ex)));
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occured while getting membership list: " + ex.Message, GetType().Name);
+                    AddressBook.Initialize();
+                    firstTime = (DateTime.MinValue == WebServiceDateTimeConverter.ConvertToDateTime(AddressBook.GetAddressBookLastChange(WebServiceConstants.MessengerIndividualAddressBookId)));
                 }
             }
-            else
+            catch (Exception)
             {
-                InitialMembershipAndAbRequestCompleted();
+            }
+            finally
+            {
+                BinarySemaphore.Release();
+            }
+
+            if (firstTime)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                    "Getting your membership list for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
+            }
+
+            // Should be no lock here, let the msRequest take care of the locks.
+            try
+            {
+                msRequest(
+                    PartnerScenario.Initial,
+                    delegate
+                    {
+                        BinarySemaphore.WaitOne();
+                        {
+                            if (AddressBook != null && Deltas != null)
+                            {
+                                BinarySemaphore.Release();
+
+                                if (firstTime)
+                                {
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
+                                        "Getting your address book for the first time. If you have a lot of contacts, please be patient!", GetType().Name);
+                                }
+
+                                // Should be no lock here, let the abRequest take care of the locks.
+                                try
+                                {
+                                    abRequest(PartnerScenario.Initial,
+                                        delegate
+                                        {
+                                            // Should be no lock here, let the InitialABRequestCompleted take care of the locks.
+                                            InitialMembershipAndAbRequestCompleted();
+                                        }
+                                    );
+                                }
+                                catch (Exception abRequestEception)
+                                {
+                                    OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("ABFindContactsPaged",
+                                        new MSNPSharpException(abRequestEception.Message, abRequestEception)));
+
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                                        "An error occured while getting membership list: " + abRequestEception.Message, GetType().Name);
+                                    return;
+                                }
+                            }
+                            else
+                            {
+                                //If addressbook is null, we are still locking.
+                                BinarySemaphore.Release();
+                            }
+                        }
+                        // Should has no lock here.
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("FindMembership", new MSNPSharpException(ex.Message, ex)));
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, "An error occured while getting membership list: " + ex.Message, GetType().Name);
             }
         }
 

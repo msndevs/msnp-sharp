@@ -44,6 +44,7 @@ namespace MSNPSharpClient
             this.appearOfflineMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.appearOnlineMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.deleteMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.liveProfileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.openImageDialog = new System.Windows.Forms.OpenFileDialog();
             this.sortContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -80,7 +81,6 @@ namespace MSNPSharpClient
             this.btnSetMusic = new System.Windows.Forms.Button();
             this.lblPM = new System.Windows.Forms.TextBox();
             this.lblName = new System.Windows.Forms.TextBox();
-            this.cbRobotMode = new System.Windows.Forms.CheckBox();
             this.accountTextBox = new System.Windows.Forms.TextBox();
             this.loginButton = new System.Windows.Forms.Button();
             this.passwordTextBox = new System.Windows.Forms.TextBox();
@@ -89,7 +89,6 @@ namespace MSNPSharpClient
             this.displayImageBox = new System.Windows.Forms.PictureBox();
             this.logoImageBox = new System.Windows.Forms.PictureBox();
             this.statusBar = new System.Windows.Forms.Label();
-            this.liveProfileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.userMenuStrip.SuspendLayout();
             this.sortContextMenu.SuspendLayout();
             this.groupContextMenu.SuspendLayout();
@@ -134,7 +133,7 @@ namespace MSNPSharpClient
             this.deleteMenuItem,
             this.liveProfileToolStripMenuItem});
             this.userMenuStrip.Name = "contextMenuStrip1";
-            this.userMenuStrip.Size = new System.Drawing.Size(161, 236);
+            this.userMenuStrip.Size = new System.Drawing.Size(161, 214);
             // 
             // sendIMMenuItem
             // 
@@ -204,6 +203,13 @@ namespace MSNPSharpClient
             this.deleteMenuItem.Size = new System.Drawing.Size(160, 22);
             this.deleteMenuItem.Text = "Delete contact";
             this.deleteMenuItem.Click += new System.EventHandler(this.deleteMenuItem_Click);
+            // 
+            // liveProfileToolStripMenuItem
+            // 
+            this.liveProfileToolStripMenuItem.Name = "liveProfileToolStripMenuItem";
+            this.liveProfileToolStripMenuItem.Size = new System.Drawing.Size(160, 22);
+            this.liveProfileToolStripMenuItem.Text = "Live profile";
+            this.liveProfileToolStripMenuItem.Click += new System.EventHandler(this.liveProfileToolStripMenuItem_Click);
             // 
             // openFileDialog
             // 
@@ -603,7 +609,6 @@ namespace MSNPSharpClient
             // pnlLogin
             // 
             this.pnlLogin.Controls.Add(this.pnlNameAndPM);
-            this.pnlLogin.Controls.Add(this.cbRobotMode);
             this.pnlLogin.Controls.Add(this.accountTextBox);
             this.pnlLogin.Controls.Add(this.loginButton);
             this.pnlLogin.Controls.Add(this.passwordTextBox);
@@ -666,29 +671,17 @@ namespace MSNPSharpClient
             this.lblName.TabIndex = 6;
             this.lblName.Leave += new System.EventHandler(this.lblName_Leave);
             // 
-            // cbRobotMode
-            // 
-            this.cbRobotMode.AutoSize = true;
-            this.cbRobotMode.Location = new System.Drawing.Point(7, 54);
-            this.cbRobotMode.Name = "cbRobotMode";
-            this.cbRobotMode.Size = new System.Drawing.Size(136, 19);
-            this.cbRobotMode.TabIndex = 11;
-            this.cbRobotMode.Text = "Provisioned Account";
-            this.cbRobotMode.UseVisualStyleBackColor = true;
-            this.cbRobotMode.CheckedChanged += new System.EventHandler(this.cbRobotMode_CheckedChanged);
-            // 
             // accountTextBox
             // 
             this.accountTextBox.Location = new System.Drawing.Point(3, 2);
             this.accountTextBox.Name = "accountTextBox";
             this.accountTextBox.Size = new System.Drawing.Size(260, 21);
             this.accountTextBox.TabIndex = 9;
-            this.accountTextBox.Text = "";
             this.accountTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.login_KeyPress);
             // 
             // loginButton
             // 
-            this.loginButton.Location = new System.Drawing.Point(152, 50);
+            this.loginButton.Location = new System.Drawing.Point(152, 26);
             this.loginButton.Name = "loginButton";
             this.loginButton.Size = new System.Drawing.Size(111, 22);
             this.loginButton.TabIndex = 8;
@@ -702,9 +695,8 @@ namespace MSNPSharpClient
             this.passwordTextBox.Location = new System.Drawing.Point(3, 27);
             this.passwordTextBox.Name = "passwordTextBox";
             this.passwordTextBox.PasswordChar = '*';
-            this.passwordTextBox.Size = new System.Drawing.Size(260, 21);
+            this.passwordTextBox.Size = new System.Drawing.Size(140, 21);
             this.passwordTextBox.TabIndex = 10;
-            this.passwordTextBox.Text = "";
             this.passwordTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.login_KeyPress);
             // 
             // comboStatus
@@ -775,13 +767,6 @@ namespace MSNPSharpClient
             this.statusBar.Size = new System.Drawing.Size(637, 30);
             this.statusBar.TabIndex = 10;
             this.statusBar.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // liveProfileToolStripMenuItem
-            // 
-            this.liveProfileToolStripMenuItem.Name = "liveProfileToolStripMenuItem";
-            this.liveProfileToolStripMenuItem.Size = new System.Drawing.Size(160, 22);
-            this.liveProfileToolStripMenuItem.Text = "Live profile";
-            this.liveProfileToolStripMenuItem.Click += new System.EventHandler(this.liveProfileToolStripMenuItem_Click);
             // 
             // ClientForm
             // 
@@ -875,7 +860,6 @@ namespace MSNPSharpClient
         private Button btnSetMusic;
         private TextBox lblPM;
         private TextBox lblName;
-        private CheckBox cbRobotMode;
         private TextBox accountTextBox;
         private Button loginButton;
         private TextBox passwordTextBox;

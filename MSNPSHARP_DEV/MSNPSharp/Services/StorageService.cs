@@ -917,48 +917,6 @@ namespace MSNPSharp
         #endregion
 
         /// <summary>
-        /// Get my profile. Display name, personal status and display photo.
-        /// </summary>
-        [Obsolete("No more used in MSNP21, please use directory service instead.")]
-        public OwnerProfile GetProfile()
-        {
-            if (NSMessageHandler.BotMode == false)
-            {
-                if (NSMessageHandler.ContactService.Deltas == null)
-                {
-                    OnServiceOperationFailed(this, new ServiceOperationFailedEventArgs("GetProfile", new MSNPSharpException("You don't have access right on this action anymore.")));
-                    return null;
-                }
-
-                if (NSMessageHandler.MSNTicket != MSNTicket.Empty)
-                {
-                    DateTime deltasProfileDateModified = WebServiceDateTimeConverter.ConvertToDateTime(NSMessageHandler.ContactService.Deltas.Profile.DateModified);
-                    DateTime annotationLiveProfileExpressionLastChanged = WebServiceDateTimeConverter.ConvertToDateTime(NSMessageHandler.ContactService.AddressBook.MyProperties[AnnotationNames.Live_Profile_Expression_LastChanged]);
-
-                    if ((annotationLiveProfileExpressionLastChanged == DateTime.MinValue) ||
-                        (deltasProfileDateModified < annotationLiveProfileExpressionLastChanged))
-                    {
-                        return GetProfileImpl(PartnerScenario.Initial, true);
-                    }
-                }
-            }
-            else
-            {
-                if (NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage == null)
-                {
-                    SerializableMemoryStream serStream = new SerializableMemoryStream();
-                    Properties.Resources.MSNPSharp_logo.Save(serStream, Properties.Resources.MSNPSharp_logo.RawFormat);
-
-                    NSMessageHandler.ContactService.Deltas.Profile.Photo.DisplayImage = serStream;
-                    NSMessageHandler.ContactService.Deltas.Profile.HasExpressionProfile = false;
-                    NSMessageHandler.ContactService.Deltas.Save(true);
-                }
-            }
-
-            return NSMessageHandler.ContactService.Deltas.Profile;
-        }
-
-        /// <summary>
         /// Update personal displayname and status in profile
         /// </summary>
         /// <param name="displayName"></param>

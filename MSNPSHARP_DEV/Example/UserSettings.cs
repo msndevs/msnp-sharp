@@ -20,7 +20,6 @@ namespace MSNPSharpClient
 
         private string username = "testmsnpsharp@live.cn";
         private string password = "tstmsnpsharp";
-        private string bot = "false";
         private string lastStatus = "Online";
 
         public string Username
@@ -44,18 +43,6 @@ namespace MSNPSharpClient
             set
             {
                 password = value;
-            }
-        }
-
-        public string Bot
-        {
-            get
-            {
-                return bot;
-            }
-            set
-            {
-                bot = value;
             }
         }
 

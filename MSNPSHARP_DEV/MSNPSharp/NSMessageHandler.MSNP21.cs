@@ -633,7 +633,7 @@ namespace MSNPSharp
             MessageProcessor.SendMessage(delPayload);
 
             // We will receive NFY DEL for normal users
-            if (BotMode && endPointID == MachineGuid && messageProcessor.Connected)
+            if (endPointID == MachineGuid && messageProcessor.Connected)
                 messageProcessor.Disconnect();
         }
 
@@ -749,10 +749,7 @@ namespace MSNPSharp
 
                     userElement.AppendChild(service);
 
-                    if (BotMode)
-                    {
-                        Owner.SetStatus(newStatus); // Don't call Status = newStatus. It is recursive call to this method.
-                    }
+                    // Don't call Owner.Status = newStatus.
                 }
 
                 // s.PE (UserTileLocation, FriendlyName, PSM, Scene, ColorScheme)
@@ -765,12 +762,6 @@ namespace MSNPSharp
                     userElement.AppendChild(service);
 
                     // Don't set owner.PersonalMessage here. It is replaced (with a new reference) when NFY PUT received.
-                    // Exception: Bots
-                    if (BotMode)
-                    {
-                        // Don't call Owner.PersonalMessage. It is recursive call to this method.
-                        ((Contact)Owner).PersonalMessage = newPSM;
-                    }
                 }
 
                 // sep.IM (Capabilities)
@@ -780,10 +771,6 @@ namespace MSNPSharp
                 {
                     ClientCapabilities localIMCaps = setAll ? ClientCapabilities.DefaultIM : newLocalIMCaps;
                     ClientCapabilitiesEx localIMCapsEx = setAll ? ClientCapabilitiesEx.DefaultIM : newLocalIMCapsex;
-                    if (BotMode)
-                    {
-                        localIMCaps |= ClientCapabilities.IsBot;
-                    }
 
                     XmlElement sep = xmlDoc.CreateElement("sep");
                     sep.SetAttribute("n", ServiceShortNames.IM.ToString());
@@ -792,12 +779,7 @@ namespace MSNPSharp
                     sep.AppendChild(capabilities);
                     userElement.AppendChild(sep);
 
-                    if (BotMode)
-                    {
-                        // Don't call Owner.LocalEndPointIMCapabilities. It is recursive call to this method.
-                        Owner.EndPointData[MachineGuid].IMCapabilities = localIMCaps;
-                        Owner.EndPointData[MachineGuid].IMCapabilitiesEx = localIMCapsEx;
-                    }
+                    // Don't call Owner.LocalEndPointIMCapabilities. It is recursive call to this method.
                 }
 
                 // sep.PE (Capabilities)
@@ -821,12 +803,7 @@ namespace MSNPSharp
                     sep.AppendChild(capabilities);
                     userElement.AppendChild(sep);
 
-                    if (BotMode)
-                    {
-                        // Don't call Owner.LocalEndPointPECapabilities. It is recursive call to this method.
-                        Owner.EndPointData[MachineGuid].PECapabilities = localPECaps;
-                        Owner.EndPointData[MachineGuid].PECapabilitiesEx = localPECapsEx;
-                    }
+                    // Don't call Owner.LocalEndPointPECapabilities. It is recursive call to this method.
                 }
 
                 // sep.PD (EpName, State)
@@ -850,15 +827,7 @@ namespace MSNPSharp
                     sep.AppendChild(state);
                     userElement.AppendChild(sep);
 
-                    if (BotMode)
-                    {
-                        // Don't call Owner.EpName. It is recursive call to this method.
-                        PrivateEndPointData privateEndPoint = Owner.EndPointData[MachineGuid] as PrivateEndPointData;
-                        privateEndPoint.ClientType = String.Copy(clientType.InnerText);
-                        privateEndPoint.Name = newEPName;
-                        privateEndPoint.Idle = bool.Parse(((newStatus == PresenceStatus.Idle) ? "true" : "false"));
-                        privateEndPoint.State = newStatus;
-                    }
+                    // Don't set Owner.EpName. It is recursive call to this method.
                 }
 
                 if (userElement.HasChildNodes)

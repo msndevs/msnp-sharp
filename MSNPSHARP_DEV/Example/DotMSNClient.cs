@@ -266,7 +266,6 @@ namespace MSNPSharpClient
 #if SAVEPASSWORD
             passwordTextBox.Text = xmlSettings.Password;
 #endif
-            cbRobotMode.Checked = bool.Parse(xmlSettings.Bot);
             comboStatus.SelectedIndex = comboStatus.FindString(GetStatusString((PresenceStatus)Enum.Parse(typeof(PresenceStatus), xmlSettings.LastStatus)));
         }
 
@@ -289,7 +288,6 @@ namespace MSNPSharpClient
 #if SAVEPASSWORD
                 xmlSettings.Password = passwordTextBox.Text;
 #endif
-                xmlSettings.Bot = cbRobotMode.Checked.ToString();
                 xmlSettings.LastStatus = lastStatus.ToString();
                 xmlSettings.Save();
             }
@@ -1047,11 +1045,6 @@ namespace MSNPSharpClient
             }
         }
 
-        void cbRobotMode_CheckedChanged(object sender, EventArgs e)
-        {
-            messenger.Nameserver.BotMode = cbRobotMode.Checked;
-        }
-
         private void Owner_PlacesChanged(object sender, PlaceChangedEventArgs e)
         {
             if (comboPlaces.InvokeRequired)
@@ -1091,8 +1084,6 @@ namespace MSNPSharpClient
                 BeginInvoke(new EventHandler(NameserverProcessor_ConnectionEstablished), sender, e);
                 return;
             }
-
-            messenger.Nameserver.AutoSynchronize = !cbRobotMode.Checked;
 
             SetStatus("Connected to server");
         }

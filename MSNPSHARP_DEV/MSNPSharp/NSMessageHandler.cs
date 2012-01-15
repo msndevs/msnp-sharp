@@ -242,8 +242,6 @@ namespace MSNPSharp
         private ContactList contactList;
         private ContactManager contactManager;
         private MessageManager messageManager;
-        private bool autoSynchronize = true;
-        private bool botMode = false;
 
         private bool isSignedIn = false;
         private MSNTicket msnTicket = MSNTicket.Empty;
@@ -276,34 +274,6 @@ namespace MSNPSharp
         #endregion
 
         #region Properties
-
-        /// <summary>
-        /// The library runs as a bot. Not to auto synchronize the addressbook when login.
-        /// </summary>
-        public bool BotMode
-        {
-            get
-            {
-                return botMode;
-            }
-            set
-            {
-                botMode = value;
-                AutoSynchronize = !value;
-            }
-        }
-
-        public bool AutoSynchronize
-        {
-            get
-            {
-                return autoSynchronize;
-            }
-            set
-            {
-                autoSynchronize = value;
-            }
-        }
 
         /// <summary>
         /// Defines whether the user is signed in the messenger network
@@ -1220,57 +1190,8 @@ namespace MSNPSharp
                 NetworkMessage networkMessage = message as NetworkMessage;
                 if (networkMessage.InnerBody != null) //Payload ADL command
                 {
-                    #region NORMAL USER
-                    if (AutoSynchronize)
-                    {
-                        // ALL CHANGES WILL BE MADE BY msRequest()
-                        ContactService.msRequest(PartnerScenario.MessengerPendingList, null);
-                    }
-                    #endregion
-                    #region BOT MODE
-                    else
-                    {
-                        XmlDocument xmlDoc = new XmlDocument();
-                        xmlDoc.Load(new MemoryStream(networkMessage.InnerBody));
-                        XmlNodeList domains = xmlDoc.GetElementsByTagName("d");
-                        string domain = String.Empty;
-                        foreach (XmlNode domainNode in domains)
-                        {
-                            domain = domainNode.Attributes["n"].Value;
-                            XmlNode contactNode = domainNode.FirstChild;
-                            do
-                            {
-                                string account = contactNode.Attributes["n"].Value + "@" + domain;
-                                IMAddressInfoType type = (IMAddressInfoType)int.Parse(contactNode.Attributes["t"].Value);
-                                int list = int.Parse(contactNode.Attributes["l"].Value);
-                                string displayName = account;
-                                try
-                                {
-                                    displayName = contactNode.Attributes["f"].Value;
-                                }
-                                catch (Exception)
-                                {
-                                }
-
-                                if (list == 8 /*RoleLists.Reverse*/)
-                                {
-                                    Contact contact = ContactList.GetContact(account, displayName, type);
-                                    if (!contact.OnPendingList)
-                                    {
-                                        contact.Lists |= RoleLists.Pending;
-                                        ContactService.OnFriendshipRequested(new ContactEventArgs(contact));
-                                    }
-
-                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "ADL received, FriendshipRequested event fired. Contact is in list: " + contact.Lists.ToString());
-
-                                }
-
-                                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, account + ":" + type + " was added to your " + list.ToString(), GetType().Name);
-
-                            } while (contactNode.NextSibling != null);
-                        }
-                    }
-                    #endregion
+                    // ALL CHANGES WILL BE MADE BY msRequest()
+                    ContactService.msRequest(PartnerScenario.MessengerPendingList, null);
                 }
             }
         }
@@ -1286,10 +1207,7 @@ namespace MSNPSharp
             NetworkMessage networkMessage = nsMessage as NetworkMessage;
             if (networkMessage.InnerBody != null)   //Payload RML command.
             {
-                if (AutoSynchronize)
-                {
-                    ContactService.msRequest(PartnerScenario.Initial, null);
-                }
+                ContactService.msRequest(PartnerScenario.Initial, null);
 
                 if (Settings.TraceSwitch.TraceVerbose)
                 {
@@ -1436,14 +1354,7 @@ namespace MSNPSharp
             pm.UserTileLocation = Owner.DisplayImage.IsDefaultImage ? string.Empty : Owner.DisplayImage.ContextPlain;
             Owner.PersonalMessage = pm;
 
-            if (AutoSynchronize)
-            {
-                SendInitialServiceADL();
-            }
-            else
-            {
-                OnSignedIn(EventArgs.Empty);
-            }
+            SendInitialServiceADL();
         }
 
         private void SendInitialServiceADL()
@@ -1613,30 +1524,24 @@ namespace MSNPSharp
 
                     if (!AddressBookSynchronized)
                     {
-                        if (AutoSynchronize)
+                        foreach (Contact contact in ContactList.All)
                         {
-                            foreach (Contact contact in ContactList.All)
+                            // Added by other place, this place hasn't synchronized this contact yet.
+                            if (contact.OnForwardList && contact.OnPendingList)
                             {
-                                // Added by other place, this place hasn't synchronized this contact yet.
-                                if (contact.OnForwardList && contact.OnPendingList)
-                                {
-                                    contact.OnPendingList = false;
-                                }
-                                else if (contact.OnPendingList || contact.FriendshipStatus == RoleId.Pending)
-                                {
-                                    // FriendshipRequested (1/2): Before SignedIn
-                                    ContactService.OnFriendshipRequested(new ContactEventArgs(contact));
-                                }
+                                contact.OnPendingList = false;
+                            }
+                            else if (contact.OnPendingList || contact.FriendshipStatus == RoleId.Pending)
+                            {
+                                // FriendshipRequested (1/2): Before SignedIn
+                                ContactService.OnFriendshipRequested(new ContactEventArgs(contact));
                             }
                         }
 
                         ContactService.OnSynchronizationCompleted(EventArgs.Empty);
                     }
 
-                    if (AutoSynchronize)
-                    {
-                        OnSignedIn(EventArgs.Empty);
-                    }
+                    OnSignedIn(EventArgs.Empty);
                 }
                 return true;
             }
