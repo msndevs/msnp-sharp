@@ -67,7 +67,7 @@ namespace MSNPSharp.Core
     /// </summary>
     public class HttpSocketMessageProcessor : SocketMessageProcessor, IDisposable
     {
-        public const int MaxAllowedPacket = 32768;
+        public const int MaxAllowedPacket = Int16.MaxValue;
 
         private HttpPollAction action = HttpPollAction.None;
 
