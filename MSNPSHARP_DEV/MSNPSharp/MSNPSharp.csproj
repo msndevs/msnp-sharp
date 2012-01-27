@@ -289,37 +289,37 @@
     <WebReferences Include="Web References\" />
   </ItemGroup>
   <ItemGroup>
-    <WebReferenceUrl Include="http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNDirectoryService/directory_ws.wsdl">
+    <WebReferenceUrl Include="http://external.msnp-sharp.googlecode.com/git/WebServiceDefAndSchemas/MSNDirectoryService/directory_ws.wsdl">
       <UrlBehavior>Static</UrlBehavior>
       <RelPath>Web References\MSNWS.MSNDirectoryService\</RelPath>
-      <UpdateFromURL>http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNDirectoryService/directory_ws.wsdl</UpdateFromURL>
+      <UpdateFromURL>http://external.msnp-sharp.googlecode.com/git/WebServiceDefAndSchemas/MSNDirectoryService/directory_ws.wsdl</UpdateFromURL>
       <ServiceLocationURL />
       <CachedDynamicPropName />
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>MSNPSharp_MSNDirectoryService_DirectoryService</CachedSettingsPropName>
     </WebReferenceUrl>
-    <WebReferenceUrl Include="http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNABSharingService/msnab_sharingservice.wsdl">
+    <WebReferenceUrl Include="http://external.msnp-sharp.googlecode.com/git/WebServiceDefAndSchemas/MSNABSharingService/msnab_sharingservice.wsdl">
       <UrlBehavior>Static</UrlBehavior>
       <RelPath>Web References\MSNWS.MSNABSharingService\</RelPath>
-      <UpdateFromURL>http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNABSharingService/msnab_sharingservice.wsdl</UpdateFromURL>
+      <UpdateFromURL>http://external.msnp-sharp.googlecode.com/git/WebServiceDefAndSchemas/MSNABSharingService/msnab_sharingservice.wsdl</UpdateFromURL>
       <ServiceLocationURL />
       <CachedDynamicPropName />
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>MSNPSharp_MSNWS_MSNABSharingService_SharingService</CachedSettingsPropName>
     </WebReferenceUrl>
-    <WebReferenceUrl Include="http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.wsdl">
+    <WebReferenceUrl Include="http://external.msnp-sharp.googlecode.com/git/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.wsdl">
       <UrlBehavior>Static</UrlBehavior>
       <RelPath>Web References\MSNWS.MSNSecurityTokenService\</RelPath>
-      <UpdateFromURL>http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.wsdl</UpdateFromURL>
+      <UpdateFromURL>http://external.msnp-sharp.googlecode.com/git/WebServiceDefAndSchemas/MSNSecurityTokenService/ps.wsdl</UpdateFromURL>
       <ServiceLocationURL />
       <CachedDynamicPropName />
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
       <CachedSettingsPropName>MSNPSharp_MSNWS_MSNSecurityTokenService_SecurityTokenService</CachedSettingsPropName>
     </WebReferenceUrl>
-    <WebReferenceUrl Include="http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl">
+    <WebReferenceUrl Include="http://external.msnp-sharp.googlecode.com/git/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl">
       <UrlBehavior>Static</UrlBehavior>
       <RelPath>Web References\MSNWS.MSNStorageService\</RelPath>
-      <UpdateFromURL>http://msnp-sharp.googlecode.com/svn/trunk/MSNPSHARP_DEV/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl</UpdateFromURL>
+      <UpdateFromURL>http://external.msnp-sharp.googlecode.com/git/WebServiceDefAndSchemas/MSNStorageService/msnstorage_ws.wsdl</UpdateFromURL>
       <ServiceLocationURL />
       <CachedDynamicPropName />
       <CachedAppSettingsObjectName>Settings</CachedAppSettingsObjectName>
