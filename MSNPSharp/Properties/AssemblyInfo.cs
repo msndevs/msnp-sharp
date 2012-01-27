@@ -19,8 +19,11 @@ using System.Runtime.InteropServices;
 [assembly: GuidAttribute("FAE04EC0-301F-11D3-BF4B-00C04F79EFBC")]
 
 // Version information for an assembly consists of the following four values:
-// Major.Minor.Build.SVNRevision
+<<<<<<< .mine// Major.Minor.Build.SVNRevision
 [assembly: AssemblyVersionAttribute("5.0.0.2717")]
 [assembly: AssemblyFileVersionAttribute("5.0.0.2717")]
-[assembly: AssemblyCompanyAttribute("MSNPSharp")]
+=======// Major.Minor.Build.BuildDate
+[assembly: AssemblyVersionAttribute("5.0.0.20120127")]
+[assembly: AssemblyFileVersionAttribute("5.0.0.20120127")]
+>>>>>>> .theirs[assembly: AssemblyCompanyAttribute("MSNPSharp")]
 [assembly: AssemblyTrademarkAttribute("MSNPSharp")]
