@@ -602,7 +602,23 @@ namespace MSNPSharp
             }
             else
             {
-                throw new AuthenticationException("Invalid account");
+                AuthenticationException authenticationException = new AuthenticationException("Invalid account");
+                if(async)
+                {
+                    if(onError != null)
+                    {
+                        onError(this, new ExceptionEventArgs(authenticationException));
+                    }
+                    else
+                    {
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, authenticationException.Message);
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceError, authenticationException.StackTrace);
+                    }
+                }
+                else
+                {
+                    throw authenticationException;
+                }
             }
 
             RequestMultipleSecurityTokensType mulToken = new RequestMultipleSecurityTokensType();
@@ -627,7 +643,9 @@ namespace MSNPSharp
 
                             if (onError == null)
                             {
-                                throw sexp;
+                                // throw sexp; // Should not throw here, or it will crash the client!
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Error.Message);
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Error.StackTrace);
                             }
                             else
                             {
@@ -636,12 +654,25 @@ namespace MSNPSharp
 
                             return;
                         }
-
-                        GetTickets(e.Result, securService, msnticket);
-
-                        if (onSuccess != null)
+      
+                        try
                         {
-                            onSuccess(this, EventArgs.Empty);
+                            GetTickets(e.Result, securService, msnticket);
+    
+                            if (onSuccess != null)
+                            {
+                                onSuccess(this, EventArgs.Empty);
+                            }
+                        }
+                        catch(Exception ex)
+                        {
+                            if(onError != null)
+                            {
+                                onError(this, new ExceptionEventArgs(ex));
+                            }else{
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Error.Message);
+                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Error.StackTrace);
+                            }
                         }
                     }
                 };
