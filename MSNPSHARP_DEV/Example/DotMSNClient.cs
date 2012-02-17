@@ -1214,7 +1214,7 @@ namespace MSNPSharpClient
         {
             if (InvokeRequired)
             {
-                BeginInvoke(new EventHandler<ExceptionEventArgs>(Nameserver_ExceptionOccurred), new object[] { sender, e });
+                BeginInvoke(new EventHandler<ExceptionEventArgs>(Nameserver_AuthenticationError), new object[] { sender, e });
             }
             else
             {
