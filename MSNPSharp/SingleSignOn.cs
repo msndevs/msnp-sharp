@@ -374,18 +374,13 @@ namespace MSNPSharp
 
                     SingleSignOn sso = new SingleSignOn(nsMessageHandler, policy);
                     sso.AddAuths(expiredtickets);
-
-                    if (onSuccess == null && onError == null)
-                    {
-                        sso.Authenticate(ticket, false);
-                        cache[hashcode] = ticket;
-                        nsMessageHandler.MSNTicket = ticket;
-                    }
-                    else
+                    
+                    // ASYNC
+                    if (onSuccess != null && onError != null)
                     {
                         try
                         {
-                            sso.Authenticate(ticket, true,
+                            sso.Authenticate(ticket,
                                 delegate(object sender, EventArgs e)
                                 {
                                     try
@@ -393,34 +388,31 @@ namespace MSNPSharp
                                         cache[hashcode] = ticket;
                                         nsMessageHandler.MSNTicket = ticket;
 
-                                        if (onSuccess != null)
-                                        {
-                                            onSuccess(nsMessageHandler, e);
-                                        }
+                                        onSuccess(nsMessageHandler, e);
+                                        
                                     }
                                     catch (Exception ex)
                                     {
-                                        if (onError != null)
-                                        {
-                                            onError(nsMessageHandler, new ExceptionEventArgs(ex));
-                                        }
+                                        onError(nsMessageHandler, new ExceptionEventArgs(ex));
                                     }
                                 },
                                 delegate(object sender, ExceptionEventArgs e)
                                 {
-                                    if (onError != null)
-                                    {
-                                        onError(nsMessageHandler, e);
-                                    }
+                                    onError(nsMessageHandler, e);
                                 });
                         }
                         catch (Exception error)
                         {
-                            if (onError != null)
-                            {
-                                onError(nsMessageHandler, new ExceptionEventArgs(error));
-                            }
-                        }
+                            onError(nsMessageHandler, new ExceptionEventArgs(error));
+                        }                        
+                    }
+                    else
+                    {
+                        // SYNC
+                        sso.Authenticate(ticket, null, null);
+                        
+                        cache[hashcode] = ticket;
+                        nsMessageHandler.MSNTicket = ticket;
                     }
                 }
             }
@@ -446,7 +438,8 @@ namespace MSNPSharp
 
                     if (es == ExpiryState.WillExpireSoon)
                     {
-                        sso.Authenticate(ticket, true,
+                        // ASYNC
+                        sso.Authenticate(ticket,
                                 delegate(object sender, EventArgs e)
                                 {
                                     // Keep this delegate to NOT throw Exception.
@@ -461,7 +454,9 @@ namespace MSNPSharp
                     }
                     else
                     {
-                        sso.Authenticate(ticket, false);
+                        // SYNC
+                        sso.Authenticate(ticket, null, null);
+                        
                         cache[hashcode] = ticket;
                     }
                 }
@@ -590,19 +585,13 @@ namespace MSNPSharp
             }
         }
 
-
-        public void Authenticate(MSNTicket msnticket, bool async)
-        {
-            Authenticate(msnticket, async, null, null);
-        }
-
-        public void Authenticate(MSNTicket msnticket, bool async, EventHandler onSuccess, EventHandler<ExceptionEventArgs> onError)
+        public void Authenticate(MSNTicket msnticket, EventHandler onSuccess, EventHandler<ExceptionEventArgs> onError)
         {
             SecurityTokenService securService = CreateSecurityTokenService(@"http://schemas.xmlsoap.org/ws/2005/02/trust/RST/Issue", @"HTTPS://login.live.com:443//RST2.srf");
-            Authenticate(securService, msnticket, async, onSuccess, onError);
+            Authenticate(securService, msnticket, onSuccess, onError);
         }
 
-        public void Authenticate(SecurityTokenService securService, MSNTicket msnticket, bool async, EventHandler onSuccess, EventHandler<ExceptionEventArgs> onError)
+        public void Authenticate(SecurityTokenService securService, MSNTicket msnticket, EventHandler onSuccess, EventHandler<ExceptionEventArgs> onError)
         {
             if (user.Split('@').Length > 1)
             {
@@ -620,7 +609,8 @@ namespace MSNPSharp
             mulToken.Id = "RSTS";
             mulToken.RequestSecurityToken = auths.ToArray();
 
-            if (async)
+            // ASYNC
+            if (onSuccess != null && onError != null)
             {
                 securService.RequestMultipleSecurityTokensCompleted += delegate(object sender, RequestMultipleSecurityTokensCompletedEventArgs e)
                 {
@@ -628,30 +618,21 @@ namespace MSNPSharp
                     {
                         if (e.Error != null)
                         {
-                            if (ProcessError(securService, e.Error as SoapException, msnticket, async, onSuccess, onError))
+                            SoapException sex = e.Error as SoapException;
+                            if (sex != null && ProcessError(securService, sex, msnticket, onSuccess, onError))
                                 return;
 
                             MSNPSharpException sexp = new MSNPSharpException(e.Error.Message + ". See innerexception for detail.", e.Error);
                             if (securService.pp != null)
                                 sexp.Data["Code"] = securService.pp.reqstatus;  //Error code
 
-                            if (onError == null)
-                            {
-                                throw sexp;
-                            }
-                            else
-                            {
-                                onError(this, new ExceptionEventArgs(sexp));
-                            }
+                            onError(this, new ExceptionEventArgs(sexp));
                         }
                         else if (e.Result != null)
                         {
                             GetTickets(e.Result, securService, msnticket);
-
-                            if (onSuccess != null)
-                            {
-                                onSuccess(this, EventArgs.Empty);
-                            }
+                            
+                            onSuccess(this, EventArgs.Empty);
                         }
                         else
                         {
@@ -663,32 +644,40 @@ namespace MSNPSharp
             }
             else
             {
-                RequestSecurityTokenResponseType[] result = null;
                 try
                 {
-                    result = securService.RequestMultipleSecurityTokens(mulToken);
+                    RequestSecurityTokenResponseType[] result = securService.RequestMultipleSecurityTokens(mulToken);
+                    
+                    if (result != null)
+                    {
+                        GetTickets(result, securService, msnticket);
+                    }
+                }                
+                catch (SoapException sex)
+                {
+                    if (ProcessError(securService, sex, msnticket, onSuccess, onError))
+                        return;
+                    
+                    throw sex;
                 }
                 catch (Exception ex)
                 {
-                    if (ProcessError(securService, ex as SoapException, msnticket, async, onSuccess, onError))
-                        return;
-
                     MSNPSharpException sexp = new MSNPSharpException(ex.Message + ". See innerexception for detail.", ex);
+                    
                     if (securService.pp != null)
                         sexp.Data["Code"] = securService.pp.reqstatus;  //Error code
 
                     throw sexp;
-                }
-
-                GetTickets(result, securService, msnticket);
+                }                
             }
         }
 
-        private bool ProcessError(SecurityTokenService secureService, SoapException exception, MSNTicket msnticket, bool async, EventHandler onSuccess, EventHandler<ExceptionEventArgs> onError)
+        private bool ProcessError(SecurityTokenService secureService, SoapException exception, MSNTicket msnticket, EventHandler onSuccess, EventHandler<ExceptionEventArgs> onError)
         {
             string errFedDirectLogin = @"Direct login to WLID is not allowed for this federated namespace";
             if (exception == null)
                 return false;
+            
             if (secureService.pp == null)
                 return false;
 
@@ -747,7 +736,7 @@ namespace MSNPSharp
 
                     RequestSecurityTokenResponseType response = null;
 
-                    if (async)
+                    if (onSuccess != null && onError != null)
                     {
                         //Async request.
                         fedSecureService.RequestSecurityTokenCompleted += delegate(object sender, RequestSecurityTokenCompletedEventArgs e)
@@ -757,16 +746,7 @@ namespace MSNPSharp
                                 if (e.Error != null)
                                 {
                                     MSNPSharpException sexp = new MSNPSharpException(e.Error.Message + ". See innerexception for detail.", e.Error);
-
-                                    if (onError == null)
-                                    {
-                                        throw sexp;
-                                    }
-                                    else
-                                    {
-                                        onError(this, new ExceptionEventArgs(sexp));
-                                    }
-
+                                    onError(this, new ExceptionEventArgs(sexp));
                                     return;
                                 }
 
@@ -783,7 +763,7 @@ namespace MSNPSharp
                                 secureService.Security.Timestamp.Created = response.Lifetime.Created;
                                 secureService.Security.Timestamp.Expires = response.Lifetime.Expires;
 
-                                Authenticate(secureService, msnticket, async, onSuccess, onError);
+                                Authenticate(secureService, msnticket, onSuccess, onError);
                             }
                         };
 
@@ -812,7 +792,8 @@ namespace MSNPSharp
                         AssertionType assertion = response.RequestedSecurityToken.Assertion;
                         secureService = CreateSecurityTokenService(@"http://schemas.xmlsoap.org/ws/2005/02/trust/RST/Issue", @"HTTPS://login.live.com:443//RST2.srf");
                         secureService.Security.Assertion = assertion;
-                        Authenticate(secureService, msnticket, async, onSuccess, onError);
+                        
+                        Authenticate(secureService, msnticket, onSuccess, onError);
                         return true;
                     }
                 }
