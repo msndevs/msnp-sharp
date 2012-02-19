@@ -88,6 +88,8 @@ namespace MSNPSharp
         private int hashcode;
         [NonSerialized]
         internal int DeleteTick;
+        [NonSerialized]
+        internal int UpdateTick;
 
         public MSNTicket()
         {
@@ -99,6 +101,7 @@ namespace MSNPSharp
             {
                 hashcode = (creds.Account.ToLowerInvariant() + creds.Password).GetHashCode();
                 DeleteTick = unchecked(Environment.TickCount + (Settings.MSNTicketLifeTime * 60000)); // in minutes
+                UpdateTick = 0; // Not updated yet! No tickets yet!
             }
         }
 
@@ -348,8 +351,16 @@ namespace MSNPSharp
 
             if (nsMessageHandler != null)
             {
-                int hashcode = (nsMessageHandler.Credentials.Account.ToLowerInvariant() + nsMessageHandler.Credentials.Password).GetHashCode();
-                MSNTicket ticket = cache.ContainsKey(hashcode) ? cache[hashcode] : new MSNTicket(nsMessageHandler.Credentials);
+                string authUser = nsMessageHandler.Credentials.Account.ToLowerInvariant();
+                string authPassword = nsMessageHandler.Credentials.Password;
+                string authKey = authUser + authPassword;
+                int hashcode = authKey.GetHashCode();
+                MSNTicket ticket = null;
+                lock (SyncObject)
+                {
+                    ticket = cache.ContainsKey(hashcode) ? cache[hashcode] : new MSNTicket(nsMessageHandler.Credentials);
+                }
+                
                 SSOTicketType[] ssos = (SSOTicketType[])Enum.GetValues(typeof(SSOTicketType));
                 SSOTicketType expiredtickets = SSOTicketType.None;
 
@@ -385,11 +396,26 @@ namespace MSNPSharp
                                 {
                                     try
                                     {
-                                        cache[hashcode] = ticket;
-                                        nsMessageHandler.MSNTicket = ticket;
-
-                                        onSuccess(nsMessageHandler, e);
+                                        // Update cache
+                                        lock (SyncObject)
+                                        {
+                                            cache[hashcode] = ticket;
+                                        }
+                                    
+                                        // Check Credentials again. Owner may sign off while SSOing.
+                                        if (nsMessageHandler.Credentials != null && 
+                                            nsMessageHandler.Credentials.Account == authUser &&
+                                            nsMessageHandler.Credentials.Password == authPassword)
+                                        {
+                                            NSMessageProcessor nsmp = nsMessageHandler.MessageProcessor as NSMessageProcessor;
                                         
+                                            if (nsmp != null && nsmp.Connected)
+                                            {
+                                                 nsMessageHandler.MSNTicket = ticket;
+
+                                                 onSuccess(nsMessageHandler, e);
+                                            }
+                                        }                                        
                                     }
                                     catch (Exception ex)
                                     {
@@ -411,7 +437,11 @@ namespace MSNPSharp
                         // SYNC
                         sso.Authenticate(ticket, null, null);
                         
-                        cache[hashcode] = ticket;
+                        lock (SyncObject)
+                        {
+                            cache[hashcode] = ticket;
+                        }
+                        
                         nsMessageHandler.MSNTicket = ticket;
                     }
                 }
@@ -424,8 +454,13 @@ namespace MSNPSharp
 
             if (nsMessageHandler != null)
             {
-                int hashcode = (nsMessageHandler.Credentials.Account.ToLowerInvariant() + nsMessageHandler.Credentials.Password).GetHashCode();
-                MSNTicket ticket = cache.ContainsKey(hashcode) ? cache[hashcode] : new MSNTicket(nsMessageHandler.Credentials);
+                int hashcode = (nsMessageHandler.Credentials.Account.ToLowerInvariant() + nsMessageHandler.Credentials.Password).GetHashCode();                
+                MSNTicket ticket = null;
+                lock (SyncObject)
+                {
+                    ticket = cache.ContainsKey(hashcode) ? cache[hashcode] : new MSNTicket(nsMessageHandler.Credentials);
+                }
+                
                 ExpiryState es = ticket.Expired(renew);
 
                 if (ExpiryState.NotExpired != es)
@@ -457,7 +492,10 @@ namespace MSNPSharp
                         // SYNC
                         sso.Authenticate(ticket, null, null);
                         
-                        cache[hashcode] = ticket;
+                        lock (SyncObject)
+                        {
+                            cache[hashcode] = ticket;
+                        }
                     }
                 }
 
@@ -918,8 +956,12 @@ namespace MSNPSharp
                     ssoticket.Created = XmlConvert.ToDateTime(token.Lifetime.Created.Value, "yyyy-MM-ddTHH:mm:ssZ");
                     ssoticket.Expires = XmlConvert.ToDateTime(token.Lifetime.Expires.Value, "yyyy-MM-ddTHH:mm:ssZ");
                 }
-
-                msnticket.SSOTickets[ticketype] = ssoticket;
+                
+                lock (msnticket.SSOTickets)
+                {
+                    msnticket.SSOTickets[ticketype] = ssoticket;
+                    msnticket.UpdateTick = Environment.TickCount;
+                }
             }
 
         }
