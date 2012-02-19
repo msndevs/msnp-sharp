@@ -48,6 +48,8 @@ namespace MSNPSharp.IO
     [Serializable]
     public class DeltasList : MCLSerializer
     {
+        public const string DeltasListVersion = "20120219";
+        
         private const int MaxSlot = 1000;
 
         private SerializableDictionary<CacheKeyType, string> cacheKeys = new SerializableDictionary<CacheKeyType, string>(0);
@@ -497,7 +499,7 @@ namespace MSNPSharp.IO
 
         public void Save(bool saveImmediately)
         {
-            Version = Properties.Resources.DeltasListVersion;
+            Version = DeltasListVersion;
 
             if (saveImmediately == false &&
                 File.Exists(FileName) &&
