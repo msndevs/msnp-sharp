@@ -93,15 +93,6 @@ namespace MSNPSharp.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 5.0.1.12011.
-        /// </summary>
-        internal static string DeltasListVersion {
-            get {
-                return ResourceManager.GetString("DeltasListVersion", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to F679201A-DBC9-4011-B81B-3D05F0797EA9.
         /// </summary>
         internal static string DirectoryServiceAppID {
@@ -141,15 +132,6 @@ namespace MSNPSharp.Properties {
         internal static string WhatsupServiceAppID {
             get {
                 return ResourceManager.GetString("WhatsupServiceAppID", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 5.0.1.12011.
-        /// </summary>
-        internal static string XMLContactListVersion {
-            get {
-                return ResourceManager.GetString("XMLContactListVersion", resourceCulture);
             }
         }
     }

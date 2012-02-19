@@ -290,11 +290,11 @@ namespace MSNPSharp
             try
             {
                 if (NSMessageHandler.AutoSynchronize &&
-                    (AddressBook.Version != Properties.Resources.XMLContactListVersion || Deltas.Version != Properties.Resources.DeltasListVersion))
+                    (AddressBook.Version != XMLContactList.XMLContactListVersion || Deltas.Version != DeltasList.DeltasListVersion))
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
                         "Your MCL addressbook version is outdated: " + AddressBook.Version.ToString() +
-                        "\r\nAddressBook Version Required: " + Properties.Resources.XMLContactListVersion +
+                        "\r\nAddressBook Version Required: " + XMLContactList.XMLContactListVersion +
                         "\r\nThe old mcl files for this account will be deleted and a new request for getting full addressbook list will be post.");
 
                     DeleteRecordFile(true); // Addressbook version changed. Reset addressbook.

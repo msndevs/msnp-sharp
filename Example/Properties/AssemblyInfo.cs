@@ -14,7 +14,7 @@ using System.Runtime.InteropServices;
 
 // Version information for an assembly consists of the following four values:
 // Major.Minor.Build.BuildDate
-[assembly: AssemblyVersionAttribute("5.0.1.12011")]
-[assembly: AssemblyFileVersionAttribute("5.0.1.12011")]
+[assembly: AssemblyVersionAttribute("5.0.1.12021")]
+[assembly: AssemblyFileVersionAttribute("5.0.1.12021")]
 [assembly: AssemblyCompanyAttribute("MSNPSharp")]
 [assembly: AssemblyTrademarkAttribute("MSNPSharp")]

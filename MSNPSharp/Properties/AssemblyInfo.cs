@@ -27,7 +27,7 @@ using System.Runtime.InteropServices;
 //                                                    MM=MONT(01)
 //                                                     I=INCREMENTAL(montly): (1-9) FOR STABLE
 // Ex: 12042: on 2012(12), APRIL(04), 2ND release
-[assembly: AssemblyVersionAttribute("5.0.1.12011")]
-[assembly: AssemblyFileVersionAttribute("5.0.1.12011")]
+[assembly: AssemblyVersionAttribute("5.0.1.12021")]
+[assembly: AssemblyFileVersionAttribute("5.0.1.12021")]
 [assembly: AssemblyCompanyAttribute("MSNPSharp")]
 [assembly: AssemblyTrademarkAttribute("MSNPSharp")]

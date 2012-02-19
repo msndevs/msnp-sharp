@@ -50,6 +50,8 @@ namespace MSNPSharp.IO
     [XmlRoot("ContactList")]
     public class XMLContactList : MCLSerializer
     {
+        public const string XMLContactListVersion = "20120219";
+    
         #region Members
 
         [NonSerialized]
@@ -267,7 +269,7 @@ namespace MSNPSharp.IO
             {
                 try
                 {
-                    Version = Properties.Resources.XMLContactListVersion;
+                    Version = XMLContactListVersion;
                     base.Save(filename);
                 }
                 catch (Exception ex)
@@ -414,6 +416,7 @@ namespace MSNPSharp.IO
                 }
             }
         }
+
 
         public virtual void Add(string abId, Dictionary<Guid, ContactType> abRange)
         {
@@ -2537,6 +2540,7 @@ namespace MSNPSharp.IO
 
             return null;
         }
+
 
         private ReturnState UpdateContact(ContactType contactType, out Contact updatedContact)
         {
