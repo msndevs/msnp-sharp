@@ -446,7 +446,18 @@ namespace MSNPSharp
 
                     if (es == ExpiryState.WillExpireSoon)
                     {
-                        sso.Authenticate(ticket, true);
+                        sso.Authenticate(ticket, true,
+                                delegate(object sender, EventArgs e)
+                                {
+                                    // Keep this delegate to NOT throw Exception.
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Ticket will expire soon updated with new ticket.");
+                                },
+                                delegate(object sender, ExceptionEventArgs e)
+                                {
+                                    // Keep this delegate to NOT throw Exception.
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Exception.StackTrace);
+                                }
+                        );
                     }
                     else
                     {
@@ -615,7 +626,6 @@ namespace MSNPSharp
                 {
                     if (!e.Cancelled)
                     {
-
                         if (e.Error != null)
                         {
                             if (ProcessError(securService, e.Error as SoapException, msnticket, async, onSuccess, onError))
@@ -633,15 +643,19 @@ namespace MSNPSharp
                             {
                                 onError(this, new ExceptionEventArgs(sexp));
                             }
-
-                            return;
                         }
-
-                        GetTickets(e.Result, securService, msnticket);
-
-                        if (onSuccess != null)
+                        else if (e.Result != null)
                         {
-                            onSuccess(this, EventArgs.Empty);
+                            GetTickets(e.Result, securService, msnticket);
+
+                            if (onSuccess != null)
+                            {
+                                onSuccess(this, EventArgs.Empty);
+                            }
+                        }
+                        else
+                        {
+                            // Is this possible? Answer: No.
                         }
                     }
                 };
