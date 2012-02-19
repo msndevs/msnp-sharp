@@ -81,7 +81,6 @@ namespace MSNPSharp.IO
 
         private SerializableDictionary<ServiceName, ServiceMembership> mslist = new SerializableDictionary<ServiceName, ServiceMembership>(0);
         private SerializableDictionary<string, ABFindContactsPagedResultTypeAB> abInfos = new SerializableDictionary<string, ABFindContactsPagedResultTypeAB>();
-        private SerializableDictionary<string, string> myproperties = new SerializableDictionary<string, string>(0);
         private SerializableDictionary<Guid, GroupType> groups = new SerializableDictionary<Guid, GroupType>(0);
         private SerializableDictionary<string, SerializableDictionary<Guid, ContactType>> abcontacts = new SerializableDictionary<string, SerializableDictionary<Guid, ContactType>>(0);
         private SerializableDictionary<string, CircleInverseInfoType> circleResults = new SerializableDictionary<string, CircleInverseInfoType>(0);
@@ -128,18 +127,6 @@ namespace MSNPSharp.IO
 
                 services.Sort();
                 return services[services.Count - 1].LastChange;
-            }
-        }
-
-        public SerializableDictionary<string, string> MyProperties
-        {
-            get
-            {
-                return myproperties;
-            }
-            set
-            {
-                myproperties = value;
             }
         }
 
@@ -467,18 +454,6 @@ namespace MSNPSharp.IO
                 {
                     groups.Add(key, group);
                 }
-            }
-        }
-
-        /// <summary>
-        /// Set MyProperties to default value.
-        /// </summary>
-        public void InitializeMyProperties()
-        {
-            lock (SyncObject)
-            {
-                if (!MyProperties.ContainsKey(AnnotationNames.Live_Profile_Expression_LastChanged))
-                    MyProperties[AnnotationNames.Live_Profile_Expression_LastChanged] = XmlConvert.ToString(DateTime.MinValue, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzzzzz");
             }
         }
 
@@ -2842,16 +2817,6 @@ namespace MSNPSharp.IO
                     SetContactPhones(owner, contactInfo);
 
                     #endregion
-
-                    if (null != contactInfo.annotations && lowerId == WebServiceConstants.MessengerIndividualAddressBookId)
-                    {
-                        foreach (Annotation anno in contactInfo.annotations)
-                        {
-                            MyProperties[anno.Name] = anno.Value;
-                        }
-                    }
-
-                    InitializeMyProperties();
 
                     // Networks...
                     if (contactInfo.NetworkInfoList != null)

@@ -404,7 +404,6 @@ namespace MSNPSharp
                 if (AddressBook != null && Deltas != null)
                 {
                     // Save addressbook and then truncate deltas file.
-                    AddressBook.InitializeMyProperties();
                     AddressBook.Save();
                     Deltas.Truncate();
                 }
