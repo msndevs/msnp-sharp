@@ -289,8 +289,7 @@ namespace MSNPSharp
 
             try
             {
-                if (NSMessageHandler.AutoSynchronize &&
-                    (AddressBook.Version != XMLContactList.XMLContactListVersion || Deltas.Version != DeltasList.DeltasListVersion))
+                if (AddressBook.Version != XMLContactList.XMLContactListVersion || Deltas.Version != DeltasList.DeltasListVersion)
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
                         "Your MCL addressbook version is outdated: " + AddressBook.Version.ToString() +
