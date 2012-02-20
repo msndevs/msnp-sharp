@@ -1,4 +1,4 @@
-﻿#region
+#region
 /*
 Copyright (c) 2002-2012, Bas Geertsema, Xih Solutions
 (http://www.xihsolutions.net), Thiago.Sayao, Pang Wu, Ethem Evlice, Andy Phan, Chang Liu. 
@@ -374,15 +374,14 @@ namespace MSNPSharp.Core
         private void EndGetResponseCallback(IAsyncResult ar)
         {
             HttpState httpState = (HttpState)ar.AsyncState;
-
-            lock (SyncObject)
+            try
             {
-                try
+                httpState.Response = httpState.Request.EndGetResponse(ar);
+                int responseLength = (int)httpState.Response.ContentLength;
+                httpState.Request = null;
+                
+                lock (SyncObject)
                 {
-                    httpState.Response = httpState.Request.EndGetResponse(ar);
-                    int responseLength = (int)httpState.Response.ContentLength;
-                    httpState.Request = null;
-
                     foreach (string header in httpState.Response.Headers.AllKeys)
                     {
                         switch (header)
@@ -422,17 +421,17 @@ namespace MSNPSharp.Core
                                 break;
                         }
                     }
-
-                    httpState.Stream = httpState.Response.GetResponseStream();
-                    httpState.Buffer = new byte[responseLength];
-                    httpState.BufferOffset = 0;
-
-                    httpState.Stream.BeginRead(httpState.Buffer, httpState.BufferOffset, httpState.Buffer.Length - httpState.BufferOffset, ResponseStreamEndReadCallback, httpState);
                 }
-                catch (WebException we)
-                {
-                    HandleWebException(we);
-                }
+
+                httpState.Stream = httpState.Response.GetResponseStream();
+                httpState.Buffer = new byte[responseLength];
+                httpState.BufferOffset = 0;
+
+                httpState.Stream.BeginRead(httpState.Buffer, httpState.BufferOffset, httpState.Buffer.Length - httpState.BufferOffset, ResponseStreamEndReadCallback, httpState);
+            }
+            catch (WebException we)
+            {
+                HandleWebException(we);
             }
         }
 
