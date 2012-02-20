@@ -77,7 +77,7 @@ namespace MSNPSharp
     {
         public static readonly MSNTicket Empty = new MSNTicket(null);
 
-        private string policy = "MBI_KEY_OLD";
+        private string policy = "MBI_KEY";
         private string mainBrandID = "MSFT";
         private long ownerCID = 0;
 
@@ -356,6 +356,7 @@ namespace MSNPSharp
                 string authKey = authUser + authPassword;
                 int hashcode = authKey.GetHashCode();
                 MSNTicket ticket = null;
+                
                 lock (SyncObject)
                 {
                     ticket = cache.ContainsKey(hashcode) ? cache[hashcode] : new MSNTicket(nsMessageHandler.Credentials);
@@ -435,7 +436,7 @@ namespace MSNPSharp
                     else
                     {
                         // SYNC
-                        sso.Authenticate(ticket, null, null);
+                        sso.Authenticate(ticket);
                         
                         lock (SyncObject)
                         {
@@ -490,7 +491,7 @@ namespace MSNPSharp
                     else
                     {
                         // SYNC
-                        sso.Authenticate(ticket, null, null);
+                        sso.Authenticate(ticket);
                         
                         lock (SyncObject)
                         {
@@ -622,6 +623,11 @@ namespace MSNPSharp
                 }
             }
         }
+        
+        public void Authenticate(MSNTicket msnticket)
+        {
+            Authenticate(msnticket, null, null);
+        }
   
         /// <summary>
         /// Authenticate the specified user. By asynchronous or synchronous ways.
@@ -638,8 +644,6 @@ namespace MSNPSharp
         /// <exception cref='AuthenticationException'>
         /// Is thrown when the authentication failed and the request is a synchronous request.
         /// Or the <paramref name="onError"/> callback will be called.
-        /// If the username contains a wrong format, this exception will always thrown even the request is asynchronous.
-        /// Which will lead to applcation crash.
         /// </exception>
         /// <remarks>
         /// The method is asynchronous only when both <paramref name="onSuccess"/> and <paramref name="onError"/> are not null.
@@ -651,32 +655,7 @@ namespace MSNPSharp
             Authenticate(securService, msnticket, onSuccess, onError);
         }
   
-        /// <summary>
-        /// Authenticate the specified user. By asynchronous or synchronous ways.
-        /// </summary>
-        /// <param name='securService'>
-        /// The authentication webservice to invoke.
-        /// </param>
-        /// <param name='msnticket'>
-        /// Msnticket.
-        /// </param>
-        /// <param name='onSuccess'>
-        /// Callback when the authentication was passed.
-        /// </param>
-        /// <param name='onError'>
-        /// Callback when the authentication encounts errors.
-        /// </param>
-        /// <exception cref='AuthenticationException'>
-        /// Is thrown when the authentication failed and the request is a synchronous request.
-        /// Or the <paramref name="onError"/> callback will be called.
-        /// If the username contains a wrong format, this exception will always thrown even the request is asynchronous.
-        /// Which will lead to applcation crash.
-        /// </exception>
-        /// <remarks>
-        /// The method is asynchronous only when both <paramref name="onSuccess"/> and <paramref name="onError"/> are not null.
-        /// Otherwise it will perform a synchronous request.
-        /// </remarks>
-        public void Authenticate(SecurityTokenService securService, MSNTicket msnticket, EventHandler onSuccess, EventHandler<ExceptionEventArgs> onError)
+        private void Authenticate(SecurityTokenService securService, MSNTicket msnticket, EventHandler onSuccess, EventHandler<ExceptionEventArgs> onError)
         {
             if (user.Split('@').Length > 1)
             {
@@ -687,7 +666,11 @@ namespace MSNPSharp
             }
             else
             {
-                throw new AuthenticationException("Invalid account");
+                AuthenticationException authenticationException = new AuthenticationException("Invalid account. The account must contain @ char");
+                if (onError != null && onSuccess != null)
+                    onError(this, new ExceptionEventArgs(authenticationException));
+                else
+                    throw authenticationException;
             }
 
             RequestMultipleSecurityTokensType mulToken = new RequestMultipleSecurityTokensType();
@@ -836,18 +819,20 @@ namespace MSNPSharp
                                 }
 
                                 response = e.Result;
-                                if (response.RequestedSecurityToken == null)
-                                    return;
-                                if (response.RequestedSecurityToken.Assertion == null)
+                                
+                                if (response.RequestedSecurityToken == null || response.RequestedSecurityToken.Assertion == null)
                                     return;
 
                                 AssertionType assertion = response.RequestedSecurityToken.Assertion;
                                 secureService = CreateSecurityTokenService(@"http://schemas.xmlsoap.org/ws/2005/02/trust/RST/Issue", @"HTTPS://login.live.com:443//RST2.srf");
                                 secureService.Security.Assertion = assertion;
-
-                                secureService.Security.Timestamp.Created = response.Lifetime.Created;
-                                secureService.Security.Timestamp.Expires = response.Lifetime.Expires;
-
+                                
+                                if (response.Lifetime != null)
+                                {
+                                    secureService.Security.Timestamp.Created = response.Lifetime.Created;
+                                    secureService.Security.Timestamp.Expires = response.Lifetime.Expires;
+                                }
+                                
                                 Authenticate(secureService, msnticket, onSuccess, onError);
                             }
                         };
