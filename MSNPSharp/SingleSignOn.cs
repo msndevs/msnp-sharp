@@ -622,13 +622,60 @@ namespace MSNPSharp
                 }
             }
         }
-
+  
+        /// <summary>
+        /// Authenticate the specified user. By asynchronous or synchronous ways.
+        /// </summary>
+        /// <param name='msnticket'>
+        /// Msnticket.
+        /// </param>
+        /// <param name='onSuccess'>
+        /// Callback when the authentication was passed.
+        /// </param>
+        /// <param name='onError'>
+        /// Callback when the authentication encounts errors.
+        /// </param>
+        /// <exception cref='AuthenticationException'>
+        /// Is thrown when the authentication failed and the request is a synchronous request.
+        /// Or the <paramref name="onError"/> callback will be called.
+        /// If the username contains a wrong format, this exception will always thrown even the request is asynchronous.
+        /// Which will lead to applcation crash.
+        /// </exception>
+        /// <remarks>
+        /// The method is asynchronous only when both <paramref name="onSuccess"/> and <paramref name="onError"/> are not null.
+        /// Otherwise it will perform a synchronous request.
+        /// </remarks>
         public void Authenticate(MSNTicket msnticket, EventHandler onSuccess, EventHandler<ExceptionEventArgs> onError)
         {
             SecurityTokenService securService = CreateSecurityTokenService(@"http://schemas.xmlsoap.org/ws/2005/02/trust/RST/Issue", @"HTTPS://login.live.com:443//RST2.srf");
             Authenticate(securService, msnticket, onSuccess, onError);
         }
-
+  
+        /// <summary>
+        /// Authenticate the specified user. By asynchronous or synchronous ways.
+        /// </summary>
+        /// <param name='securService'>
+        /// The authentication webservice to invoke.
+        /// </param>
+        /// <param name='msnticket'>
+        /// Msnticket.
+        /// </param>
+        /// <param name='onSuccess'>
+        /// Callback when the authentication was passed.
+        /// </param>
+        /// <param name='onError'>
+        /// Callback when the authentication encounts errors.
+        /// </param>
+        /// <exception cref='AuthenticationException'>
+        /// Is thrown when the authentication failed and the request is a synchronous request.
+        /// Or the <paramref name="onError"/> callback will be called.
+        /// If the username contains a wrong format, this exception will always thrown even the request is asynchronous.
+        /// Which will lead to applcation crash.
+        /// </exception>
+        /// <remarks>
+        /// The method is asynchronous only when both <paramref name="onSuccess"/> and <paramref name="onError"/> are not null.
+        /// Otherwise it will perform a synchronous request.
+        /// </remarks>
         public void Authenticate(SecurityTokenService securService, MSNTicket msnticket, EventHandler onSuccess, EventHandler<ExceptionEventArgs> onError)
         {
             if (user.Split('@').Length > 1)
