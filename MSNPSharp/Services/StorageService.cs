@@ -718,10 +718,8 @@ namespace MSNPSharp
                 Uri uri = new Uri(usertitleURL);
 
                 HttpWebRequest fwr = (HttpWebRequest)WebRequest.Create(uri);
-                fwr.Proxy = WebProxy;
+                NSMessageHandler.ConnectivitySettings.SetupWebRequest(fwr);
                 fwr.Timeout = 30000;
-                fwr.ServicePoint.BindIPEndPointDelegate = new BindIPEndPoint(new IPEndPointCallback(new IPEndPoint(String.IsNullOrEmpty(NSMessageHandler.ConnectivitySettings.LocalHost) ? IPAddress.Any : IPAddress.Parse(NSMessageHandler.ConnectivitySettings.LocalHost), NSMessageHandler.ConnectivitySettings.LocalPort)).BindIPEndPointCallback);
-
                 fwr.BeginGetResponse(delegate(IAsyncResult result)
                 {
                     try
@@ -776,6 +774,7 @@ namespace MSNPSharp
             LiveAtomAPILight.UpdatePersonalStatusAsync(personalStatus,
                 NSMessageHandler.Owner.CID,
                 NSMessageHandler.MSNTicket.SSOTickets[SSOTicketType.RPST].Ticket,
+                NSMessageHandler.ConnectivitySettings,
                 delegate(object sender, AtomRequestSucceedEventArgs succ)
                 {
                     if (succ.Entry != null)

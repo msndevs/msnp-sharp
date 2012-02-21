@@ -53,26 +53,26 @@ namespace MSNPSharp.Services
     [System.Web.Services.WebServiceBindingAttribute(Name = "SecurityTokenServicePortBinding", Namespace = "http://schemas.microsoft.com/Passport/SoapServices/PPCRL")]
     public sealed class SecurityTokenServiceWrapper : SecurityTokenService
     {
-        private IPEndPoint localEndPoint = null;
+        private NSMessageHandler nsHandler;
 
         public SecurityTokenServiceWrapper()
             : base()
         {
         }
 
-        public SecurityTokenServiceWrapper(IPEndPoint localEndPoint)
+        public SecurityTokenServiceWrapper(NSMessageHandler nsHandler)
             : base()
         {
-            this.localEndPoint = localEndPoint;
+            this.nsHandler = nsHandler;
         }
 
         protected override WebRequest GetWebRequest(Uri uri)
         {
             WebRequest request = base.GetWebRequest(uri);
             HttpWebRequest httpRequest = request as HttpWebRequest;
-            if (httpRequest != null)
+            if (httpRequest != null && nsHandler != null && nsHandler.ConnectivitySettings != null)
             {
-                httpRequest.ServicePoint.BindIPEndPointDelegate = new BindIPEndPoint((new IPEndPointCallback(localEndPoint)).BindIPEndPointCallback);
+                nsHandler.ConnectivitySettings.SetupWebRequest(httpRequest);
             }
             return request;
         }

@@ -945,7 +945,7 @@ namespace MSNPSharpClient
 
             if (remoteContact.UserTileURL != null && remoteContact.ClientType != IMAddressInfoType.WindowsLive) // For WLM display image, shouldn't overwrite with user tile.
             {
-                HttpAsyncDataDownloader.BeginDownload(remoteContact.UserTileURL.AbsoluteUri, new EventHandler<ObjectEventArgs>(SetUserTileToPictureBox), _messenger.ConnectivitySettings.WebProxy);
+                HttpAsyncDataDownloader.BeginDownload(remoteContact.UserTileURL.AbsoluteUri, new EventHandler<ObjectEventArgs>(SetUserTileToPictureBox), _messenger.ConnectivitySettings);
             }
         }
 

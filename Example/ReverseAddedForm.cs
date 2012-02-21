@@ -89,7 +89,7 @@ namespace MSNPSharpClient
                                 pictureBox1.Image = Image.FromStream(new MemoryStream(oea.Object as byte[]));
                             },
 
-                            messenger.ConnectivitySettings.WebProxy);
+                            messenger.ConnectivitySettings);
                     }
                 },
                 null);
@@ -159,7 +159,7 @@ namespace MSNPSharpClient
                                 pb.Image = Image.FromStream(new MemoryStream(oea.Object as byte[]));
                             },
 
-                            messenger.ConnectivitySettings.WebProxy);
+                            messenger.ConnectivitySettings);
 
                     }
                 }

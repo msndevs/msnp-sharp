@@ -30,68 +30,74 @@ THE POSSIBILITY OF SUCH DAMAGE.
 */
 #endregion
 
-
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml;
 using System.Net;
-using MSNPSharp.LiveConnectAPI.Atom;
 using System.Xml.Serialization;
 using System.IO;
 using System.Threading;
 
 namespace MSNPSharp.LiveConnectAPI
 {
+    using MSNPSharp.LiveConnectAPI.Atom;
+
     /// <summary>
     /// A wrapper of Windows Live API (http://api.live.net)
     /// </summary>
-    public class LiveAtomAPILight
+    internal static class LiveAtomAPILight
     {
         private const string liveAPIBaseURL = @"http://api.live.net";
         private const string appID = "1275182653";
 
         internal static void UpdatePersonalStatusAsync(string newDisplayName, long ownerCID, string authToken,
+            ConnectivitySettings connectivitySettings,
             EventHandler<AtomRequestSucceedEventArgs> onSucceed,
             EventHandler<ExceptionEventArgs> onError)
         {
             Thread workingThread = new Thread(new ParameterizedThreadStart(doUpdate));
-            workingThread.Start(new object[] { newDisplayName, ownerCID, authToken, onSucceed, onError });
+            workingThread.Start(new object[] { newDisplayName, ownerCID, authToken, connectivitySettings, onSucceed, onError });
         }
 
         private static void doUpdate(object paramArray)
         {
             object[] parameters = paramArray as object[];
-            entryType returnEntry = null;
             long ownerCID = 0;
             try
             {
                 string newDisplayName = parameters[0].ToString();
                 ownerCID = (long)parameters[1];
                 string authToken = parameters[2].ToString();
-                returnEntry = LiveAtomAPILight.UpdatePersonalStatus(newDisplayName, ownerCID, authToken);
+                ConnectivitySettings connectivitySettings = (ConnectivitySettings)parameters[3];
+                EventHandler<AtomRequestSucceedEventArgs> onSuccessHandler = parameters[4] as EventHandler<AtomRequestSucceedEventArgs>;
+
+                entryType returnEntry = LiveAtomAPILight.UpdatePersonalStatus(newDisplayName, ownerCID, authToken, connectivitySettings);
+
+                if (onSuccessHandler != null)
+                    onSuccessHandler(ownerCID, new AtomRequestSucceedEventArgs(returnEntry));
             }
             catch (Exception ex)
             {
-                EventHandler<ExceptionEventArgs> onErrorHandler = parameters[4] as EventHandler<ExceptionEventArgs>;
+                EventHandler<ExceptionEventArgs> onErrorHandler = parameters[5] as EventHandler<ExceptionEventArgs>;
+
                 if (onErrorHandler != null)
                     onErrorHandler(ownerCID, new ExceptionEventArgs(ex));
             }
-
-            EventHandler<AtomRequestSucceedEventArgs> onSuccessHandler = parameters[3] as EventHandler<AtomRequestSucceedEventArgs>;
-            if (onSuccessHandler != null)
-                onSuccessHandler(ownerCID, new AtomRequestSucceedEventArgs(returnEntry));
         }
 
-        internal static entryType UpdatePersonalStatus(string newDisplayName, long ownerCID, string authToken)
+        internal static entryType UpdatePersonalStatus(string newDisplayName, long ownerCID, string authToken, ConnectivitySettings connectivitySettings)
         {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(liveAPIBaseURL + "/Users({0})/Status".Replace("{0}", ownerCID.ToString()));
+            if (connectivitySettings != null)
+            {
+                connectivitySettings.SetupWebRequest(request);
+            }
             request.Method = "POST";
             request.Accept = @"application/atom+xml; type=entry";
             request.ContentType = @"application/atom+xml";
             request.Headers.Add(HttpRequestHeader.Authorization, "WLID1.0 " + authToken);
             request.Headers.Add("AppId", appID);
-            request.ServicePoint.Expect100Continue = false;
 
             entryType entry = new entryType();
 
@@ -105,24 +111,19 @@ namespace MSNPSharp.LiveConnectAPI
             MemoryStream memStream = new MemoryStream();
             ser.Serialize(memStream, entry);
             string xmlString = Encoding.UTF8.GetString(memStream.ToArray());
-            request.ContentLength = Encoding.UTF8.GetByteCount(xmlString);
+            int xmlLength = Encoding.UTF8.GetByteCount(xmlString);
 
-            request.GetRequestStream().Write(Encoding.UTF8.GetBytes(xmlString), 0, Encoding.UTF8.GetByteCount(xmlString));
+            request.ContentLength = xmlLength;
+            request.GetRequestStream().Write(Encoding.UTF8.GetBytes(xmlString), 0, xmlLength);
 
-
-            entryType returnEntry = null;
             XmlReaderSettings readerSettings = new XmlReaderSettings();
             readerSettings.CloseInput = true;
 
-            XmlReader xmlReader = XmlReader.Create(request.GetResponse().GetResponseStream(), readerSettings);
-
-
-            returnEntry = (entryType)ser.Deserialize(xmlReader);
-
-
-            return returnEntry;
-
+            using (XmlReader xmlReader = XmlReader.Create(request.GetResponse().GetResponseStream(), readerSettings))
+            {
+                return (entryType)ser.Deserialize(xmlReader);
+            }
         }
 
     }
-}
+};

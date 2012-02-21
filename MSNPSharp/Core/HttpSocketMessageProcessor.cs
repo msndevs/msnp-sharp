@@ -309,9 +309,11 @@ namespace MSNPSharp.Core
 
                         isWebRequestInProcess = true;
                         HttpWebRequest request = (HttpWebRequest)WebRequest.Create(GenerateURI());
+                        ConnectivitySettings.SetupWebRequest(request);
+
                         action = HttpPollAction.None;
 
-                        request.Timeout = 5000;
+                        request.Timeout = 10000;
                         request.Method = "POST";
                         request.Accept = "*/*";
                         request.AllowAutoRedirect = false;

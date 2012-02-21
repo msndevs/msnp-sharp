@@ -33,12 +33,14 @@ THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Net;
 using System.Web;
+using System.Net.Sockets;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 
 namespace MSNPSharp
 {
     using MSNPSharp.Core;
+    using MSNPSharp.Services;
 
     public class MSNServiceCertificatePolicy : ICertificatePolicy
     {
@@ -289,7 +291,7 @@ namespace MSNPSharp
         /// <param name="proxyType">The proxy version, Socks4 or Socks5</param>
         /// <param name="webProxy">Webproxy to be used when accessing HTTP resources</param>
         public ConnectivitySettings(string host, int port, string proxyHost, int proxyPort, string proxyUsername, string proxyPassword, ProxyType proxyType, WebProxy webProxy)
-            :this(string.Empty, 0, host, port, proxyHost, proxyPort, proxyUsername, proxyPassword, proxyType, webProxy)
+            : this(string.Empty, 0, host, port, proxyHost, proxyPort, proxyUsername, proxyPassword, proxyType, webProxy)
         {
         }
 
@@ -397,13 +399,13 @@ namespace MSNPSharp
         /// </summary>
         public string LocalHost
         {
-            get 
-            { 
-                return localHost; 
+            get
+            {
+                return localHost;
             }
-            set 
-            { 
-                localHost = value; 
+            set
+            {
+                localHost = value;
             }
         }
 
@@ -412,13 +414,13 @@ namespace MSNPSharp
         /// </summary>
         public int LocalPort
         {
-            get 
-            { 
-                return localPort; 
+            get
+            {
+                return localPort;
             }
-            set 
-            { 
-                localPort = value; 
+            set
+            {
+                localPort = value;
             }
         }
 
@@ -535,6 +537,31 @@ namespace MSNPSharp
         {
             return "{Host=" + Host + ", Port=" + Port + "}";
         }
+        #endregion
+
+        #region Public Methods
+
+        public void SetupWebRequest(HttpWebRequest webRequest)
+        {
+            // Set Keep-Alive for performance reasons.
+            // Web request acts as TCP :)
+            webRequest.KeepAlive = true;
+            webRequest.ServicePoint.Expect100Continue = false;
+
+            // Web Proxy
+            // Check for null and don't override system settings
+            // webRequest.Proxy = null: overrides global settings
+            if (webProxy != null)
+            {
+                webRequest.Proxy = webProxy;
+            }
+
+            // Local bind address
+            IPAddress bindAddress = String.IsNullOrEmpty(LocalHost) ? IPAddress.Any : IPAddress.Parse(LocalHost);
+            webRequest.ServicePoint.BindIPEndPointDelegate =
+                new BindIPEndPoint(new IPEndPointCallback(new IPEndPoint(bindAddress, LocalPort)).BindIPEndPointCallback);
+        }
+
         #endregion
     }
 };
