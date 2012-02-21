@@ -467,7 +467,7 @@ namespace MSNPSharpClient
 
                         HttpAsyncDataDownloader.BeginDownload(c.UserTileURL.AbsoluteUri + "?t=" + System.Web.HttpUtility.UrlEncode(Messenger.StorageTicket),
                             new EventHandler<ObjectEventArgs>(SetUserTileToPictureBox),
-                            Messenger.ConnectivitySettings.WebProxy);
+                            Messenger.ConnectivitySettings);
                     }
                     else
                     {

@@ -279,19 +279,6 @@ namespace MSNPSharp
             }
         }
 
-        public WebProxy WebProxy
-        {
-            get
-            {
-                if (NSMessageHandler.ConnectivitySettings != null && NSMessageHandler.ConnectivitySettings.WebProxy != null)
-                {
-                    webProxy = NSMessageHandler.ConnectivitySettings.WebProxy;
-                }
-
-                return webProxy;
-            }
-        }
-
         #endregion
 
         #region Events
@@ -318,14 +305,12 @@ namespace MSNPSharp
         protected internal SoapHttpClientProtocol CreateService(MsnServiceType serviceType, MsnServiceState asyncObject)
         {
             SoapHttpClientProtocol service = null;
-            IPEndPoint localEndPoint = new IPEndPoint(String.IsNullOrEmpty(NSMessageHandler.ConnectivitySettings.LocalHost) ? IPAddress.Any : IPAddress.Parse(NSMessageHandler.ConnectivitySettings.LocalHost), NSMessageHandler.ConnectivitySettings.LocalPort);
 
             switch (serviceType)
             {
                 case MsnServiceType.AB:
 
-                    ABServiceBinding abService = new ABServiceBindingWrapper(localEndPoint, NSMessageHandler);
-                    abService.Proxy = WebProxy;
+                    ABServiceBinding abService = new ABServiceBindingWrapper(NSMessageHandler);
                     abService.Timeout = Int32.MaxValue;
                     abService.UserAgent = Properties.Resources.WebServiceUserAgent;
                     abService.ABApplicationHeaderValue = new ABApplicationHeader();
@@ -342,8 +327,7 @@ namespace MSNPSharp
 
                 case MsnServiceType.Sharing:
 
-                    SharingServiceBinding sharingService = new SharingServiceBindingWrapper(localEndPoint, NSMessageHandler);
-                    sharingService.Proxy = WebProxy;
+                    SharingServiceBinding sharingService = new SharingServiceBindingWrapper(NSMessageHandler);
                     sharingService.Timeout = Int32.MaxValue;
                     sharingService.UserAgent = Properties.Resources.WebServiceUserAgent;
                     sharingService.ABApplicationHeaderValue = new ABApplicationHeader();
@@ -361,8 +345,7 @@ namespace MSNPSharp
 
                 case MsnServiceType.Storage:
 
-                    StorageService storageService = new StorageServiceWrapper(localEndPoint, NSMessageHandler);
-                    storageService.Proxy = WebProxy;
+                    StorageService storageService = new StorageServiceWrapper(NSMessageHandler);
                     storageService.StorageApplicationHeaderValue = new StorageApplicationHeader();
                     storageService.StorageApplicationHeaderValue.ApplicationID = Properties.Resources.ApplicationStrId;
                     storageService.StorageApplicationHeaderValue.Scenario = Convert.ToString(asyncObject.PartnerScenario);
@@ -377,8 +360,7 @@ namespace MSNPSharp
 
                 case MsnServiceType.WhatsUp:
 
-                    WhatsUpServiceBinding wuService = new WhatsUpServiceBindingWrapper(localEndPoint, NSMessageHandler);
-                    wuService.Proxy = WebProxy;
+                    WhatsUpServiceBinding wuService = new WhatsUpServiceBindingWrapper(NSMessageHandler);
                     wuService.Timeout = 60000;
                     wuService.UserAgent = Properties.Resources.WebServiceUserAgent;
                     wuService.WNApplicationHeader = new WNApplicationHeaderType();
@@ -391,8 +373,7 @@ namespace MSNPSharp
 
                 case MsnServiceType.Directory:
 
-                    DirectoryService dirService = new DirectoryServiceWrapper(localEndPoint, NSMessageHandler);
-                    dirService.Proxy = WebProxy;
+                    DirectoryService dirService = new DirectoryServiceWrapper(NSMessageHandler);
                     dirService.Timeout = Int32.MaxValue;
                     dirService.SOAPApplicationHeaderValue = new SOAPApplicationHeader();
                     dirService.SOAPApplicationHeaderValue.ApplicationId = Properties.Resources.DirectoryServiceAppID;

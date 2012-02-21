@@ -45,10 +45,10 @@ namespace MSNPSharp.IO
 
     public class HttpAsyncDataDownloader
     {
-        public static void BeginDownload(string URL, EventHandler<ObjectEventArgs> completeCallback, WebProxy proxy)
+        public static void BeginDownload(string URL, EventHandler<ObjectEventArgs> completeCallback, ConnectivitySettings connectivitySettings)
         {
             Thread httpRequestThread = new Thread(new ParameterizedThreadStart(DoDownload));
-            httpRequestThread.Start(new object[] { URL, completeCallback, proxy });
+            httpRequestThread.Start(new object[] { URL, completeCallback, connectivitySettings });
         }
 
         private static void DoDownload(object param)
@@ -57,22 +57,19 @@ namespace MSNPSharp.IO
 
             string usertileURL = paramlist[0].ToString();
             EventHandler<ObjectEventArgs> callBack = paramlist[1] as EventHandler<ObjectEventArgs>;
-            WebProxy proxy = paramlist[2] as WebProxy;
+            ConnectivitySettings connectivitySettings = paramlist[2] as ConnectivitySettings;
 
             try
             {
                 Uri uri = new Uri(usertileURL);
 
                 HttpWebRequest fwr = (HttpWebRequest)WebRequest.Create(uri);
-
-                // Don't override existing system wide proxy settings.
-                if (proxy != null)
+                if (connectivitySettings != null)
                 {
-                    fwr.Proxy = proxy;
+                    connectivitySettings.SetupWebRequest(fwr);
                 }
 
                 fwr.Timeout = 10000;
-
                 fwr.BeginGetResponse(delegate(IAsyncResult result)
                 {
                     try

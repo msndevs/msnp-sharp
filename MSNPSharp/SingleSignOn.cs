@@ -63,11 +63,12 @@ namespace MSNPSharp
         RPST = 0x100
     }
 
+    [Serializable]
     public enum ExpiryState
     {
-        NotExpired,
-        WillExpireSoon,
-        Expired
+        NotExpired = 0,
+        WillExpireSoon = 1,
+        Expired = 2
     }
 
     #region MSNTicket
@@ -82,14 +83,16 @@ namespace MSNPSharp
         private long ownerCID = 0;
 
         [NonSerialized]
-        private SerializableDictionary<SSOTicketType, SSOTicket> ssoTickets = new SerializableDictionary<SSOTicketType, SSOTicket>();
+        private Dictionary<SSOTicketType, SSOTicket> ssoTickets = new Dictionary<SSOTicketType, SSOTicket>();
 
         [NonSerialized]
-        private int hashcode;
+        private string sha256Key = String.Empty;
+
+        /// <summary>
+        /// Prevents deleting from cache if the ticket used mostly.
+        /// </summary>
         [NonSerialized]
         internal int DeleteTick;
-        [NonSerialized]
-        internal int UpdateTick;
 
         public MSNTicket()
         {
@@ -97,17 +100,55 @@ namespace MSNPSharp
 
         internal MSNTicket(Credentials creds)
         {
-            if (creds != null)
+            if (null != creds &&
+                false == String.IsNullOrEmpty(creds.Account) &&
+                false == String.IsNullOrEmpty(creds.Password))
             {
-                hashcode = (creds.Account.ToLowerInvariant() + creds.Password).GetHashCode();
-                DeleteTick = unchecked(Environment.TickCount + (Settings.MSNTicketLifeTime * 60000)); // in minutes
-                UpdateTick = 0; // Not updated yet! No tickets yet!
+                DeleteTick = NextDeleteTick();
+                Sha256Key = ComputeSHA(creds.Account, creds.Password);
             }
+        }
+
+        internal static string ComputeSHA(string account, string password)
+        {
+            using (SHA256Managed sha256 = new SHA256Managed())
+            {
+                return Convert.ToBase64String(sha256.ComputeHash(Encoding.UTF8.GetBytes(account.ToLowerInvariant() + password)));
+            }
+        }
+
+        /// <summary>
+        /// Generates a new delete time to prevent deleting the msn ticket from cache. 
+        /// </summary>
+        /// <returns></returns>
+        internal static int NextDeleteTick()
+        {
+            return unchecked(Environment.TickCount + (Settings.MSNTicketLifeTime * 60000)); // in minutes
+        }
+
+        internal void Clear()
+        {
+            SSOTickets.Clear();
+            Sha256Key = String.Empty;
+            OwnerCID = 0;
+            DeleteTick = 0;
         }
 
         #region Properties
 
-        public SerializableDictionary<SSOTicketType, SSOTicket> SSOTickets
+        internal string Sha256Key
+        {
+            get
+            {
+                return sha256Key;
+            }
+            private set
+            {
+                sha256Key = value;
+            }
+        }
+
+        public Dictionary<SSOTicketType, SSOTicket> SSOTickets
         {
             get
             {
@@ -164,14 +205,15 @@ namespace MSNPSharp
                 if (SSOTickets[tt].Expires < DateTime.Now)
                     return ExpiryState.Expired;
 
-                return (SSOTickets[tt].Expires < DateTime.Now.AddSeconds(10)) ? ExpiryState.WillExpireSoon : ExpiryState.NotExpired;
+                return (SSOTickets[tt].Expires < DateTime.Now.AddSeconds(30)) ? ExpiryState.WillExpireSoon : ExpiryState.NotExpired;
             }
+
             return ExpiryState.Expired;
         }
 
         public override int GetHashCode()
         {
-            return hashcode;
+            return Sha256Key.GetHashCode();
         }
 
         public override bool Equals(object obj)
@@ -182,7 +224,7 @@ namespace MSNPSharp
             if (ReferenceEquals(this, obj))
                 return true;
 
-            return GetHashCode() == ((MSNTicket)obj).GetHashCode();
+            return Sha256Key == ((MSNTicket)obj).Sha256Key;
         }
     }
 
@@ -286,11 +328,15 @@ namespace MSNPSharp
 
     #region SingleSignOnManager
 
+    /// <summary>
+    /// Manages SingleSignOn and auth tickets.
+    /// </summary>
     internal static class SingleSignOnManager
     {
-        private static Dictionary<int, MSNTicket> cache = new Dictionary<int, MSNTicket>();
+        private static Dictionary<string, MSNTicket> ticketCache = new Dictionary<string, MSNTicket>();
         private static DateTime nextCleanup = NextCleanupTime();
         private static object syncObject;
+
         private static object SyncObject
         {
             get
@@ -312,27 +358,40 @@ namespace MSNPSharp
 
         private static void CheckCleanup()
         {
+            // Check if clean is necessary.
             if (nextCleanup < DateTime.Now)
             {
+                // Only one thread can run this block.
                 lock (SyncObject)
                 {
+                    // Skip if another thread is changed the clean up time.
                     if (nextCleanup < DateTime.Now)
                     {
+                        // This must be the first. Don't change the order.
                         nextCleanup = NextCleanupTime();
-                        int tickcount = Environment.TickCount;
-                        List<int> cachestodelete = new List<int>();
-                        foreach (MSNTicket t in cache.Values)
+
+                        // Empty ticket and it's sso ticket?
+                        // This is not possible but be sure it is clean.
+                        MSNTicket.Empty.Clear();
+
+                        // Delete tickets from cache (depends on DeleteTick).
+                        int tc = Environment.TickCount;
+                        List<string> cachestodelete = new List<string>();
+
+                        foreach (MSNTicket t in ticketCache.Values)
                         {
-                            if (t.DeleteTick != 0 && t.DeleteTick < tickcount)
+                            if (t.DeleteTick != 0 && t.DeleteTick < tc &&
+                                false == String.IsNullOrEmpty(t.Sha256Key))
                             {
-                                cachestodelete.Add(t.GetHashCode());
+                                cachestodelete.Add(t.Sha256Key);
                             }
                         }
+
                         if (cachestodelete.Count > 0)
                         {
-                            foreach (int i in cachestodelete)
+                            foreach (string key in cachestodelete)
                             {
-                                cache.Remove(i);
+                                ticketCache.Remove(key);
                             }
                             GC.Collect();
                         }
@@ -349,19 +408,22 @@ namespace MSNPSharp
         {
             CheckCleanup();
 
-            if (nsMessageHandler != null)
+            if (nsMessageHandler == null || nsMessageHandler.Credentials == null)
+                return;
+
+            string authUser = nsMessageHandler.Credentials.Account;
+            string authPassword = nsMessageHandler.Credentials.Password;
+
+            if (false == String.IsNullOrEmpty(authUser) && false == String.IsNullOrEmpty(authPassword))
             {
-                string authUser = nsMessageHandler.Credentials.Account.ToLowerInvariant();
-                string authPassword = nsMessageHandler.Credentials.Password;
-                string authKey = authUser + authPassword;
-                int hashcode = authKey.GetHashCode();
+                string sha256key = MSNTicket.ComputeSHA(authUser, authPassword);
                 MSNTicket ticket = null;
-                
+
                 lock (SyncObject)
                 {
-                    ticket = cache.ContainsKey(hashcode) ? cache[hashcode] : new MSNTicket(nsMessageHandler.Credentials);
+                    ticket = ticketCache.ContainsKey(sha256key) ? ticketCache[sha256key] : new MSNTicket(nsMessageHandler.Credentials);
                 }
-                
+
                 SSOTicketType[] ssos = (SSOTicketType[])Enum.GetValues(typeof(SSOTicketType));
                 SSOTicketType expiredtickets = SSOTicketType.None;
 
@@ -373,6 +435,9 @@ namespace MSNPSharp
 
                 if (expiredtickets == SSOTicketType.None)
                 {
+                    // Hit delete tick.
+                    ticket.DeleteTick = MSNTicket.NextDeleteTick();
+
                     nsMessageHandler.MSNTicket = ticket;
 
                     if (onSuccess != null)
@@ -386,7 +451,7 @@ namespace MSNPSharp
 
                     SingleSignOn sso = new SingleSignOn(nsMessageHandler, policy);
                     sso.AddAuths(expiredtickets);
-                    
+
                     // ASYNC
                     if (onSuccess != null && onError != null)
                     {
@@ -398,25 +463,36 @@ namespace MSNPSharp
                                     try
                                     {
                                         // Update cache
-                                        lock (SyncObject)
+                                        try
                                         {
-                                            cache[hashcode] = ticket;
+                                            lock (SyncObject)
+                                            {
+                                                if (ticket.SSOTickets.Count > 0)
+                                                {
+                                                    ticketCache[sha256key] = ticket;
+                                                }
+                                            }
                                         }
-                                    
+                                        catch (Exception error)
+                                        {
+                                            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Update cache error: " + error.StackTrace, "SingleSignOnManager");
+                                        }
+
                                         // Check Credentials again. Owner may sign off while SSOing.
-                                        if (nsMessageHandler.Credentials != null && 
+                                        if (nsMessageHandler.Credentials != null &&
                                             nsMessageHandler.Credentials.Account == authUser &&
-                                            nsMessageHandler.Credentials.Password == authPassword)
+                                            nsMessageHandler.Credentials.Password == authPassword &&
+                                            nsMessageHandler.IsSignedIn == false)
                                         {
                                             NSMessageProcessor nsmp = nsMessageHandler.MessageProcessor as NSMessageProcessor;
-                                        
+
                                             if (nsmp != null && nsmp.Connected)
                                             {
-                                                 nsMessageHandler.MSNTicket = ticket;
+                                                nsMessageHandler.MSNTicket = ticket;
 
-                                                 onSuccess(nsMessageHandler, e);
+                                                onSuccess(nsMessageHandler, e);
                                             }
-                                        }                                        
+                                        }
                                     }
                                     catch (Exception ex)
                                     {
@@ -431,18 +507,18 @@ namespace MSNPSharp
                         catch (Exception error)
                         {
                             onError(nsMessageHandler, new ExceptionEventArgs(error));
-                        }                        
+                        }
                     }
                     else
                     {
                         // SYNC
                         sso.Authenticate(ticket);
-                        
+
                         lock (SyncObject)
                         {
-                            cache[hashcode] = ticket;
+                            ticketCache[sha256key] = ticket;
                         }
-                        
+
                         nsMessageHandler.MSNTicket = ticket;
                     }
                 }
@@ -453,19 +529,29 @@ namespace MSNPSharp
         {
             CheckCleanup();
 
-            if (nsMessageHandler != null)
+            if (nsMessageHandler == null || nsMessageHandler.Credentials == null)
+                return;
+
+            string authUser = nsMessageHandler.Credentials.Account;
+            string authPassword = nsMessageHandler.Credentials.Password;
+
+            if (false == String.IsNullOrEmpty(authUser) && false == String.IsNullOrEmpty(authPassword))
             {
-                int hashcode = (nsMessageHandler.Credentials.Account.ToLowerInvariant() + nsMessageHandler.Credentials.Password).GetHashCode();                
+                string sha256key = MSNTicket.ComputeSHA(authUser, authPassword);
                 MSNTicket ticket = null;
+
                 lock (SyncObject)
                 {
-                    ticket = cache.ContainsKey(hashcode) ? cache[hashcode] : new MSNTicket(nsMessageHandler.Credentials);
+                    ticket = ticketCache.ContainsKey(sha256key) ? ticketCache[sha256key] : new MSNTicket(nsMessageHandler.Credentials);
                 }
-                
+
                 ExpiryState es = ticket.Expired(renew);
 
                 if (ExpiryState.NotExpired != es)
                 {
+                    // Hit delete tick
+                    ticket.DeleteTick = MSNTicket.NextDeleteTick();
+
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Re-new ticket: " + renew, "SingleSignOnManager");
 
                     SingleSignOn sso = new SingleSignOn(nsMessageHandler, ticket.Policy);
@@ -490,13 +576,68 @@ namespace MSNPSharp
                     }
                     else
                     {
-                        // SYNC
-                        sso.Authenticate(ticket);
-                        
-                        lock (SyncObject)
+                        // NO TICKET. WE NEED SYNC CALL!
+                        // DILEMMA:
+                        // 1 - We need this ticket (absolutely)
+                        // 2 - What we do if connection error occured!
+                        // ANSWER: Try 3 times if it is soft error.
+                        int retries = 0;
+                        do
                         {
-                            cache[hashcode] = ticket;
-                        }
+                            try
+                            {
+                                sso.Authenticate(ticket);
+
+                                // Update cache
+                                try
+                                {
+                                    lock (SyncObject)
+                                    {
+                                        if (ticket.SSOTickets.Count > 0)
+                                        {
+                                            ticketCache[sha256key] = ticket;
+                                        }
+                                    }
+                                }
+                                catch (Exception error)
+                                {
+                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Update cache error: " + error.StackTrace, "SingleSignOnManager");
+                                }
+
+                                break;
+                            }
+                            catch (AuthenticationException authExc)
+                            {
+                                throw authExc;
+                            }
+                            catch (MSNPSharpException msnpExc)
+                            {
+                                if (msnpExc.InnerException == null)
+                                    throw msnpExc;
+
+                                WebException webExc = msnpExc.InnerException as WebException;
+                                if (webExc == null)
+                                    throw msnpExc.InnerException;
+
+                                // Handle soft errors
+                                switch (webExc.Status)
+                                {
+                                    case WebExceptionStatus.ConnectionClosed:
+                                    case WebExceptionStatus.KeepAliveFailure:
+                                    case WebExceptionStatus.ReceiveFailure:
+                                    case WebExceptionStatus.SendFailure:
+                                    case WebExceptionStatus.Timeout:
+                                    case WebExceptionStatus.UnknownError:
+
+                                        retries++;
+                                        break;
+
+                                    default:
+                                        throw msnpExc.InnerException;
+                                }
+                            }
+
+                        } while (retries < 3);
                     }
                 }
 
@@ -530,24 +671,8 @@ namespace MSNPSharp
             }
         }
 
-        private WebProxy WebProxy
-        {
-            get
-            {
-                return NSMessageHandler == null ? null : NSMessageHandler.ConnectivitySettings.WebProxy;
-            }
-        }
 
-        private IPEndPoint LocalEndPoint
-        {
-            get
-            {
-                return NSMessageHandler == null ? null : new IPEndPoint(String.IsNullOrEmpty(NSMessageHandler.ConnectivitySettings.LocalHost) ? IPAddress.Any : IPAddress.Parse(NSMessageHandler.ConnectivitySettings.LocalHost), NSMessageHandler.ConnectivitySettings.LocalPort);
-            }
-        }
-
-
-        public SingleSignOn(string username, string password, string policy)
+        private SingleSignOn(string username, string password, string policy)
         {
             this.user = username;
             this.pass = password;
@@ -623,12 +748,12 @@ namespace MSNPSharp
                 }
             }
         }
-        
+
         public void Authenticate(MSNTicket msnticket)
         {
             Authenticate(msnticket, null, null);
         }
-  
+
         /// <summary>
         /// Authenticate the specified user. By asynchronous or synchronous ways.
         /// </summary>
@@ -654,7 +779,7 @@ namespace MSNPSharp
             SecurityTokenService securService = CreateSecurityTokenService(@"http://schemas.xmlsoap.org/ws/2005/02/trust/RST/Issue", @"HTTPS://login.live.com:443//RST2.srf");
             Authenticate(securService, msnticket, onSuccess, onError);
         }
-  
+
         private void Authenticate(SecurityTokenService securService, MSNTicket msnticket, EventHandler onSuccess, EventHandler<ExceptionEventArgs> onError)
         {
             if (user.Split('@').Length > 1)
@@ -699,7 +824,7 @@ namespace MSNPSharp
                         else if (e.Result != null)
                         {
                             GetTickets(e.Result, securService, msnticket);
-                            
+
                             onSuccess(this, EventArgs.Empty);
                         }
                         else
@@ -715,28 +840,28 @@ namespace MSNPSharp
                 try
                 {
                     RequestSecurityTokenResponseType[] result = securService.RequestMultipleSecurityTokens(mulToken);
-                    
+
                     if (result != null)
                     {
                         GetTickets(result, securService, msnticket);
                     }
-                }                
+                }
                 catch (SoapException sex)
                 {
                     if (ProcessError(securService, sex, msnticket, onSuccess, onError))
                         return;
-                    
+
                     throw sex;
                 }
                 catch (Exception ex)
                 {
                     MSNPSharpException sexp = new MSNPSharpException(ex.Message + ". See innerexception for detail.", ex);
-                    
+
                     if (securService.pp != null)
                         sexp.Data["Code"] = securService.pp.reqstatus;  //Error code
 
                     throw sexp;
-                }                
+                }
             }
         }
 
@@ -745,7 +870,7 @@ namespace MSNPSharp
             string errFedDirectLogin = @"Direct login to WLID is not allowed for this federated namespace";
             if (exception == null)
                 return false;
-            
+
             if (secureService.pp == null)
                 return false;
 
@@ -819,20 +944,20 @@ namespace MSNPSharp
                                 }
 
                                 response = e.Result;
-                                
+
                                 if (response.RequestedSecurityToken == null || response.RequestedSecurityToken.Assertion == null)
                                     return;
 
                                 AssertionType assertion = response.RequestedSecurityToken.Assertion;
                                 secureService = CreateSecurityTokenService(@"http://schemas.xmlsoap.org/ws/2005/02/trust/RST/Issue", @"HTTPS://login.live.com:443//RST2.srf");
                                 secureService.Security.Assertion = assertion;
-                                
+
                                 if (response.Lifetime != null)
                                 {
                                     secureService.Security.Timestamp.Created = response.Lifetime.Created;
                                     secureService.Security.Timestamp.Expires = response.Lifetime.Expires;
                                 }
-                                
+
                                 Authenticate(secureService, msnticket, onSuccess, onError);
                             }
                         };
@@ -862,7 +987,7 @@ namespace MSNPSharp
                         AssertionType assertion = response.RequestedSecurityToken.Assertion;
                         secureService = CreateSecurityTokenService(@"http://schemas.xmlsoap.org/ws/2005/02/trust/RST/Issue", @"HTTPS://login.live.com:443//RST2.srf");
                         secureService.Security.Assertion = assertion;
-                        
+
                         Authenticate(secureService, msnticket, onSuccess, onError);
                         return true;
                     }
@@ -875,9 +1000,8 @@ namespace MSNPSharp
 
         private SecurityTokenService CreateSecurityTokenService(string actionValue, string toValue)
         {
-            SecurityTokenService securService = new SecurityTokenServiceWrapper(LocalEndPoint);
+            SecurityTokenService securService = new SecurityTokenServiceWrapper(NSMessageHandler);
             securService.Timeout = 60000;
-            securService.Proxy = WebProxy;
             securService.AuthInfo = new AuthInfoType();
             securService.AuthInfo.Id = "PPAuthInfo";
             securService.AuthInfo.HostingApp = "{7108E71A-9926-4FCB-BCC9-9A9D3F32E423}";
@@ -975,24 +1099,28 @@ namespace MSNPSharp
                 }
 
                 SSOTicket ssoticket = new SSOTicket(ticketype);
+
                 if (token.AppliesTo != null)
                     ssoticket.Domain = token.AppliesTo.EndpointReference.Address.Value;
+
                 if (token.RequestedSecurityToken.BinarySecurityToken != null)
                     ssoticket.Ticket = token.RequestedSecurityToken.BinarySecurityToken.Value;
+
                 if (token.RequestedProofToken != null && token.RequestedProofToken.BinarySecret != null)
                 {
                     ssoticket.BinarySecret = token.RequestedProofToken.BinarySecret.Value;
                 }
+
                 if (token.Lifetime != null)
                 {
                     ssoticket.Created = XmlConvert.ToDateTime(token.Lifetime.Created.Value, "yyyy-MM-ddTHH:mm:ssZ");
                     ssoticket.Expires = XmlConvert.ToDateTime(token.Lifetime.Expires.Value, "yyyy-MM-ddTHH:mm:ssZ");
                 }
-                
+
                 lock (msnticket.SSOTickets)
                 {
                     msnticket.SSOTickets[ticketype] = ssoticket;
-                    msnticket.UpdateTick = Environment.TickCount;
+                    msnticket.DeleteTick = MSNTicket.NextDeleteTick();
                 }
             }
 

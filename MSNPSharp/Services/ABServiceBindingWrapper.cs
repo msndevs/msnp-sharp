@@ -43,17 +43,17 @@ namespace MSNPSharp.Services
     [System.Web.Services.WebServiceBindingAttribute(Name = "ABServiceBinding", Namespace = "http://www.msn.com/webservices/AddressBook")]
     internal sealed class ABServiceBindingWrapper : ABServiceBinding
     {
-        private IPEndPoint localEndPoint = null;
+        private NSMessageHandler nsHandler;
 
         public ABServiceBindingWrapper()
             : base()
         {
         }
 
-        public ABServiceBindingWrapper(IPEndPoint localEndPoint, NSMessageHandler nsHandler)
+        public ABServiceBindingWrapper(NSMessageHandler nsHandler)
             : this()
         {
-            this.localEndPoint = localEndPoint;
+            this.nsHandler = nsHandler;
 
             SingleSignOnManager.RenewIfExpired(nsHandler, SSOTicketType.Contact);
         }
@@ -64,7 +64,7 @@ namespace MSNPSharp.Services
             HttpWebRequest httpRequest = request as HttpWebRequest;
             if (httpRequest != null)
             {
-                httpRequest.ServicePoint.BindIPEndPointDelegate = new BindIPEndPoint((new IPEndPointCallback(localEndPoint)).BindIPEndPointCallback);
+                nsHandler.ConnectivitySettings.SetupWebRequest(httpRequest);
             }
             return request;
         }
