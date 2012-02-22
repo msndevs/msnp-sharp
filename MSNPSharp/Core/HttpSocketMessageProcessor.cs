@@ -81,7 +81,6 @@ namespace MSNPSharp.Core
         private string sessionID;
         private string gatewayIP;
         private string host;
-        private WebProxy webProxy;
 
         private Queue<QueueState> sendingQueue = new Queue<QueueState>();
         private System.Timers.Timer pollTimer = new System.Timers.Timer(2000);
@@ -94,17 +93,8 @@ namespace MSNPSharp.Core
             host = gatewayIP;
             pollTimer.Elapsed += pollTimer_Elapsed;
             pollTimer.AutoReset = true;
-
-            webProxy = connectivitySettings.WebProxy;
         }
 
-        public WebProxy WebProxy
-        {
-            get
-            {
-                return webProxy;
-            }
-        }
 
         public override bool Connected
         {
@@ -326,13 +316,6 @@ namespace MSNPSharp.Core
                         request.ContentType = "text/html; charset=UTF-8";
                         request.UserAgent = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.912.63 Safari/535.7";
                         request.Headers.Add("X-Requested-Session-Content-Type", "text/html");
-
-                        request.ServicePoint.Expect100Continue = false;
-
-                        if (webProxy != null)
-                        {
-                            request.Proxy = webProxy;
-                        }
 
                         HttpState httpState = new HttpState(request, null, null, data, userState);
                         request.BeginGetRequestStream(EndGetRequestStreamCallback, httpState);

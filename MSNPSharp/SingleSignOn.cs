@@ -333,7 +333,7 @@ namespace MSNPSharp
     /// </summary>
     internal static class SingleSignOnManager
     {
-        private static Dictionary<string, MSNTicket> ticketCache = new Dictionary<string, MSNTicket>();
+        private static Dictionary<string, MSNTicket> authenticatedTicketsCache = new Dictionary<string, MSNTicket>();
         private static DateTime nextCleanup = NextCleanupTime();
         private static object syncObject;
 
@@ -372,31 +372,107 @@ namespace MSNPSharp
 
                         // Empty ticket and it's sso ticket?
                         // This is not possible but be sure it is clean.
-                        MSNTicket.Empty.Clear();
+                        try
+                        {
+                            MSNTicket.Empty.Clear();
+                        }
+                        catch (Exception)
+                        {
+                        }
 
                         // Delete tickets from cache (depends on DeleteTick).
                         int tc = Environment.TickCount;
                         List<string> cachestodelete = new List<string>();
 
-                        foreach (MSNTicket t in ticketCache.Values)
+                        try
                         {
-                            if (t.DeleteTick != 0 && t.DeleteTick < tc &&
-                                false == String.IsNullOrEmpty(t.Sha256Key))
+                            foreach (MSNTicket t in authenticatedTicketsCache.Values)
                             {
-                                cachestodelete.Add(t.Sha256Key);
+                                if (t.DeleteTick != 0 && t.DeleteTick < tc &&
+                                    false == String.IsNullOrEmpty(t.Sha256Key))
+                                {
+                                    cachestodelete.Add(t.Sha256Key);
+                                }
                             }
+                        }
+                        catch (Exception)
+                        {
                         }
 
                         if (cachestodelete.Count > 0)
                         {
-                            foreach (string key in cachestodelete)
+                            try
                             {
-                                ticketCache.Remove(key);
+                                foreach (string key in cachestodelete)
+                                {
+                                    authenticatedTicketsCache.Remove(key);
+                                }
+                            }
+                            catch (Exception)
+                            {
                             }
                             GC.Collect();
                         }
                     }
                 }
+            }
+        }
+
+        private static MSNTicket GetFromCacheOrCreateNewWithLock(string sha256key, Credentials creds)
+        {
+            MSNTicket ticket = null;
+
+            lock (SyncObject)
+            {
+                if (authenticatedTicketsCache.ContainsKey(sha256key))
+                {
+                    // Hit delete tick
+                    ticket = authenticatedTicketsCache[sha256key];
+                    ticket.DeleteTick = MSNTicket.NextDeleteTick();
+                }
+                else
+                {
+                    ticket = new MSNTicket(creds);
+                }
+            }
+
+            return ticket;
+        }
+
+        private static void AddToCacheWithLock(MSNTicket ticket)
+        {
+            try
+            {
+                lock (SyncObject)
+                {
+                    if (ticket.SSOTickets.Count > 0 && false == String.IsNullOrEmpty(ticket.Sha256Key))
+                    {
+                        authenticatedTicketsCache[ticket.Sha256Key] = ticket;
+                        ticket.DeleteTick = MSNTicket.NextDeleteTick();
+                    }
+                }
+            }
+            catch (Exception error)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Add to cache error: " + error.StackTrace, "SingleSignOnManager");
+            }
+        }
+
+        private static void DeleteFromCacheWithLock(string sha256key)
+        {
+            try
+            {
+                lock (SyncObject)
+                {
+                    if (authenticatedTicketsCache.ContainsKey(sha256key))
+                    {
+                        authenticatedTicketsCache.Remove(sha256key);
+                    }
+                }
+            }
+            catch (Exception error)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Delete from cache error: " + error.StackTrace, "SingleSignOnManager");
             }
         }
 
@@ -414,115 +490,92 @@ namespace MSNPSharp
             string authUser = nsMessageHandler.Credentials.Account;
             string authPassword = nsMessageHandler.Credentials.Password;
 
-            if (false == String.IsNullOrEmpty(authUser) && false == String.IsNullOrEmpty(authPassword))
+            if (String.IsNullOrEmpty(authUser) || String.IsNullOrEmpty(authPassword))
+                return;
+
+            string sha256key = MSNTicket.ComputeSHA(authUser, authPassword);
+            MSNTicket ticket = GetFromCacheOrCreateNewWithLock(sha256key, nsMessageHandler.Credentials);
+
+            SSOTicketType[] ssos = (SSOTicketType[])Enum.GetValues(typeof(SSOTicketType));
+            SSOTicketType expiredtickets = SSOTicketType.None;
+
+            foreach (SSOTicketType ssot in ssos)
             {
-                string sha256key = MSNTicket.ComputeSHA(authUser, authPassword);
-                MSNTicket ticket = null;
+                if (ExpiryState.NotExpired != ticket.Expired(ssot))
+                    expiredtickets |= ssot;
+            }
 
-                lock (SyncObject)
+            if (expiredtickets == SSOTicketType.None)
+            {
+                nsMessageHandler.MSNTicket = ticket;
+
+                if (onSuccess != null)
                 {
-                    ticket = ticketCache.ContainsKey(sha256key) ? ticketCache[sha256key] : new MSNTicket(nsMessageHandler.Credentials);
+                    onSuccess(nsMessageHandler, EventArgs.Empty);
                 }
+            }
+            else
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Request new tickets: " + expiredtickets, "SingleSignOnManager");
 
-                SSOTicketType[] ssos = (SSOTicketType[])Enum.GetValues(typeof(SSOTicketType));
-                SSOTicketType expiredtickets = SSOTicketType.None;
+                SingleSignOn sso = new SingleSignOn(nsMessageHandler, policy);
+                sso.AddAuths(expiredtickets);
 
-                foreach (SSOTicketType ssot in ssos)
+                // ASYNC
+                if (onSuccess != null && onError != null)
                 {
-                    if (ExpiryState.NotExpired != ticket.Expired(ssot))
-                        expiredtickets |= ssot;
-                }
-
-                if (expiredtickets == SSOTicketType.None)
-                {
-                    // Hit delete tick.
-                    ticket.DeleteTick = MSNTicket.NextDeleteTick();
-
-                    nsMessageHandler.MSNTicket = ticket;
-
-                    if (onSuccess != null)
+                    try
                     {
-                        onSuccess(nsMessageHandler, EventArgs.Empty);
+                        sso.Authenticate(ticket,
+                            delegate(object sender, EventArgs e)
+                            {
+                                try
+                                {
+                                    AddToCacheWithLock(ticket);
+
+                                    // Check Credentials again. Owner may sign off while SSOing.
+                                    if (nsMessageHandler.Credentials != null &&
+                                        nsMessageHandler.Credentials.Account == authUser &&
+                                        nsMessageHandler.Credentials.Password == authPassword &&
+                                        nsMessageHandler.IsSignedIn == false)
+                                    {
+                                        NSMessageProcessor nsmp = nsMessageHandler.MessageProcessor as NSMessageProcessor;
+
+                                        if (nsmp != null && nsmp.Connected)
+                                        {
+                                            nsMessageHandler.MSNTicket = ticket;
+
+                                            onSuccess(nsMessageHandler, e);
+                                        }
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    DeleteFromCacheWithLock(sha256key);
+                                    onError(nsMessageHandler, new ExceptionEventArgs(ex));
+                                }
+                            },
+                            delegate(object sender, ExceptionEventArgs e)
+                            {
+                                DeleteFromCacheWithLock(sha256key);
+                                onError(nsMessageHandler, e);
+                            });
+                    }
+                    catch (Exception error)
+                    {
+                        DeleteFromCacheWithLock(sha256key);
+                        onError(nsMessageHandler, new ExceptionEventArgs(error));
                     }
                 }
                 else
                 {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Request new tickets: " + expiredtickets, "SingleSignOnManager");
+                    // SYNC
+                    AuthenticateRetryAndUpdateCacheSync(sso, ticket, sha256key, 3);
 
-                    SingleSignOn sso = new SingleSignOn(nsMessageHandler, policy);
-                    sso.AddAuths(expiredtickets);
-
-                    // ASYNC
-                    if (onSuccess != null && onError != null)
-                    {
-                        try
-                        {
-                            sso.Authenticate(ticket,
-                                delegate(object sender, EventArgs e)
-                                {
-                                    try
-                                    {
-                                        // Update cache
-                                        try
-                                        {
-                                            lock (SyncObject)
-                                            {
-                                                if (ticket.SSOTickets.Count > 0)
-                                                {
-                                                    ticketCache[sha256key] = ticket;
-                                                }
-                                            }
-                                        }
-                                        catch (Exception error)
-                                        {
-                                            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Update cache error: " + error.StackTrace, "SingleSignOnManager");
-                                        }
-
-                                        // Check Credentials again. Owner may sign off while SSOing.
-                                        if (nsMessageHandler.Credentials != null &&
-                                            nsMessageHandler.Credentials.Account == authUser &&
-                                            nsMessageHandler.Credentials.Password == authPassword &&
-                                            nsMessageHandler.IsSignedIn == false)
-                                        {
-                                            NSMessageProcessor nsmp = nsMessageHandler.MessageProcessor as NSMessageProcessor;
-
-                                            if (nsmp != null && nsmp.Connected)
-                                            {
-                                                nsMessageHandler.MSNTicket = ticket;
-
-                                                onSuccess(nsMessageHandler, e);
-                                            }
-                                        }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        onError(nsMessageHandler, new ExceptionEventArgs(ex));
-                                    }
-                                },
-                                delegate(object sender, ExceptionEventArgs e)
-                                {
-                                    onError(nsMessageHandler, e);
-                                });
-                        }
-                        catch (Exception error)
-                        {
-                            onError(nsMessageHandler, new ExceptionEventArgs(error));
-                        }
-                    }
-                    else
-                    {
-                        // SYNC
-                        sso.Authenticate(ticket);
-
-                        lock (SyncObject)
-                        {
-                            ticketCache[sha256key] = ticket;
-                        }
-
-                        nsMessageHandler.MSNTicket = ticket;
-                    }
+                    nsMessageHandler.MSNTicket = ticket;
                 }
             }
+
         }
 
         internal static void RenewIfExpired(NSMessageHandler nsMessageHandler, SSOTicketType renew)
@@ -535,114 +588,113 @@ namespace MSNPSharp
             string authUser = nsMessageHandler.Credentials.Account;
             string authPassword = nsMessageHandler.Credentials.Password;
 
-            if (false == String.IsNullOrEmpty(authUser) && false == String.IsNullOrEmpty(authPassword))
+            if (String.IsNullOrEmpty(authUser) || String.IsNullOrEmpty(authPassword))
+                return;
+
+            string sha256key = MSNTicket.ComputeSHA(authUser, authPassword);
+            MSNTicket ticket = GetFromCacheOrCreateNewWithLock(sha256key, nsMessageHandler.Credentials);
+            ExpiryState es = ticket.Expired(renew);
+
+            if (es == ExpiryState.NotExpired)
             {
-                string sha256key = MSNTicket.ComputeSHA(authUser, authPassword);
-                MSNTicket ticket = null;
-
-                lock (SyncObject)
-                {
-                    ticket = ticketCache.ContainsKey(sha256key) ? ticketCache[sha256key] : new MSNTicket(nsMessageHandler.Credentials);
-                }
-
-                ExpiryState es = ticket.Expired(renew);
-
-                if (ExpiryState.NotExpired != es)
-                {
-                    // Hit delete tick
-                    ticket.DeleteTick = MSNTicket.NextDeleteTick();
-
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Re-new ticket: " + renew, "SingleSignOnManager");
-
-                    SingleSignOn sso = new SingleSignOn(nsMessageHandler, ticket.Policy);
-
-                    sso.AddAuths(renew);
-
-                    if (es == ExpiryState.WillExpireSoon)
-                    {
-                        // ASYNC
-                        sso.Authenticate(ticket,
-                                delegate(object sender, EventArgs e)
-                                {
-                                    // Keep this delegate to NOT throw Exception.
-                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Ticket will expire soon updated with new ticket.");
-                                },
-                                delegate(object sender, ExceptionEventArgs e)
-                                {
-                                    // Keep this delegate to NOT throw Exception.
-                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError, e.Exception.StackTrace);
-                                }
-                        );
-                    }
-                    else
-                    {
-                        // NO TICKET. WE NEED SYNC CALL!
-                        // DILEMMA:
-                        // 1 - We need this ticket (absolutely)
-                        // 2 - What we do if connection error occured!
-                        // ANSWER: Try 3 times if it is soft error.
-                        int retries = 0;
-                        do
-                        {
-                            try
-                            {
-                                sso.Authenticate(ticket);
-
-                                // Update cache
-                                try
-                                {
-                                    lock (SyncObject)
-                                    {
-                                        if (ticket.SSOTickets.Count > 0)
-                                        {
-                                            ticketCache[sha256key] = ticket;
-                                        }
-                                    }
-                                }
-                                catch (Exception error)
-                                {
-                                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Update cache error: " + error.StackTrace, "SingleSignOnManager");
-                                }
-
-                                break;
-                            }
-                            catch (AuthenticationException authExc)
-                            {
-                                throw authExc;
-                            }
-                            catch (MSNPSharpException msnpExc)
-                            {
-                                if (msnpExc.InnerException == null)
-                                    throw msnpExc;
-
-                                WebException webExc = msnpExc.InnerException as WebException;
-                                if (webExc == null)
-                                    throw msnpExc.InnerException;
-
-                                // Handle soft errors
-                                switch (webExc.Status)
-                                {
-                                    case WebExceptionStatus.ConnectionClosed:
-                                    case WebExceptionStatus.KeepAliveFailure:
-                                    case WebExceptionStatus.ReceiveFailure:
-                                    case WebExceptionStatus.SendFailure:
-                                    case WebExceptionStatus.Timeout:
-                                    case WebExceptionStatus.UnknownError:
-
-                                        retries++;
-                                        break;
-
-                                    default:
-                                        throw msnpExc.InnerException;
-                                }
-                            }
-
-                        } while (retries < 3);
-                    }
-                }
-
                 nsMessageHandler.MSNTicket = ticket;
             }
+            else if (es == ExpiryState.Expired || es == ExpiryState.WillExpireSoon)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Re-new ticket: " + renew, "SingleSignOnManager");
+
+                SingleSignOn sso = new SingleSignOn(nsMessageHandler, ticket.Policy);
+
+                sso.AddAuths(renew);
+
+                if (es == ExpiryState.WillExpireSoon)
+                {
+                    nsMessageHandler.MSNTicket = ticket;
+
+                    // The ticket is in cache but it will expire soon.
+                    // Do ASYNC call.
+                    sso.Authenticate(ticket,
+                            delegate(object sender, EventArgs e)
+                            {
+                                AddToCacheWithLock(ticket);
+                            },
+                            delegate(object sender, ExceptionEventArgs e)
+                            {
+                                DeleteFromCacheWithLock(sha256key);
+                            }
+                    );
+                }
+                else
+                {
+                    // The ticket expired but we need this ticket absolutely.
+                    // Do SYNC call.
+                    AuthenticateRetryAndUpdateCacheSync(sso, ticket, sha256key, 3);
+
+                    nsMessageHandler.MSNTicket = ticket;
+                }
+            }
+        }
+
+        private static void AuthenticateRetryAndUpdateCacheSync(SingleSignOn sso, MSNTicket ticket, string sha256key, int retryCount)
+        {
+            // NO TICKET. WE NEED SYNC CALL!
+            // DILEMMA:
+            // 1 - We need this ticket (absolutely)
+            // 2 - What we do if connection error occured!
+            // ANSWER: Try 3 times if it is soft error.
+            int retries = retryCount;
+            do
+            {
+                try
+                {
+                    sso.Authenticate(ticket);
+                    AddToCacheWithLock(ticket);
+                    break;
+                }
+                catch (AuthenticationException authExc)
+                {
+                    DeleteFromCacheWithLock(sha256key);
+                    throw authExc;
+                }
+                catch (MSNPSharpException msnpExc)
+                {
+                    if (msnpExc.InnerException == null)
+                    {
+                        DeleteFromCacheWithLock(sha256key);
+                        throw msnpExc;
+                    }
+
+                    WebException webExc = msnpExc.InnerException as WebException;
+                    if (webExc == null)
+                    {
+                        DeleteFromCacheWithLock(sha256key);
+                        throw msnpExc.InnerException;
+                    }
+
+                    // Handle soft errors
+                    switch (webExc.Status)
+                    {
+                        case WebExceptionStatus.ConnectionClosed:
+                        case WebExceptionStatus.KeepAliveFailure:
+                        case WebExceptionStatus.ReceiveFailure:
+                        case WebExceptionStatus.SendFailure:
+                        case WebExceptionStatus.Timeout:
+                        case WebExceptionStatus.UnknownError:
+                            {
+                                // Don't delete the ticket from cache
+                                retries--;
+                                break;
+                            }
+
+                        default:
+                            {
+                                DeleteFromCacheWithLock(sha256key);
+                                throw msnpExc.InnerException;
+                            }
+                    }
+                }
+            }
+            while (retries > 0);
         }
     }
 
@@ -657,32 +709,19 @@ namespace MSNPSharp
         private string policy = string.Empty;
         private int authId = 0;
         private List<RequestSecurityTokenType> auths = new List<RequestSecurityTokenType>(0);
-        private NSMessageHandler nsMessageHandler = null;
+        private NSMessageHandler nsMessageHandler;
 
-        private NSMessageHandler NSMessageHandler
-        {
-            get
-            {
-                return nsMessageHandler;
-            }
-            set
-            {
-                nsMessageHandler = value;
-            }
-        }
-
-
-        private SingleSignOn(string username, string password, string policy)
+        public SingleSignOn(string username, string password, string policy)
         {
             this.user = username;
             this.pass = password;
             this.policy = policy;
         }
 
-        public SingleSignOn(NSMessageHandler nsHandler, string policy)
+        protected internal SingleSignOn(NSMessageHandler nsHandler, string policy)
             : this(nsHandler.Credentials.Account, nsHandler.Credentials.Password, policy)
         {
-            NSMessageHandler = nsHandler;
+            this.nsMessageHandler = nsHandler;
         }
 
         public void AuthenticationAdd(string domain, string policyref)
@@ -1000,7 +1039,7 @@ namespace MSNPSharp
 
         private SecurityTokenService CreateSecurityTokenService(string actionValue, string toValue)
         {
-            SecurityTokenService securService = new SecurityTokenServiceWrapper(NSMessageHandler);
+            SecurityTokenService securService = new SecurityTokenServiceWrapper(nsMessageHandler);
             securService.Timeout = 60000;
             securService.AuthInfo = new AuthInfoType();
             securService.AuthInfo.Id = "PPAuthInfo";
@@ -1120,10 +1159,8 @@ namespace MSNPSharp
                 lock (msnticket.SSOTickets)
                 {
                     msnticket.SSOTickets[ticketype] = ssoticket;
-                    msnticket.DeleteTick = MSNTicket.NextDeleteTick();
                 }
             }
-
         }
     }
 
