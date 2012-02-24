@@ -51,7 +51,7 @@ namespace MSNPSharp.IO
     public class XMLContactList : MCLSerializer
     {
         public const string XMLContactListVersion = "20120219";
-    
+
         #region Members
 
         [NonSerialized]
@@ -77,7 +77,7 @@ namespace MSNPSharp.IO
 
         [NonSerialized]
         private List<ContactType> individualShellContacts = new List<ContactType>(0);
-  
+
         [NonSerialized]
         private NSMessageHandler nsMessageHandler;
 
@@ -90,14 +90,14 @@ namespace MSNPSharp.IO
         #endregion
 
         #region Properties
-        
+
         protected NSMessageHandler NSMessageHandler
         {
             get
             {
                 return nsMessageHandler;
             }
-            
+
             set
             {
                 nsMessageHandler = value;
@@ -275,8 +275,8 @@ namespace MSNPSharp.IO
                 catch (Exception ex)
                 {
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                                      "An error occurs while saving the Addressbook, StackTrace:\r\n" +
-                                      ex.StackTrace);
+                        "An error occurs while saving the Addressbook, StackTrace:\r\n" +
+                        ex.StackTrace);
                 }
             }
         }
@@ -1060,7 +1060,6 @@ namespace MSNPSharp.IO
             lock (SyncObject)
             {
                 string lowerId = abId.ToLowerInvariant();
-
                 string compareTime = GetAddressBookLastChange(lowerId);
 
                 try
@@ -1240,7 +1239,6 @@ namespace MSNPSharp.IO
 
             lock (CircleResults)
                 return CircleResults[lowerId];
-
         }
 
         private string[] SelectWLConnection(List<string> abIds, RelationshipState state)
@@ -1273,7 +1271,6 @@ namespace MSNPSharp.IO
         private string[] FilterWLConnections(List<string> abIds, RelationshipState state)
         {
             List<string> returnValues = new List<string>(0);
-
 
             foreach (string abId in abIds)
             {
@@ -2003,9 +2000,7 @@ namespace MSNPSharp.IO
 
                 //lock (contactTable)
                 contactTable.Clear();
-
             }
-
         }
 
         /// <summary>
@@ -2253,7 +2248,6 @@ namespace MSNPSharp.IO
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -2271,7 +2265,6 @@ namespace MSNPSharp.IO
             {
                 RequestAddressBookByABId(abId, state, scene);
             }
-
         }
 
         private Contact CreateGatewayContact(NetworkInfoType networkInfo)
@@ -2285,7 +2278,6 @@ namespace MSNPSharp.IO
                 Contact gatewayContact = NSMessageHandler.ContactList.GetContactWithCreate(RemoteNetworkGateways.FaceBookGatewayAccount, IMAddressInfoType.RemoteNetwork);
                 gatewayContact.Lists |= RoleLists.Forward;
 
-
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Gateway " + gatewayContact + " added to network contacts", GetType().Name);
 
                 return gatewayContact;
@@ -2295,8 +2287,8 @@ namespace MSNPSharp.IO
                 "[Warning] Unknown Getway found, please implement this gateway:\r\n" +
                 "DomainTag: " + networkInfo.DomainTag + "\r\n" +
                 "DomainId: " + networkInfo.DomainId + "\r\n" +
-                "SourceId: " + networkInfo.SourceId + "\r\n"
-                );
+                "SourceId: " + networkInfo.SourceId + "\r\n");
+
             return null;
         }
 
@@ -2387,33 +2379,32 @@ namespace MSNPSharp.IO
                 foreach (NetworkInfoType networkInfo in shellContact.contactInfo.NetworkInfoList)
                 {
                     if (!String.IsNullOrEmpty(networkInfo.DomainTag) &&
-                        networkInfo.DomainTag != WebServiceConstants.NullDomainTag &&
-                        networkInfo.SourceId == SourceId.FaceBook &&
-                        networkInfo.DomainId == DomainIds.FaceBookDomain)
+                        networkInfo.DomainTag != WebServiceConstants.NullDomainTag)
                     {
-
-                        if (networkInfo.DomainId == DomainIds.FaceBookDomain)
+                        if (networkInfo.SourceId == SourceId.FaceBook && networkInfo.DomainId == DomainIds.FaceBookDomain)
                         {
-
                             facebookContact = facebookGatewayContact.ContactList.CreateShellContact(
-                                coreContact, IMAddressInfoType.Connect,
-                                networkInfo.DomainTag);
-                            facebookContact.UserTileURL = new Uri(networkInfo.UserTileURL);
+                                coreContact, IMAddressInfoType.Connect, networkInfo.DomainTag);
 
+                            if (!String.IsNullOrEmpty(networkInfo.UserTileURL))
+                            {
+                                facebookContact.UserTileURL = new Uri(networkInfo.UserTileURL);
+                            }
                             return facebookContact;
                         }
-
                     }
                 }
             }
             else
             {
                 facebookContact = facebookGatewayContact.ContactList.CreateShellContact(coreContact, IMAddressInfoType.Connect, shellContact.contactInfo.SourceHandle.ObjectID);
+
                 if (shellContact.contactInfo.URLs != null)
                 {
                     foreach (ContactURLType contactURL in shellContact.contactInfo.URLs)
                     {
-                        if (contactURL.URLType == URLType.Other && contactURL.URLName == URLName.UserTileXL)
+                        if (String.IsNullOrEmpty(contactURL.URL) == false &&
+                            contactURL.URLType == URLType.Other && contactURL.URLName == URLName.UserTileXL)
                         {
                             facebookContact.UserTileURL = new Uri(contactURL.URL);
                         }
@@ -2443,7 +2434,6 @@ namespace MSNPSharp.IO
         /// </returns>
         private Contact CreateContactFromLinkedShellContact(Guid personID, string sourceID)
         {
-
             if (!MessengerContactLink.ContainsKey(personID))
             {
                 return null;
@@ -2502,9 +2492,7 @@ namespace MSNPSharp.IO
                                 case SourceId.MySpace:
                                     // MySpace contacts.
                                     break;
-
                             }
-
                         }
                     }
 
@@ -2931,7 +2919,6 @@ namespace MSNPSharp.IO
             }
 
             return string.Empty;
-
         }
 
         /// <summary>
