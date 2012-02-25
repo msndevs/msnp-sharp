@@ -615,6 +615,15 @@ namespace MSNPSharp
 
         internal void SignoutFrom(Guid endPointID)
         {
+            if (messageProcessor == null || messageProcessor.Connected == false)
+                return;
+
+            if (endPointID == MachineGuid)
+            {
+                messageProcessor.Disconnect();
+                return;
+            }
+
             string me = ((int)Owner.ClientType).ToString() + ":" + Owner.Account;
 
             MultiMimeMessage mmMessage = new MultiMimeMessage(me, me);
@@ -631,10 +640,6 @@ namespace MSNPSharp
             NSMessage delPayload = new NSMessage("DEL");
             delPayload.InnerMessage = mmMessage;
             MessageProcessor.SendMessage(delPayload);
-
-            // We will receive NFY DEL for normal users
-            if (BotMode && endPointID == MachineGuid && messageProcessor.Connected)
-                messageProcessor.Disconnect();
         }
 
         #endregion
@@ -1447,10 +1452,9 @@ namespace MSNPSharp
                                             }
 
                                             if (routingInfo.FromOwner && epid == MachineGuid &&
-                                                messageProcessor != null && messageProcessor.Connected)
+                                                messageProcessor != null)
                                             {
-                                                // Just disconnect
-                                                messageProcessor.Disconnect();
+                                                SignoutFrom(epid);
                                             }
 
                                             break;

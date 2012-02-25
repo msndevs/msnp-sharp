@@ -180,7 +180,7 @@ namespace MSNPSharp.Core
             Send(buffer, userStates.ToArray());
         }
 
-        private string GenerateURI()
+        private string GenerateURI(HttpPollAction pollAction)
         {
             StringBuilder stringBuilder = new StringBuilder();
 
@@ -188,17 +188,19 @@ namespace MSNPSharp.Core
             stringBuilder.Append(gatewayIP);
             stringBuilder.Append("/gateway/gateway.dll?");
 
-            switch (action)
+            switch (pollAction)
             {
                 case HttpPollAction.Open:
                     stringBuilder.Append("Action=open&");
                     stringBuilder.Append("Server=NS&");
                     stringBuilder.Append("IP=" + ConnectivitySettings.Host);
                     break;
+
                 case HttpPollAction.Poll:
                     stringBuilder.Append("Action=poll&Lifespan=3&");
                     stringBuilder.Append("SessionID=" + SessionID);
                     break;
+
                 case HttpPollAction.None:
                     stringBuilder.Append("SessionID=" + SessionID);
                     break;
@@ -283,43 +285,47 @@ namespace MSNPSharp.Core
         {
             if (opened || (null != (data = Open(data))))
             {
-                lock (SyncObject)
+                if (isWebRequestInProcess)
                 {
-                    if (isWebRequestInProcess)
+                    lock (SyncObject)
                     {
                         sendingQueue.Enqueue(new QueueState(data, userState));
                         action = HttpPollAction.None;
                     }
-                    else
+                }
+                else
+                {
+                    isWebRequestInProcess = true;
+                    HttpPollAction oldAction = action;
+
+                    lock (SyncObject)
                     {
+                        action = HttpPollAction.None;
+
                         if (pollTimer.Enabled)
                         {
                             pollTimer.Stop();
                         }
-
-                        isWebRequestInProcess = true;
-                        HttpWebRequest request = (HttpWebRequest)WebRequest.Create(GenerateURI());
-                        ConnectivitySettings.SetupWebRequest(request);
-
-                        action = HttpPollAction.None;
-
-                        request.Timeout = 10000;
-                        request.Method = "POST";
-                        request.Accept = "*/*";
-                        request.AllowAutoRedirect = false;
-                        request.AllowWriteStreamBuffering = false;
-                        request.KeepAlive = true;
-                        request.ContentLength = data.Length;
-                        request.Headers.Add("Pragma", "no-cache");
-
-                        // Bypass msnp blockers
-                        request.ContentType = "text/html; charset=UTF-8";
-                        request.UserAgent = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.912.63 Safari/535.7";
-                        request.Headers.Add("X-Requested-Session-Content-Type", "text/html");
-
-                        HttpState httpState = new HttpState(request, null, null, data, userState);
-                        request.BeginGetRequestStream(EndGetRequestStreamCallback, httpState);
                     }
+
+                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(GenerateURI(oldAction));
+                    ConnectivitySettings.SetupWebRequest(request);
+                    request.Timeout = 10000;
+                    request.Method = "POST";
+                    request.Accept = "*/*";
+                    request.AllowAutoRedirect = false;
+                    request.AllowWriteStreamBuffering = false;
+                    request.KeepAlive = true;
+                    request.ContentLength = data.Length;
+                    request.Headers.Add("Pragma", "no-cache");
+
+                    // Bypass msnp blockers
+                    request.ContentType = "text/html; charset=UTF-8";
+                    request.UserAgent = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.912.63 Safari/535.7";
+                    request.Headers.Add("X-Requested-Session-Content-Type", "text/html");
+
+                    HttpState httpState = new HttpState(request, null, null, data, userState);
+                    request.BeginGetRequestStream(EndGetRequestStreamCallback, httpState);
                 }
             }
         }
@@ -364,7 +370,7 @@ namespace MSNPSharp.Core
                 httpState.Response = httpState.Request.EndGetResponse(ar);
                 int responseLength = (int)httpState.Response.ContentLength;
                 httpState.Request = null;
-                
+
                 lock (SyncObject)
                 {
                     foreach (string header in httpState.Response.Headers.AllKeys)
