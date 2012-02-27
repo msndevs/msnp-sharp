@@ -1528,23 +1528,6 @@ namespace MSNPSharp.IO
 
                 ContactType meContact = SelectMeContactFromAddressBookContactPage(lowerId);
                 CircleInverseInfoType inverseInfo = SelectCircleInverseInfo(lowerId);
-
-                if (meContact == null)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                       "[UpdateCircleFromAddressBook] Cannot create circle since Me not found in addressbook. ABId: "
-                       + abId);
-                    return null;
-                }
-
-                if (inverseInfo == null)
-                {
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose,
-                       "[UpdateCircleFromAddressBook] Cannot create circle since inverse info not found in circle result list. ABId: "
-                       + abId);
-                    return null;
-                }
-
                 return CreateCircle(meContact, inverseInfo);
             }
 
@@ -2144,13 +2127,21 @@ namespace MSNPSharp.IO
         /// <returns></returns>
         private Contact CreateCircle(ContactType me, CircleInverseInfoType inverseInfo)
         {
-            string circleMail = inverseInfo.Content.Handle.Id.ToLowerInvariant() + "@" + inverseInfo.Content.Info.HostedDomain.ToLowerInvariant();
-            Contact circle = NSMessageHandler.ContactList.GetCircle(circleMail);
-
-            if (circle == null)
+            if (me == null || me.contactInfo == null)
             {
-                circle = NSMessageHandler.ContactList.GetContactWithCreate(circleMail, IMAddressInfoType.Circle);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "[CreateCircle] Cannot create circle since Me not found in addressbook.");
+                return null;
             }
+
+            if (inverseInfo == null || inverseInfo.PersonalInfo == null ||
+                inverseInfo.Content == null || inverseInfo.Content.Info == null || inverseInfo.Content.Handle == null)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "[CreateCircle] Cannot create circle since inverse info not found in circle result list.");
+                return null;
+            }
+
+            string circleMail = inverseInfo.Content.Handle.Id.ToLowerInvariant() + "@" + inverseInfo.Content.Info.HostedDomain.ToLowerInvariant();
+            Contact circle = NSMessageHandler.ContactList.GetContactWithCreate(circleMail, IMAddressInfoType.Circle);
 
             circle.SetCircleInfo(inverseInfo, me);
 
@@ -2233,21 +2224,28 @@ namespace MSNPSharp.IO
             }
 
             circle = CreateCircle(me, inverseInfo);
-            UpdateCircleMembersFromAddressBookContactPage(circle, Scenario.Restore);
 
-            switch (circle.CircleRole)
+            if (circle != null)
             {
-                case RoleId.Admin:
-                case RoleId.AssistantAdmin:
-                case RoleId.Member:
-                    AddCircleToCircleList(circle);
-                    break;
-                case RoleId.StatePendingOutbound:
-                    FireJoinCircleInvitationReceivedEvents(circle);
-                    break;
+                UpdateCircleMembersFromAddressBookContactPage(circle, Scenario.Restore);
+
+                switch (circle.CircleRole)
+                {
+                    case RoleId.Admin:
+                    case RoleId.AssistantAdmin:
+                    case RoleId.Member:
+                        AddCircleToCircleList(circle);
+                        break;
+
+                    case RoleId.StatePendingOutbound:
+                        FireJoinCircleInvitationReceivedEvents(circle);
+                        break;
+                }
+
+                return true;
             }
 
-            return true;
+            return false;
         }
 
         /// <summary>
