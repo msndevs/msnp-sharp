@@ -310,12 +310,12 @@ namespace MSNPSharp.Core
 
                     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(GenerateURI(oldAction));
                     ConnectivitySettings.SetupWebRequest(request);
-                    request.Timeout = 10000;
-                    request.Method = "POST";
                     request.Accept = "*/*";
+                    request.Method = "POST";
+                    request.Timeout = 10000;
+                    request.KeepAlive = true;
                     request.AllowAutoRedirect = false;
                     request.AllowWriteStreamBuffering = false;
-                    request.KeepAlive = true;
                     request.ContentLength = data.Length;
                     request.Headers.Add("Pragma", "no-cache");
 
@@ -323,6 +323,9 @@ namespace MSNPSharp.Core
                     request.ContentType = "text/html; charset=UTF-8";
                     request.UserAgent = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.912.63 Safari/535.7";
                     request.Headers.Add("X-Requested-Session-Content-Type", "text/html");
+
+                    // Enable GZIP
+                    request.AutomaticDecompression = Settings.EnableGzipCompressionForWebServices ? DecompressionMethods.GZip : DecompressionMethods.None;
 
                     HttpState httpState = new HttpState(request, null, null, data, userState);
                     request.BeginGetRequestStream(EndGetRequestStreamCallback, httpState);
@@ -368,7 +371,6 @@ namespace MSNPSharp.Core
             try
             {
                 httpState.Response = httpState.Request.EndGetResponse(ar);
-                int responseLength = (int)httpState.Response.ContentLength;
                 httpState.Request = null;
 
                 lock (SyncObject)
@@ -415,10 +417,10 @@ namespace MSNPSharp.Core
                 }
 
                 httpState.Stream = httpState.Response.GetResponseStream();
-                httpState.Buffer = new byte[responseLength];
-                httpState.BufferOffset = 0;
+                httpState.Buffer = new byte[8192];
+                httpState.ResponseReadStream = new MemoryStream();
 
-                httpState.Stream.BeginRead(httpState.Buffer, httpState.BufferOffset, httpState.Buffer.Length - httpState.BufferOffset, ResponseStreamEndReadCallback, httpState);
+                httpState.Stream.BeginRead(httpState.Buffer, 0, httpState.Buffer.Length, ResponseStreamEndReadCallback, httpState);
             }
             catch (WebException we)
             {
@@ -429,13 +431,16 @@ namespace MSNPSharp.Core
         private void ResponseStreamEndReadCallback(IAsyncResult ar)
         {
             HttpState httpState = (HttpState)ar.AsyncState;
+            int read = 0;
             try
             {
-                httpState.BufferOffset += httpState.Stream.EndRead(ar);
+                read = httpState.Stream.EndRead(ar);
 
-                if (httpState.BufferOffset < httpState.Buffer.Length)
+                if (read > 0)
                 {
-                    httpState.Stream.BeginRead(httpState.Buffer, httpState.BufferOffset, httpState.Buffer.Length - httpState.BufferOffset, ResponseStreamEndReadCallback, httpState);
+                    httpState.ResponseReadStream.Write(httpState.Buffer, 0, read);
+
+                    httpState.Stream.BeginRead(httpState.Buffer, 0, httpState.Buffer.Length, ResponseStreamEndReadCallback, httpState);
                     return;
                 }
             }
@@ -450,7 +455,7 @@ namespace MSNPSharp.Core
             }
             finally
             {
-                if (httpState.Buffer != null && httpState.Buffer.Length == httpState.BufferOffset)
+                if (read == 0)
                 {
                     isWebRequestInProcess = false;
                     try
@@ -472,7 +477,20 @@ namespace MSNPSharp.Core
             }
 
             OnAfterRawDataSent(httpState.UserState);
-            DispatchRawData(httpState.Buffer);
+
+            try
+            {
+                httpState.ResponseReadStream.Flush();
+                byte[] rawData = httpState.ResponseReadStream.ToArray();
+                DispatchRawData(rawData);
+                httpState.ResponseReadStream.Close();
+                httpState.ResponseReadStream = null;
+            }
+            catch (Exception exc)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                    "DispatchRawData error: " + exc.StackTrace, GetType().Name);
+            }
 
             lock (SyncObject)
             {
@@ -548,9 +566,9 @@ namespace MSNPSharp.Core
             internal WebRequest Request;
             internal WebResponse Response;
             internal Stream Stream;
+            internal MemoryStream ResponseReadStream;
 
             internal byte[] Buffer;
-            internal int BufferOffset;
             internal Object UserState;
 
             internal HttpState(WebRequest request, WebResponse response,
