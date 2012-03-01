@@ -73,6 +73,7 @@ namespace MSNPSharp.Core
 
         private volatile bool connected;
         private volatile bool isWebRequestInProcess; // We can't send another web request if this is true
+        private bool useLifespan; // Don't set lifespan until SignedIn
 
         private bool opened; // first call to server has Action=open
         private byte[] openCommand = new byte[0];
@@ -101,6 +102,18 @@ namespace MSNPSharp.Core
             get
             {
                 return connected;
+            }
+        }
+
+        internal bool UseLifespan
+        {
+            get
+            {
+                return useLifespan;
+            }
+            set
+            {
+                useLifespan = value;
             }
         }
 
@@ -197,7 +210,11 @@ namespace MSNPSharp.Core
                     break;
 
                 case HttpPollAction.Poll:
-                    stringBuilder.Append("Action=poll&Lifespan=3&");
+                    stringBuilder.Append("Action=poll&");
+                    if (useLifespan)
+                    {
+                        stringBuilder.Append("Lifespan=3&");
+                    }
                     stringBuilder.Append("SessionID=" + SessionID);
                     break;
 
@@ -268,6 +285,7 @@ namespace MSNPSharp.Core
             openCommand = new byte[0];
             openState.SetAll(false);
             opened = false;
+            useLifespan = false;
         }
 
         public void Dispose()

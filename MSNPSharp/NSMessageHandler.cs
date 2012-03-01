@@ -127,6 +127,12 @@ namespace MSNPSharp
         {
             isSignedIn = true;
 
+            HttpSocketMessageProcessor httpProcessor = messageProcessor.Processor as HttpSocketMessageProcessor;
+            if (httpProcessor != null)
+            {
+                httpProcessor.UseLifespan = true;
+            }
+
             Owner.EndPointData[NSMessageHandler.MachineGuid] = new PrivateEndPointData(Owner.Account, NSMessageHandler.MachineGuid);
 
             if (ContactService.Deltas != null)
