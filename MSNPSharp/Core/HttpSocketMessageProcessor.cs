@@ -299,15 +299,15 @@ namespace MSNPSharp.Core
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
-        public override void Send(byte[] data, object userState)
+        public override void Send(byte[] outgoingData, object userState)
         {
-            if (opened || (null != (data = Open(data))))
+            if (opened || (null != (outgoingData = Open(outgoingData))))
             {
                 if (isWebRequestInProcess)
                 {
                     lock (SyncObject)
                     {
-                        sendingQueue.Enqueue(new QueueState(data, userState));
+                        sendingQueue.Enqueue(new QueueState(outgoingData, userState));
                         action = HttpPollAction.None;
                     }
                 }
@@ -334,7 +334,7 @@ namespace MSNPSharp.Core
                     request.KeepAlive = true;
                     request.AllowAutoRedirect = false;
                     request.AllowWriteStreamBuffering = false;
-                    request.ContentLength = data.Length;
+                    request.ContentLength = outgoingData.Length;
                     request.Headers.Add("Pragma", "no-cache");
 
                     // Bypass msnp blockers
@@ -345,7 +345,7 @@ namespace MSNPSharp.Core
                     // Enable GZIP
                     request.AutomaticDecompression = Settings.EnableGzipCompressionForWebServices ? DecompressionMethods.GZip : DecompressionMethods.None;
 
-                    HttpState httpState = new HttpState(request, null, null, data, userState);
+                    HttpState httpState = new HttpState(request, outgoingData, userState, null, null);
                     request.BeginGetRequestStream(EndGetRequestStreamCallback, httpState);
                 }
             }
@@ -357,11 +357,11 @@ namespace MSNPSharp.Core
             try
             {
                 httpState.Stream = httpState.Request.EndGetRequestStream(ar);
-                httpState.Stream.BeginWrite(httpState.Buffer, 0, httpState.Buffer.Length, RequestStreamEndWriteCallback, httpState);
+                httpState.Stream.BeginWrite(httpState.OutgoingData, 0, httpState.OutgoingData.Length, RequestStreamEndWriteCallback, httpState);
             }
             catch (WebException we)
             {
-                HandleWebException(we);
+                HandleWebException(we, httpState);
             }
         }
 
@@ -373,13 +373,14 @@ namespace MSNPSharp.Core
                 httpState.Stream.EndWrite(ar);
                 httpState.Stream.Close();
                 httpState.Stream = null;
-                httpState.Buffer = null;
+                // We must re-send the data when connection error is not fatal.
+                // So, don't set httpState.OutgoingData = null;
 
                 httpState.Request.BeginGetResponse(EndGetResponseCallback, httpState);
             }
             catch (WebException we)
             {
-                HandleWebException(we);
+                HandleWebException(we, httpState);
             }
         }
 
@@ -434,20 +435,22 @@ namespace MSNPSharp.Core
                     }
                 }
 
+                httpState.OutgoingData = null; // Response is OK and the our data was sent successfuly.
                 httpState.Stream = httpState.Response.GetResponseStream();
-                httpState.Buffer = new byte[8192];
+                httpState.IncomingBuffer = new byte[8192];
                 httpState.ResponseReadStream = new MemoryStream();
 
-                httpState.Stream.BeginRead(httpState.Buffer, 0, httpState.Buffer.Length, ResponseStreamEndReadCallback, httpState);
+                httpState.Stream.BeginRead(httpState.IncomingBuffer, 0, httpState.IncomingBuffer.Length, ResponseStreamEndReadCallback, httpState);
             }
             catch (WebException we)
             {
-                HandleWebException(we);
+                HandleWebException(we, httpState);
             }
         }
 
         private void ResponseStreamEndReadCallback(IAsyncResult ar)
         {
+            bool dataIsSentButKeepAliveErrorOccured = false;
             HttpState httpState = (HttpState)ar.AsyncState;
             int read = 0;
             try
@@ -456,15 +459,15 @@ namespace MSNPSharp.Core
 
                 if (read > 0)
                 {
-                    httpState.ResponseReadStream.Write(httpState.Buffer, 0, read);
+                    httpState.ResponseReadStream.Write(httpState.IncomingBuffer, 0, read);
 
-                    httpState.Stream.BeginRead(httpState.Buffer, 0, httpState.Buffer.Length, ResponseStreamEndReadCallback, httpState);
+                    httpState.Stream.BeginRead(httpState.IncomingBuffer, 0, httpState.IncomingBuffer.Length, ResponseStreamEndReadCallback, httpState);
                     return;
                 }
             }
             catch (WebException we)
             {
-                HandleWebException(we);
+                dataIsSentButKeepAliveErrorOccured = HandleWebException(we, httpState);
             }
             catch (ObjectDisposedException ode)
             {
@@ -496,12 +499,15 @@ namespace MSNPSharp.Core
 
             OnAfterRawDataSent(httpState.UserState);
 
-            // Don't catch exceptions here.
-            httpState.ResponseReadStream.Flush();
-            byte[] rawData = httpState.ResponseReadStream.ToArray();
-            DispatchRawData(rawData);
-            httpState.ResponseReadStream.Close();
-            httpState.ResponseReadStream = null;
+            if (httpState.ResponseReadStream != null)
+            {
+                // Don't catch exceptions here.
+                httpState.ResponseReadStream.Flush();
+                byte[] rawData = httpState.ResponseReadStream.ToArray();
+                DispatchRawData(rawData);
+                httpState.ResponseReadStream.Close();
+                httpState.ResponseReadStream = null;
+            }
 
             lock (SyncObject)
             {
@@ -515,12 +521,36 @@ namespace MSNPSharp.Core
                     OnDisconnected();
                 }
             }
+
+            if (dataIsSentButKeepAliveErrorOccured)
+            {
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                    "Outgoing data was sent but an error occured while reading response data", GetType().Name);
+            }
         }
 
-        private void HandleWebException(WebException we)
+        private bool HandleWebException(WebException we, HttpState httpState)
         {
             switch (we.Status)
             {
+                case WebExceptionStatus.KeepAliveFailure:
+                    {
+                        // When this happens, re-send the last packet.
+
+                        isWebRequestInProcess = false;
+
+                        if (httpState.OutgoingData != null)
+                        {
+                            Send(httpState.OutgoingData, httpState.UserState);
+                        }
+                        else
+                        {
+                            // It seems outgoing data was sent, but an error occured while reading http response.
+                            return true;
+                        }
+                    }
+                    break;
+
                 case WebExceptionStatus.NameResolutionFailure:
                 case WebExceptionStatus.ProxyNameResolutionFailure:
                     {
@@ -531,7 +561,6 @@ namespace MSNPSharp.Core
 
                 case WebExceptionStatus.ConnectFailure:
                 case WebExceptionStatus.ConnectionClosed:
-                case WebExceptionStatus.KeepAliveFailure:
                 case WebExceptionStatus.PipelineFailure:
                 case WebExceptionStatus.SecureChannelFailure:
                     {
@@ -570,26 +599,30 @@ namespace MSNPSharp.Core
                         break;
                     }
             }
+
+            return false;
         }
 
         private class HttpState
         {
+            internal byte[] OutgoingData;
             internal WebRequest Request;
+            internal Object UserState;
+
+            internal byte[] IncomingBuffer;
             internal WebResponse Response;
             internal Stream Stream;
             internal MemoryStream ResponseReadStream;
 
-            internal byte[] Buffer;
-            internal Object UserState;
-
-            internal HttpState(WebRequest request, WebResponse response,
-                Stream stream, byte[] buffer, object userState)
+            internal HttpState(WebRequest request, byte[] outgoingData, object userState,
+                WebResponse response, Stream stream)
             {
                 this.Request = request;
+                this.OutgoingData = outgoingData;
+                this.UserState = userState;
+
                 this.Response = response;
                 this.Stream = stream;
-                this.Buffer = buffer;
-                this.UserState = userState;
             }
         }
 
