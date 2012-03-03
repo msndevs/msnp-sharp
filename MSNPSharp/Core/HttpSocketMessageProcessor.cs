@@ -320,7 +320,7 @@ namespace MSNPSharp.Core
         {
             if (opened || (null != (outgoingData = Open(outgoingData))))
             {
-                if (httpWebRequestStatus == HttpWebRequestStatus.None)
+                if (httpWebRequestStatus != HttpWebRequestStatus.None)
                 {
                     lock (SyncObject)
                     {
