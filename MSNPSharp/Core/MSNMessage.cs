@@ -58,12 +58,6 @@ namespace MSNPSharp.Core
             CommandValues = commandValues;
         }
 
-        public override void PrepareMessage()
-        {
-            base.PrepareMessage();
-        }
-
-
         public int TransactionID
         {
             get
@@ -100,9 +94,13 @@ namespace MSNPSharp.Core
             }
         }
 
+        public override void PrepareMessage()
+        {
+            base.PrepareMessage();
+        }
+
         public override byte[] GetBytes()
         {
-
             StringBuilder builder = new StringBuilder(128);
             builder.Append(Command);
 
@@ -121,8 +119,6 @@ namespace MSNPSharp.Core
                 builder.Append(val);
             }
 
-
-
             if (InnerMessage != null)
             {
                 builder.Append(' ');
@@ -139,7 +135,6 @@ namespace MSNPSharp.Core
 
         public override void ParseBytes(byte[] data)
         {
-
             int cnt = 0;
             int bodyStart = 0;
 
@@ -163,8 +158,7 @@ namespace MSNPSharp.Core
             string commandLine = Encoding.UTF8.GetString(data, 4, cnt - 4);
             CommandValues = new ArrayList(commandLine.Split(new char[] { ' ' }));
 
-
-                //Filter those commands follow by a number but not transaction id.
+            //Filter those commands follow by a number but not transaction id.
             if (noTransactionIDCommands.IndexOf(Command) == -1)
             {
                 if (CommandValues.Count > 0)
@@ -178,7 +172,6 @@ namespace MSNPSharp.Core
                         CommandValues.RemoveAt(0);
                     }
                 }
-
             }
 
             // set the inner body contents, if it is available
@@ -194,8 +187,6 @@ namespace MSNPSharp.Core
                 InnerBody = new byte[newLength];
                 Buffer.BlockCopy(data, startIndex, InnerBody, 0, newLength);
             }
-
-
         }
 
         /// <summary>
@@ -212,7 +203,6 @@ namespace MSNPSharp.Core
             StringBuilder builder = new StringBuilder(128);
             builder.Append(Command);
 
-
             if (noTransactionIDCommands.IndexOf(Command) == -1)
             {
                 if (TransactionID != -1)
@@ -222,13 +212,11 @@ namespace MSNPSharp.Core
                 }
             }
 
-
             foreach (string val in CommandValues)
             {
                 builder.Append(' ');
                 builder.Append(val);
             }
-
 
             if (InnerMessage != null)
             {

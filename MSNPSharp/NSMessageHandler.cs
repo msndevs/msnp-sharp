@@ -1622,54 +1622,6 @@ namespace MSNPSharp
             return signInStatus;
         }
 
-        protected virtual NetworkMessage ParseTextPayloadMessage(NSMessage message)
-        {
-            TextPayloadMessage txtPayLoad = new TextPayloadMessage(string.Empty);
-            txtPayLoad.CreateFromParentMessage(message);
-            return message;
-        }
-
-        protected virtual NetworkMessage ParseMSGMessage(NSMessage message)
-        {
-            MimeMessage mimeMessage = new MimeMessage();
-            mimeMessage.CreateFromParentMessage(message);
-
-            string mime = mimeMessage.MimeHeader[MIMEContentHeaders.ContentType].ToString();
-
-            if (mime.IndexOf("text/x-msmsgsprofile") >= 0)
-            {
-                //This is profile, the content is nothing.
-            }
-            else
-            {
-                MimeMessage innerMimeMessage = new MimeMessage(false);
-                innerMimeMessage.CreateFromParentMessage(mimeMessage);
-            }
-
-            return message;
-        }
-
-        protected virtual NetworkMessage ParseNetworkMessage(NSMessage nsMessage)
-        {
-            if (nsMessage.InnerBody != null)
-            {
-                switch (nsMessage.Command)
-                {
-                    case "MSG":
-                        ParseMSGMessage(nsMessage);
-                        break;
-                    case "SDG":
-                        ParseSDGMessage(nsMessage);
-                        break;
-                    default:
-                        ParseTextPayloadMessage(nsMessage);
-                        break;
-                }
-            }
-
-            return nsMessage;
-        }
-
         protected virtual bool ProcessNetworkMessage(NSMessage nsMessage)
         {
             bool isUnknownMessage = false;
@@ -1763,9 +1715,6 @@ namespace MSNPSharp
             try
             {
                 NSMessage nsMessage = e.NSMessage;
-
-                // I think this is better: NSMessage.ParseBytes()
-                ParseNetworkMessage(nsMessage);
 
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Incoming NS command: " + nsMessage.ToDebugString() + "\r\n", GetType().Name);
 
