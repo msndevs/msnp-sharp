@@ -61,6 +61,22 @@ namespace MSNPSharp.Core
         Poll
     };
 
+    internal enum HttpWebRequestStatus
+    {
+        None,
+        GeneratingUri,
+        WebRequestCreated,
+        BeginGetRequestStream,
+        EndGetRequestStream,
+        BeginRequestStreamWrite,
+        EndRequestStreamWrite,
+        BeginGetResponse,
+        EndGetResponse,
+        GetResponseStream,
+        BeginResponseStreamRead,
+        EndResponseStreamRead
+    }
+
     /// <summary>
     /// HTTP polling transport layer.
     /// Reference in http://www.hypothetic.org/docs/msn/sitev2.0/general/http_connections.php.
@@ -72,8 +88,9 @@ namespace MSNPSharp.Core
         private HttpPollAction action = HttpPollAction.None;
 
         private volatile bool connected;
-        private volatile bool isWebRequestInProcess; // We can't send another web request if this is true
         private bool useLifespan; // Don't set lifespan until SignedIn
+        // We can send another web request if it is NONE
+        private volatile HttpWebRequestStatus httpWebRequestStatus = HttpWebRequestStatus.None;
 
         private bool opened; // first call to server has Action=open
         private byte[] openCommand = new byte[0];
@@ -280,7 +297,7 @@ namespace MSNPSharp.Core
                 OnDisconnected();
             }
 
-            isWebRequestInProcess = false;
+            httpWebRequestStatus = HttpWebRequestStatus.None;
             sendingQueue = new Queue<QueueState>();
             openCommand = new byte[0];
             openState.SetAll(false);
@@ -303,7 +320,7 @@ namespace MSNPSharp.Core
         {
             if (opened || (null != (outgoingData = Open(outgoingData))))
             {
-                if (isWebRequestInProcess)
+                if (httpWebRequestStatus == HttpWebRequestStatus.None)
                 {
                     lock (SyncObject)
                     {
@@ -313,8 +330,8 @@ namespace MSNPSharp.Core
                 }
                 else
                 {
-                    isWebRequestInProcess = true;
-                    HttpPollAction oldAction = action;
+                    httpWebRequestStatus = HttpWebRequestStatus.GeneratingUri;
+                    string uri = GenerateURI(action);
 
                     lock (SyncObject)
                     {
@@ -326,7 +343,8 @@ namespace MSNPSharp.Core
                         }
                     }
 
-                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(GenerateURI(oldAction));
+                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(uri);
+                    httpWebRequestStatus = HttpWebRequestStatus.WebRequestCreated;
                     ConnectivitySettings.SetupWebRequest(request);
                     request.Accept = "*/*";
                     request.Method = "POST";
@@ -346,6 +364,7 @@ namespace MSNPSharp.Core
                     request.AutomaticDecompression = Settings.EnableGzipCompressionForWebServices ? DecompressionMethods.GZip : DecompressionMethods.None;
 
                     HttpState httpState = new HttpState(request, outgoingData, userState, null, null);
+                    httpWebRequestStatus = HttpWebRequestStatus.BeginGetRequestStream;
                     request.BeginGetRequestStream(EndGetRequestStreamCallback, httpState);
                 }
             }
@@ -356,7 +375,10 @@ namespace MSNPSharp.Core
             HttpState httpState = (HttpState)ar.AsyncState;
             try
             {
+                httpWebRequestStatus = HttpWebRequestStatus.EndGetRequestStream;
                 httpState.Stream = httpState.Request.EndGetRequestStream(ar);
+
+                httpWebRequestStatus = HttpWebRequestStatus.BeginRequestStreamWrite;
                 httpState.Stream.BeginWrite(httpState.OutgoingData, 0, httpState.OutgoingData.Length, RequestStreamEndWriteCallback, httpState);
             }
             catch (WebException we)
@@ -370,12 +392,14 @@ namespace MSNPSharp.Core
             HttpState httpState = (HttpState)ar.AsyncState;
             try
             {
+                httpWebRequestStatus = HttpWebRequestStatus.EndRequestStreamWrite;
                 httpState.Stream.EndWrite(ar);
                 httpState.Stream.Close();
                 httpState.Stream = null;
                 // We must re-send the data when connection error is not fatal.
                 // So, don't set httpState.OutgoingData = null;
 
+                httpWebRequestStatus = HttpWebRequestStatus.BeginGetResponse;
                 httpState.Request.BeginGetResponse(EndGetResponseCallback, httpState);
             }
             catch (WebException we)
@@ -389,6 +413,7 @@ namespace MSNPSharp.Core
             HttpState httpState = (HttpState)ar.AsyncState;
             try
             {
+                httpWebRequestStatus = HttpWebRequestStatus.EndGetResponse;
                 httpState.Response = httpState.Request.EndGetResponse(ar);
                 httpState.Request = null;
 
@@ -436,10 +461,12 @@ namespace MSNPSharp.Core
                 }
 
                 httpState.OutgoingData = null; // Response is OK and the our data was sent successfuly.
+                httpWebRequestStatus = HttpWebRequestStatus.GetResponseStream;
                 httpState.Stream = httpState.Response.GetResponseStream();
                 httpState.IncomingBuffer = new byte[8192];
                 httpState.ResponseReadStream = new MemoryStream();
 
+                httpWebRequestStatus = HttpWebRequestStatus.BeginResponseStreamRead;
                 httpState.Stream.BeginRead(httpState.IncomingBuffer, 0, httpState.IncomingBuffer.Length, ResponseStreamEndReadCallback, httpState);
             }
             catch (WebException we)
@@ -450,17 +477,22 @@ namespace MSNPSharp.Core
 
         private void ResponseStreamEndReadCallback(IAsyncResult ar)
         {
+            HttpWebRequestStatus httpWebRequestStatusForDebug = httpWebRequestStatus;
             bool dataIsSentButKeepAliveErrorOccured = false;
             HttpState httpState = (HttpState)ar.AsyncState;
             int read = 0;
             try
             {
+                httpWebRequestStatus = HttpWebRequestStatus.EndResponseStreamRead;
+                httpWebRequestStatusForDebug = httpWebRequestStatus;
                 read = httpState.Stream.EndRead(ar);
 
                 if (read > 0)
                 {
                     httpState.ResponseReadStream.Write(httpState.IncomingBuffer, 0, read);
 
+                    httpWebRequestStatus = HttpWebRequestStatus.BeginResponseStreamRead;
+                    httpWebRequestStatusForDebug = httpWebRequestStatus;
                     httpState.Stream.BeginRead(httpState.IncomingBuffer, 0, httpState.IncomingBuffer.Length, ResponseStreamEndReadCallback, httpState);
                     return;
                 }
@@ -478,7 +510,7 @@ namespace MSNPSharp.Core
             {
                 if (read == 0)
                 {
-                    isWebRequestInProcess = false;
+                    httpWebRequestStatus = HttpWebRequestStatus.None;
                     try
                     {
                         httpState.Stream.Close();
@@ -511,7 +543,7 @@ namespace MSNPSharp.Core
 
             lock (SyncObject)
             {
-                if (connected && (!isWebRequestInProcess) && (!pollTimer.Enabled))
+                if (connected && (httpWebRequestStatus == HttpWebRequestStatus.None) && (!pollTimer.Enabled))
                 {
                     pollTimer.Start();
                 }
@@ -525,7 +557,7 @@ namespace MSNPSharp.Core
             if (dataIsSentButKeepAliveErrorOccured)
             {
                 Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                    "Outgoing data was sent but an error occured while reading response data", GetType().Name);
+                    "Outgoing data was sent but an error occured while reading response data = " + httpWebRequestStatusForDebug, GetType().Name);
             }
         }
 
@@ -536,8 +568,7 @@ namespace MSNPSharp.Core
                 case WebExceptionStatus.KeepAliveFailure:
                     {
                         // When this happens, re-send the last packet.
-
-                        isWebRequestInProcess = false;
+                        httpWebRequestStatus = HttpWebRequestStatus.None;
 
                         if (httpState.OutgoingData != null)
                         {
