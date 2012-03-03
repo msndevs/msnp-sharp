@@ -496,19 +496,12 @@ namespace MSNPSharp.Core
 
             OnAfterRawDataSent(httpState.UserState);
 
-            try
-            {
-                httpState.ResponseReadStream.Flush();
-                byte[] rawData = httpState.ResponseReadStream.ToArray();
-                DispatchRawData(rawData);
-                httpState.ResponseReadStream.Close();
-                httpState.ResponseReadStream = null;
-            }
-            catch (Exception exc)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                    "DispatchRawData error: " + exc.StackTrace, GetType().Name);
-            }
+            // Don't catch exceptions here.
+            httpState.ResponseReadStream.Flush();
+            byte[] rawData = httpState.ResponseReadStream.ToArray();
+            DispatchRawData(rawData);
+            httpState.ResponseReadStream.Close();
+            httpState.ResponseReadStream = null;
 
             lock (SyncObject)
             {
