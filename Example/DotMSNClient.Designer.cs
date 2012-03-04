@@ -89,6 +89,7 @@ namespace MSNPSharpClient
             this.displayImageBox = new System.Windows.Forms.PictureBox();
             this.logoImageBox = new System.Windows.Forms.PictureBox();
             this.statusBar = new System.Windows.Forms.Label();
+            this.cbUseTcp = new System.Windows.Forms.CheckBox();
             this.userMenuStrip.SuspendLayout();
             this.sortContextMenu.SuspendLayout();
             this.groupContextMenu.SuspendLayout();
@@ -315,8 +316,8 @@ namespace MSNPSharpClient
             // 
             // lblNews
             // 
-            this.lblNews.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblNews.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.lblNews.AutoEllipsis = true;
             this.lblNews.BackColor = System.Drawing.Color.Transparent;
             this.lblNews.Location = new System.Drawing.Point(97, 3);
@@ -328,8 +329,8 @@ namespace MSNPSharpClient
             // 
             // pbNewsPicture
             // 
-            this.pbNewsPicture.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.pbNewsPicture.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.pbNewsPicture.BackColor = System.Drawing.Color.Transparent;
             this.pbNewsPicture.Cursor = System.Windows.Forms.Cursors.Hand;
             this.pbNewsPicture.Location = new System.Drawing.Point(589, 1);
@@ -444,8 +445,8 @@ namespace MSNPSharpClient
             this.treeViewFilterList.Size = new System.Drawing.Size(375, 386);
             this.treeViewFilterList.TabIndex = 5;
             this.treeViewFilterList.Visible = false;
-            this.treeViewFilterList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
             this.treeViewFilterList.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
+            this.treeViewFilterList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
             // 
             // treeViewFavoriteList
             // 
@@ -468,11 +469,11 @@ namespace MSNPSharpClient
             this.treeViewFavoriteList.ShowRootLines = false;
             this.treeViewFavoriteList.Size = new System.Drawing.Size(375, 386);
             this.treeViewFavoriteList.TabIndex = 4;
+            this.treeViewFavoriteList.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.treeViewFavoriteList_ItemDrag);
+            this.treeViewFavoriteList.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
             this.treeViewFavoriteList.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
             this.treeViewFavoriteList.DragDrop += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragDrop);
             this.treeViewFavoriteList.DragEnter += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragEnter);
-            this.treeViewFavoriteList.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
-            this.treeViewFavoriteList.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.treeViewFavoriteList_ItemDrag);
             this.treeViewFavoriteList.DragOver += new System.Windows.Forms.DragEventHandler(this.treeViewFavoriteList_DragOver);
             // 
             // SortPanel
@@ -490,9 +491,9 @@ namespace MSNPSharpClient
             // 
             // txtSearch
             // 
-            this.txtSearch.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtSearch.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.txtSearch.ForeColor = System.Drawing.SystemColors.ScrollBar;
             this.txtSearch.Location = new System.Drawing.Point(8, 2);
             this.txtSearch.Name = "txtSearch";
@@ -500,13 +501,13 @@ namespace MSNPSharpClient
             this.txtSearch.TabIndex = 9;
             this.txtSearch.Text = "Search contacts";
             this.txtSearch.TextChanged += new System.EventHandler(this.txtSearch_TextChanged);
-            this.txtSearch.Leave += new System.EventHandler(this.txtSearch_Leave);
             this.txtSearch.Enter += new System.EventHandler(this.txtSearch_Enter);
+            this.txtSearch.Leave += new System.EventHandler(this.txtSearch_Leave);
             // 
             // btnAddNew
             // 
-            this.btnAddNew.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnAddNew.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.btnAddNew.BackColor = System.Drawing.SystemColors.Control;
             this.btnAddNew.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
             this.btnAddNew.Location = new System.Drawing.Point(330, 1);
@@ -519,8 +520,8 @@ namespace MSNPSharpClient
             // 
             // btnSortBy
             // 
-            this.btnSortBy.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnSortBy.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSortBy.BackColor = System.Drawing.SystemColors.Control;
             this.btnSortBy.Cursor = System.Windows.Forms.Cursors.Arrow;
             this.btnSortBy.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
@@ -612,6 +613,7 @@ namespace MSNPSharpClient
             this.pnlLogin.Controls.Add(this.accountTextBox);
             this.pnlLogin.Controls.Add(this.loginButton);
             this.pnlLogin.Controls.Add(this.passwordTextBox);
+            this.pnlLogin.Controls.Add(this.cbUseTcp);
             this.pnlLogin.Controls.Add(this.comboStatus);
             this.pnlLogin.Controls.Add(this.comboPlaces);
             this.pnlLogin.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -768,6 +770,17 @@ namespace MSNPSharpClient
             this.statusBar.TabIndex = 10;
             this.statusBar.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
+            // cbUseTcp
+            // 
+            this.cbUseTcp.AutoSize = true;
+            this.cbUseTcp.Location = new System.Drawing.Point(5, 50);
+            this.cbUseTcp.Name = "cbUseTcp";
+            this.cbUseTcp.Size = new System.Drawing.Size(124, 19);
+            this.cbUseTcp.TabIndex = 6;
+            this.cbUseTcp.Text = "Use TCP gateway";
+            this.cbUseTcp.UseVisualStyleBackColor = true;
+            this.cbUseTcp.CheckedChanged += new System.EventHandler(this.cbUseTcp_CheckedChanged);
+            // 
             // ClientForm
             // 
             this.AutoScaleBaseSize = new System.Drawing.Size(6, 14);
@@ -779,8 +792,8 @@ namespace MSNPSharpClient
             this.Name = "ClientForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "MSNPSharp Example Client for MSNP21";
-            this.Load += new System.EventHandler(this.ClientForm_Load);
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ClientForm_FormClosing);
+            this.Load += new System.EventHandler(this.ClientForm_Load);
             this.userMenuStrip.ResumeLayout(false);
             this.sortContextMenu.ResumeLayout(false);
             this.groupContextMenu.ResumeLayout(false);
@@ -870,6 +883,7 @@ namespace MSNPSharpClient
         private ComboBox comboPlaces;
         private ToolStripMenuItem leaveCircleToolStripMenuItem;
         private ToolStripMenuItem liveProfileToolStripMenuItem;
+        private CheckBox cbUseTcp;
 
     }
 }

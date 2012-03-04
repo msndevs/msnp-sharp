@@ -21,6 +21,45 @@ namespace MSNPSharpClient
         private string username = "testmsnpsharp@live.cn";
         private string password = "tstmsnpsharp";
         private string lastStatus = "Online";
+        private string useTcpGateway = "false";
+        private string epName = Environment.MachineName;
+        private string machineGuid = Guid.NewGuid().ToString();
+
+        public string MachineGuid
+        {
+            get
+            {
+                return machineGuid;
+            }
+            set
+            {
+                machineGuid = value;
+            }
+        }
+
+        public string EpName
+        {
+            get
+            {
+                return epName;
+            }
+            set
+            {
+                epName = value;
+            }
+        }
+
+        public string UseTcpGateway
+        {
+            get
+            {
+                return useTcpGateway;
+            }
+            set
+            {
+                useTcpGateway = value;
+            }
+        }
 
         public string Username
         {

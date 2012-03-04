@@ -266,6 +266,10 @@ namespace MSNPSharpClient
 #if SAVEPASSWORD
             passwordTextBox.Text = xmlSettings.Password;
 #endif
+            NSMessageHandler.MachineGuid = new Guid(xmlSettings.MachineGuid);
+            Settings.DisableHttpPolling = bool.Parse(xmlSettings.UseTcpGateway);
+            cbUseTcp.Checked = Settings.DisableHttpPolling;
+
             comboStatus.SelectedIndex = comboStatus.FindString(GetStatusString((PresenceStatus)Enum.Parse(typeof(PresenceStatus), xmlSettings.LastStatus)));
         }
 
@@ -288,6 +292,8 @@ namespace MSNPSharpClient
 #if SAVEPASSWORD
                 xmlSettings.Password = passwordTextBox.Text;
 #endif
+                xmlSettings.MachineGuid = NSMessageHandler.MachineGuid.ToString();
+                xmlSettings.UseTcpGateway = Settings.DisableHttpPolling.ToString();
                 xmlSettings.LastStatus = lastStatus.ToString();
                 xmlSettings.Save();
             }
@@ -589,6 +595,8 @@ namespace MSNPSharpClient
             Messenger.Owner.ScreenNameChanged += new EventHandler<EventArgs>(Owner_PersonalMessageChanged);
             Messenger.Owner.PlacesChanged += new EventHandler<PlaceChangedEventArgs>(Owner_PlacesChanged);
             Messenger.Owner.StatusChanged += new EventHandler<StatusChangedEventArgs>(Owner_StatusChanged);
+
+            Messenger.Owner.EpName = xmlSettings.EpName;
         }
 
         void Owner_CoreProfileUpdated(object sender, EventArgs e)
@@ -2535,6 +2543,14 @@ namespace MSNPSharpClient
             Process.Start("http://profile.live.com/cid-" +
                 String.Format("{0:x}", selectedContact.CID) + "/");
 
+        }
+
+        private void cbUseTcp_CheckedChanged(object sender, EventArgs e)
+        {
+            xmlSettings.UseTcpGateway = cbUseTcp.Checked.ToString();
+            xmlSettings.Save();
+
+            Settings.DisableHttpPolling = cbUseTcp.Checked;
         }
 
     }
