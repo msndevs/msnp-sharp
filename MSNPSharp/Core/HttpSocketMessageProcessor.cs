@@ -488,9 +488,25 @@ namespace MSNPSharp.Core
         {
             HttpStatusCode statusCode = GetErrorCode(we.Response as HttpWebResponse);
 
-            // Don't send httpState.OutgoingData again... Just reconnect.
+            // Not has an INTERNET connection (resolve error),
+            // or the net cable was unplugged after http request was sent (connect failure)
+            // This generates Disconnect event and stops.
+            if (we.Status == WebExceptionStatus.NameResolutionFailure ||
+                we.Status == WebExceptionStatus.ProxyNameResolutionFailure ||
+                we.Status == WebExceptionStatus.ConnectFailure)
+            {
+                isWebRequestInProcess = false;
+                Disconnect();
+
+                OnConnectingException(we);
+                return;
+            }
+
+            // If the session corrupted (BadRequest), 
+            // or the first request (Open) is timed out then reconnect: We passed resolve/connect failures.
+            // IMPORTANT: Don't send httpState.OutgoingData again...
             if (statusCode == HttpStatusCode.BadRequest ||
-                httpState.PollAction == HttpPollAction.Open)
+                (we.Status == WebExceptionStatus.Timeout && httpState.PollAction == HttpPollAction.Open))
             {
                 Disconnect();
                 Connect();
@@ -517,13 +533,6 @@ namespace MSNPSharp.Core
                         }
                     }
                     break;
-
-                case WebExceptionStatus.NameResolutionFailure:
-                case WebExceptionStatus.ProxyNameResolutionFailure:
-                    {
-                        OnConnectingException(we);
-                        goto default;
-                    }
 
 
                 case WebExceptionStatus.ConnectFailure:
