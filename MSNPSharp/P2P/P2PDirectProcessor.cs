@@ -513,14 +513,6 @@ namespace MSNPSharp.P2P
                         dcMessage.ParseBytes(data);
 
                         OnP2PMessageReceived(new P2PMessageEventArgs(dcMessage));
-
-                        lock (Processor.MessageHandlers)
-                        {
-                            foreach (IMessageHandler handler in Processor.MessageHandlers)
-                            {
-                                handler.HandleMessage(this, dcMessage);
-                            }
-                        }
                     }
                     break;
 
@@ -646,16 +638,6 @@ namespace MSNPSharp.P2P
         {
             Dispose(true);
             GC.SuppressFinalize(this);
-        }
-
-        public void RegisterHandler(IMessageHandler handler)
-        {
-            Processor.RegisterHandler(handler);
-        }
-
-        public void UnregisterHandler(IMessageHandler handler)
-        {
-            Processor.UnregisterHandler(handler);
         }
     }
 };

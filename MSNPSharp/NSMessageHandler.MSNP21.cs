@@ -1646,53 +1646,6 @@ namespace MSNPSharp
 
         #region OnSDGReceived
 
-        protected virtual NetworkMessage ParseSDGMessage(NSMessage nsMessage)
-        {
-            MultiMimeMessage multiMimeMessage = new MultiMimeMessage();
-            multiMimeMessage.CreateFromParentMessage(nsMessage);
-
-            if (multiMimeMessage.ContentHeaders.ContainsKey(MIMEContentHeaders.MessageType))
-            {
-                switch (multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString())
-                {
-                    default:
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                            "[OnSDGReceived] Cannot parse this type of SDG message: \r\n" + multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString() +
-                            "\r\n\r\nMessage Body: \r\n\r\n" + multiMimeMessage.ToDebugString());
-                        break;
-
-                    case MessageTypes.Nudge:
-                    case MessageTypes.ControlTyping:
-                    case MessageTypes.Wink:
-                    case MessageTypes.SignalCloseIMWindow:
-                        // Pure Text body, nothing to parse.
-                        ParseSDGTextPayloadMessage(multiMimeMessage);
-                        break;
-
-                    case MessageTypes.Text:
-                        // Set the TextMessage as its InnerMessage.
-                        ParseSDGTextMessage(multiMimeMessage);
-                        break;
-
-                    case MessageTypes.CustomEmoticon:
-                        // Set the EmoticonMessage as its InnerMessage.
-                        ParseSDGCustomEmoticonMessage(multiMimeMessage);
-                        break;
-
-                    case MessageTypes.SignalP2P:
-                        // Add the SLPMessage as its InnerMessage.
-                        ParseSDGP2PSignalMessage(multiMimeMessage);
-                        break;
-
-                    case MessageTypes.Data:
-                        //OnSDGDataMessageReceived(multiMimeMessage, sender, by, routingInfo);
-                        break;
-                }
-            }
-
-            return nsMessage;
-        }
-
         //This is actually another OnMSGxxx
 
         /// <summary>
@@ -1802,7 +1755,6 @@ namespace MSNPSharp
         }
 
         #region Process SDG Messages
-        //Note: Don't make these function protected.
 
         private void OnSDGCloseIMWindowReceived(MultiMimeMessage multiMimeMessage, RoutingInfo routingInfo)
         {
@@ -1844,30 +1796,12 @@ namespace MSNPSharp
                                                                      partiesList.ToArray()));
         }
 
-        private MultiMimeMessage ParseSDGTextPayloadMessage(MultiMimeMessage multiMimeMessage)
-        {
-            TextPayloadMessage textPayloadMessage = new TextPayloadMessage();
-            textPayloadMessage.CreateFromParentMessage(multiMimeMessage);
-            return multiMimeMessage;
-        }
-
         private void OnSDGWinkReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact originalSender, RoutingInfo routingInfo)
         {
             Wink wink = new Wink();
             wink.SetContext((multiMimeMessage.InnerMessage as TextPayloadMessage).Text);
 
             OnWinkDefinitionReceived(new WinkEventArgs(originalSender, wink, routingInfo));
-        }
-
-        private MultiMimeMessage ParseSDGCustomEmoticonMessage(MultiMimeMessage multiMimeMessage)
-        {
-            EmoticonMessage emoticonMessage = new EmoticonMessage();
-            emoticonMessage.CreateFromParentMessage(multiMimeMessage);
-
-            emoticonMessage.EmoticonType = multiMimeMessage.ContentHeaders[MIMEContentHeaders.ContentType] == "text/x-mms-animemoticon" ?
-                EmoticonType.AnimEmoticon : EmoticonType.StaticEmoticon;
-
-            return multiMimeMessage;
         }
 
         private void OnSDGCustomEmoticonReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact originalSender, RoutingInfo routingInfo)
@@ -1880,28 +1814,11 @@ namespace MSNPSharp
             }
         }
 
-        private MultiMimeMessage ParseSDGTextMessage(MultiMimeMessage multiMimeMessage)
-        {
-            TextMessage txtMessage = new TextMessage();
-            txtMessage.CreateFromParentMessage(multiMimeMessage);
-
-            return multiMimeMessage;
-        }
-
         private void OnSDGTextMessageReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact by, RoutingInfo routingInfo)
         {
-
             TextMessage txtMessage = multiMimeMessage.InnerMessage as TextMessage;
 
             OnTextMessageReceived(new TextMessageArrivedEventArgs(sender, txtMessage, by, routingInfo));
-        }
-
-        private MultiMimeMessage ParseSDGP2PSignalMessage(MultiMimeMessage multiMimeMessage)
-        {
-            SLPMessage slpMessage = SLPMessage.Parse(multiMimeMessage.InnerBody);
-            slpMessage.CreateFromParentMessage(multiMimeMessage);
-
-            return multiMimeMessage;
         }
 
         private void OnSDGP2PSignalReceived(MultiMimeMessage multiMimeMessage, Contact sender, Contact by, RoutingInfo routingInfo)

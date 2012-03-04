@@ -33,10 +33,12 @@ THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 using System.Text;
 using System.Collections;
+using System.Diagnostics;
 
 namespace MSNPSharp.Core
 {
     using MSNPSharp;
+    using MSNPSharp.P2P;
 
     [Serializable()]
     public class NSMessage : MSNMessage, ICloneable
@@ -62,6 +64,11 @@ namespace MSNPSharp.Core
             Command = command;
         }
 
+        public override string ToString()
+        {
+            return base.ToString();
+        }
+
         /// <summary>
         /// 
         /// </summary>
@@ -79,9 +86,133 @@ namespace MSNPSharp.Core
             }
         }
 
-        public override string ToString()
+        public override void ParseBytes(byte[] data)
         {
-            return base.ToString();
+            base.ParseBytes(data);
+
+            if (InnerBody != null)
+            {
+                switch (Command)
+                {
+                    case "MSG":
+                        ParseMSGMessage(this);
+                        break;
+                    case "SDG":
+                        ParseSDGMessage(this);
+                        break;
+                    default:
+                        ParseTextPayloadMessage(this);
+                        break;
+                }
+            }
+        }
+
+        private NetworkMessage ParseMSGMessage(NSMessage message)
+        {
+            MimeMessage mimeMessage = new MimeMessage();
+            mimeMessage.CreateFromParentMessage(message);
+
+            string mime = mimeMessage.MimeHeader[MIMEContentHeaders.ContentType].ToString();
+
+            if (mime.IndexOf("text/x-msmsgsprofile") >= 0)
+            {
+                //This is profile, the content is nothing.
+            }
+            else
+            {
+                MimeMessage innerMimeMessage = new MimeMessage(false);
+                innerMimeMessage.CreateFromParentMessage(mimeMessage);
+            }
+
+            return message;
+        }
+
+        private NetworkMessage ParseTextPayloadMessage(NSMessage message)
+        {
+            TextPayloadMessage txtPayLoad = new TextPayloadMessage(string.Empty);
+            txtPayLoad.CreateFromParentMessage(message);
+            return message;
+        }
+
+        private MultiMimeMessage ParseSDGCustomEmoticonMessage(MultiMimeMessage multiMimeMessage)
+        {
+            EmoticonMessage emoticonMessage = new EmoticonMessage();
+            emoticonMessage.CreateFromParentMessage(multiMimeMessage);
+
+            emoticonMessage.EmoticonType = multiMimeMessage.ContentHeaders[MIMEContentHeaders.ContentType] == "text/x-mms-animemoticon" ?
+                EmoticonType.AnimEmoticon : EmoticonType.StaticEmoticon;
+
+            return multiMimeMessage;
+        }
+
+        private NetworkMessage ParseSDGMessage(NSMessage nsMessage)
+        {
+            MultiMimeMessage multiMimeMessage = new MultiMimeMessage();
+            multiMimeMessage.CreateFromParentMessage(nsMessage);
+
+            if (multiMimeMessage.ContentHeaders.ContainsKey(MIMEContentHeaders.MessageType))
+            {
+                switch (multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString())
+                {
+                    default:
+                        Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
+                            "[ParseSDGMessage] Cannot parse this type of SDG message: \r\n" + multiMimeMessage.ContentHeaders[MIMEContentHeaders.MessageType].ToString() +
+                            "\r\n\r\nMessage Body: \r\n\r\n" + multiMimeMessage.ToDebugString());
+                        break;
+
+                    case MessageTypes.Nudge:
+                    case MessageTypes.ControlTyping:
+                    case MessageTypes.Wink:
+                    case MessageTypes.SignalCloseIMWindow:
+                        // Pure Text body, nothing to parse.
+                        ParseSDGTextPayloadMessage(multiMimeMessage);
+                        break;
+
+                    case MessageTypes.Text:
+                        // Set the TextMessage as its InnerMessage.
+                        ParseSDGTextMessage(multiMimeMessage);
+                        break;
+
+                    case MessageTypes.CustomEmoticon:
+                        // Set the EmoticonMessage as its InnerMessage.
+                        ParseSDGCustomEmoticonMessage(multiMimeMessage);
+                        break;
+
+                    case MessageTypes.SignalP2P:
+                        // Add the SLPMessage as its InnerMessage.
+                        ParseSDGP2PSignalMessage(multiMimeMessage);
+                        break;
+
+                    case MessageTypes.Data:
+                        //OnSDGDataMessageReceived(multiMimeMessage, sender, by, routingInfo);
+                        break;
+                }
+            }
+
+            return nsMessage;
+        }
+
+        private MultiMimeMessage ParseSDGTextPayloadMessage(MultiMimeMessage multiMimeMessage)
+        {
+            TextPayloadMessage textPayloadMessage = new TextPayloadMessage();
+            textPayloadMessage.CreateFromParentMessage(multiMimeMessage);
+            return multiMimeMessage;
+        }
+
+        private MultiMimeMessage ParseSDGTextMessage(MultiMimeMessage multiMimeMessage)
+        {
+            TextMessage txtMessage = new TextMessage();
+            txtMessage.CreateFromParentMessage(multiMimeMessage);
+
+            return multiMimeMessage;
+        }
+
+        private MultiMimeMessage ParseSDGP2PSignalMessage(MultiMimeMessage multiMimeMessage)
+        {
+            SLPMessage slpMessage = SLPMessage.Parse(multiMimeMessage.InnerBody);
+            slpMessage.CreateFromParentMessage(multiMimeMessage);
+
+            return multiMimeMessage;
         }
 
         #region ICloneable

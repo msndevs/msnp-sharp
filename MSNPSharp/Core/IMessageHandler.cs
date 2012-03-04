@@ -50,15 +50,5 @@ namespace MSNPSharp.Core
             get;
             set;
         }
-
-        /// <summary>
-        /// A IMessageProcessor calls this method. The handler can then process the
-        /// message.
-        /// </summary>
-        /// <remarks>
-        /// </remarks>
-        /// <param name="message"></param>
-        /// <param name="sender"></param>
-        void HandleMessage(IMessageProcessor sender, NetworkMessage message);
     }
 };

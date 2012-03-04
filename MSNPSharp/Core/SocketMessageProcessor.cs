@@ -147,7 +147,6 @@ namespace MSNPSharp.Core
 
         #region Members
 
-        private List<IMessageHandler> messageHandlers = new List<IMessageHandler>();
         private ConnectivitySettings connectivitySettings;
         private bool hasFiredDisconnectEvent;
         private MessagePool messagePool;
@@ -187,14 +186,6 @@ namespace MSNPSharp.Core
             }
         }
 
-        public List<IMessageHandler> MessageHandlers
-        {
-            get
-            {
-                return messageHandlers;
-            }
-        }
-
         protected MessagePool MessagePool
         {
             get
@@ -209,40 +200,7 @@ namespace MSNPSharp.Core
 
         #endregion
 
-        #region IMessageProcessor members
-
         public abstract void SendMessage(NetworkMessage message);
-
-        public virtual void RegisterHandler(IMessageHandler handler)
-        {
-            if (handler != null && !messageHandlers.Contains(handler))
-            {
-                lock (messageHandlers)
-                {
-                    messageHandlers.Add(handler);
-                    Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
-                       handler.ToString() + " added to handler list.", GetType().Name);
-                }
-            }
-        }
-
-        public virtual void UnregisterHandler(IMessageHandler handler)
-        {
-            if (handler != null)
-            {
-                lock (messageHandlers)
-                {
-                    while (messageHandlers.Remove(handler))
-                    {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
-                            handler.ToString() + " removed from handler list.", GetType().Name);
-                    }
-                }
-            }
-        }
-
-        #endregion
-
         public abstract void Connect();
         public abstract void Disconnect();
 

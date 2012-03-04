@@ -127,6 +127,12 @@ namespace MSNPSharp
         {
             isSignedIn = true;
 
+            HttpSocketMessageProcessor httpProcessor = messageProcessor.Processor as HttpSocketMessageProcessor;
+            if (httpProcessor != null)
+            {
+                httpProcessor.UseLifespan = true;
+            }
+
             Owner.EndPointData[NSMessageHandler.MachineGuid] = new PrivateEndPointData(Owner.Account, NSMessageHandler.MachineGuid);
 
             if (ContactService.Deltas != null)
@@ -496,9 +502,8 @@ namespace MSNPSharp
                 {
                     messageProcessor.ConnectionEstablished -= OnProcessorConnectCallback;
                     messageProcessor.ConnectionClosed -= OnProcessorDisconnectCallback;
+                    messageProcessor.NSMessageReceived -= OnProcessorNSMessageReceivedCallback;
                     // messageProcessor.SendCompleted -= OnProcessorSendCompletedCallback;
-
-                    messageProcessor.UnregisterHandler(this);
                 }
 
                 NSMessageProcessor oldProcessor = messageProcessor;
@@ -513,10 +518,10 @@ namespace MSNPSharp
                     messageProcessor.ConnectionEstablished += OnProcessorConnectCallback;
                     // and make sure we respond on closing
                     messageProcessor.ConnectionClosed += OnProcessorDisconnectCallback;
+                    // handle received nameserver messages
+                    messageProcessor.NSMessageReceived += OnProcessorNSMessageReceivedCallback;
                     // track transid
                     // messageProcessor.SendCompleted += OnProcessorSendCompletedCallback;
-
-                    messageProcessor.RegisterHandler(this);
                 }
             }
         }
@@ -1712,59 +1717,8 @@ namespace MSNPSharp
             return signInStatus;
         }
 
-        protected virtual NetworkMessage ParseTextPayloadMessage(NSMessage message)
+        protected virtual bool ProcessNetworkMessage(NSMessage nsMessage)
         {
-            TextPayloadMessage txtPayLoad = new TextPayloadMessage(string.Empty);
-            txtPayLoad.CreateFromParentMessage(message);
-            return message;
-        }
-
-        protected virtual NetworkMessage ParseMSGMessage(NSMessage message)
-        {
-            MimeMessage mimeMessage = new MimeMessage();
-            mimeMessage.CreateFromParentMessage(message);
-
-            string mime = mimeMessage.MimeHeader[MIMEContentHeaders.ContentType].ToString();
-
-            if (mime.IndexOf("text/x-msmsgsprofile") >= 0)
-            {
-                //This is profile, the content is nothing.
-            }
-            else
-            {
-                MimeMessage innerMimeMessage = new MimeMessage(false);
-                innerMimeMessage.CreateFromParentMessage(mimeMessage);
-            }
-
-            return message;
-        }
-
-        protected virtual NetworkMessage ParseNetworkMessage(NetworkMessage message)
-        {
-            NSMessage nsMessage = (NSMessage)message;
-
-            if (nsMessage.InnerBody != null)
-            {
-                switch (nsMessage.Command)
-                {
-                    case "MSG":
-                        ParseMSGMessage(nsMessage);
-                        break;
-                    case "SDG":
-                        ParseSDGMessage(nsMessage);
-                        break;
-                    default:
-                        ParseTextPayloadMessage(nsMessage);
-                        break;
-                }
-            }
-
-            return nsMessage;
-        }
-
-        protected virtual bool ProcessNetworkMessage(NetworkMessage message)
-        {
-            NSMessage nsMessage = (NSMessage)message;
             bool isUnknownMessage = false;
 
             switch (nsMessage.Command)
@@ -1840,7 +1794,7 @@ namespace MSNPSharp
         }
 
         /// <summary>
-        /// Handles message from the processor.
+        /// Handles message from the name server processor.
         /// </summary>
         /// <remarks>
         /// This is one of the most important functions of the class.
@@ -1850,26 +1804,20 @@ namespace MSNPSharp
         /// Exceptions which occur in this method are redirected via the <see cref="ExceptionOccurred"/> event.
         /// </remarks>
         /// <param name="sender">The message processor that dispatched the message.</param>
-        /// <param name="message">The network message received from the notification server</param>
-        public virtual void HandleMessage(IMessageProcessor sender, NetworkMessage message)
+        /// <param name="e">The ns message received from the notification server</param>
+        protected virtual void OnProcessorNSMessageReceivedCallback(object sender, NSMessageEventArgs e)
         {
             try
             {
-                // We expect at least a NSMessage object
-                NSMessage nsMessage = (NSMessage)message;
-                bool processed = false;
+                NSMessage nsMessage = e.NSMessage;
 
-                ParseNetworkMessage(message);
+                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Incoming NS command: " + nsMessage.ToDebugString() + "\r\n", GetType().Name);
 
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "Incoming NS command: " + message.ToDebugString() + "\r\n", GetType().Name);
-
-                processed = ProcessNetworkMessage(message);
-
-                if (processed)
+                if (ProcessNetworkMessage(nsMessage))
                     return;
 
                 // Check whether it is a numeric error command
-                if (nsMessage.Command[0] >= '0' && nsMessage.Command[0] <= '9' && processed == false)
+                if (nsMessage.Command[0] >= '0' && nsMessage.Command[0] <= '9')
                 {
                     MSNError msnError = 0;
                     string description = string.Empty;
@@ -1904,10 +1852,10 @@ namespace MSNPSharp
                     Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning, "UNKNOWN COMMAND: " + nsMessage.Command + "\r\n" + nsMessage.ToDebugString(), GetType().ToString());
                 }
             }
-            catch (Exception e)
+            catch (Exception exc)
             {
-                OnExceptionOccurred(new ExceptionEventArgs(e));
-                throw; //RethrowToPreserveStackDetails (without e)
+                OnExceptionOccurred(new ExceptionEventArgs(exc));
+                throw; //RethrowToPreserveStackDetails (without exc)
             }
         }
 

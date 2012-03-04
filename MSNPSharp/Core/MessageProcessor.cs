@@ -33,7 +33,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 using System;
 
 namespace MSNPSharp.Core
-{    
+{
     using MSNPSharp;
 
     /// <summary>
@@ -44,7 +44,6 @@ namespace MSNPSharp.Core
     /// Network messages can be any kind of messages: text messages, data messages.
     /// By using this interface a de-coupling is established between the handling of messages
     /// and the I/O of messages.
-    /// IMessageProcessor is mostly used internal.
     /// </remarks>
     public interface IMessageProcessor
     {
@@ -53,17 +52,5 @@ namespace MSNPSharp.Core
         /// </summary>
         /// <param name="message"></param>
         void SendMessage(NetworkMessage message);
-
-        /// <summary>
-        /// Registers a handler that wants to receive incoming messages.
-        /// </summary>
-        /// <param name="handler"></param>
-        void RegisterHandler(IMessageHandler handler);
-
-        /// <summary>
-        /// Unregisters (removes) a handler that no lange wants to receive incoming messages.
-        /// </summary>
-        /// <param name="handler"></param>
-        void UnregisterHandler(IMessageHandler handler);
     }
 };

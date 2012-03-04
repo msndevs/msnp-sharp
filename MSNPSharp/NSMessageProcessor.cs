@@ -40,6 +40,24 @@ namespace MSNPSharp
 {
     using MSNPSharp.Core;
 
+    public class NSMessageEventArgs : EventArgs
+    {
+        private NSMessage nsMessage;
+
+        public NSMessageEventArgs(NSMessage nsMessage)
+        {
+            this.nsMessage = nsMessage;
+        }
+
+        public NSMessage NSMessage
+        {
+            get
+            {
+                return nsMessage;
+            }
+        }
+    };
+
     public class NSMessageProcessor : IMessageProcessor
     {
         #region Events
@@ -70,6 +88,13 @@ namespace MSNPSharp
         {
             if (ConnectionException != null)
                 ConnectionException(sender, e);
+        }
+
+        public event EventHandler<NSMessageEventArgs> NSMessageReceived;
+        protected virtual void OnNSMessageReceived(object sender, NSMessageEventArgs e)
+        {
+            if (NSMessageReceived != null)
+                NSMessageReceived(sender, e);
         }
 
         public event EventHandler<ObjectEventArgs> SendCompleted;
@@ -179,11 +204,17 @@ namespace MSNPSharp
         protected void OnMessageReceived(object sender, ByteEventArgs e)
         {
             Trace.WriteLineIf(Settings.TraceSwitch.TraceVerbose, "Parsing incoming NS command...", GetType().Name);
-
-            NSMessage message = new NSMessage();
-            message.ParseBytes(e.Bytes);
-
-            DispatchMessage(message);
+            try
+            {
+                NSMessage nsMessage = new NSMessage();
+                nsMessage.ParseBytes(e.Bytes);
+                OnNSMessageReceived(this, new NSMessageEventArgs(nsMessage));
+            }
+            catch (Exception exc)
+            {
+                OnHandlerException(this, new ExceptionEventArgs(new MSNPSharpException(
+                    "An exception occured while handling a nameserver message. See inner exception for more details.", exc)));
+            }
         }
 
         public void SendMessage(NetworkMessage message)
@@ -224,44 +255,6 @@ namespace MSNPSharp
 
             // OUT disconnects
             // Processor.Disconnect();
-        }
-
-        public void RegisterHandler(IMessageHandler handler)
-        {
-            Processor.RegisterHandler(handler);
-        }
-
-        public void UnregisterHandler(IMessageHandler handler)
-        {
-            Processor.UnregisterHandler(handler);
-        }
-
-        protected virtual void DispatchMessage(NetworkMessage message)
-        {
-            // copy the messageHandlers array because the collection can be 
-            // modified during the message handling. (Handlers are registered/unregistered)
-            IMessageHandler[] handlers = Processor.MessageHandlers.ToArray();
-
-            // now give the handlers the opportunity to handle the message
-            foreach (IMessageHandler handler in handlers)
-            {
-                try
-                {
-                    //I think the person who first write this make a big mistake, C# is NOT C++,
-                    //message class passes as reference, one change, all changed.
-                    //Mabe we need to review all HandleMessage calling.
-                    ICloneable imessageClone = message as ICloneable;
-                    if (imessageClone != null)
-                    {
-                        handler.HandleMessage(this, imessageClone.Clone() as NSMessage);
-                    }
-                }
-                catch (Exception e)
-                {
-                    OnHandlerException(this, new ExceptionEventArgs(new MSNPSharpException(
-                        "An exception occured while handling a nameserver message. See inner exception for more details.", e)));
-                }
-            }
         }
     }
 };

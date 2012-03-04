@@ -73,6 +73,7 @@ namespace MSNPSharp.Core
 
         private volatile bool connected;
         private volatile bool isWebRequestInProcess; // We can't send another web request if this is true
+        private bool useLifespan; // Don't set lifespan until SignedIn
 
         private bool opened; // first call to server has Action=open
         private byte[] openCommand = new byte[0];
@@ -101,6 +102,18 @@ namespace MSNPSharp.Core
             get
             {
                 return connected;
+            }
+        }
+
+        internal bool UseLifespan
+        {
+            get
+            {
+                return useLifespan;
+            }
+            set
+            {
+                useLifespan = value;
             }
         }
 
@@ -197,7 +210,11 @@ namespace MSNPSharp.Core
                     break;
 
                 case HttpPollAction.Poll:
-                    stringBuilder.Append("Action=poll&Lifespan=3&");
+                    stringBuilder.Append("Action=poll&");
+                    if (useLifespan)
+                    {
+                        stringBuilder.Append("Lifespan=3&");
+                    }
                     stringBuilder.Append("SessionID=" + SessionID);
                     break;
 
@@ -268,6 +285,7 @@ namespace MSNPSharp.Core
             openCommand = new byte[0];
             openState.SetAll(false);
             opened = false;
+            useLifespan = false;
         }
 
         public void Dispose()
@@ -281,15 +299,15 @@ namespace MSNPSharp.Core
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
-        public override void Send(byte[] data, object userState)
+        public override void Send(byte[] outgoingData, object userState)
         {
-            if (opened || (null != (data = Open(data))))
+            if (opened || (null != (outgoingData = Open(outgoingData))))
             {
                 if (isWebRequestInProcess)
                 {
                     lock (SyncObject)
                     {
-                        sendingQueue.Enqueue(new QueueState(data, userState));
+                        sendingQueue.Enqueue(new QueueState(outgoingData, userState));
                         action = HttpPollAction.None;
                     }
                 }
@@ -310,13 +328,13 @@ namespace MSNPSharp.Core
 
                     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(GenerateURI(oldAction));
                     ConnectivitySettings.SetupWebRequest(request);
-                    request.Timeout = 10000;
-                    request.Method = "POST";
                     request.Accept = "*/*";
+                    request.Method = "POST";
+                    request.Timeout = 10000;
+                    request.KeepAlive = true;
                     request.AllowAutoRedirect = false;
                     request.AllowWriteStreamBuffering = false;
-                    request.KeepAlive = true;
-                    request.ContentLength = data.Length;
+                    request.ContentLength = outgoingData.Length;
                     request.Headers.Add("Pragma", "no-cache");
 
                     // Bypass msnp blockers
@@ -324,7 +342,11 @@ namespace MSNPSharp.Core
                     request.UserAgent = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.912.63 Safari/535.7";
                     request.Headers.Add("X-Requested-Session-Content-Type", "text/html");
 
-                    HttpState httpState = new HttpState(request, null, null, data, userState);
+                    // Enable GZIP
+                    request.AutomaticDecompression = Settings.EnableGzipCompressionForWebServices ? DecompressionMethods.GZip : DecompressionMethods.None;
+
+                    // Don't block current thread.
+                    HttpState httpState = new HttpState(request, outgoingData, userState, oldAction);
                     request.BeginGetRequestStream(EndGetRequestStreamCallback, httpState);
                 }
             }
@@ -335,54 +357,30 @@ namespace MSNPSharp.Core
             HttpState httpState = (HttpState)ar.AsyncState;
             try
             {
-                httpState.Stream = httpState.Request.EndGetRequestStream(ar);
-                httpState.Stream.BeginWrite(httpState.Buffer, 0, httpState.Buffer.Length, RequestStreamEndWriteCallback, httpState);
-            }
-            catch (WebException we)
-            {
-                HandleWebException(we);
-            }
-        }
+                using (Stream stream = httpState.Request.EndGetRequestStream(ar))
+                {
+                    stream.Write(httpState.OutgoingData, 0, httpState.OutgoingData.Length);
+                    // We must re-send the data when connection error is not fatal.
+                    // So, don't set here: httpState.OutgoingData = null;
+                }
 
-        private void RequestStreamEndWriteCallback(IAsyncResult ar)
-        {
-            HttpState httpState = (HttpState)ar.AsyncState;
-            try
-            {
-                httpState.Stream.EndWrite(ar);
-                httpState.Stream.Close();
-                httpState.Stream = null;
-                httpState.Buffer = null;
-
-                httpState.Request.BeginGetResponse(EndGetResponseCallback, httpState);
-            }
-            catch (WebException we)
-            {
-                HandleWebException(we);
-            }
-        }
-
-        private void EndGetResponseCallback(IAsyncResult ar)
-        {
-            HttpState httpState = (HttpState)ar.AsyncState;
-            try
-            {
-                httpState.Response = httpState.Request.EndGetResponse(ar);
-                int responseLength = (int)httpState.Response.ContentLength;
+                WebResponse response = httpState.Request.GetResponse();
                 httpState.Request = null;
+
+                #region Read Headers
 
                 lock (SyncObject)
                 {
-                    foreach (string header in httpState.Response.Headers.AllKeys)
+                    foreach (string header in response.Headers.AllKeys)
                     {
                         switch (header)
                         {
                             case "X-MSN-Host":
-                                host = httpState.Response.Headers.Get(header);
+                                host = response.Headers.Get(header);
                                 break;
 
                             case "X-MSN-Messenger":
-                                string text = httpState.Response.Headers.Get(header);
+                                string text = response.Headers.Get(header);
 
                                 string[] parts = text.Split(';');
                                 foreach (string part in parts)
@@ -393,9 +391,11 @@ namespace MSNPSharp.Core
                                         case "SessionID":
                                             SessionID = elements[1];
                                             break;
+
                                         case "GW-IP":
                                             GatewayIP = elements[1];
                                             break;
+
                                         case "Session":
                                             if ("close" == elements[1])
                                             {
@@ -405,6 +405,7 @@ namespace MSNPSharp.Core
                                                 connected = false;
                                             }
                                             break;
+
                                         case "Action":
                                             break;
                                     }
@@ -414,84 +415,109 @@ namespace MSNPSharp.Core
                     }
                 }
 
-                httpState.Stream = httpState.Response.GetResponseStream();
-                httpState.Buffer = new byte[responseLength];
-                httpState.BufferOffset = 0;
+                #endregion
 
-                httpState.Stream.BeginRead(httpState.Buffer, httpState.BufferOffset, httpState.Buffer.Length - httpState.BufferOffset, ResponseStreamEndReadCallback, httpState);
-            }
-            catch (WebException we)
-            {
-                HandleWebException(we);
-            }
-        }
-
-        private void ResponseStreamEndReadCallback(IAsyncResult ar)
-        {
-            HttpState httpState = (HttpState)ar.AsyncState;
-            try
-            {
-                httpState.BufferOffset += httpState.Stream.EndRead(ar);
-
-                if (httpState.BufferOffset < httpState.Buffer.Length)
+                MemoryStream responseReadStream = new MemoryStream();
+                int read = 0;
+                try
                 {
-                    httpState.Stream.BeginRead(httpState.Buffer, httpState.BufferOffset, httpState.Buffer.Length - httpState.BufferOffset, ResponseStreamEndReadCallback, httpState);
-                    return;
+                    using (Stream responseStream = response.GetResponseStream())
+                    {
+                        byte[] readBuffer = new byte[8192];
+                        do
+                        {
+                            read = responseStream.Read(readBuffer, 0, readBuffer.Length);
+                            if (read > 0)
+                            {
+                                responseReadStream.Write(readBuffer, 0, read);
+                            }
+                        }
+                        while (read > 0);
+
+                        // We read all incoming data and no error occured.
+                        // Now, it is time to set null to not resend the data.
+                        httpState.OutgoingData = null;
+
+                        response.Close();
+                        response = null;
+                    }
                 }
+                catch (IOException ioe)
+                {
+                    if (ioe.InnerException is WebException)
+                        throw ioe.InnerException;
+
+                    throw ioe;
+                }
+                finally
+                {
+                    isWebRequestInProcess = false;
+                }
+
+                OnAfterRawDataSent(httpState.UserState);
+
+                // Don't catch exceptions here.
+                responseReadStream.Flush();
+                byte[] rawData = responseReadStream.ToArray();
+                DispatchRawData(rawData);
+                responseReadStream.Close();
+                responseReadStream = null;
             }
             catch (WebException we)
             {
-                HandleWebException(we);
-            }
-            catch (ObjectDisposedException ode)
-            {
-                Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                    "HTTP Response Stream disposed: " + ode.StackTrace, GetType().Name);
+                HandleWebException(we, httpState);
             }
             finally
             {
-                if (httpState.Buffer != null && httpState.Buffer.Length == httpState.BufferOffset)
+                lock (SyncObject)
                 {
-                    isWebRequestInProcess = false;
-                    try
+                    if (connected && (!isWebRequestInProcess) && (!pollTimer.Enabled))
                     {
-                        httpState.Stream.Close();
-                        httpState.Response.Close();
+                        pollTimer.Start();
                     }
-                    catch (Exception exc)
+                    else if (!connected)
                     {
-                        Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                            "HTTP Response Stream close error: " + exc.StackTrace, GetType().Name);
+                        // All content is read. It is time to fire event if not connected..
+                        OnDisconnected();
                     }
-                    finally
-                    {
-                        httpState.Stream = null;
-                        httpState.Response = null;
-                    }
-                }
-            }
-
-            OnAfterRawDataSent(httpState.UserState);
-            DispatchRawData(httpState.Buffer);
-
-            lock (SyncObject)
-            {
-                if (connected && (!isWebRequestInProcess) && (!pollTimer.Enabled))
-                {
-                    pollTimer.Start();
-                }
-                else if (!connected)
-                {
-                    // All content is read. It is time to fire event if not connected..
-                    OnDisconnected();
                 }
             }
         }
 
-        private void HandleWebException(WebException we)
+        private void HandleWebException(WebException we, HttpState httpState)
         {
+            HttpStatusCode statusCode = GetErrorCode(we.Response as HttpWebResponse);
+
+            // Don't send httpState.OutgoingData again... Just reconnect.
+            if (statusCode == HttpStatusCode.BadRequest ||
+                httpState.PollAction == HttpPollAction.Open)
+            {
+                Disconnect();
+                Connect();
+                return;
+            }
+
             switch (we.Status)
             {
+                case WebExceptionStatus.KeepAliveFailure:
+                case WebExceptionStatus.ProtocolError:
+                case WebExceptionStatus.Timeout:
+                    {
+                        // When this happened, re-send the last packet.
+                        isWebRequestInProcess = false;
+
+                        if (httpState.OutgoingData != null && httpState.OutgoingData.Length > 0)
+                        {
+                            Send(httpState.OutgoingData, httpState.UserState);
+                        }
+                        else
+                        {
+                            // It seems outgoing data was sent, but an error occured while reading http response.
+                            return;
+                        }
+                    }
+                    break;
+
                 case WebExceptionStatus.NameResolutionFailure:
                 case WebExceptionStatus.ProxyNameResolutionFailure:
                     {
@@ -502,7 +528,6 @@ namespace MSNPSharp.Core
 
                 case WebExceptionStatus.ConnectFailure:
                 case WebExceptionStatus.ConnectionClosed:
-                case WebExceptionStatus.KeepAliveFailure:
                 case WebExceptionStatus.PipelineFailure:
                 case WebExceptionStatus.SecureChannelFailure:
                     {
@@ -511,10 +536,10 @@ namespace MSNPSharp.Core
                     }
 
                 case WebExceptionStatus.SendFailure:
-                case WebExceptionStatus.ProtocolError:
+
                 case WebExceptionStatus.ReceiveFailure:
                 case WebExceptionStatus.RequestCanceled:
-                case WebExceptionStatus.Timeout:
+
                 case WebExceptionStatus.UnknownError:
                 default:
                     {
@@ -524,43 +549,43 @@ namespace MSNPSharp.Core
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
                             "HTTP Error: " + we.ToString(), GetType().Name);
 
-                        HttpWebResponse wr = (HttpWebResponse)we.Response;
-                        if (wr != null)
-                        {
-                            try
-                            {
-                                Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo,
-                                    "HTTP Status: " + ((int)wr.StatusCode) + " " + wr.StatusCode + " " + wr.StatusDescription, GetType().Name);
-                            }
-                            catch (Exception exp)
-                            {
-                                Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
-                                    "HTTP Error: " + exp.ToString(), GetType().Name);
-                            }
-                        }
+
                         break;
                     }
             }
         }
 
+        private HttpStatusCode GetErrorCode(HttpWebResponse wr)
+        {
+            HttpStatusCode ret = HttpStatusCode.OK;
+            if (wr != null)
+            {
+                try
+                {
+                    ret = wr.StatusCode;
+                }
+                catch (Exception exp)
+                {
+                    Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
+                        "HTTP Error: " + exp.ToString(), GetType().Name);
+                }
+            }
+            return ret;
+        }
+
         private class HttpState
         {
             internal WebRequest Request;
-            internal WebResponse Response;
-            internal Stream Stream;
-
-            internal byte[] Buffer;
-            internal int BufferOffset;
+            internal byte[] OutgoingData;
             internal Object UserState;
+            internal HttpPollAction PollAction;
 
-            internal HttpState(WebRequest request, WebResponse response,
-                Stream stream, byte[] buffer, object userState)
+            internal HttpState(WebRequest request, byte[] outgoingData, object userState, HttpPollAction pollAction)
             {
                 this.Request = request;
-                this.Response = response;
-                this.Stream = stream;
-                this.Buffer = buffer;
+                this.OutgoingData = outgoingData;
                 this.UserState = userState;
+                this.PollAction = pollAction;
             }
         }
 
