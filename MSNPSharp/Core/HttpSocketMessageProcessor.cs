@@ -360,10 +360,14 @@ namespace MSNPSharp.Core
                 using (Stream stream = httpState.Request.EndGetRequestStream(ar))
                 {
                     stream.Write(httpState.OutgoingData, 0, httpState.OutgoingData.Length);
+                    // We must re-send the data when connection error is not fatal.
+                    // So, don't set here: httpState.OutgoingData = null;
                 }
 
                 WebResponse response = httpState.Request.GetResponse();
                 httpState.Request = null;
+
+                #region Read Headers
 
                 lock (SyncObject)
                 {
@@ -387,9 +391,11 @@ namespace MSNPSharp.Core
                                         case "SessionID":
                                             SessionID = elements[1];
                                             break;
+
                                         case "GW-IP":
                                             GatewayIP = elements[1];
                                             break;
+
                                         case "Session":
                                             if ("close" == elements[1])
                                             {
@@ -399,6 +405,7 @@ namespace MSNPSharp.Core
                                                 connected = false;
                                             }
                                             break;
+
                                         case "Action":
                                             break;
                                     }
@@ -408,22 +415,32 @@ namespace MSNPSharp.Core
                     }
                 }
 
+                #endregion
 
-                Stream responseStream = response.GetResponseStream();
                 MemoryStream responseReadStream = new MemoryStream();
-                byte[] readBuffer = new byte[8192];
                 int read = 0;
                 try
                 {
-                    do
+                    using (Stream responseStream = response.GetResponseStream())
                     {
-                        read = responseStream.Read(readBuffer, 0, readBuffer.Length);
-                        if (read > 0)
+                        byte[] readBuffer = new byte[8192];
+                        do
                         {
-                            responseReadStream.Write(readBuffer, 0, read);
+                            read = responseStream.Read(readBuffer, 0, readBuffer.Length);
+                            if (read > 0)
+                            {
+                                responseReadStream.Write(readBuffer, 0, read);
+                            }
                         }
+                        while (read > 0);
+
+                        // We read all incoming data and no error occured.
+                        // Now, it is time to set null to not resend the data.
+                        httpState.OutgoingData = null;
+
+                        response.Close();
+                        response = null;
                     }
-                    while (read > 0);
                 }
                 catch (IOException ioe)
                 {
@@ -432,31 +449,9 @@ namespace MSNPSharp.Core
 
                     throw ioe;
                 }
-                catch (WebException we)
-                {
-                    HandleWebException(we, httpState);
-                }
                 finally
                 {
-                    if (read == 0)
-                    {
-                        isWebRequestInProcess = false;
-                        try
-                        {
-                            responseStream.Close();
-                            response.Close();
-                        }
-                        catch (Exception exc)
-                        {
-                            Trace.WriteLineIf(Settings.TraceSwitch.TraceWarning,
-                                "HTTP Response Stream close error: " + exc.StackTrace, GetType().Name);
-                        }
-                        finally
-                        {
-                            responseStream = null;
-                            response = null;
-                        }
-                    }
+                    isWebRequestInProcess = false;
                 }
 
                 OnAfterRawDataSent(httpState.UserState);
@@ -467,7 +462,13 @@ namespace MSNPSharp.Core
                 DispatchRawData(rawData);
                 responseReadStream.Close();
                 responseReadStream = null;
-
+            }
+            catch (WebException we)
+            {
+                HandleWebException(we, httpState);
+            }
+            finally
+            {
                 lock (SyncObject)
                 {
                     if (connected && (!isWebRequestInProcess) && (!pollTimer.Enabled))
@@ -481,15 +482,20 @@ namespace MSNPSharp.Core
                     }
                 }
             }
-            catch (WebException we)
-            {
-                HandleWebException(we, httpState);
-            }
         }
 
-        private bool HandleWebException(WebException we, HttpState httpState)
+        private void HandleWebException(WebException we, HttpState httpState)
         {
             HttpStatusCode statusCode = GetErrorCode(we.Response as HttpWebResponse);
+
+            // Don't send httpState.OutgoingData again... Just reconnect.
+            if (statusCode == HttpStatusCode.BadRequest ||
+                httpState.PollAction == HttpPollAction.Open)
+            {
+                Disconnect();
+                Connect();
+                return;
+            }
 
             switch (we.Status)
             {
@@ -497,20 +503,8 @@ namespace MSNPSharp.Core
                 case WebExceptionStatus.ProtocolError:
                 case WebExceptionStatus.Timeout:
                     {
-                        if (statusCode == HttpStatusCode.BadRequest)
-                        {
-                            Disconnect();
-                            return false;
-                        }
-
-                        // When this happens, re-send the last packet.
+                        // When this happened, re-send the last packet.
                         isWebRequestInProcess = false;
-
-                        if (httpState.PollAction == HttpPollAction.Open)
-                        {
-                            Disconnect();
-                            Connect();
-                        }
 
                         if (httpState.OutgoingData != null && httpState.OutgoingData.Length > 0)
                         {
@@ -519,7 +513,7 @@ namespace MSNPSharp.Core
                         else
                         {
                             // It seems outgoing data was sent, but an error occured while reading http response.
-                            return true;
+                            return;
                         }
                     }
                     break;
@@ -559,8 +553,6 @@ namespace MSNPSharp.Core
                         break;
                     }
             }
-
-            return false;
         }
 
         private HttpStatusCode GetErrorCode(HttpWebResponse wr)
