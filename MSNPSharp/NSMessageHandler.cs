@@ -60,7 +60,7 @@ namespace MSNPSharp
         /// <summary>
         /// Machine Guid
         /// </summary>
-        public static readonly Guid MachineGuid = Guid.NewGuid();
+        public static Guid MachineGuid = Guid.NewGuid();
 
         #region AdlState
 

@@ -251,8 +251,6 @@ namespace MSNPSharp
         /// </summary>
         public const string StorageServiceRedirectionHost = @"tkrdr.storage.msn.com";
 
-
-        private WebProxy webProxy;
         private NSMessageHandler nsMessageHandler;
         private Dictionary<MsnServiceState, SoapHttpClientProtocol> asyncStates =
             new Dictionary<MsnServiceState, SoapHttpClientProtocol>(0);
