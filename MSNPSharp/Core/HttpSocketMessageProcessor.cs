@@ -233,30 +233,30 @@ namespace MSNPSharp.Core
             OnConnected();
         }
 
-        private byte[] Open(byte[] data)
+        private byte[] GetOpenOrClosePacket(byte[] outgoingData)
         {
-            if (data.Length > 4 && data[3] == ' ')
+            if (outgoingData.Length > 4 && outgoingData[3] == ' ')
             {
                 // Be fast...
-                switch ((char)data[0])
+                switch ((char)outgoingData[0])
                 {
                     case 'V': // VER
-                        openState[0] = (data[1] == 'E' && data[2] == 'R');
-                        openCommand = NetworkMessage.AppendArray(openCommand, data);
+                        openState[0] = (outgoingData[1] == 'E' && outgoingData[2] == 'R');
+                        openCommand = NetworkMessage.AppendArray(openCommand, outgoingData);
                         break;
 
                     case 'C': // CVR
-                        openState[1] = (data[1] == 'V' && data[2] == 'R');
-                        openCommand = NetworkMessage.AppendArray(openCommand, data);
+                        openState[1] = (outgoingData[1] == 'V' && outgoingData[2] == 'R');
+                        openCommand = NetworkMessage.AppendArray(openCommand, outgoingData);
                         break;
 
                     case 'U': // USR
-                        openState[2] = (data[1] == 'S' && data[2] == 'R');
-                        openCommand = NetworkMessage.AppendArray(openCommand, data);
+                        openState[2] = (outgoingData[1] == 'S' && outgoingData[2] == 'R');
+                        openCommand = NetworkMessage.AppendArray(openCommand, outgoingData);
                         break;
 
                     case 'O': // OUT
-                        openState[3] = (data[1] == 'U' && data[2] == 'T');
+                        openState[3] = (outgoingData[1] == 'U' && outgoingData[2] == 'T');
                         // Don't buffer OUT packet
                         break;
                 }
@@ -273,7 +273,7 @@ namespace MSNPSharp.Core
                 // Special case, not connected, but the packet is OUT
                 isWebRequestInProcess = false;
                 // This fires Disconnected event
-                return data;
+                return outgoingData;
             }
 
             return null; // Connection has not been established yet
@@ -313,7 +313,7 @@ namespace MSNPSharp.Core
         [MethodImpl(MethodImplOptions.Synchronized)]
         public override void Send(byte[] outgoingData, object userState)
         {
-            if (opened || (null != (outgoingData = Open(outgoingData))))
+            if (opened || (null != (outgoingData = GetOpenOrClosePacket(outgoingData))))
             {
                 if (isWebRequestInProcess)
                 {
