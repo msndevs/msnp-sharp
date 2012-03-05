@@ -71,10 +71,13 @@ namespace MSNPSharp.Core
 
         private HttpPollAction action = HttpPollAction.None;
 
-        private volatile bool connected;
+        // For SessionID corruption. That means we have session ID. 
+        // Actually, we can send another web request if this is true but it is better to read all content.
+        private bool isWebRequestHeaderProcessed;
         private volatile bool isWebRequestInProcess; // We can't send another web request if this is true
         private bool useLifespan; // Don't set lifespan until SignedIn
 
+        private volatile bool connected;
         private bool opened; // first call to server has Action=open
         private byte[] openCommand = new byte[0];
         private BitArray openState = new BitArray(4); // VER,CVR,USR,OUT
@@ -272,8 +275,17 @@ namespace MSNPSharp.Core
             {
                 // Special case, not connected, but the packet is OUT
                 isWebRequestInProcess = false;
-                // This fires Disconnected event
-                return outgoingData;
+                // This fires Disconnected event (send only 1 OUT packet)
+                if (isWebRequestHeaderProcessed)
+                {
+                    return outgoingData;
+                }
+                else
+                {
+                    isWebRequestHeaderProcessed = false;
+                    OnDisconnected();
+                    return null;
+                }
             }
 
             return null; // Connection has not been established yet
@@ -293,6 +305,7 @@ namespace MSNPSharp.Core
             }
 
             isWebRequestInProcess = false;
+            isWebRequestHeaderProcessed = false;
             sendingQueue = new Queue<QueueState>();
             openCommand = new byte[0];
             openState.SetAll(false);
@@ -428,6 +441,7 @@ namespace MSNPSharp.Core
                                 break;
                         }
                     }
+                    isWebRequestHeaderProcessed = true;
                 }
 
                 #endregion
