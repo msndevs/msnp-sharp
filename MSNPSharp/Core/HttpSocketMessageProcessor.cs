@@ -77,7 +77,7 @@ namespace MSNPSharp.Core
 
         private bool opened; // first call to server has Action=open
         private byte[] openCommand = new byte[0];
-        private BitArray openState = new BitArray(3); // VER,CVR,USR
+        private BitArray openState = new BitArray(4); // VER,CVR,USR,OUT
 
         private string sessionID;
         private string gatewayIP;
@@ -237,22 +237,27 @@ namespace MSNPSharp.Core
         {
             if (data.Length > 4 && data[3] == ' ')
             {
-                // Concat data to the end of OpenCommand
-                openCommand = NetworkMessage.AppendArray(openCommand, data);
-
                 // Be fast...
                 switch ((char)data[0])
                 {
-                    case 'V':
+                    case 'V': // VER
                         openState[0] = (data[1] == 'E' && data[2] == 'R');
+                        openCommand = NetworkMessage.AppendArray(openCommand, data);
                         break;
 
-                    case 'C':
+                    case 'C': // CVR
                         openState[1] = (data[1] == 'V' && data[2] == 'R');
+                        openCommand = NetworkMessage.AppendArray(openCommand, data);
                         break;
 
-                    case 'U':
+                    case 'U': // USR
                         openState[2] = (data[1] == 'S' && data[2] == 'R');
+                        openCommand = NetworkMessage.AppendArray(openCommand, data);
+                        break;
+
+                    case 'O': // OUT
+                        openState[3] = (data[1] == 'U' && data[2] == 'T');
+                        // Don't buffer OUT packet
                         break;
                 }
             }
@@ -262,6 +267,13 @@ namespace MSNPSharp.Core
                 opened = true;
                 action = HttpPollAction.Open;
                 return openCommand;
+            }
+            else if (openState.Get(3))
+            {
+                // Special case, not connected, but the packet is OUT
+                isWebRequestInProcess = false;
+                // This fires Disconnected event
+                return data;
             }
 
             return null; // Connection has not been established yet
