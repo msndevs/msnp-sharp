@@ -193,7 +193,7 @@ namespace MSNPSharp
             msnp21.ProductID = "PROD0120PW!CCV9@";
             msnp21.ProductKey = "C1BX{V4W}Q3*10SM";
             msnp21.MessengerClientName = "MSNMSGR";
-            msnp21.MessengerClientBuildVer = "15.4.3508.1109";
+            msnp21.MessengerClientBuildVer = "15.4.3538.0513";
             msnp21.ApplicationId = Properties.Resources.ApplicationID;
             msnp21.MessengerClientBrand = "MSNMSGR";
             DefaultCredentials[msnp21.MsnProtocol] = msnp21;
