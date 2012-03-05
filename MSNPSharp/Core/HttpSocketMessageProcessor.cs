@@ -525,7 +525,8 @@ namespace MSNPSharp.Core
             // It disconnects automatically and stops. So you don't need to call Disconnect().
             if (we.Status == WebExceptionStatus.NameResolutionFailure ||
                 we.Status == WebExceptionStatus.ProxyNameResolutionFailure ||
-                we.Status == WebExceptionStatus.ConnectFailure)
+                we.Status == WebExceptionStatus.ConnectFailure ||
+                we.Status == WebExceptionStatus.ProtocolError)
             {
                 isWebRequestInProcess = false;
                 Disconnect();
@@ -552,7 +553,6 @@ namespace MSNPSharp.Core
                 case WebExceptionStatus.ConnectionClosed:
                 case WebExceptionStatus.PipelineFailure:
                 case WebExceptionStatus.KeepAliveFailure:
-                case WebExceptionStatus.ProtocolError:
                 case WebExceptionStatus.Timeout:
                 case WebExceptionStatus.SendFailure:
                 case WebExceptionStatus.ReceiveFailure:
