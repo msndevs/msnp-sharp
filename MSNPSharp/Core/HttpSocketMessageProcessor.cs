@@ -330,16 +330,19 @@ namespace MSNPSharp.Core
                     ConnectivitySettings.SetupWebRequest(request);
                     request.Accept = "*/*";
                     request.Method = "POST";
-                    request.Timeout = 10000;
                     request.KeepAlive = true;
                     request.AllowAutoRedirect = false;
                     request.AllowWriteStreamBuffering = false;
                     request.ContentLength = outgoingData.Length;
                     request.Headers.Add("Pragma", "no-cache");
 
+                    // Set timeouts (10+40=50) = PNG average interval
+                    request.Timeout = 10000; // 10 seconds for GetRequestStream(). Timeout error occurs when the server is busy.
+                    request.ReadWriteTimeout = 40000; // 40 seconds for Read()/Write(). PNG interval is 45-60, so timeout must be <= 40.
+
                     // Bypass msnp blockers
                     request.ContentType = "text/html; charset=UTF-8";
-                    request.UserAgent = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.912.63 Safari/535.7";
+                    request.UserAgent = @"Mozilla/5.0 (Windows NT 6.1) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.65 Safari/535.11";
                     request.Headers.Add("X-Requested-Session-Content-Type", "text/html");
 
                     // Enable GZIP
@@ -435,9 +438,11 @@ namespace MSNPSharp.Core
                         while (read > 0);
 
                         // We read all incoming data and no error occured.
-                        // Now, it is time to set null to not resend the data.
+                        // Now, it is time to set null to NOT resend the data.
                         httpState.OutgoingData = null;
 
+                        // This can close "keep-alive" connection, but it isn't important.
+                        // We handle soft errors and we send the last packet again if it is necessary.
                         response.Close();
                         response = null;
                     }
@@ -454,6 +459,7 @@ namespace MSNPSharp.Core
                     isWebRequestInProcess = false;
                 }
 
+                // Yay! No http errors (soft or hard)
                 OnAfterRawDataSent(httpState.UserState);
 
                 // Don't catch exceptions here.
@@ -488,9 +494,9 @@ namespace MSNPSharp.Core
         {
             HttpStatusCode statusCode = GetErrorCode(we.Response as HttpWebResponse);
 
-            // Not has an INTERNET connection (resolve error),
-            // or the net cable was unplugged after http request was sent (connect failure)
-            // This generates Disconnect event and stops.
+            // It hasn't an active INTERNET connection (resolve error),
+            // or the connection was LOST after http request was sent (connect failure)
+            // It disconnects automatically and stops. So you don't need to call Disconnect().
             if (we.Status == WebExceptionStatus.NameResolutionFailure ||
                 we.Status == WebExceptionStatus.ProxyNameResolutionFailure ||
                 we.Status == WebExceptionStatus.ConnectFailure)
@@ -503,11 +509,12 @@ namespace MSNPSharp.Core
             }
 
             // If the session corrupted (BadRequest), 
-            // or the first request (Open) is timed out then reconnect: We passed resolve/connect failures.
+            // or the first http request (Open) is timed out then reconnect: We passed resolve/connect failures.
             // IMPORTANT: Don't send httpState.OutgoingData again...
             if (statusCode == HttpStatusCode.BadRequest ||
                 (we.Status == WebExceptionStatus.Timeout && httpState.PollAction == HttpPollAction.Open))
             {
+                isWebRequestInProcess = false;
                 Disconnect();
                 Connect();
                 return;
@@ -515,49 +522,47 @@ namespace MSNPSharp.Core
 
             switch (we.Status)
             {
+                // If a soft error occurs, re-send the last packet.
+                case WebExceptionStatus.ConnectionClosed:
+                case WebExceptionStatus.PipelineFailure:
                 case WebExceptionStatus.KeepAliveFailure:
                 case WebExceptionStatus.ProtocolError:
                 case WebExceptionStatus.Timeout:
+                case WebExceptionStatus.SendFailure:
+                case WebExceptionStatus.ReceiveFailure:
                     {
-                        // When this happened, re-send the last packet.
                         isWebRequestInProcess = false;
 
+                        // IN MIDDLE SOFT ERROR
+                        // Outgoing data wasn't sent, we can re-send...
                         if (httpState.OutgoingData != null && httpState.OutgoingData.Length > 0)
                         {
                             Send(httpState.OutgoingData, httpState.UserState);
                         }
                         else
                         {
-                            // It seems outgoing data was sent, but an error occured while reading http response.
+                            // AT END SOFT ERROR
+                            // Outgoing data was sent, but an error occured while closing (KeepAliveFailure)
+                            // Anyway this is not fatal, next time we will send PNG...
                             return;
                         }
                     }
                     break;
 
-
-                case WebExceptionStatus.ConnectFailure:
-                case WebExceptionStatus.ConnectionClosed:
-                case WebExceptionStatus.PipelineFailure:
                 case WebExceptionStatus.SecureChannelFailure:
                     {
                         OnConnectionException(we);
                         goto default;
                     }
 
-                case WebExceptionStatus.SendFailure:
-
-                case WebExceptionStatus.ReceiveFailure:
                 case WebExceptionStatus.RequestCanceled:
-
                 case WebExceptionStatus.UnknownError:
                 default:
                     {
-
                         OnDisconnected();
 
                         Trace.WriteLineIf(Settings.TraceSwitch.TraceError,
                             "HTTP Error: " + we.ToString(), GetType().Name);
-
 
                         break;
                     }
