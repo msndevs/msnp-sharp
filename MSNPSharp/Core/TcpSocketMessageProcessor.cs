@@ -44,7 +44,7 @@ namespace MSNPSharp.Core
 {
     using MSNPSharp;
 
-    public class TcpSocketMessageProcessor : SocketMessageProcessor, IDisposable
+    public class TcpSocketMessageProcessor : SocketMessageProcessor
     {
         #region Members
 
@@ -55,11 +55,6 @@ namespace MSNPSharp.Core
         public TcpSocketMessageProcessor(ConnectivitySettings connectivitySettings, MessagePool messagePool)
             : base(connectivitySettings, messagePool)
         {
-        }
-
-        ~TcpSocketMessageProcessor()
-        {
-            Dispose(false);
         }
 
         #endregion
@@ -395,11 +390,6 @@ namespace MSNPSharp.Core
             }
         }
 
-        public override void SendMessage(NetworkMessage message)
-        {
-            Send(message.GetBytes());
-        }
-
         public override void Send(byte[] data, object userState)
         {
             SendSocketData(socket, data, userState);
@@ -495,23 +485,6 @@ namespace MSNPSharp.Core
                 // We don't need to call OnDisconnect here since EndReceiveCallback will be call automatically later on. (This is not valid if disconnected remotelly)
                 // We need to call OnDisconnect after EndReceiveCallback if disconnected locally.
             }
-        }
-
-        public void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                // Dispose managed resources
-                Disconnect();
-            }
-
-            // Free native resources
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
         }
 
         #endregion

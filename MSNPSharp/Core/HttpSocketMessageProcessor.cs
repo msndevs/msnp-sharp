@@ -65,7 +65,7 @@ namespace MSNPSharp.Core
     /// HTTP polling transport layer.
     /// Reference in http://www.hypothetic.org/docs/msn/sitev2.0/general/http_connections.php.
     /// </summary>
-    public class HttpSocketMessageProcessor : SocketMessageProcessor, IDisposable
+    public class HttpSocketMessageProcessor : SocketMessageProcessor
     {
         public const int MaxAllowedPacket = Int16.MaxValue;
 
@@ -313,16 +313,6 @@ namespace MSNPSharp.Core
             useLifespan = false;
         }
 
-        public void Dispose()
-        {
-            Disconnect();
-        }
-
-        public override void SendMessage(NetworkMessage message)
-        {
-            Send(message.GetBytes());
-        }
-
         [MethodImpl(MethodImplOptions.Synchronized)]
         public override void Send(byte[] outgoingData, object userState)
         {
@@ -469,8 +459,14 @@ namespace MSNPSharp.Core
 
                         // This can close "keep-alive" connection, but it isn't important.
                         // We handle soft errors and we send the last packet again if it is necessary.
-                        response.Close();
-                        response = null;
+                        try
+                        {
+                            response.Close();
+                            response = null;
+                        }
+                        catch (Exception)
+                        {
+                        }
                     }
                 }
                 catch (IOException ioe)
@@ -509,8 +505,10 @@ namespace MSNPSharp.Core
                     }
                     else if (!connected)
                     {
-                        // All content is read. It is time to fire event if not connected..
-                        OnDisconnected();
+                        // All content was read. It is time to fire event if not connected.
+                        // "connected" is set as "false" when OUT received.
+                        Disconnect(); // This won't fire OnDisconnected event, because connected=false,
+                        OnDisconnected(); // so we fire event here to ensure event fired.
                     }
                 }
             }
