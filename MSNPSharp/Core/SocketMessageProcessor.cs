@@ -81,7 +81,7 @@ namespace MSNPSharp.Core
     };
 
 
-    public abstract class SocketMessageProcessor : IMessageProcessor, IDisposable
+    public abstract class SocketMessageProcessor : IDisposable
     {
         #region Events
 

@@ -185,7 +185,7 @@ namespace MSNPSharp.P2P
                 mmMessage.InnerMessage = p2pMessage;
             }
 
-            NSMessageProcessor nsmp = (NSMessageProcessor)NSMessageHandler.MessageProcessor;
+            NSMessageProcessor nsmp = NSMessageHandler.MessageProcessor;
             int transId = nsmp.IncreaseTransactionID();
 
             lock (p2pAckMessages)
@@ -202,7 +202,7 @@ namespace MSNPSharp.P2P
             if (remote == null)
                 return;
 
-            NSMessageProcessor nsmp = (NSMessageProcessor)NSMessageHandler.MessageProcessor;
+            NSMessageProcessor nsmp = NSMessageHandler.MessageProcessor;
 
             string to = ((int)remote.ClientType).ToString() + ":" + remote.Account;
             string from = ((int)NSMessageHandler.Owner.ClientType).ToString() + ":" + NSMessageHandler.Owner.Account;

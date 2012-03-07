@@ -539,7 +539,7 @@ namespace MSNPSharp
                                         nsMessageHandler.Credentials.Password == authPassword &&
                                         nsMessageHandler.IsSignedIn == false)
                                     {
-                                        NSMessageProcessor nsmp = nsMessageHandler.MessageProcessor as NSMessageProcessor;
+                                        NSMessageProcessor nsmp = nsMessageHandler.MessageProcessor;
 
                                         if (nsmp != null && nsmp.Connected)
                                         {

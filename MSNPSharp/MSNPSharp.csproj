@@ -94,7 +94,6 @@
       <DependentUpon>enums.cs</DependentUpon>
     </Compile>
     <Compile Include="EventArgs.cs" />
-    <Compile Include="Core\IMessageHandler.cs" />
     <Compile Include="Framework.cs" />
     <Compile Include="IO\DeltasList.cs" />
     <Compile Include="IO\IO.cs" />
@@ -104,7 +103,6 @@
     <Compile Include="IO\SerializableMemoryStream.cs" />
     <Compile Include="MailEventArgs.cs" />
     <Compile Include="Core\MessagePool.cs" />
-    <Compile Include="Core\MessageProcessor.cs" />
     <Compile Include="MessageManager.cs" />
     <Compile Include="Messenger.cs" />
     <Compile Include="Core\MSNMessage.cs" />

@@ -146,7 +146,7 @@ namespace MSNPSharp
             {
                 connectivitySettings = value;
 
-                NSMessageProcessor mp = Nameserver.MessageProcessor as NSMessageProcessor;
+                NSMessageProcessor mp = Nameserver.MessageProcessor;
 
                 if (mp != null)
                 {
@@ -195,7 +195,7 @@ namespace MSNPSharp
         {
             get
             {
-                NSMessageProcessor mp = Nameserver.MessageProcessor as NSMessageProcessor;
+                NSMessageProcessor mp = Nameserver.MessageProcessor;
                 return (mp != null && mp.Connected);
             }
         }
@@ -368,7 +368,7 @@ namespace MSNPSharp
         /// </summary>
         public virtual void Disconnect()
         {
-            NSMessageProcessor mp = Nameserver.MessageProcessor as NSMessageProcessor;
+            NSMessageProcessor mp = Nameserver.MessageProcessor;
 
             if (mp != null && mp.Connected)
             {
