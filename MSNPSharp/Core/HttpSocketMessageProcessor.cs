@@ -73,7 +73,7 @@ namespace MSNPSharp.Core
 
         // For SessionID corruption. That means we have session ID. 
         // Actually, we can send another web request if this is true but it is better to read all content.
-        private bool isWebRequestHeaderProcessed;
+        private bool isWebResponseHeadersProcessed;
         private volatile bool isWebRequestInProcess; // We can't send another web request if this is true
         private bool useLifespan; // Don't set lifespan until SignedIn
 
@@ -276,13 +276,13 @@ namespace MSNPSharp.Core
                 // Special case, not connected, but the packet is OUT
                 isWebRequestInProcess = false;
                 // This fires Disconnected event (send only 1 OUT packet)
-                if (isWebRequestHeaderProcessed)
+                if (isWebResponseHeadersProcessed)
                 {
                     return outgoingData;
                 }
                 else
                 {
-                    isWebRequestHeaderProcessed = false;
+                    isWebResponseHeadersProcessed = false;
                     OnDisconnected();
                     return null;
                 }
@@ -305,7 +305,7 @@ namespace MSNPSharp.Core
             }
 
             isWebRequestInProcess = false;
-            isWebRequestHeaderProcessed = false;
+            isWebResponseHeadersProcessed = false;
             sendingQueue = new Queue<QueueState>();
             openCommand = new byte[0];
             openState.SetAll(false);
@@ -417,10 +417,10 @@ namespace MSNPSharp.Core
                                         case "Session":
                                             if ("close" == elements[1])
                                             {
-                                                // Session is closed... OUT or SignoutFromHere() was sent.
+                                                // Session has just closed (OUT/SignoutFromHere)
                                                 // We will receive 400 error if we send a new data.
-                                                // So, fire event after all content read.
-                                                connected = false;
+                                                connected = false; // We will fire Disconnected event after all content was read.
+                                                // See the finally block of this function.
                                             }
                                             break;
 
@@ -431,7 +431,7 @@ namespace MSNPSharp.Core
                                 break;
                         }
                     }
-                    isWebRequestHeaderProcessed = true;
+                    isWebResponseHeadersProcessed = true;
                 }
 
                 #endregion
@@ -506,7 +506,7 @@ namespace MSNPSharp.Core
                     else if (!connected)
                     {
                         // All content was read. It is time to fire event if not connected.
-                        // "connected" is set as "false" when OUT received.
+                        // "connected" is set as "false" when Session=close received.
                         Disconnect(); // This won't fire OnDisconnected event, because connected=false,
                         OnDisconnected(); // so we fire event here to ensure event fired.
                     }
