@@ -44,7 +44,7 @@ namespace MSNPSharp.Core
 {
     using MSNPSharp;
 
-    public class TcpSocketMessageProcessor : SocketMessageProcessor, IDisposable
+    public class TcpSocketMessageProcessor : SocketMessageProcessor
     {
         #region Members
 
@@ -55,11 +55,6 @@ namespace MSNPSharp.Core
         public TcpSocketMessageProcessor(ConnectivitySettings connectivitySettings, MessagePool messagePool)
             : base(connectivitySettings, messagePool)
         {
-        }
-
-        ~TcpSocketMessageProcessor()
-        {
-            Dispose(false);
         }
 
         #endregion
@@ -395,11 +390,6 @@ namespace MSNPSharp.Core
             }
         }
 
-        public override void SendMessage(NetworkMessage message)
-        {
-            Send(message.GetBytes());
-        }
-
         public override void Send(byte[] data, object userState)
         {
             SendSocketData(socket, data, userState);
@@ -470,16 +460,27 @@ namespace MSNPSharp.Core
             }
         }
 
+        protected override void OnDisconnected()
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "OnDisconnected", GetType().Name);
+
+            Disconnect();
+            base.OnDisconnected();
+        }
+
         public override void Disconnect()
         {
             // clean up the socket properly
             if (socket != null)
             {
+                ProxySocket pSocket = socket;
+                socket = null;
+
                 try
                 {
-                    if (Connected)
+                    if (IsSocketConnected(pSocket))
                     {
-                        socket.Shutdown(SocketShutdown.Both);
+                        pSocket.Shutdown(SocketShutdown.Both);
                     }
                 }
                 catch (Exception)
@@ -487,31 +488,13 @@ namespace MSNPSharp.Core
                 }
                 finally
                 {
-                    socket.Close();
+                    pSocket.Close();
                 }
-
-                socket = null;
 
                 // We don't need to call OnDisconnect here since EndReceiveCallback will be call automatically later on. (This is not valid if disconnected remotelly)
                 // We need to call OnDisconnect after EndReceiveCallback if disconnected locally.
+                // We call Disconnect() when OnDisconnected event fired.
             }
-        }
-
-        public void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                // Dispose managed resources
-                Disconnect();
-            }
-
-            // Free native resources
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
         }
 
         #endregion

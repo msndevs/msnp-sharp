@@ -81,7 +81,7 @@ namespace MSNPSharp.Core
     };
 
 
-    public abstract class SocketMessageProcessor : IMessageProcessor
+    public abstract class SocketMessageProcessor : IMessageProcessor, IDisposable
     {
         #region Events
 
@@ -157,6 +157,11 @@ namespace MSNPSharp.Core
             MessagePool = messagePool;
         }
 
+        ~SocketMessageProcessor()
+        {
+            Dispose(false);
+        }
+
         #endregion
 
         #region Properties
@@ -200,14 +205,34 @@ namespace MSNPSharp.Core
 
         #endregion
 
-        public abstract void SendMessage(NetworkMessage message);
         public abstract void Connect();
         public abstract void Disconnect();
-
         public abstract void Send(byte[] data, object userState);
         public virtual void Send(byte[] data)
         {
             Send(data, null);
+        }
+
+        public virtual void SendMessage(NetworkMessage message)
+        {
+            Send(message.GetBytes());
+        }
+
+        public virtual void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                // Dispose managed resources
+                Disconnect();
+            }
+
+            // Free native resources
         }
 
         protected virtual void DispatchRawData(byte[] data)

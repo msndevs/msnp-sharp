@@ -630,8 +630,6 @@ namespace MSNPSharp.P2P
             {
                 Disconnect();
             }
-
-            Processor.Dispose(disposing);
         }
 
         public void Dispose()

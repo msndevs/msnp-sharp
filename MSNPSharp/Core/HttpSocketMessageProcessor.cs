@@ -65,7 +65,7 @@ namespace MSNPSharp.Core
     /// HTTP polling transport layer.
     /// Reference in http://www.hypothetic.org/docs/msn/sitev2.0/general/http_connections.php.
     /// </summary>
-    public class HttpSocketMessageProcessor : SocketMessageProcessor, IDisposable
+    public class HttpSocketMessageProcessor : SocketMessageProcessor
     {
         public const int MaxAllowedPacket = Int16.MaxValue;
 
@@ -73,7 +73,7 @@ namespace MSNPSharp.Core
 
         // For SessionID corruption. That means we have session ID. 
         // Actually, we can send another web request if this is true but it is better to read all content.
-        private bool isWebRequestHeaderProcessed;
+        private bool isWebResponseHeadersProcessed;
         private volatile bool isWebRequestInProcess; // We can't send another web request if this is true
         private bool useLifespan; // Don't set lifespan until SignedIn
 
@@ -276,13 +276,13 @@ namespace MSNPSharp.Core
                 // Special case, not connected, but the packet is OUT
                 isWebRequestInProcess = false;
                 // This fires Disconnected event (send only 1 OUT packet)
-                if (isWebRequestHeaderProcessed)
+                if (isWebResponseHeadersProcessed)
                 {
                     return outgoingData;
                 }
                 else
                 {
-                    isWebRequestHeaderProcessed = false;
+                    isWebResponseHeadersProcessed = false;
                     OnDisconnected();
                     return null;
                 }
@@ -305,22 +305,12 @@ namespace MSNPSharp.Core
             }
 
             isWebRequestInProcess = false;
-            isWebRequestHeaderProcessed = false;
+            isWebResponseHeadersProcessed = false;
             sendingQueue = new Queue<QueueState>();
             openCommand = new byte[0];
             openState.SetAll(false);
             opened = false;
             useLifespan = false;
-        }
-
-        public void Dispose()
-        {
-            Disconnect();
-        }
-
-        public override void SendMessage(NetworkMessage message)
-        {
-            Send(message.GetBytes());
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
@@ -427,10 +417,10 @@ namespace MSNPSharp.Core
                                         case "Session":
                                             if ("close" == elements[1])
                                             {
-                                                // Session is closed... OUT or SignoutFromHere() was sent.
+                                                // Session has just closed (OUT/SignoutFromHere)
                                                 // We will receive 400 error if we send a new data.
-                                                // So, fire event after all content read.
-                                                connected = false;
+                                                connected = false; // We will fire Disconnected event after all content was read.
+                                                // See the finally block of this function.
                                             }
                                             break;
 
@@ -441,7 +431,7 @@ namespace MSNPSharp.Core
                                 break;
                         }
                     }
-                    isWebRequestHeaderProcessed = true;
+                    isWebResponseHeadersProcessed = true;
                 }
 
                 #endregion
@@ -469,8 +459,14 @@ namespace MSNPSharp.Core
 
                         // This can close "keep-alive" connection, but it isn't important.
                         // We handle soft errors and we send the last packet again if it is necessary.
-                        response.Close();
-                        response = null;
+                        try
+                        {
+                            response.Close();
+                            response = null;
+                        }
+                        catch (Exception)
+                        {
+                        }
                     }
                 }
                 catch (IOException ioe)
@@ -509,8 +505,10 @@ namespace MSNPSharp.Core
                     }
                     else if (!connected)
                     {
-                        // All content is read. It is time to fire event if not connected..
-                        OnDisconnected();
+                        // All content was read. It is time to fire event if not connected.
+                        // "connected" is set as "false" when Session=close received.
+                        Disconnect(); // This won't fire OnDisconnected event, because connected=false,
+                        OnDisconnected(); // so we fire event here to ensure event fired.
                     }
                 }
             }
