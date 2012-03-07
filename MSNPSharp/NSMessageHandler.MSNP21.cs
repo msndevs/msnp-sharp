@@ -275,7 +275,7 @@ namespace MSNPSharp
                 throw new InvalidOperationException("At least 2 contacts is required except you and contacts must support multiparty.");
 
 
-            NSMessageProcessor nsmp = MessageProcessor;
+            NSMessageProcessor nsmp = (NSMessageProcessor)MessageProcessor;
             int transId = nsmp.IncreaseTransactionID();
 
             lock (multiParties)
@@ -1274,7 +1274,7 @@ namespace MSNPSharp
                             if (mpo == null)
                             {
                                 // Created remotely.
-                                NSMessageProcessor nsmp = MessageProcessor;
+                                NSMessageProcessor nsmp = (NSMessageProcessor)MessageProcessor;
                                 int transId = nsmp.IncreaseTransactionID();
 
                                 group = new Contact(routingInfo.SenderAccount, IMAddressInfoType.TemporaryGroup, this);

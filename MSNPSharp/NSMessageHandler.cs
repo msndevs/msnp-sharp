@@ -55,7 +55,7 @@ namespace MSNPSharp
     /// Handles the protocol messages from the notification server
     /// and implements protocol version MSNP21.
     /// </summary>
-    public partial class NSMessageHandler
+    public partial class NSMessageHandler : IMessageHandler
     {
         /// <summary>
         /// Machine Guid
@@ -403,7 +403,7 @@ namespace MSNPSharp
         {
             get
             {
-                return MessageProcessor.ConnectivitySettings;
+                return (MessageProcessor as NSMessageProcessor).ConnectivitySettings;
             }
         }
 
@@ -459,7 +459,7 @@ namespace MSNPSharp
         /// <summary>
         /// The processor to handle the messages
         /// </summary>
-        public NSMessageProcessor MessageProcessor
+        public IMessageProcessor MessageProcessor
         {
             get
             {
@@ -635,7 +635,7 @@ namespace MSNPSharp
         /// </summary>
         protected virtual void SendInitialMessage()
         {
-            MessageProcessor.ResetTransactionID();
+            (MessageProcessor as NSMessageProcessor).ResetTransactionID();
 
             // 1) VER: MSN Protocol used
             MessageProcessor.SendMessage(new NSMessage("VER", new string[] { "MSNP21", "CVR0" }));
@@ -902,7 +902,7 @@ namespace MSNPSharp
             if ((string)message.CommandValues[0] == "NS")
             {
                 // switch to a new notification server. That means reconnecting our current message processor.
-                NSMessageProcessor processor = MessageProcessor;
+                NSMessageProcessor processor = (NSMessageProcessor)MessageProcessor;
                 // set new connectivity settings
                 ConnectivitySettings newSettings = new ConnectivitySettings(processor.ConnectivitySettings);
                 // disconnect first
@@ -1364,7 +1364,7 @@ namespace MSNPSharp
 
         private void SendInitialServiceADL()
         {
-            NSMessageProcessor nsmp = MessageProcessor;
+            NSMessageProcessor nsmp = MessageProcessor as NSMessageProcessor;
 
             if (nsmp == null)
                 return;
@@ -1397,7 +1397,7 @@ namespace MSNPSharp
             if (scene == Scenario.None)
                 return;
 
-            NSMessageProcessor nsmp = MessageProcessor;
+            NSMessageProcessor nsmp = (NSMessageProcessor)MessageProcessor;
 
             if (nsmp == null)
                 return;

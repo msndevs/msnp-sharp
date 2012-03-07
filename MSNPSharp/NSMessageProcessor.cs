@@ -58,7 +58,7 @@ namespace MSNPSharp
         }
     };
 
-    public class NSMessageProcessor
+    public class NSMessageProcessor : IMessageProcessor
     {
         #region Events
 

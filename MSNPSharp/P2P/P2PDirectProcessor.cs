@@ -55,7 +55,7 @@ namespace MSNPSharp.P2P
     /// <summary>
     /// Handles the direct connections in P2P sessions.
     /// </summary>
-    public class P2PDirectProcessor : IDisposable
+    public class P2PDirectProcessor : IMessageProcessor, IDisposable
     {
         #region Events
 
