@@ -477,7 +477,10 @@ namespace MSNPSharp.Core
                 }
                 finally
                 {
-                    socket.Close();
+                    if(socket != null)
+                    {
+                        socket.Close();
+                    }
                 }
 
                 socket = null;
