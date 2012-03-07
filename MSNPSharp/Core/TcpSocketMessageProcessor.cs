@@ -460,16 +460,27 @@ namespace MSNPSharp.Core
             }
         }
 
+        protected override void OnDisconnected()
+        {
+            Trace.WriteLineIf(Settings.TraceSwitch.TraceInfo, "OnDisconnected", GetType().Name);
+
+            Disconnect();
+            base.OnDisconnected();
+        }
+
         public override void Disconnect()
         {
             // clean up the socket properly
             if (socket != null)
             {
+                ProxySocket pSocket = socket;
+                socket = null;
+
                 try
                 {
-                    if (Connected)
+                    if (IsSocketConnected(pSocket))
                     {
-                        socket.Shutdown(SocketShutdown.Both);
+                        pSocket.Shutdown(SocketShutdown.Both);
                     }
                 }
                 catch (Exception)
@@ -477,16 +488,12 @@ namespace MSNPSharp.Core
                 }
                 finally
                 {
-                    if(socket != null)
-                    {
-                        socket.Close();
-                    }
+                    pSocket.Close();
                 }
-
-                socket = null;
 
                 // We don't need to call OnDisconnect here since EndReceiveCallback will be call automatically later on. (This is not valid if disconnected remotelly)
                 // We need to call OnDisconnect after EndReceiveCallback if disconnected locally.
+                // We call Disconnect() when OnDisconnected event fired.
             }
         }
 
