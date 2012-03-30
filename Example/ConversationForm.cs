@@ -492,6 +492,7 @@ namespace MSNPSharpClient
 
         private Messenger _messenger = null;
         private Contact remoteContact;
+        private DateTime lastTypingMessageSent = DateTime.Now;
 
         public Contact RemoteContact
         {
@@ -627,7 +628,12 @@ namespace MSNPSharpClient
 
             try
             {
-                remoteContact.SendTypingMessage();
+                // To avoid RateLimitExceed Exception from server, we should be carefull
+                // with sending the typing message.
+                if(DateTime.Now - lastTypingMessageSent >= new TimeSpan(0, 5, 0)){
+                    remoteContact.SendTypingMessage();
+                    lastTypingMessageSent = DateTime.Now;
+                }
 
             }
             catch (Exception)
