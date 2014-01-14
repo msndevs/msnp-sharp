@@ -1394,7 +1394,7 @@ namespace MSNPSharpClient
         {
             if ((e.Button == MouseButtons.Left) && (e.Node.Level != 0))
             {
-                Contact selectedContact = treeViewFavoriteList.SelectedNode.Tag as Contact;
+                Contact selectedContact = e.Node.Tag as Contact;
 
                 if (selectedContact != null)
                 {
@@ -1448,8 +1448,9 @@ namespace MSNPSharpClient
             {
                 if (e.Node.Tag is Contact && e.Node.Level > 0)
                 {
-                    treeViewFavoriteList.SelectedNode = e.Node;
-                    Contact contact = (Contact)treeViewFavoriteList.SelectedNode.Tag;
+                    
+                    
+                    Contact contact = e.Node.Tag as Contact;
 
                     if (contact.AppearOffline)
                     {
@@ -1465,9 +1466,14 @@ namespace MSNPSharpClient
                     liveProfileToolStripMenuItem.Visible = contact.CID != 0;
                     deleteMenuItem.Visible = contact.Guid != Guid.Empty;
                     leaveCircleToolStripMenuItem.Visible = contact.ClientType == IMAddressInfoType.Circle;
-
-                    Point point = treeViewFavoriteList.PointToScreen(new Point(e.X, e.Y));
-                    userMenuStrip.Show(point.X - userMenuStrip.Width, point.Y);
+                    if (e.Node.TreeView == treeViewFavoriteList)
+                    {
+                        treeViewFavoriteList.SelectedNode = e.Node;
+                        Point point = treeViewFavoriteList.PointToScreen(new Point(e.X, e.Y));
+                        userMenuStrip.Show(point.X - userMenuStrip.Width, point.Y);
+                    }
+                    
+                    
                 }
                 else if (e.Node.Tag is ContactGroup)
                 {
@@ -1498,7 +1504,16 @@ namespace MSNPSharpClient
 
         private void deleteMenuItem_Click(object sender, EventArgs e)
         {
-            Contact contact = (Contact)treeViewFavoriteList.SelectedNode.Tag;
+            Contact contact = null;
+            if (treeViewFavoriteList.SelectedNode == null)
+            {
+                contact = treeViewFilterList.SelectedNode.Tag as Contact;
+            }
+            else
+            {
+                contact = treeViewFavoriteList.SelectedNode.Tag as Contact;
+            }
+
             RemoveContactForm form = new RemoveContactForm();
             form.FormClosed += delegate(object f, FormClosedEventArgs fce)
             {
@@ -1513,7 +1528,15 @@ namespace MSNPSharpClient
 
         private void sendMessageToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Contact contact = treeViewFavoriteList.SelectedNode.Tag as Contact;
+            Contact contact = null;
+            if (treeViewFavoriteList.SelectedNode == null)
+            {
+                contact = treeViewFilterList.SelectedNode.Tag as Contact;
+            }
+            else
+            {
+                contact = treeViewFavoriteList.SelectedNode.Tag as Contact;
+            }
 
             foreach (ConversationForm conv in ConversationForms)
             {
@@ -1533,13 +1556,22 @@ namespace MSNPSharpClient
 
         private void sendMIMMenuItem_Click(object sender, EventArgs e)
         {
-            Contact selectedContact = (Contact)treeViewFavoriteList.SelectedNode.Tag;
-            this.propertyGrid.SelectedObject = selectedContact;
-
-            if (selectedContact.MobileAccess ||
-                selectedContact.ClientType == IMAddressInfoType.Telephone)
+            Contact contact = null;
+            if (treeViewFavoriteList.SelectedNode == null)
             {
-                selectedContact.SendMobileMessage("MSNP mobile message");
+                contact = treeViewFilterList.SelectedNode.Tag as Contact;
+            }
+            else
+            {
+                contact = treeViewFavoriteList.SelectedNode.Tag as Contact;
+            }
+
+            this.propertyGrid.SelectedObject = contact;
+
+            if (contact.MobileAccess ||
+                contact.ClientType == IMAddressInfoType.Telephone)
+            {
+                contact.SendMobileMessage("MSNP mobile message");
             }
             else
                 MessageBox.Show("This contact is not able to receive mobile messages");
